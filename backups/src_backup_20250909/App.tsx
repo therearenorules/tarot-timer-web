@@ -1,8 +1,213 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Timer from './components/Timer';
-import Spread from './components/Spread';
 import Icon from './components/ui/Icon';
+
+// 스프레드 데이터 정의
+const SPREAD_TYPES = [
+  {
+    id: 'one-card',
+    name: 'One Card Spread',
+    nameKr: '1카드 스프레드',
+    descriptionKr: '오늘 하루의 핵심 메시지를 전달하는 간단하고 강력한 스프레드입니다.',
+    isPremium: false,
+    cardCount: 1
+  },
+  {
+    id: 'three-card',
+    name: 'Three Card Spread',
+    nameKr: '3카드 스프레드',
+    descriptionKr: '과거, 현재, 미래의 흐름을 보여주는 기본적인 스프레드입니다.',
+    isPremium: false,
+    cardCount: 3
+  },
+  {
+    id: 'four-card',
+    name: 'Four Card Spread',
+    nameKr: '4카드 스프레드',
+    descriptionKr: '현재 상황을 다각도로 분석하는 균형잡힌 스프레드입니다.',
+    isPremium: false,
+    cardCount: 4
+  },
+  {
+    id: 'five-card',
+    name: 'Five Card V Spread',
+    nameKr: '5카드 V 스프레드',
+    descriptionKr: '복잡한 상황의 근본 원인과 해결책을 찾는 심화 스프레드입니다.',
+    isPremium: false,
+    cardCount: 5
+  },
+  {
+    id: 'celtic-cross',
+    name: 'Celtic Cross',
+    nameKr: '켈틱 크로스',
+    descriptionKr: '타로의 왕좌, 가장 완벽하고 깊이 있는 통찰을 제공하는 전문가 스프레드입니다.',
+    isPremium: true,
+    cardCount: 10
+  },
+  {
+    id: 'cup-of-relationship',
+    name: 'Cup of Relationship',
+    nameKr: '컵 오브 릴레이션십',
+    descriptionKr: '사랑과 관계의 모든 측면을 세밀하게 분석하는 특별한 연애 전용 스프레드입니다.',
+    isPremium: true,
+    cardCount: 11
+  },
+  {
+    id: 'ab-choice',
+    name: 'AB Choice Spread',
+    nameKr: 'AB 선택 스프레드',
+    descriptionKr: '두 개의 선택지 사이에서 올바른 결정을 내리도록 도와주는 결정 전용 스프레드입니다.',
+    isPremium: true,
+    cardCount: 7
+  }
+];
+
+const Spreads = () => {
+  const [selectedSpread, setSelectedSpread] = useState<string | null>(null);
+
+  const handleSpreadSelect = (spreadId: string) => {
+    setSelectedSpread(spreadId);
+    // TODO: 스프레드 선택 후 리딩 화면으로 이동
+    console.log('Selected spread:', spreadId);
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-cosmic-gradient">
+      {/* 떠다니는 미스틱 요소들 */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="animate-cosmic-float absolute top-16 left-8 w-2 h-2 bg-brand-accent rounded-full opacity-40" />
+        <div className="animate-cosmic-float absolute top-32 right-12 w-1 h-1 bg-brand-accent/60 rounded-full opacity-60" style={{ animationDelay: '1s' }} />
+        <div className="animate-cosmic-float absolute top-64 left-16 w-3 h-3 bg-brand-accent/80 rounded-full opacity-30" style={{ animationDelay: '2s' }} />
+        <div className="animate-cosmic-float absolute top-80 right-8 w-1.5 h-1.5 bg-brand-accent rounded-full opacity-50" style={{ animationDelay: '0.5s' }} />
+      </div>
+
+      {/* 메인 컨텐츠 */}
+      <div className="flex-1 px-6 pt-8 pb-24 safe-area-pt">
+        {/* 헤더 섹션 */}
+        <div className="text-center mb-8">
+          <div className="relative inline-flex items-center justify-center w-12 h-12 mb-4">
+            <Icon name="layout" size={48} color="#d4af37" className="animate-mystical-pulse" />
+            <div className="absolute inset-0 bg-brand-accent/20 rounded-full animate-aurum-glow" />
+          </div>
+          <h1 className="text-3xl font-semibold text-white mb-2">
+            신비한 스프레드
+          </h1>
+          <p className="text-white/70 text-base">
+            운명의 카드 배치법을 선택하세요
+          </p>
+        </div>
+
+        {/* 스프레드 카드 목록 */}
+        <div className="space-y-4 mb-6">
+          {SPREAD_TYPES.map((spread) => (
+            <motion.div
+              key={spread.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: SPREAD_TYPES.indexOf(spread) * 0.1 }}
+              className="group"
+            >
+              <div
+                onClick={() => handleSpreadSelect(spread.id)}
+                className={`
+                  card-mystical p-5 cursor-pointer transition-all duration-300
+                  ${selectedSpread === spread.id ? 'border-brand-accent/60 shadow-glow-gold' : 'hover:border-brand-accent/40'}
+                  hover:scale-[1.02] active:scale-[0.98]
+                `}
+              >
+                {/* 카드 헤더 */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <Icon name="layout" size={20} color="#d4af37" />
+                      {spread.isPremium && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-accent rounded-full flex items-center justify-center">
+                          <Icon name="star" size={8} color="#1a1f3a" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-1">
+                        {spread.nameKr}
+                      </h3>
+                      <p className="text-sm text-brand-accent/80">
+                        {spread.name}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {spread.isPremium && (
+                    <div className="px-3 py-1 bg-gradient-to-r from-brand-accent to-brand-accent/80 rounded-full">
+                      <div className="flex items-center space-x-1">
+                        <Icon name="star" size={12} color="#1a1f3a" />
+                        <span className="text-xs font-medium text-dark-bg-primary">프리미엄</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 설명 */}
+                <p className="text-white/80 text-sm mb-4 leading-relaxed">
+                  {spread.descriptionKr}
+                </p>
+
+                {/* 액션 버튼 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-xs text-white/60">
+                    <Icon name="tarot-cards" size={16} color="currentColor" />
+                    <span>{spread.cardCount}장의 카드</span>
+                  </div>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSpreadSelect(spread.id);
+                    }}
+                    className="btn-mystical-secondary flex items-center space-x-2 px-4 py-2 hover:bg-brand-accent/20"
+                  >
+                    <Icon name="zap" size={16} color="currentColor" />
+                    <span className="text-sm font-medium">리딩 시작하기</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* 프리미엄 하이라이트 섹션 */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="card-mystical p-6 text-center mb-6"
+        >
+          <div className="relative inline-flex items-center justify-center w-12 h-12 mb-4">
+            <Icon name="star" size={48} color="#d4af37" className="animate-mystical-pulse" />
+            <div className="absolute inset-0 bg-brand-accent/30 rounded-full animate-aurum-glow" />
+          </div>
+          
+          <h2 className="text-xl font-semibold text-white mb-2">
+            프리미엄 스프레드
+          </h2>
+          <p className="text-white/70 text-sm mb-4">
+            더 깊은 통찰을 위한 고급 스프레드들
+          </p>
+          
+          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-brand-accent/20 border border-brand-accent/30 rounded-full">
+            <Icon name="star" size={16} color="#d4af37" />
+            <span className="text-sm font-medium text-brand-accent">활성화됨</span>
+          </div>
+        </motion.div>
+
+        {/* 신비로운 인용구 */}
+        <div className="text-center text-white/60 text-sm italic">
+          "각각의 스프레드는 다른 차원의 문을 열어준다."
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // 더미 데이터 - 실제로는 로컬 스토리지에서 가져옴
 const SAMPLE_DAILY_SAVES = [
@@ -701,7 +906,7 @@ const Settings = () => {
 
 const tabs = [
   { id: 'timer', name: '타이머', icon: 'clock', component: Timer },
-  { id: 'spreads', name: '스프레드', icon: 'tarot-cards', component: Spread },
+  { id: 'spreads', name: '스프레드', icon: 'tarot-cards', component: Spreads },
   { id: 'journal', name: '저널', icon: 'book-open', component: Journal },
   { id: 'settings', name: '설정', icon: 'settings', component: Settings },
 ] as const;
