@@ -47,48 +47,6 @@ export interface SpreadType {
   positionsKr: string[];
 }
 
-// 스프레드 포지션 인터페이스
-export interface SpreadPosition {
-  id: string;
-  name: string;
-  nameKr: string;
-  x: number;
-  y: number;
-  description?: string;
-  descriptionKr?: string;
-  group?: string;
-  isSpecial?: boolean;
-  isRotated?: boolean;
-  section?: string;
-}
-
-// 스프레드 카드 인터페이스
-export interface SpreadCard {
-  card: TarotCard;
-  position: SpreadPosition;
-  isRevealed: boolean;
-}
-
-// 확장된 스프레드 타입 인터페이스
-export interface SpreadTypeExtended extends SpreadType {
-  layout: SpreadPosition[];
-  instructions?: string;
-  instructionsKr?: string;
-}
-
-// 저장된 스프레드 인터페이스
-export interface SavedSpread {
-  id: string;
-  spreadType: SpreadTypeExtended;
-  cards: SpreadCard[];
-  question: string;
-  date: string;
-  title?: string;
-  insights: string;
-  spreadName: string;
-  savedAt: string;
-}
-
 // 현재 시간 관련 유틸리티 함수들
 export const getCurrentHour = (): number => {
   return new Date().getHours();
@@ -113,76 +71,6 @@ export const formatTime = (date: Date): string => {
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
   return `${hours}:${minutes}`;
-};
-
-// 타로 카드 이름을 파일명으로 변환하는 함수
-export const getCardImagePath = (cardName: string): string => {
-  // Major Arcana 매핑 (0-21)
-  const majorArcanaMapping: { [key: string]: string } = {
-    'The Fool': 'major_00_fool.jpg',
-    'The Magician': 'major_01_magician.jpg',
-    'The High Priestess': 'major_02_high_priestess.jpg',
-    'The Empress': 'major_03_empress.jpg',
-    'The Emperor': 'major_04_emperor.jpg',
-    'The Hierophant': 'major_05_hierophant.jpg',
-    'The Lovers': 'major_06_lovers.jpg',
-    'The Chariot': 'major_07_chariot.jpg',
-    'Strength': 'major_08_strength.jpg',
-    'The Hermit': 'major_09_hermit.jpg',
-    'Wheel of Fortune': 'major_10_wheel_of_fortune.jpg',
-    'Justice': 'major_11_justice.jpg',
-    'The Hanged Man': 'major_12_hanged_man.jpg',
-    'Death': 'major_13_death.jpg',
-    'Temperance': 'major_14_temperance.jpg',
-    'The Devil': 'major_15_devil.jpg',
-    'The Tower': 'major_16_tower.jpg',
-    'The Star': 'major_17_star.jpg',
-    'The Moon': 'major_18_moon.jpg',
-    'The Sun': 'major_19_sun.jpg',
-    'Judgement': 'major_20_judgement.jpg',
-    'The World': 'major_21_world.jpg'
-  };
-
-  // Major Arcana 카드인 경우
-  if (majorArcanaMapping[cardName]) {
-    return `/assets/tarot-cards/${majorArcanaMapping[cardName]}`;
-  }
-
-  // Minor Arcana 매핑 로직
-  // 카드 이름에서 suit과 rank 추출
-  if (cardName.includes(' of ')) {
-    const [rank, , suit] = cardName.split(' ');
-    const suitMap: { [key: string]: string } = {
-      'Cups': 'cups',
-      'Wands': 'wands',
-      'Swords': 'swords',
-      'Pentacles': 'pentacles'
-    };
-
-    const rankMap: { [key: string]: string } = {
-      'Ace': 'ace',
-      'Two': '02',
-      'Three': '03',
-      'Four': '04',
-      'Five': '05',
-      'Six': '06',
-      'Seven': '07',
-      'Eight': '08',
-      'Nine': '09',
-      'Ten': '10',
-      'Page': 'page',
-      'Knight': 'knight',
-      'Queen': 'queen',
-      'King': 'king'
-    };
-
-    if (suitMap[suit] && rankMap[rank]) {
-      return `/assets/tarot-cards/minor_${suitMap[suit]}_${rankMap[rank]}.jpg`;
-    }
-  }
-
-  // 매핑되지 않는 경우 fallback 이미지
-  return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400';
 };
 
 // 완전한 78장 타로 카드 데이터
@@ -1166,25 +1054,37 @@ export const generateDailyCards = (seedDate: Date): TarotCard[] => {
 };
 
 // 스프레드용 카드 생성 함수
-export const generateSpreadCards = (spreadType: SpreadTypeExtended): TarotCard[] => {
-  const allCards = getAllCards();
-  const usedCards = new Set<number>();
-  const selectedCards: TarotCard[] = [];
+export const generateSpreadCards = (count: number, seed?: number): TarotCard[] => {
+  const cards: TarotCard[] = [];
+  let randomSeed = seed || Date.now();
   
-  for (let i = 0; i < spreadType.cardCount; i++) {
+  const seededRandom = () => {
+    randomSeed = (randomSeed * 9301 + 49297) % 233280;
+    return randomSeed / 233280;
+  };
+  
+  const usedCards = new Set<number>();
+  
+  for (let i = 0; i < count; i++) {
     let cardIndex;
     do {
-      cardIndex = Math.floor(Math.random() * allCards.length);
-    } while (usedCards.has(cardIndex) && usedCards.size < allCards.length);
+      cardIndex = Math.floor(seededRandom() * ALL_TAROT_CARDS.length);
+    } while (usedCards.has(cardIndex) && usedCards.size < ALL_TAROT_CARDS.length);
     
-    if (usedCards.size < allCards.length) {
+    if (usedCards.size < ALL_TAROT_CARDS.length) {
       usedCards.add(cardIndex);
     }
     
-    selectedCards.push(allCards[cardIndex] || allCards[0]);
+    const baseCard = ALL_TAROT_CARDS[cardIndex] || ALL_TAROT_CARDS[0];
+    const card: TarotCard = {
+      ...baseCard,
+      id: i + 1,
+    };
+    
+    cards.push(card);
   }
   
-  return selectedCards;
+  return cards;
 };
 
 // localStorage 관리 함수들 (웹용)
@@ -1258,7 +1158,8 @@ export const loadSpreadSaves = async (): Promise<SpreadSave[]> => {
   }
 };
 
-export const SPREAD_TYPES: SpreadTypeExtended[] = [
+// 스프레드 타입 정의
+export const SPREAD_TYPES: SpreadType[] = [
   {
     id: 'one-card',
     name: 'One Card Spread',
@@ -1268,12 +1169,7 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
     isPremium: false,
     cardCount: 1,
     positions: ['Present Situation'],
-    positionsKr: ['현재 상황'],
-    layout: [
-      { id: 'center', name: 'Present Situation', nameKr: '현재 상황', x: 50, y: 50 }
-    ],
-    instructions: 'Focus on your question and draw a single card for guidance.',
-    instructionsKr: '질문에 집중하며 하나의 카드를 뽑아 조언을 받으세요.'
+    positionsKr: ['현재 상황']
   },
   {
     id: 'three-card',
@@ -1284,14 +1180,7 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
     isPremium: false,
     cardCount: 3,
     positions: ['Past', 'Present', 'Future'],
-    positionsKr: ['과거', '현재', '미래'],
-    layout: [
-      { id: 'past', name: 'Past', nameKr: '과거', x: 20, y: 50 },
-      { id: 'present', name: 'Present', nameKr: '현재', x: 50, y: 50 },
-      { id: 'future', name: 'Future', nameKr: '미래', x: 80, y: 50 }
-    ],
-    instructions: 'Draw three cards to understand the timeline of your situation.',
-    instructionsKr: '상황의 시간적 흐름을 이해하기 위해 세 장의 카드를 뽑으세요.'
+    positionsKr: ['과거', '현재', '미래']
   },
   {
     id: 'four-elements',
@@ -1302,15 +1191,7 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
     isPremium: false,
     cardCount: 4,
     positions: ['Fire (Passion)', 'Water (Emotion)', 'Air (Thought)', 'Earth (Material)'],
-    positionsKr: ['불 (열정)', '물 (감정)', '공기 (생각)', '땅 (물질)'],
-    layout: [
-      { id: 'fire', name: 'Fire (Passion)', nameKr: '불 (열정)', x: 50, y: 20 },
-      { id: 'water', name: 'Water (Emotion)', nameKr: '물 (감정)', x: 80, y: 50 },
-      { id: 'air', name: 'Air (Thought)', nameKr: '공기 (생각)', x: 50, y: 80 },
-      { id: 'earth', name: 'Earth (Material)', nameKr: '땅 (물질)', x: 20, y: 50 }
-    ],
-    instructions: 'Explore the elemental balance in your situation.',
-    instructionsKr: '상황 속 원소들의 균형을 탐구해보세요.'
+    positionsKr: ['불 (열정)', '물 (감정)', '공기 (생각)', '땅 (물질)']
   },
   {
     id: 'five-card-v',
@@ -1321,16 +1202,7 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
     isPremium: false,
     cardCount: 5,
     positions: ['Distant Past', 'Recent Past', 'Present', 'Near Future', 'Distant Future'],
-    positionsKr: ['먼 과거', '최근 과거', '현재', '가까운 미래', '먼 미래'],
-    layout: [
-      { id: 'distant-past', name: 'Distant Past', nameKr: '먼 과거', x: 10, y: 20 },
-      { id: 'recent-past', name: 'Recent Past', nameKr: '최근 과거', x: 30, y: 40 },
-      { id: 'present', name: 'Present', nameKr: '현재', x: 50, y: 60 },
-      { id: 'near-future', name: 'Near Future', nameKr: '가까운 미래', x: 70, y: 40 },
-      { id: 'distant-future', name: 'Distant Future', nameKr: '먼 미래', x: 90, y: 20 }
-    ],
-    instructions: 'Draw cards in a V-shape to see the full timeline.',
-    instructionsKr: 'V자 형태로 카드를 배치해 전체 시간의 흐름을 확인하세요.'
+    positionsKr: ['먼 과거', '최근 과거', '현재', '가까운 미래', '먼 미래']
   },
   {
     id: 'celtic-cross',
@@ -1363,21 +1235,7 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
       '외부 영향',
       '희망과 두려움',
       '최종 결과'
-    ],
-    layout: [
-      { id: 'present', name: 'Present Situation', nameKr: '현재 상황', x: 35, y: 50, section: 'cross' },
-      { id: 'cross', name: 'Cross/Challenge', nameKr: '장애물/도전', x: 35, y: 50, isRotated: true, section: 'cross' },
-      { id: 'foundation', name: 'Distant Past/Foundation', nameKr: '먼 과거/기반', x: 35, y: 80, section: 'cross' },
-      { id: 'past', name: 'Recent Past', nameKr: '최근 과거', x: 15, y: 50, section: 'cross' },
-      { id: 'crown', name: 'Possible Outcome', nameKr: '가능한 결과', x: 35, y: 20, section: 'cross' },
-      { id: 'future', name: 'Immediate Future', nameKr: '가까운 미래', x: 55, y: 50, section: 'cross' },
-      { id: 'approach', name: 'Your Approach', nameKr: '당신의 접근법', x: 75, y: 95, section: 'staff' },
-      { id: 'external', name: 'External Influences', nameKr: '외부 영향', x: 75, y: 70, section: 'staff' },
-      { id: 'hopes-fears', name: 'Hopes and Fears', nameKr: '희망과 두려움', x: 75, y: 30, section: 'staff' },
-      { id: 'outcome', name: 'Final Outcome', nameKr: '최종 결과', x: 75, y: 5, section: 'staff' }
-    ],
-    instructions: 'The ultimate spread for complex situations requiring deep analysis.',
-    instructionsKr: '복잡한 상황의 깊이 있는 분석을 위한 궁극의 스프레드입니다.'
+    ]
   },
   {
     id: 'relationship-spread',
@@ -1386,48 +1244,25 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
     description: 'Explore the dynamics of any relationship.',
     descriptionKr: '모든 관계의 역학을 깊이 있게 탐구하는 전문 스프레드입니다.',
     isPremium: true,
-    cardCount: 11,
+    cardCount: 7,
     positions: [
-      'Foundation',
-      'Growth Potential',
-      'Future of Relationship',
-      'Relationship Advice',
-      'Heart of Relationship',
-      'Relationship Challenge',
-      'Your Feelings',
-      'Their Feelings',
-      'Past Relationship Pattern',
-      'Hidden Influences',
-      'Core Relationship Theme'
+      'You',
+      'The Other Person',
+      'The Relationship',
+      'What You Bring',
+      'What They Bring',
+      'Common Ground',
+      'Potential Future'
     ],
     positionsKr: [
-      '관계의 기반',
-      '관계의 성장',
-      '관계의 미래',
-      '관계 조언',
-      '관계의 중심',
-      '관계의 도전',
-      '당신의 감정',
-      '상대방의 감정',
-      '과거 관계 패턴',
-      '숨겨진 영향',
-      '관계 핵심 테마'
-    ],
-    layout: [
-      { id: 'foundation', name: 'Foundation', nameKr: '관계의 기반', x: 20, y: 99, section: 'bottom' },
-      { id: 'growth', name: 'Growth Potential', nameKr: '관계의 성장', x: 80, y: 99, section: 'bottom' },
-      { id: 'future', name: 'Future of Relationship', nameKr: '관계의 미래', x: 50, y: 99, section: 'bottom' },
-      { id: 'advice', name: 'Relationship Advice', nameKr: '관계 조언', x: 50, y: 71, section: 'bottom' },
-      { id: 'heart', name: 'Heart of Relationship', nameKr: '관계의 중심', x: 50, y: 41, section: 'center', isSpecial: true },
-      { id: 'challenge', name: 'Relationship Challenge', nameKr: '관계의 도전', x: 65, y: 58, section: 'center' },
-      { id: 'your-feelings', name: 'Your Feelings', nameKr: '당신의 감정', x: 35, y: 28, section: 'middle' },
-      { id: 'their-feelings', name: 'Their Feelings', nameKr: '상대방의 감정', x: 65, y: 28, section: 'middle' },
-      { id: 'past-pattern', name: 'Past Relationship Pattern', nameKr: '과거 관계 패턴', x: 20, y: 2, section: 'top' },
-      { id: 'hidden', name: 'Hidden Influences', nameKr: '숨겨진 영향', x: 80, y: 2, section: 'top' },
-      { id: 'core-theme', name: 'Core Relationship Theme', nameKr: '관계 핵심 테마', x: 50, y: 2, section: 'top', isSpecial: true }
-    ],
-    instructions: 'Explore the complete dynamics and potential of any relationship with 11 cards.',
-    instructionsKr: '11장의 카드로 모든 관계의 완전한 역학과 잠재력을 탐구해보세요.'
+      '당신',
+      '상대방',
+      '관계 자체',
+      '당신이 가져오는 것',
+      '상대방이 가져오는 것',
+      '공통점',
+      '잠재적 미래'
+    ]
   },
   {
     id: 'choice-spread',
@@ -1436,38 +1271,26 @@ export const SPREAD_TYPES: SpreadTypeExtended[] = [
     description: 'When facing a difficult decision between two options.',
     descriptionKr: '두 가지 선택 사이에서 고민할 때 명확한 방향을 제시하는 스프레드입니다.',
     isPremium: true,
-    cardCount: 7,
+    cardCount: 6,
     positions: [
-      'A: Advantages',
-      'A: Challenges', 
-      'A: Outcome',
-      'Guidance',
-      'B: Advantages',
-      'B: Challenges',
-      'B: Outcome'
+      'Current Situation',
+      'Option A',
+      'Option B',
+      'What You Need to Know',
+      'Likely Outcome A',
+      'Likely Outcome B'
     ],
     positionsKr: [
-      'A: 장점',
-      'A: 단점',
-      'A: 결과',
-      '조언',
-      'B: 장점',
-      'B: 단점',
-      'B: 결과'
-    ],
-    layout: [
-      { id: 'a-advantages', name: 'A: Advantages', nameKr: 'A: 장점', x: 25, y: 25, group: 'A' },
-      { id: 'a-challenges', name: 'A: Challenges', nameKr: 'A: 단점', x: 25, y: 50, group: 'A' },
-      { id: 'a-outcome', name: 'A: Outcome', nameKr: 'A: 결과', x: 25, y: 75, group: 'A' },
-      { id: 'guidance', name: 'Guidance', nameKr: '조언', x: 50, y: 50, group: 'Advice', isSpecial: true },
-      { id: 'b-advantages', name: 'B: Advantages', nameKr: 'B: 장점', x: 75, y: 25, group: 'B' },
-      { id: 'b-challenges', name: 'B: Challenges', nameKr: 'B: 단점', x: 75, y: 50, group: 'B' },
-      { id: 'b-outcome', name: 'B: Outcome', nameKr: 'B: 결과', x: 75, y: 75, group: 'B' }
-    ],
-    instructions: 'Compare two choices: their advantages, challenges, and likely outcomes, with central guidance.',
-    instructionsKr: '두 선택의 장단점과 결과를 비교하고 중앙의 조언을 받으세요.'
+      '현재 상황',
+      '선택 A',
+      '선택 B', 
+      '알아야 할 것',
+      '결과 A',
+      '결과 B'
+    ]
   }
 ];
+
 // 샘플 데이터 생성 함수들
 export const generateSampleDailyData = (): DailyTarotSave[] => {
   const samples: DailyTarotSave[] = [];
@@ -1513,7 +1336,7 @@ export const generateSampleSpreadData = (): SpreadSave[] => {
     const date = new Date();
     date.setDate(date.getDate() - index);
     
-    const cards = generateSpreadCards(spreadType);
+    const cards = generateSpreadCards(spreadType.cardCount, Date.now() + index);
     
     samples.push({
       id: `spread-${spreadType.id}-${date.toDateString()}`,
@@ -1533,17 +1356,10 @@ export const generateSampleSpreadData = (): SpreadSave[] => {
 
 // 유틸리티 함수들
 export const getCardById = (id: number): TarotCard | undefined => {
-  const card = ALL_TAROT_CARDS.map((card, index) => ({ ...card, id: index + 1 })).find(card => card.id === id);
-  if (card) {
-    return {
-      ...card,
-      imageUrl: getCardImagePath(card.name)
-    };
-  }
-  return undefined;
+  return ALL_TAROT_CARDS.map((card, index) => ({ ...card, id: index + 1 })).find(card => card.id === id);
 };
 
-export const getSpreadTypeById = (id: string): SpreadTypeExtended | undefined => {
+export const getSpreadTypeById = (id: string): SpreadType | undefined => {
   return SPREAD_TYPES.find(spread => spread.id === id);
 };
 
@@ -1557,22 +1373,14 @@ export const shuffleCards = (cards: TarotCard[]): TarotCard[] => {
 };
 
 export const getRandomCards = (count: number): TarotCard[] => {
-  const allCardsWithId = ALL_TAROT_CARDS.map((card, index) => ({ 
-    ...card, 
-    id: index + 1,
-    imageUrl: getCardImagePath(card.name)
-  }));
+  const allCardsWithId = ALL_TAROT_CARDS.map((card, index) => ({ ...card, id: index + 1 }));
   const shuffled = shuffleCards(allCardsWithId);
   return shuffled.slice(0, count);
 };
 
-// 모든 카드 데이터 내보내기 (ID 포함, 로컬 이미지 경로 적용)
+// 모든 카드 데이터 내보내기 (ID 포함)
 export const getAllCards = (): TarotCard[] => {
-  return ALL_TAROT_CARDS.map((card, index) => ({ 
-    ...card, 
-    id: index + 1,
-    imageUrl: getCardImagePath(card.name)
-  }));
+  return ALL_TAROT_CARDS.map((card, index) => ({ ...card, id: index + 1 }));
 };
 
 // 카드 검색 함수
@@ -1602,404 +1410,552 @@ export const getCardsByType = (type: 'Major Arcana' | 'Minor Arcana'): TarotCard
   return allCards.filter(card => card.type === type);
 };
 
-// 스프레드 유틸리티 함수들
-export const getFreeSpreads = (): SpreadTypeExtended[] => {
-  return SPREAD_TYPES.filter(spread => !spread.isPremium);
+// ===== 스프레드 시스템 추가 =====
+
+// 스프레드 포지션 인터페이스
+export interface SpreadPosition {
+  id: string;
+  name: string;
+  nameKr: string;
+  description: string;
+  descriptionKr: string;
+  x: number; // 화면상 위치 (%)
+  y: number; // 화면상 위치 (%)
+}
+
+// 스프레드 카드 (포지션 + 카드)
+export interface SpreadCard {
+  position: SpreadPosition;
+  card: TarotCard;
+  interpretation?: string;
+}
+
+// 스프레드 타입 (기존 인터페이스 확장)
+export interface SpreadTypeExtended {
+  id: string;
+  name: string;
+  nameKr: string;
+  description: string;
+  descriptionKr: string;
+  isPremium: boolean;
+  cardCount: number;
+  positions: SpreadPosition[];
+}
+
+// 저장된 스프레드
+export interface SavedSpread {
+  id: string;
+  title: string;
+  spreadType: string;
+  spreadName: string;
+  date: string;
+  cards: SpreadCard[];
+  insights: string;
+  savedAt: string;
+}
+
+// 완전한 스프레드 타입 데이터
+export const SPREAD_TYPES: SpreadTypeExtended[] = [
+  {
+    id: 'one-card',
+    name: 'One Card Spread',
+    nameKr: '1카드 스프레드',
+    description: 'A simple yet powerful spread for daily guidance and quick insights.',
+    descriptionKr: '오늘 하루의 핵심 메시지를 전달하는 간단하고 강력한 스프레드입니다.',
+    isPremium: false,
+    cardCount: 1,
+    positions: [
+      {
+        id: 'center',
+        name: 'Main Message',
+        nameKr: '핵심 메시지',
+        description: 'The primary guidance for your situation',
+        descriptionKr: '현재 상황에 대한 주요 안내',
+        x: 50,
+        y: 50
+      }
+    ]
+  },
+  {
+    id: 'three-card',
+    name: 'Three Card Spread',
+    nameKr: '3카드 스프레드',
+    description: 'Past, present, and future insights for comprehensive understanding.',
+    descriptionKr: '과거, 현재, 미래의 흐름을 보여주는 기본적인 스프레드입니다.',
+    isPremium: false,
+    cardCount: 3,
+    positions: [
+      {
+        id: 'past',
+        name: 'Past',
+        nameKr: '과거',
+        description: 'Past influences affecting your current situation',
+        descriptionKr: '현재 상황에 영향을 미치는 과거의 요인',
+        x: 20,
+        y: 50
+      },
+      {
+        id: 'present',
+        name: 'Present',
+        nameKr: '현재',
+        description: 'Your current situation and immediate circumstances',
+        descriptionKr: '현재 상황과 즉각적인 환경',
+        x: 50,
+        y: 50
+      },
+      {
+        id: 'future',
+        name: 'Future',
+        nameKr: '미래',
+        description: 'Potential outcomes and future developments',
+        descriptionKr: '잠재적 결과와 미래의 전개',
+        x: 80,
+        y: 50
+      }
+    ]
+  },
+  {
+    id: 'four-card',
+    name: 'Four Card Cross',
+    nameKr: '4카드 크로스',
+    description: 'A balanced spread examining all aspects of your situation.',
+    descriptionKr: '현재 상황을 다각도로 분석하는 균형잡힌 스프레드입니다.',
+    isPremium: false,
+    cardCount: 4,
+    positions: [
+      {
+        id: 'north',
+        name: 'What to embrace',
+        nameKr: '받아들일 것',
+        description: 'What you should embrace or focus on',
+        descriptionKr: '받아들이거나 집중해야 할 것',
+        x: 50,
+        y: 20
+      },
+      {
+        id: 'east',
+        name: 'External influences',
+        nameKr: '외부 영향',
+        description: 'External factors affecting your situation',
+        descriptionKr: '상황에 영향을 미치는 외부 요인',
+        x: 80,
+        y: 50
+      },
+      {
+        id: 'south',
+        name: 'What to release',
+        nameKr: '놓아줄 것',
+        description: 'What you should let go or move away from',
+        descriptionKr: '놓아주거나 멀어져야 할 것',
+        x: 50,
+        y: 80
+      },
+      {
+        id: 'west',
+        name: 'Internal guidance',
+        nameKr: '내면의 안내',
+        description: 'Your inner wisdom and intuitive guidance',
+        descriptionKr: '내면의 지혜와 직관적 안내',
+        x: 20,
+        y: 50
+      }
+    ]
+  },
+  {
+    id: 'five-card',
+    name: 'Five Card V Spread',
+    nameKr: '5카드 V 스프레드',
+    description: 'Deep insights into complex situations with root causes and solutions.',
+    descriptionKr: '복잡한 상황의 근본 원인과 해결책을 찾는 심화 스프레드입니다.',
+    isPremium: false,
+    cardCount: 5,
+    positions: [
+      {
+        id: 'guidance',
+        name: 'Guidance',
+        nameKr: '안내',
+        description: 'Advice and recommended action',
+        descriptionKr: '조언과 권장되는 행동',
+        x: 50,
+        y: 20
+      },
+      {
+        id: 'past_influence',
+        name: 'Past Influence',
+        nameKr: '과거 영향',
+        description: 'How the past is influencing the present',
+        descriptionKr: '과거가 현재에 미치는 영향',
+        x: 25,
+        y: 40
+      },
+      {
+        id: 'future_influence',
+        name: 'Future Influence',
+        nameKr: '미래 영향',
+        description: 'Emerging influences and trends',
+        descriptionKr: '새롭게 나타나는 영향과 흐름',
+        x: 75,
+        y: 40
+      },
+      {
+        id: 'present_situation',
+        name: 'Present',
+        nameKr: '현재 상황',
+        description: 'Your current circumstances',
+        descriptionKr: '현재의 상황',
+        x: 50,
+        y: 60
+      },
+      {
+        id: 'root_cause',
+        name: 'Root Cause',
+        nameKr: '근본 원인',
+        description: 'The underlying cause of your situation',
+        descriptionKr: '상황의 근본적인 원인',
+        x: 50,
+        y: 80
+      }
+    ]
+  },
+  {
+    id: 'celtic-cross',
+    name: 'Celtic Cross',
+    nameKr: '켈틱 크로스',
+    description: 'The most comprehensive tarot spread providing deep insights into all aspects of life.',
+    descriptionKr: '타로의 왕좌, 가장 완벽하고 깊이 있는 통찰을 제공하는 전문가 스프레드입니다.',
+    isPremium: true,
+    cardCount: 10,
+    positions: [
+      {
+        id: 'present',
+        name: 'Present Situation',
+        nameKr: '현재 상황',
+        description: 'Your current situation and state of mind',
+        descriptionKr: '현재 상황과 마음의 상태',
+        x: 40,
+        y: 50
+      },
+      {
+        id: 'challenge',
+        name: 'Challenge',
+        nameKr: '도전과제',
+        description: 'The challenge or obstacle you face',
+        descriptionKr: '마주한 도전과제나 장애물',
+        x: 40,
+        y: 35
+      },
+      {
+        id: 'distant_past',
+        name: 'Distant Past',
+        nameKr: '원거리 과거',
+        description: 'Foundation of the situation',
+        descriptionKr: '상황의 토대가 되는 과거',
+        x: 25,
+        y: 50
+      },
+      {
+        id: 'recent_past',
+        name: 'Recent Past',
+        nameKr: '최근 과거',
+        description: 'Recent past events affecting now',
+        descriptionKr: '현재에 영향을 미치는 최근 과거',
+        x: 40,
+        y: 65
+      },
+      {
+        id: 'possible_outcome',
+        name: 'Possible Outcome',
+        nameKr: '가능한 결과',
+        description: 'Potential outcome if current path continues',
+        descriptionKr: '현재 경로를 계속 따를 때의 잠재적 결과',
+        x: 40,
+        y: 20
+      },
+      {
+        id: 'immediate_future',
+        name: 'Immediate Future',
+        nameKr: '가까운 미래',
+        description: 'What will happen in the near future',
+        descriptionKr: '가까운 미래에 일어날 일',
+        x: 55,
+        y: 50
+      },
+      {
+        id: 'your_approach',
+        name: 'Your Approach',
+        nameKr: '당신의 접근법',
+        description: 'Your approach to the situation',
+        descriptionKr: '상황에 대한 당신의 접근법',
+        x: 75,
+        y: 80
+      },
+      {
+        id: 'external_influences',
+        name: 'External Influences',
+        nameKr: '외부 영향',
+        description: 'How others see you or external influences',
+        descriptionKr: '타인이 보는 당신의 모습이나 외부 영향',
+        x: 75,
+        y: 65
+      },
+      {
+        id: 'hopes_fears',
+        name: 'Hopes & Fears',
+        nameKr: '희망과 두려움',
+        description: 'Your inner hopes and fears',
+        descriptionKr: '내면의 희망과 두려움',
+        x: 75,
+        y: 50
+      },
+      {
+        id: 'final_outcome',
+        name: 'Final Outcome',
+        nameKr: '최종 결과',
+        description: 'The ultimate outcome',
+        descriptionKr: '궁극적인 결과',
+        x: 75,
+        y: 35
+      }
+    ]
+  },
+  {
+    id: 'cup-of-relationship',
+    name: 'Cup of Relationship',
+    nameKr: '컵 오브 릴레이션십',
+    description: 'A specialized spread for deep analysis of love and relationship matters.',
+    descriptionKr: '사랑과 관계의 모든 측면을 세밀하게 분석하는 특별한 연애 전용 스프레드입니다.',
+    isPremium: true,
+    cardCount: 7,
+    positions: [
+      {
+        id: 'your_heart',
+        name: 'Your Heart',
+        nameKr: '당신의 마음',
+        description: 'Your true feelings and desires',
+        descriptionKr: '당신의 진정한 감정과 욕망',
+        x: 30,
+        y: 30
+      },
+      {
+        id: 'their_heart',
+        name: 'Their Heart',
+        nameKr: '상대방의 마음',
+        description: "The other person's feelings",
+        descriptionKr: '상대방의 감정',
+        x: 70,
+        y: 30
+      },
+      {
+        id: 'connection',
+        name: 'Connection',
+        nameKr: '연결',
+        description: 'The energy between you both',
+        descriptionKr: '두 사람 사이의 에너지',
+        x: 50,
+        y: 20
+      },
+      {
+        id: 'challenges',
+        name: 'Challenges',
+        nameKr: '도전과제',
+        description: 'Obstacles in the relationship',
+        descriptionKr: '관계에서의 장애물',
+        x: 20,
+        y: 60
+      },
+      {
+        id: 'strengths',
+        name: 'Strengths',
+        nameKr: '강점',
+        description: 'What works well in your connection',
+        descriptionKr: '관계에서 잘 작동하는 것들',
+        x: 80,
+        y: 60
+      },
+      {
+        id: 'guidance',
+        name: 'Guidance',
+        nameKr: '안내',
+        description: 'Advice for the relationship',
+        descriptionKr: '관계를 위한 조언',
+        x: 50,
+        y: 50
+      },
+      {
+        id: 'outcome',
+        name: 'Outcome',
+        nameKr: '결과',
+        description: 'Potential future of the relationship',
+        descriptionKr: '관계의 잠재적 미래',
+        x: 50,
+        y: 80
+      }
+    ]
+  },
+  {
+    id: 'ab-choice',
+    name: 'AB Choice Spread',
+    nameKr: 'AB 선택 스프레드',
+    description: 'Perfect for making decisions between two options with clear guidance.',
+    descriptionKr: '두 개의 선택지 사이에서 올바른 결정을 내리도록 도와주는 결정 전용 스프레드입니다.',
+    isPremium: true,
+    cardCount: 7,
+    positions: [
+      {
+        id: 'situation',
+        name: 'Current Situation',
+        nameKr: '현재 상황',
+        description: 'Your current circumstances requiring a decision',
+        descriptionKr: '결정이 필요한 현재 상황',
+        x: 50,
+        y: 20
+      },
+      {
+        id: 'option_a',
+        name: 'Option A',
+        nameKr: '선택지 A',
+        description: 'The nature and energy of the first option',
+        descriptionKr: '첫 번째 선택지의 성격과 에너지',
+        x: 25,
+        y: 40
+      },
+      {
+        id: 'option_b',
+        name: 'Option B',
+        nameKr: '선택지 B',
+        description: 'The nature and energy of the second option',
+        descriptionKr: '두 번째 선택지의 성격과 에너지',
+        x: 75,
+        y: 40
+      },
+      {
+        id: 'outcome_a',
+        name: 'Outcome A',
+        nameKr: '결과 A',
+        description: 'Potential outcome if you choose option A',
+        descriptionKr: '선택지 A를 선택했을 때의 잠재적 결과',
+        x: 25,
+        y: 60
+      },
+      {
+        id: 'outcome_b',
+        name: 'Outcome B',
+        nameKr: '결과 B',
+        description: 'Potential outcome if you choose option B',
+        descriptionKr: '선택지 B를 선택했을 때의 잠재적 결과',
+        x: 75,
+        y: 60
+      },
+      {
+        id: 'hidden_factor',
+        name: 'Hidden Factor',
+        nameKr: '숨겨진 요인',
+        description: 'Something you may not be considering',
+        descriptionKr: '고려하지 못했을 수도 있는 요인',
+        x: 50,
+        y: 50
+      },
+      {
+        id: 'guidance',
+        name: 'Guidance',
+        nameKr: '안내',
+        description: 'Spiritual guidance for your decision',
+        descriptionKr: '결정을 위한 영적 안내',
+        x: 50,
+        y: 80
+      }
+    ]
+  }
+];
+
+// ===== 스프레드 관련 유틸리티 함수들 =====
+
+// 스프레드 카드 생성
+export const generateSpreadCards = (spreadType: SpreadTypeExtended): TarotCard[] => {
+  const allCards = getAllCards();
+  const usedCards = new Set<number>();
+  const selectedCards: TarotCard[] = [];
+  
+  // 현재 시간을 시드로 사용하여 매번 다른 카드 조합 생성
+  const seed = Date.now();
+  let randomSeed = seed;
+  
+  const seededRandom = () => {
+    randomSeed = (randomSeed * 9301 + 49297) % 233280;
+    return randomSeed / 233280;
+  };
+  
+  for (let i = 0; i < spreadType.cardCount; i++) {
+    let cardIndex;
+    do {
+      cardIndex = Math.floor(seededRandom() * allCards.length);
+    } while (usedCards.has(cardIndex) && usedCards.size < allCards.length);
+    
+    usedCards.add(cardIndex);
+    selectedCards.push(allCards[cardIndex]);
+  }
+  
+  return selectedCards;
 };
 
-export const getPremiumSpreads = (): SpreadTypeExtended[] => {
-  return SPREAD_TYPES.filter(spread => spread.isPremium);
-};
-
-export const createSpreadReading = (
-  spreadType: SpreadTypeExtended,
-  cards: TarotCard[]
-): SpreadCard[] => {
-  return spreadType.layout.map((position, index) => ({
-    card: cards[index],
-    position: position,
-    isRevealed: false
+// 스프레드와 카드를 조합하여 SpreadCard 배열 생성
+export const createSpreadReading = (spreadType: SpreadTypeExtended, cards: TarotCard[]): SpreadCard[] => {
+  return spreadType.positions.map((position, index) => ({
+    position,
+    card: cards[index] || cards[0], // 안전장치
+    interpretation: `${position.nameKr}에서의 ${cards[index]?.nameKr || '카드'} 해석`
   }));
 };
 
-export const saveSpread = (
-  spreadId: string,
-  question: string,
-  reading: SpreadCard[],
-  insights: string
-): SavedSpread => {
-  const spread = getSpreadTypeById(spreadId);
-  if (!spread) {
-    throw new Error('Invalid spread ID');
+// 스프레드 저장
+const SAVED_SPREADS_KEY = 'saved_spreads';
+
+export const saveSpread = async (spread: SavedSpread): Promise<void> => {
+  try {
+    const existingSpreads = await loadSavedSpreads();
+    const updatedSpreads = [...existingSpreads, spread];
+    
+    // 최근 50개 스프레드만 유지
+    const filteredSpreads = updatedSpreads.slice(-50);
+    
+    localStorage.setItem(SAVED_SPREADS_KEY, JSON.stringify(filteredSpreads));
+  } catch (error) {
+    console.error('Error saving spread:', error);
+    throw error;
   }
-
-  const savedSpread: SavedSpread = {
-    id: Date.now().toString(),
-    spreadType: spread,
-    spreadName: spread.nameKr,
-    question,
-    cards: reading,
-    insights,
-    date: new Date().toISOString(),
-    savedAt: new Date().toISOString()
-  };
-
-  // localStorage에 저장
-  const savedSpreads = loadSavedSpreads();
-  savedSpreads.push(savedSpread);
-  localStorage.setItem('saved_spreads', JSON.stringify(savedSpreads));
-
-  return savedSpread;
 };
 
-export const loadSavedSpreads = (): SavedSpread[] => {
+export const loadSavedSpreads = async (): Promise<SavedSpread[]> => {
   try {
-    const saved = localStorage.getItem('saved_spreads');
+    const saved = localStorage.getItem(SAVED_SPREADS_KEY);
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
-    console.error('Failed to load saved spreads:', error);
+    console.error('Error loading saved spreads:', error);
     return [];
   }
 };
 
-// ===== Journal 관련 유틸리티 함수들 =====
-
-// 날짜 포맷팅 함수들
-export const formatKoreanDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const weekday = weekdays[date.getDay()];
-  return `${year}년 ${month}월 ${day}일 (${weekday})`;
-};
-
-export const formatRelativeDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = now.getTime() - date.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) return '오늘';
-  if (diffDays === 1) return '어제';
-  if (diffDays <= 7) return `${diffDays}일 전`;
-  if (diffDays <= 30) return `${Math.ceil(diffDays / 7)}주 전`;
-  if (diffDays <= 365) return `${Math.ceil(diffDays / 30)}개월 전`;
-  return `${Math.ceil(diffDays / 365)}년 전`;
-};
-
-// 저널 데이터 정렬 및 필터링
-export const sortSavesByDate = (saves: (DailyTarotSave | SavedSpread)[], order: 'asc' | 'desc' = 'desc') => {
-  return saves.sort((a, b) => {
-    const dateA = new Date(a.date || a.savedAt);
-    const dateB = new Date(b.date || b.savedAt);
-    return order === 'desc' ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
-  });
-};
-
-export const filterSavesByDateRange = (
-  saves: (DailyTarotSave | SavedSpread)[], 
-  startDate: Date, 
-  endDate: Date
-): (DailyTarotSave | SavedSpread)[] => {
-  return saves.filter(save => {
-    const saveDate = new Date(save.date || save.savedAt);
-    return saveDate >= startDate && saveDate <= endDate;
-  });
-};
-
-export const searchSaves = (
-  saves: (DailyTarotSave | SavedSpread)[], 
-  query: string
-): (DailyTarotSave | SavedSpread)[] => {
-  const lowerQuery = query.toLowerCase();
-  return saves.filter(save => {
-    if ('spreadName' in save) {
-      // SavedSpread
-      return (save.title?.toLowerCase().includes(lowerQuery) || false) ||
-             save.insights.toLowerCase().includes(lowerQuery) ||
-             save.spreadName.toLowerCase().includes(lowerQuery);
-    } else {
-      // DailyTarotSave
-      return save.insights.toLowerCase().includes(lowerQuery) ||
-             Object.values(save.memos || {}).some((memo) => 
-               typeof memo === 'string' && memo.toLowerCase().includes(lowerQuery)
-             );
-    }
-  });
-};
-
-// 통계 함수들
-export const getDailyTarotStats = async (): Promise<{
-  totalSaves: number;
-  currentStreak: number;
-  longestStreak: number;
-  totalMemos: number;
-  averageMemosPerDay: number;
-}> => {
+export const deleteSavedSpread = async (spreadId: string): Promise<void> => {
   try {
-    const saves = await loadDailyTarotSaves();
-    const totalSaves = saves.length;
-    const totalMemos = saves.reduce((sum, save) => sum + Object.keys(save.memos || {}).length, 0);
-    const averageMemosPerDay = totalSaves > 0 ? Math.round((totalMemos / totalSaves) * 10) / 10 : 0;
-    
-    // 연속 일수 계산
-    const sortedSaves = saves.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    let currentStreak = 0;
-    let longestStreak = 0;
-    let tempStreak = 0;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (let i = 0; i < sortedSaves.length; i++) {
-      const saveDate = new Date(sortedSaves[i].date);
-      saveDate.setHours(0, 0, 0, 0);
-      
-      const daysDiff = Math.floor((today.getTime() - saveDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (i === 0 && (daysDiff === 0 || daysDiff === 1)) {
-        currentStreak = 1;
-        tempStreak = 1;
-      } else if (i > 0) {
-        const prevDate = new Date(sortedSaves[i - 1].date);
-        prevDate.setHours(0, 0, 0, 0);
-        const daysBetween = Math.floor((prevDate.getTime() - saveDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysBetween === 1) {
-          tempStreak++;
-          if (i === 1 && currentStreak > 0) {
-            currentStreak = tempStreak;
-          }
-        } else {
-          if (i === 1) currentStreak = 0;
-          longestStreak = Math.max(longestStreak, tempStreak);
-          tempStreak = 1;
-        }
-      }
-    }
-    
-    longestStreak = Math.max(longestStreak, tempStreak);
-    
-    return {
-      totalSaves,
-      currentStreak,
-      longestStreak,
-      totalMemos,
-      averageMemosPerDay
-    };
+    const existingSpreads = await loadSavedSpreads();
+    const filteredSpreads = existingSpreads.filter(spread => spread.id !== spreadId);
+    localStorage.setItem(SAVED_SPREADS_KEY, JSON.stringify(filteredSpreads));
   } catch (error) {
-    console.error('Error calculating daily tarot stats:', error);
-    return {
-      totalSaves: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      totalMemos: 0,
-      averageMemosPerDay: 0
-    };
-  }
-};
-
-export const getSpreadStats = (): {
-  totalSpreads: number;
-  mostUsedSpread: string;
-  premiumSpreadsUsed: number;
-  freeSpreadsUsed: number;
-} => {
-  try {
-    const saves = loadSavedSpreads();
-    const totalSpreads = saves.length;
-    
-    // 가장 많이 사용된 스프레드 찾기
-    const spreadCounts: { [key: string]: number } = {};
-    saves.forEach(save => {
-      spreadCounts[save.spreadName] = (spreadCounts[save.spreadName] || 0) + 1;
-    });
-    
-    const mostUsedSpread = Object.keys(spreadCounts).reduce((a, b) => 
-      spreadCounts[a] > spreadCounts[b] ? a : b, 
-      Object.keys(spreadCounts)[0] || ''
-    );
-    
-    // 프리미엄/무료 스프레드 사용 횟수
-    const premiumSpreads = getPremiumSpreads().map(s => s.nameKr);
-    const premiumSpreadsUsed = saves.filter(save => 
-      premiumSpreads.includes(save.spreadName)
-    ).length;
-    const freeSpreadsUsed = totalSpreads - premiumSpreadsUsed;
-    
-    return {
-      totalSpreads,
-      mostUsedSpread,
-      premiumSpreadsUsed,
-      freeSpreadsUsed
-    };
-  } catch (error) {
-    console.error('Error calculating spread stats:', error);
-    return {
-      totalSpreads: 0,
-      mostUsedSpread: '',
-      premiumSpreadsUsed: 0,
-      freeSpreadsUsed: 0
-    };
-  }
-};
-
-// 백업 및 복원 함수들
-export const exportJournalData = async (): Promise<string> => {
-  try {
-    const dailyTarotSaves = await loadDailyTarotSaves();
-    const savedSpreads = loadSavedSpreads();
-    
-    const exportData = {
-      exportDate: new Date().toISOString(),
-      version: '1.0',
-      dailyTarotSaves,
-      savedSpreads
-    };
-    
-    return JSON.stringify(exportData, null, 2);
-  } catch (error) {
-    console.error('Error exporting journal data:', error);
+    console.error('Error deleting spread:', error);
     throw error;
   }
 };
 
-export const importJournalData = async (jsonData: string): Promise<boolean> => {
-  try {
-    const importData = JSON.parse(jsonData);
-    
-    if (!importData.version || !importData.dailyTarotSaves || !importData.savedSpreads) {
-      throw new Error('잘못된 백업 파일 형식입니다.');
-    }
-    
-    // 기존 데이터와 병합
-    const existingDaily = await loadDailyTarotSaves();
-    const existingSpreads = loadSavedSpreads();
-    
-    const mergedDaily = [...existingDaily];
-    const mergedSpreads = [...existingSpreads];
-    
-    // 중복 제거하면서 병합
-    importData.dailyTarotSaves.forEach((importSave: DailyTarotSave) => {
-      const exists = mergedDaily.find(save => save.date === importSave.date);
-      if (!exists) {
-        mergedDaily.push(importSave);
-      }
-    });
-    
-    importData.savedSpreads.forEach((importSpread: SavedSpread) => {
-      const exists = mergedSpreads.find(spread => spread.id === importSpread.id);
-      if (!exists) {
-        mergedSpreads.push(importSpread);
-      }
-    });
-    
-    // 저장 (웹용 localStorage 사용)
-    localStorage.setItem(DAILY_TAROT_KEY, JSON.stringify(mergedDaily));
-    localStorage.setItem('saved_spreads', JSON.stringify(mergedSpreads));
-    
-    return true;
-  } catch (error) {
-    console.error('Error importing journal data:', error);
-    throw error;
-  }
+// 스프레드 타입 조회
+export const getSpreadTypeById = (id: string): SpreadTypeExtended | undefined => {
+  return SPREAD_TYPES.find(spread => spread.id === id);
 };
 
-// 데이터 정리 함수
-export const cleanOldData = async (daysToKeep: number = 90): Promise<number> => {
-  try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    
-    const dailySaves = await loadDailyTarotSaves();
-    const spreadSaves = loadSavedSpreads();
-    
-    const filteredDaily = dailySaves.filter(save => new Date(save.date) >= cutoffDate);
-    const filteredSpreads = spreadSaves.filter(save => new Date(save.savedAt) >= cutoffDate);
-    
-    const removedCount = (dailySaves.length - filteredDaily.length) + (spreadSaves.length - filteredSpreads.length);
-    
-    localStorage.setItem(DAILY_TAROT_KEY, JSON.stringify(filteredDaily));
-    localStorage.setItem('saved_spreads', JSON.stringify(filteredSpreads));
-    
-    return removedCount;
-  } catch (error) {
-    console.error('Error cleaning old data:', error);
-    throw error;
-  }
+// 프리미엄 스프레드 필터링
+export const getPremiumSpreads = (): SpreadTypeExtended[] => {
+  return SPREAD_TYPES.filter(spread => spread.isPremium);
 };
 
-// 샘플 데이터 생성 (개발/테스트용)
-export const generateSampleJournalData = async (): Promise<void> => {
-  try {
-    const sampleDailyTarot: DailyTarotSave[] = [
-      {
-        id: 'sample-daily-1',
-        date: new Date(Date.now() - 86400000).toDateString(), // 어제
-        hourlyCards: generateDailyCards(new Date(Date.now() - 86400000)),
-        memos: {
-          9: '아침부터 좋은 에너지를 느꼈습니다.',
-          12: '점심시간에 중요한 결정을 내렸어요.',
-          18: '저녁에 가족과 좋은 시간을 보냈습니다.',
-          22: '하루를 마무리하며 감사한 마음이 듭니다.'
-        },
-        insights: '오늘은 전반적으로 긍정적인 에너지가 흐르는 하루였습니다. 특히 오후에 좋은 기회가 있을 것 같습니다.',
-        savedAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: 'sample-daily-2',
-        date: new Date(Date.now() - 2 * 86400000).toDateString(), // 이틀 전
-        hourlyCards: generateDailyCards(new Date(Date.now() - 2 * 86400000)),
-        memos: {
-          8: '이른 아침부터 명상을 했습니다.',
-          14: '오후에 친구와 의미 있는 대화를 나눴어요.',
-          20: '저녁에 새로운 취미를 시작했습니다.'
-        },
-        insights: '변화와 성장의 하루였습니다. 내면의 목소리에 귀를 기울이는 것이 중요합니다.',
-        savedAt: new Date(Date.now() - 2 * 86400000).toISOString()
-      }
-    ];
-    
-    const sampleSpreads: SavedSpread[] = [
-      {
-        id: 'sample-spread-1',
-        title: '새로운 직장에 대한 결정',
-        spreadType: getSpreadTypeById('three-card')!,
-        spreadName: '3카드 스프레드',
-        question: '새로운 직장 제안을 수락해야 할까요?',
-        cards: [],
-        date: new Date(Date.now() - 86400000).toISOString(),
-        insights: '과거의 경험을 바탕으로 현재를 충실히 살아가면 밝은 미래가 펼쳐질 것입니다.',
-        savedAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: 'sample-spread-2',
-        title: '연애 관계의 미래',
-        spreadType: getSpreadTypeById('relationship-spread')!,
-        spreadName: '컵 오브 릴레이션십',
-        question: '현재 연애 관계는 어떻게 발전할까요?',
-        cards: [],
-        date: new Date(Date.now() - 3 * 86400000).toISOString(),
-        insights: '서로에 대한 깊은 이해와 소통이 필요한 시기입니다. 감정적 유대감을 강화하세요.',
-        savedAt: new Date(Date.now() - 3 * 86400000).toISOString()
-      }
-    ];
-    
-    // 기존 데이터와 병합해서 저장
-    const existingDaily = await loadDailyTarotSaves();
-    const existingSpreads = loadSavedSpreads();
-    
-    const mergedDaily = [...existingDaily, ...sampleDailyTarot];
-    const mergedSpreads = [...existingSpreads, ...sampleSpreads];
-    
-    localStorage.setItem(DAILY_TAROT_KEY, JSON.stringify(mergedDaily));
-    localStorage.setItem('saved_spreads', JSON.stringify(mergedSpreads));
-    
-  } catch (error) {
-    console.error('Error generating sample data:', error);
-    throw error;
-  }
+export const getFreeSpreads = (): SpreadTypeExtended[] => {
+  return SPREAD_TYPES.filter(spread => !spread.isPremium);
 };
-
