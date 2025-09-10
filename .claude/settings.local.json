@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo:*)",
+      "Bash(mkdir:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(dir:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist)",
+      "Bash(timeout:*)",
+      "Bash(start http://localhost:8082)",
+      "Bash(npm uninstall:*)",
+      "Bash(start http://localhost:8083)",
+      "Bash(npm run status:*)",
+      "Bash(start http://localhost:8085)",
+      "Bash(npx tsc:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_type",
+      "Bash(tasklist:*)",
+      "Bash(npm ls:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
