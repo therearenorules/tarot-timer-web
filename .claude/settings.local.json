@@ -28,7 +28,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(npm run dev:*)",
+      "Bash(claude --version)",
+      "Bash(npm update:*)",
+      "WebSearch",
+      "Bash(claude doctor)",
+      "Bash(claude mcp:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": [],
     "ask": []
