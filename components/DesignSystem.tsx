@@ -38,6 +38,8 @@ export const Colors = {
     tertiary: 'rgba(255, 255, 255, 0.7)',     // 본문 텍스트
     muted: 'rgba(255, 255, 255, 0.6)',        // 비활성 텍스트
     caption: 'rgba(255, 255, 255, 0.5)',      // 캡션
+    accent: '#D4AF37',                         // 악센트 텍스트
+    disabled: 'rgba(255, 255, 255, 0.4)',     // 비활성 텍스트
   },
   
   // 상태별 색상
@@ -168,6 +170,7 @@ export const TextStyles = StyleSheet.create({
   // 히어로 텍스트 (메인 제목)
   hero: {
     fontSize: 28,
+    fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '700',
     color: Colors.text.hero,
     letterSpacing: -0.5,
@@ -177,6 +180,7 @@ export const TextStyles = StyleSheet.create({
   // 골드 타이틀 (메인 타이틀용 골드 효과)
   goldTitle: {
     fontSize: 28,
+    fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '800',
     color: Colors.brand.accent,      // 골드 색상
     letterSpacing: 1,
@@ -189,6 +193,7 @@ export const TextStyles = StyleSheet.create({
   // 골드 서브타이틀 (서브타이틀용 골드 효과)
   goldSubtitle: {
     fontSize: 14,
+    fontFamily: 'NotoSansKR_500Medium',
     fontWeight: '500',
     color: Colors.brand.primary,     // 밝은 골드
     letterSpacing: 0.5,
@@ -202,6 +207,7 @@ export const TextStyles = StyleSheet.create({
   // 타이틀 (섹션 제목)
   title: {
     fontSize: 22,
+    fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
     color: Colors.text.primary,
     letterSpacing: -0.3,
@@ -210,6 +216,7 @@ export const TextStyles = StyleSheet.create({
   // 서브타이틀 (부제목)
   subtitle: {
     fontSize: 18,
+    fontFamily: 'NotoSansKR_500Medium',
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
     letterSpacing: -0.1,
@@ -218,6 +225,7 @@ export const TextStyles = StyleSheet.create({
   // 헤드라인 (카드 제목)
   headline: {
     fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
     color: Colors.text.primary,
   },
@@ -225,6 +233,7 @@ export const TextStyles = StyleSheet.create({
   // 본문 (일반 텍스트)
   body: {
     fontSize: 14,
+    fontFamily: 'NotoSansKR_400Regular',
     fontWeight: '400',
     color: Colors.text.tertiary,
     lineHeight: 20,
@@ -233,6 +242,7 @@ export const TextStyles = StyleSheet.create({
   // 캡션 (작은 설명 텍스트)
   caption: {
     fontSize: 12,
+    fontFamily: 'NotoSansKR_400Regular',
     fontWeight: '400',
     color: Colors.text.muted,
     lineHeight: 16,
@@ -241,6 +251,7 @@ export const TextStyles = StyleSheet.create({
   // 라벨 (입력 필드 라벨 등)
   label: {
     fontSize: 13,
+    fontFamily: 'NotoSansKR_500Medium',
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
     letterSpacing: 0.2,
@@ -249,12 +260,62 @@ export const TextStyles = StyleSheet.create({
   // 오버라인 (상단 작은 텍스트)
   overline: {
     fontSize: 11,
+    fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
     color: Colors.text.caption,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
   },
+
+  // H3 헤딩 (섹션 소제목)
+  h3: {
+    fontSize: 20,
+    fontFamily: 'NotoSansKR_700Bold',
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 12,
+    letterSpacing: -0.2,
+  },
+
+  // H4 헤딩 (카드 제목)
+  h4: {
+    fontSize: 18,
+    fontFamily: 'NotoSansKR_700Bold',
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+
+  // H5 헤딩 (작은 제목)
+  h5: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_500Medium',
+    fontWeight: '500',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+
+  // 버튼 텍스트
+  buttonText: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center' as const,
+  },
+
+  // 링크 텍스트
+  link: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_500Medium',
+    fontWeight: '500',
+    color: Colors.brand.primary,
+    textDecorationLine: 'underline' as const,
+  },
 });
+
+// 📝 Typography 별칭 (호환성을 위한)
+export const Typography = TextStyles;
 
 // 🎯 조합형 스타일 (자주 사용되는 조합들)
 export const CompositeStyles = StyleSheet.create({
@@ -297,10 +358,31 @@ export const CompositeStyles = StyleSheet.create({
     ...ShadowStyles.mysticGlow,
     borderColor: Colors.brand.secondary,
   },
+
+  // 정보 카드
+  infoCard: {
+    ...GlassStyles.cardSecondary,
+    ...ShadowStyles.soft,
+    padding: 20,
+  },
+
+  // 텍스트 입력 스타일
+  textInput: {
+    ...GlassStyles.cardSecondary,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: Colors.border.soft,
+    padding: 12,
+    color: Colors.text.primary,
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_400Regular',
+    fontWeight: '400',
+    minHeight: 44,
+  },
 });
 
 // 📏 간격 시스템
 export const Spacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -313,7 +395,9 @@ export const Spacing = {
 
 // 📐 보더 반지름 시스템
 export const BorderRadius = {
+  small: 8,
   sm: 8,
+  medium: 12,
   md: 12,
   lg: 16,
   xl: 20,
