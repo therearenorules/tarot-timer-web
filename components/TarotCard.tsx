@@ -1,6 +1,6 @@
 // components/TarotCard.tsx - 타로 카드 이미지 컴포넌트
-import React from 'react';
-import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Image, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { TarotCard as TarotCardType } from '../utils/tarotData';
 import { Icon } from './Icon';
 import { TarotCardBack } from './TarotCardBack';
@@ -20,25 +20,38 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
   onPress,
   showBack = false
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   const getImageSize = () => {
+    // 실제 타로 카드 비율 0.596 (1144x1919)에 맞게 조정
+    const aspectRatio = 0.596;
     switch (size) {
       case 'small':
-        return { width: 60, height: 90 };
+        const smallHeight = 100;
+        return { width: Math.round(smallHeight * aspectRatio), height: smallHeight };
       case 'medium':
-        return { width: 120, height: 180 };
+        const mediumHeight = 200;
+        return { width: Math.round(mediumHeight * aspectRatio), height: mediumHeight };
       case 'large':
-        return { width: 180, height: 270 };
+        const largeHeight = 300;
+        return { width: Math.round(largeHeight * aspectRatio), height: largeHeight };
       default:
-        return { width: 120, height: 180 };
+        const defaultHeight = 200;
+        return { width: Math.round(defaultHeight * aspectRatio), height: defaultHeight };
     }
   };
 
   const imageSize = getImageSize();
 
+  const handleImageError = () => {
+    console.warn(`Failed to load image for card: ${card?.nameKr || 'Unknown'}`);
+    setImageError(true);
+  };
+
   // 카드 뒷면 표시하거나 카드가 없는 경우
   if (showBack || !card) {
     const CardBackContent = (
-      <View style={[styles.cardContainer, { width: imageSize.width + 20 }]}>
+      <View style={[styles.cardContainer, { width: Math.floor(imageSize.width + 20) }]}>
         <TarotCardBack width={imageSize.width} height={imageSize.height} />
         {showText && !card && (
           <View style={styles.cardTextContainer}>
@@ -61,16 +74,29 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
   }
 
   const CardContent = (
-    <View style={[styles.cardContainer, { width: imageSize.width + 20 }]}>
+    <View style={[styles.cardContainer, { width: Math.floor(imageSize.width + 20) }]}>
       <View style={[styles.cardImageContainer, imageSize]}>
-        <Image
-          source={{ uri: card.imageUrl }}
-          style={[styles.cardImage, imageSize]}
-          resizeMode="cover"
-        />
-        <View style={styles.cardOverlay}>
-          <Icon name="sparkles" size={16} color="#f4d03f" />
-        </View>
+        {imageError ? (
+          // 이미지 로딩 실패 시 대체 컨텐츠
+          <View style={[styles.cardImage, imageSize, styles.errorContainer]}>
+            <Icon name="help-circle" size={32} color="#f4d03f" />
+            <Text style={styles.errorText}>이미지 로드 실패</Text>
+          </View>
+        ) : (
+          <Image
+            source={card.imageUrl}
+            style={[styles.cardImage, imageSize]}
+            resizeMode="contain"
+            onError={handleImageError}
+            onLoadStart={() => setImageError(false)}
+          />
+        )}
+        
+        {!imageError && (
+          <View style={styles.cardOverlay}>
+            <Icon name="sparkles" size={16} color="#f4d03f" />
+          </View>
+        )}
       </View>
       
       {showText && (
@@ -103,28 +129,28 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(26, 22, 37, 0.9)',
-    borderRadius: 15,
-    padding: 10,
-    borderWidth: 2,
-    borderColor: '#d4af37',
-    elevation: 8,
+    backgroundColor: 'rgba(26, 22, 37, 0.7)',
+    borderRadius: 12,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    elevation: 4,
     shadowColor: '#f4d03f',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   cardImageContainer: {
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    elevation: 8,
+    elevation: 2,
     shadowColor: '#d4af37',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: '#f4d03f',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
   },
   cardImage: {
     borderRadius: 12,
@@ -154,6 +180,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#d4b8ff',
     textAlign: 'center',
+  },
+  
+  // 오류 처리 스타일
+  errorContainer: {
+    backgroundColor: 'rgba(45, 27, 71, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.5)',
+    borderStyle: 'dashed',
+  },
+  errorText: {
+    fontSize: 10,
+    color: '#f4d03f',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
 

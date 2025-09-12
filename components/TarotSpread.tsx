@@ -44,7 +44,7 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'One Card Tarot',
     description: '간단한 질문이나 오늘의 메시지',
     positions: [
-      { id: 1, name: '메시지', nameEn: 'Message', description: '우주가 전하는 지혜', card: null }
+      { id: 1, name: '메시지', nameEn: 'Message', description: '우주가 전하는 지혜', card: null, x: 50, y: 50 }
     ]
   },
   {
@@ -53,9 +53,9 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Three Card Spread',
     description: '과거-현재-미래의 흐름 파악',
     positions: [
-      { id: 1, name: '과거', nameEn: 'Past', description: '과거의 영향과 배경', card: null },
-      { id: 2, name: '현재', nameEn: 'Present', description: '현재 상황과 에너지', card: null },
-      { id: 3, name: '미래', nameEn: 'Future', description: '미래의 가능성과 방향', card: null }
+      { id: 1, name: '과거', nameEn: 'Past', description: '과거의 영향과 배경', card: null, x: 25, y: 50 },
+      { id: 2, name: '현재', nameEn: 'Present', description: '현재 상황과 에너지', card: null, x: 50, y: 50 },
+      { id: 3, name: '미래', nameEn: 'Future', description: '미래의 가능성과 방향', card: null, x: 75, y: 50 }
     ]
   },
   {
@@ -64,23 +64,23 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Four Card Spread',
     description: '상황의 네 가지 측면 분석',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Current Situation', description: '지금의 전체적인 상황', card: null },
-      { id: 2, name: '장애물', nameEn: 'Obstacles', description: '극복해야 할 도전', card: null },
-      { id: 3, name: '조언', nameEn: 'Advice', description: '필요한 행동이나 자세', card: null },
-      { id: 4, name: '결과', nameEn: 'Outcome', description: '예상되는 결과', card: null }
+      { id: 1, name: '현재 상황', nameEn: 'Current Situation', description: '지금의 전체적인 상황', card: null, x: 25, y: 30 },
+      { id: 2, name: '장애물', nameEn: 'Obstacles', description: '극복해야 할 도전', card: null, x: 75, y: 30 },
+      { id: 3, name: '조언', nameEn: 'Advice', description: '필요한 행동이나 자세', card: null, x: 25, y: 70 },
+      { id: 4, name: '결과', nameEn: 'Outcome', description: '예상되는 결과', card: null, x: 75, y: 70 }
     ]
   },
   {
     id: 'five-card',
-    name: '✚ 파이브 카드 V 스프레드',
+    name: '✨ 파이브 카드 V 스프레드',
     nameEn: 'Five Card V Spread',
     description: '현재 상황의 다면적 분석',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Present', description: '중심이 되는 현재 상황', card: null, x: 50, y: 70 },
-      { id: 2, name: '과거 영향', nameEn: 'Past Influence', description: '영향을 미친 과거', card: null, x: 25, y: 40 },
-      { id: 3, name: '미래 가능성', nameEn: 'Future Possibility', description: '다가올 가능성', card: null, x: 75, y: 40 },
-      { id: 4, name: '숨겨진 요소', nameEn: 'Hidden Factor', description: '보이지 않는 영향', card: null, x: 10, y: 10 },
-      { id: 5, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 90, y: 10 }
+      { id: 1, name: '현재 상황', nameEn: 'Present', description: '중심이 되는 현재 상황', card: null, x: 50, y: 65 },
+      { id: 2, name: '과거 영향', nameEn: 'Past Influence', description: '영향을 미친 과거', card: null, x: 30, y: 40 },
+      { id: 3, name: '미래 가능성', nameEn: 'Future Possibility', description: '다가올 가능성', card: null, x: 70, y: 40 },
+      { id: 4, name: '숨겨진 요소', nameEn: 'Hidden Factor', description: '보이지 않는 영향', card: null, x: 15, y: 15 },
+      { id: 5, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 85, y: 15 }
     ]
   },
   {
@@ -89,35 +89,35 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Celtic Cross',
     description: '종합적이고 깊이 있는 분석',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Present Situation', description: '지금의 상황과 에너지', card: null, x: 50, y: 50 },
-      { id: 2, name: '도전과 장애', nameEn: 'Cross/Challenge', description: '극복해야 할 도전', card: null, x: 50, y: 30 },
-      { id: 3, name: '원인', nameEn: 'Distant Past', description: '상황의 근본 원인', card: null, x: 30, y: 50 },
-      { id: 4, name: '가능한 결과', nameEn: 'Possible Outcome', description: '가능한 미래', card: null, x: 70, y: 50 },
-      { id: 5, name: '최근 과거', nameEn: 'Recent Past', description: '최근의 영향', card: null, x: 50, y: 70 },
-      { id: 6, name: '가까운 미래', nameEn: 'Near Future', description: '다가올 변화', card: null, x: 50, y: 20 },
-      { id: 7, name: '당신의 접근', nameEn: 'Your Approach', description: '당신의 태도와 방법', card: null, x: 85, y: 75 },
-      { id: 8, name: '외부 영향', nameEn: 'External Influences', description: '주변 환경의 영향', card: null, x: 85, y: 55 },
-      { id: 9, name: '희망과 두려움', nameEn: 'Hopes & Fears', description: '내면의 희망과 걱정', card: null, x: 85, y: 35 },
-      { id: 10, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 85, y: 15 }
+      { id: 1, name: '현재 상황', nameEn: 'Present Situation', description: '지금의 상황과 에너지', card: null, x: 35, y: 45 },
+      { id: 2, name: '도전과 장애', nameEn: 'Cross/Challenge', description: '극복해야 할 도전', card: null, x: 55, y: 45 },
+      { id: 3, name: '원인', nameEn: 'Distant Past', description: '상황의 근본 원인', card: null, x: 15, y: 45 },
+      { id: 4, name: '가능한 결과', nameEn: 'Possible Outcome', description: '가능한 미래', card: null, x: 35, y: 20 },
+      { id: 5, name: '최근 과거', nameEn: 'Recent Past', description: '최근의 영향', card: null, x: 35, y: 70 },
+      { id: 6, name: '가까운 미래', nameEn: 'Near Future', description: '다가올 변화', card: null, x: 75, y: 45 },
+      { id: 7, name: '당신의 접근', nameEn: 'Your Approach', description: '당신의 태도와 방법', card: null, x: 80, y: 70 },
+      { id: 8, name: '외부 영향', nameEn: 'External Influences', description: '주변 환경의 영향', card: null, x: 80, y: 50 },
+      { id: 9, name: '희망과 두려움', nameEn: 'Hopes & Fears', description: '내면의 희망과 걱정', card: null, x: 80, y: 30 },
+      { id: 10, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 80, y: 10 }
     ]
   },
   {
     id: 'cup-of-relationship',
-    name: '💖 컵오브릴레이션십 스프레드',
+    name: '💖 컵오브릴레이션쉽 스프레드',
     nameEn: 'Cup of Relationship Spread',
     description: '인간관계, 연애 문제',
     positions: [
-      { id: 1, name: '당신의 감정', nameEn: 'Your Feelings', description: '당신의 현재 감정', card: null },
-      { id: 2, name: '상대의 감정', nameEn: 'Their Feelings', description: '상대방의 감정', card: null },
-      { id: 3, name: '관계의 기초', nameEn: 'Foundation', description: '관계의 토대', card: null },
-      { id: 4, name: '과거의 영향', nameEn: 'Past Influence', description: '과거가 미치는 영향', card: null },
-      { id: 5, name: '현재의 상황', nameEn: 'Present Situation', description: '지금의 관계 상태', card: null },
-      { id: 6, name: '미래의 가능성', nameEn: 'Future Potential', description: '앞으로의 가능성', card: null },
-      { id: 7, name: '장애물', nameEn: 'Obstacles', description: '관계의 걸림돌', card: null },
-      { id: 8, name: '조언', nameEn: 'Advice', description: '관계 개선을 위한 조언', card: null },
-      { id: 9, name: '외부 영향', nameEn: 'External Factors', description: '주변의 영향', card: null },
-      { id: 10, name: '숨겨진 요소', nameEn: 'Hidden Elements', description: '보이지 않는 요소', card: null },
-      { id: 11, name: '최종 결과', nameEn: 'Final Outcome', description: '관계의 최종 결과', card: null }
+      { id: 1, name: '당신의 감정', nameEn: 'Your Feelings', description: '당신의 현재 감정', card: null, x: 15, y: 15 },
+      { id: 2, name: '상대의 감정', nameEn: 'Their Feelings', description: '상대방의 감정', card: null, x: 85, y: 15 },
+      { id: 3, name: '관계의 기초', nameEn: 'Foundation', description: '관계의 토대', card: null, x: 50, y: 25 },
+      { id: 4, name: '과거의 영향', nameEn: 'Past Influence', description: '과거가 미치는 영향', card: null, x: 15, y: 40 },
+      { id: 5, name: '현재의 상황', nameEn: 'Present Situation', description: '지금의 관계 상태', card: null, x: 50, y: 40 },
+      { id: 6, name: '미래의 가능성', nameEn: 'Future Potential', description: '앞으로의 가능성', card: null, x: 85, y: 40 },
+      { id: 7, name: '장애물', nameEn: 'Obstacles', description: '관계의 걸림돌', card: null, x: 15, y: 55 },
+      { id: 8, name: '조언', nameEn: 'Advice', description: '관계 개선을 위한 조언', card: null, x: 50, y: 55 },
+      { id: 9, name: '외부 영향', nameEn: 'External Factors', description: '주변의 영향', card: null, x: 85, y: 55 },
+      { id: 10, name: '숨겨진 요소', nameEn: 'Hidden Elements', description: '보이지 않는 요소', card: null, x: 30, y: 75 },
+      { id: 11, name: '최종 결과', nameEn: 'Final Outcome', description: '관계의 최종 결과', card: null, x: 70, y: 75 }
     ]
   },
   {
@@ -126,13 +126,13 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'AB Choice Spread',
     description: '두 가지 선택지 중 결정',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Current Situation', description: '선택을 해야 하는 현재 상황', card: null },
-      { id: 2, name: '선택지 A', nameEn: 'Option A', description: '첫 번째 선택의 본질', card: null },
-      { id: 3, name: 'A의 장점', nameEn: 'A Pros', description: '선택지 A의 장점', card: null },
-      { id: 4, name: 'A의 단점', nameEn: 'A Cons', description: '선택지 A의 단점', card: null },
-      { id: 5, name: '선택지 B', nameEn: 'Option B', description: '두 번째 선택의 본질', card: null },
-      { id: 6, name: 'B의 장점', nameEn: 'B Pros', description: '선택지 B의 장점', card: null },
-      { id: 7, name: 'B의 단점', nameEn: 'B Cons', description: '선택지 B의 단점', card: null }
+      { id: 1, name: '상황', nameEn: 'Situation', description: '현재 상황', card: null, x: 50, y: 15 },
+      { id: 2, name: 'A 선택지', nameEn: 'Choice A', description: '첫 번째 선택', card: null, x: 25, y: 35 },
+      { id: 3, name: 'A 결과', nameEn: 'A Outcome', description: 'A 선택의 결과', card: null, x: 25, y: 55 },
+      { id: 4, name: 'A 조언', nameEn: 'A Advice', description: 'A 선택 시 조언', card: null, x: 25, y: 75 },
+      { id: 5, name: 'B 선택지', nameEn: 'Choice B', description: '두 번째 선택', card: null, x: 75, y: 35 },
+      { id: 6, name: 'B 결과', nameEn: 'B Outcome', description: 'B 선택의 결과', card: null, x: 75, y: 55 },
+      { id: 7, name: 'B 조언', nameEn: 'B Advice', description: 'B 선택 시 조언', card: null, x: 75, y: 75 }
     ]
   }
 ];
@@ -184,7 +184,7 @@ export const TarotSpread: React.FC = () => {
       return;
     }
 
-    // 뽑힌 카드가 있는지 확인
+    // 뽑은 카드가 있는지 확인
     const drawnCards = spreadCards.filter(position => position.card !== null);
     if (drawnCards.length === 0) {
       Alert.alert('오류', '저장할 카드가 없습니다. 먼저 카드를 뽑아주세요.');
@@ -298,7 +298,6 @@ export const TarotSpread: React.FC = () => {
     );
   };
 
-
   // 전체 스프레드 뽑기
   const drawFullSpread = async () => {
     setIsDrawing(true);
@@ -371,7 +370,6 @@ export const TarotSpread: React.FC = () => {
       >
         {/* 헤더 */}
         <Animated.View style={[styles.headerContainer, headerFadeIn]}>
-          <Text style={styles.mainTitle}>🔮 타로 스프레드</Text>
           <Text style={styles.subtitle}>"우주의 메시지를 받을 준비하세요"</Text>
         </Animated.View>
 
@@ -473,65 +471,51 @@ export const TarotSpread: React.FC = () => {
     <View style={styles.mainContainer}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.container} 
+        contentContainerStyle={styles.spreadContainer} 
         showsVerticalScrollIndicator={false}
       >
-      {/* 뒤로가기 버튼과 제목 */}
-      <View style={styles.detailHeader}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => {
-            setSelectedSpread(null);
-            setSpreadCards([]);
-            setQuestion('');
-            setReadingTitle('');
-            setInsights('');
-            setSelectedPosition(null);
-          }}
-        >
-          <Icon name="arrow-left" size={20} color="#f4d03f" />
-        </TouchableOpacity>
-        <Text style={styles.detailTitle}>{selectedSpread.name.replace(' [👑PRO]', '')}</Text>
-      </View>
+        {/* 헤더 */}
+        <View style={styles.spreadHeader}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => {
+              setSelectedSpread(null);
+              setSpreadCards([]);
+              setQuestion('');
+              setReadingTitle('');
+              setInsights('');
+              setSelectedPosition(null);
+            }}
+          >
+            <Icon name="arrow-left" size={20} color="#f4d03f" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.spreadTitle}>{selectedSpread.name.replace(/[🎯⚖️🔮✨🌟💖🤔]/g, '').trim()}</Text>
+            <Text style={styles.spreadSubtitle}>카드 {spreadCards.filter(p => p.card).length} / {spreadCards.length}</Text>
+          </View>
+        </View>
 
-      {/* 질문 입력 */}
-      <View style={styles.questionSection}>
-        <Text style={styles.sectionLabel}>📝 질문 입력:</Text>
-        <TextInput
-          style={styles.questionInput}
-          value={question}
-          onChangeText={setQuestion}
-          placeholder="타로에게 물어보고 싶은 질문을 입력하세요..."
-          placeholderTextColor="#666"
-          multiline={true}
-          maxLength={200}
-        />
-      </View>
-
-      {/* 카드 배치 영역 */}
-      <View style={styles.cardLayoutSection}>
-        <Text style={styles.sectionLabel}>─── 카드 배치 ─────────────────</Text>
-        
-        {/* 동적 카드 레이아웃 */}
-        {selectedSpread.id === 'five-card' ? (
-          <View style={styles.fiveCardCrossLayout}>
+        {/* 카드 배치 영역 - 중앙 집중형 레이아웃 */}
+        <View style={styles.cardSpreadArea}>
+          <View style={styles.cardGrid}>
             {spreadCards.map((position) => (
               <View 
                 key={position.id} 
                 style={[
-                  styles.fiveCardPosition,
+                  styles.cardPosition,
                   { 
-                    left: `${position.x}%`, 
-                    top: `${position.y}%`,
+                    position: 'absolute',
+                    left: `${position.x || 50}%`, 
+                    top: `${position.y || 50}%`,
                     transform: [
-                      { translateX: -30 }, 
-                      { translateY: -40 }
+                      { translateX: -50 }, 
+                      { translateY: -75 }
                     ]
                   }
                 ]}
               >
                 <TouchableOpacity
-                  style={styles.cardArea}
+                  style={styles.cardSlot}
                   onPress={() => handleCardPress(position.id, position.card !== null)}
                   activeOpacity={0.8}
                 >
@@ -541,293 +525,192 @@ export const TarotSpread: React.FC = () => {
                     showText={false}
                     showBack={position.card === null}
                   />
+                  <View style={styles.positionIndicator}>
+                    <Text style={styles.positionNumber}>{position.id}</Text>
+                  </View>
                 </TouchableOpacity>
-                <View style={styles.fiveCardPositionLabel}>
-                  <Text style={styles.fiveCardPositionText}>{position.name}</Text>
-                </View>
+                <Text style={styles.positionLabel}>{position.name}</Text>
               </View>
             ))}
           </View>
-        ) : (
-          <View style={styles.cardsRow}>
-            {spreadCards.map((position, index) => (
-              <View key={position.id} style={styles.cardPosition}>
-                {/* 카드 영역 */}
-                <TouchableOpacity
-                  style={styles.cardArea}
-                  onPress={() => handleCardPress(position.id, position.card !== null)}
-                  activeOpacity={0.8}
-                >
-                  <TarotCardComponent
-                    card={position.card}
-                    size="medium"
-                    showText={false}
-                    showBack={position.card === null}
-                  />
-                </TouchableOpacity>
-                
-                {/* 포지션 라벨 */}
-                <Text style={styles.positionName}>{position.name}</Text>
-              </View>
-            ))}
+        </View>
+
+        {/* 선택된 카드 상세 정보 */}
+        {selectedCard && selectedCard.card && (
+          <View style={styles.selectedCardInfo}>
+            <View style={styles.cardInfoHeader}>
+              <Icon name="star" size={16} color="#f4d03f" />
+              <Text style={styles.cardInfoTitle}>{selectedCard.name}</Text>
+            </View>
+            <Text style={styles.cardName}>{selectedCard.card.nameKr}</Text>
+            <Text style={styles.cardNameEn}>({selectedCard.card.name})</Text>
+            <Text style={styles.cardMeaning}>{selectedCard.card.meaningKr}</Text>
           </View>
         )}
-      </View>
 
-      {/* 인사이트 메모 */}
-      <View style={styles.insightsSection}>
-        <Text style={styles.sectionLabel}>💭 인사이트 메모:</Text>
-        <TextInput
-          style={styles.insightsInput}
-          value={insights}
-          onChangeText={setInsights}
-          placeholder="전체적인 느낌이나 해석을..."
-          placeholderTextColor="#666"
-          multiline={true}
-          maxLength={500}
-        />
-      </View>
-
-      {/* 리딩 제목 */}
-      <View style={styles.titleSection}>
-        <Text style={styles.sectionLabel}>📝 리딩 제목:</Text>
-        <TextInput
-          style={styles.titleInput}
-          value={readingTitle}
-          onChangeText={setReadingTitle}
-          placeholder="저장할 때 사용할 제목을 입력하세요"
-          placeholderTextColor="#666"
-          maxLength={50}
-        />
-      </View>
-
-      {/* 선택된 카드 상세 정보 */}
-      {selectedCard && selectedCard.card && (
-        <View style={styles.selectedCardContainer}>
-          <View style={styles.selectedCardHeader}>
-            <Icon name="star" size={20} color="#f4d03f" />
-            <Text style={styles.selectedCardTitle}>
-              {selectedCard.name} 카드
-            </Text>
-          </View>
-          
-          <View style={styles.selectedCardContent}>
-            <Text style={styles.selectedCardName}>
-              {selectedCard.card.nameKr}
-            </Text>
-            <Text style={styles.selectedCardNameEn}>
-              ({selectedCard.card.name})
-            </Text>
-            <Text style={styles.selectedCardMeaning}>
-              {selectedCard.card.meaningKr}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* 액션 버튼들 */}
-      <View style={styles.actionContainer}>
-        <View style={styles.actionRow}>
-          <GradientButton
-            onPress={drawFullSpread}
-            title={isDrawing ? '뽑는 중...' : '카드뽑기'}
-            icon={isDrawing ? 'rotate-ccw' : 'sparkles'}
-            disabled={isDrawing}
-            size="medium"
-          />
-          
-          {hasAnyCards && (
-            <GradientButton
-              onPress={drawFullSpread}
-              title="다시뽑기"
-              icon="refresh-ccw"
-              variant="secondary"
-              size="medium"
-            />
-          )}
-          
-          {hasAnyCards && readingTitle.trim() && (
-            <GradientButton
-              onPress={() => {
-                setSaveTitle(readingTitle);
-                setSaveInsights(insights);
-                handleSaveSpread();
-              }}
-              title="저널에 저장"
-              icon="bookmark"
-              variant="secondary"
-              size="medium"
-            />
-          )}
-        </View>
-      </View>
-
-      {/* 확장 가능한 사용 가이드 */}
-      {hasAnyCards && (
-        <ScrollView style={styles.guideContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.guideHeader}>
-            <Icon name="help-circle" size={20} color="#f4d03f" />
-            <Text style={styles.guideTitle}>스프레드 해석 가이드</Text>
-          </View>
-          <View style={styles.guideContent}>
-            <Text style={styles.guideText}>🌅 과거: 현재 상황에 영향을 미친 과거의 경험과 에너지</Text>
-            <Text style={styles.guideText}>⭐ 현재: 지금 이 순간의 상황과 당신의 현재 상태</Text>
-            <Text style={styles.guideText}>🌟 미래: 현재의 흐름이 이끌어갈 가능성과 방향성</Text>
-            <Text style={styles.guideText}>💡 뽑힌 카드를 터치하면 자세한 의미를 확인할 수 있습니다</Text>
-          </View>
-        </ScrollView>
-      )}
-
-      {/* 저장 모달 */}
-      <Modal
-        visible={isSaveModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsSaveModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Icon name="bookmark" size={24} color="#f4d03f" />
-              <Text style={styles.modalTitle}>스프레드 저장</Text>
-              <TouchableOpacity 
-                style={styles.modalCloseButton}
-                onPress={() => setIsSaveModalVisible(false)}
-              >
-                <Icon name="x" size={20} color="#9b8db8" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.modalContent}>
-              <Text style={styles.inputLabel}>제목 *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={saveTitle}
-                onChangeText={setSaveTitle}
-                placeholder="스프레드 제목을 입력하세요"
-                placeholderTextColor="#666"
-                maxLength={50}
-              />
-              
-              <Text style={styles.inputLabel}>인사이트</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={saveInsights}
-                onChangeText={setSaveInsights}
-                placeholder="이 스프레드에서 얻은 인사이트나 해석을 기록하세요 (선택사항)"
-                placeholderTextColor="#666"
-                multiline={true}
-                numberOfLines={4}
-                textAlignVertical="top"
-                maxLength={500}
-              />
-              
-              <View style={styles.modalActions}>
-                <GradientButton
+        {/* 저장 모달들 */}
+        <Modal
+          visible={isSaveModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsSaveModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Icon name="bookmark" size={24} color="#f4d03f" />
+                <Text style={styles.modalTitle}>스프레드 저장</Text>
+                <TouchableOpacity 
+                  style={styles.modalCloseButton}
                   onPress={() => setIsSaveModalVisible(false)}
-                  title="취소"
-                  variant="secondary"
-                  size="medium"
+                >
+                  <Icon name="x" size={20} color="#9b8db8" />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.modalContent}>
+                <Text style={styles.inputLabel}>제목 *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={saveTitle}
+                  onChangeText={setSaveTitle}
+                  placeholder="스프레드 제목을 입력하세요"
+                  placeholderTextColor="#666"
+                  maxLength={50}
                 />
-                <GradientButton
-                  onPress={handleSaveSpread}
-                  title="저장"
-                  icon="save"
-                  size="medium"
+                
+                <Text style={styles.inputLabel}>인사이트</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={saveInsights}
+                  onChangeText={setSaveInsights}
+                  placeholder="이 스프레드에서 얻은 인사이트나 해석을 기록하세요 (선택사항)"
+                  placeholderTextColor="#666"
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  maxLength={500}
                 />
+                
+                <View style={styles.modalActions}>
+                  <GradientButton
+                    onPress={() => setIsSaveModalVisible(false)}
+                    title="취소"
+                    variant="secondary"
+                    size="medium"
+                  />
+                  <GradientButton
+                    onPress={handleSaveSpread}
+                    title="저장"
+                    icon="save"
+                    size="medium"
+                  />
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* 불러오기 모달 */}
-      <Modal
-        visible={isLoadModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsLoadModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Icon name="book-open" size={24} color="#f4d03f" />
-              <Text style={styles.modalTitle}>저장된 스프레드</Text>
-              <TouchableOpacity 
-                style={styles.modalCloseButton}
-                onPress={() => setIsLoadModalVisible(false)}
-              >
-                <Icon name="x" size={20} color="#9b8db8" />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-              {savedSpreads.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Icon name="bookmark" size={48} color="#666" />
-                  <Text style={styles.emptyStateText}>저장된 스프레드가 없습니다</Text>
-                  <Text style={styles.emptyStateSubText}>
-                    카드를 뽑고 "저널에 저장" 버튼을 눌러 스프레드를 저장해보세요
-                  </Text>
-                </View>
-              ) : (
-                savedSpreads.map((savedSpread) => (
-                  <View key={savedSpread.id} style={styles.savedSpreadItem}>
-                    <TouchableOpacity
-                      style={styles.savedSpreadContent}
-                      onPress={() => handleLoadSpread(savedSpread)}
-                    >
-                      <View style={styles.savedSpreadHeader}>
-                        <Text style={styles.savedSpreadTitle}>{savedSpread.title}</Text>
-                        <Text style={styles.savedSpreadType}>{savedSpread.spreadName}</Text>
-                      </View>
-                      <Text style={styles.savedSpreadDate}>
-                        {new Date(savedSpread.createdAt).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </Text>
-                      {savedSpread.insights && (
-                        <Text style={styles.savedSpreadInsights} numberOfLines={2}>
-                          {savedSpread.insights}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteSpread(savedSpread.id, savedSpread.title)}
-                    >
-                      <Icon name="trash-2" size={16} color="#ff6b6b" />
-                    </TouchableOpacity>
+        <Modal
+          visible={isLoadModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsLoadModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Icon name="book-open" size={24} color="#f4d03f" />
+                <Text style={styles.modalTitle}>저장된 스프레드</Text>
+                <TouchableOpacity 
+                  style={styles.modalCloseButton}
+                  onPress={() => setIsLoadModalVisible(false)}
+                >
+                  <Icon name="x" size={20} color="#9b8db8" />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+                {savedSpreads.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Icon name="bookmark" size={48} color="#666" />
+                    <Text style={styles.emptyStateText}>저장된 스프레드가 없습니다</Text>
+                    <Text style={styles.emptyStateSubText}>
+                      카드를 뽑고 "스프레드 저장" 버튼을 눌러 스프레드를 저장해보세요
+                    </Text>
                   </View>
-                ))
-              )}
-            </ScrollView>
+                ) : (
+                  savedSpreads.map((savedSpread) => (
+                    <View key={savedSpread.id} style={styles.savedSpreadItem}>
+                      <TouchableOpacity
+                        style={styles.savedSpreadContent}
+                        onPress={() => handleLoadSpread(savedSpread)}
+                      >
+                        <View style={styles.savedSpreadHeader}>
+                          <Text style={styles.savedSpreadTitle}>{savedSpread.title}</Text>
+                          <Text style={styles.savedSpreadType}>{savedSpread.spreadName}</Text>
+                        </View>
+                        <Text style={styles.savedSpreadDate}>
+                          {new Date(savedSpread.createdAt).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </Text>
+                        {savedSpread.insights && (
+                          <Text style={styles.savedSpreadInsights} numberOfLines={2}>
+                            {savedSpread.insights}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteSpread(savedSpread.id, savedSpread.title)}
+                      >
+                        <Icon name="trash-2" size={16} color="#ff6b6b" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
       </ScrollView>
 
-      {/* 플로팅 리딩 버튼 */}
-      {hasAnyCards && (
-        <TouchableOpacity 
-          style={styles.floatingReadingButton}
-          onPress={() => {
-            // 리딩 시작 로직 추가
-            console.log('리딩 시작!');
-          }}
-          activeOpacity={0.8}
-        >
-          <View style={styles.floatingButtonContent}>
-            <Icon name="book-open" size={20} color="#FFFFFF" />
-            <Text style={styles.floatingButtonText}>리딩</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      {/* 하단 액션 버튼들 */}
+      <View style={styles.bottomActions}>
+        <GradientButton
+          onPress={drawFullSpread}
+          title={isDrawing ? '뽑는 중...' : '⚡ 전체 카드 뽑기'}
+          disabled={isDrawing}
+          size="large"
+          style={styles.primaryButton}
+        />
+        
+        <View style={styles.secondaryActions}>
+          {hasAnyCards && (
+            <TouchableOpacity 
+              style={styles.secondaryButton}
+              onPress={() => setIsSaveModalVisible(true)}
+            >
+              <Icon name="folder-open" size={16} color="#9b8db8" />
+              <Text style={styles.secondaryButtonText}>스프레드 저장</Text>
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => setIsLoadModalVisible(true)}
+          >
+            <Icon name="book-open" size={16} color="#9b8db8" />
+            <Text style={styles.secondaryButtonText}>저널</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
@@ -835,12 +718,22 @@ export const TarotSpread: React.FC = () => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   container: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xl,
     alignItems: 'center',
   },
+  spreadContainer: {
+    padding: Spacing.lg,
+    paddingBottom: 120, // 하단 버튼 공간 확보
+  },
+  mainContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  
   // 스프레드 선택 화면 스타일
   headerContainer: {
     alignItems: 'center',
@@ -939,245 +832,166 @@ const styles = StyleSheet.create({
     color: Colors.text.accent,
     textAlign: 'center',
   },
-  // SpreadDetail 화면 스타일
-  detailHeader: {
+
+  // 스프레드 상세 화면 스타일
+  spreadHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
-    width: '100%',
+    marginBottom: Spacing.xl,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(244, 208, 63, 0.3)',
   },
   backButton: {
     padding: Spacing.sm,
     marginRight: Spacing.md,
   },
-  detailTitle: {
-    ...TextStyles.title,
-    color: Colors.brand.accent,
+  headerTitleContainer: {
     flex: 1,
-  },
-  questionSection: {
-    width: '100%',
-    marginBottom: Spacing.lg,
-  },
-  sectionLabel: {
-    ...TextStyles.headline,
-    color: Colors.brand.accent,
-    marginBottom: Spacing.sm,
-  },
-  questionInput: {
-    ...CompositeStyles.textInput,
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  cardLayoutSection: {
-    width: '100%',
-    marginBottom: Spacing.lg,
-  },
-  insightsSection: {
-    width: '100%',
-    marginBottom: Spacing.lg,
-  },
-  insightsInput: {
-    ...CompositeStyles.textInput,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  titleSection: {
-    width: '100%',
-    marginBottom: Spacing.lg,
-  },
-  titleInput: {
-    ...CompositeStyles.textInput,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: Spacing.sm,
-    flexWrap: 'wrap',
-  },
-  mainSpreadContainer: {
-    ...GlassStyles.card,
-    ...ShadowStyles.brandGlow,
-    padding: Spacing.xxl,
-    marginBottom: Spacing.xxl,
-    borderWidth: 2,
-    borderColor: Colors.brand.secondary,
     alignItems: 'center',
-  },
-  spreadHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.brand.accent + '1A',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.medium,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
   },
   spreadTitle: {
-    ...TextStyles.headline,
+    ...TextStyles.title,
     color: Colors.brand.accent,
-    marginLeft: Spacing.sm,
+    textAlign: 'center',
   },
-  cardsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-start',
-    paddingHorizontal: Spacing.sm,
+  spreadSubtitle: {
+    ...TextStyles.caption,
+    color: Colors.text.accent,
+    marginTop: Spacing.xxs,
+  },
+
+  // 카드 배치 영역
+  cardSpreadArea: {
+    flex: 1,
+    minHeight: 600,
+    marginBottom: Spacing.xl,
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+    padding: Spacing.lg,
+  },
+  cardGrid: {
+    flex: 1,
+    position: 'relative',
   },
   cardPosition: {
     alignItems: 'center',
-    flex: 1,
-    marginHorizontal: Spacing.xs,
+  },
+  cardSlot: {
+    position: 'relative',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  positionIndicator: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 20,
+    height: 20,
+    backgroundColor: Colors.brand.accent,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  positionNumber: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   positionLabel: {
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    backgroundColor: Colors.brand.secondary + '33',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.medium,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
-  },
-  positionName: {
-    ...TextStyles.headline,
+    ...TextStyles.overline,
     color: Colors.brand.accent,
     textAlign: 'center',
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.xxs,
+    borderRadius: BorderRadius.small,
+    maxWidth: 90,
+    fontSize: 10,
+    lineHeight: 12,
   },
-  positionNameEn: {
-    ...TextStyles.caption,
-    color: Colors.text.accent,
-    textAlign: 'center',
-    marginTop: Spacing.xxs,
-  },
-  cardArea: {
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-  },
-  positionDescription: {
-    ...TextStyles.caption,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-  },
-  selectedCardContainer: {
+
+  // 선택된 카드 정보
+  selectedCardInfo: {
     ...GlassStyles.card,
-    ...ShadowStyles.brandGlow,
-    padding: Spacing.xxl,
-    marginBottom: Spacing.xxl,
-    borderWidth: 2,
-    borderColor: Colors.brand.secondary,
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.brand.accent,
   },
-  selectedCardHeader: {
+  cardInfoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.brand.accent + '1A',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.medium,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
+    marginBottom: Spacing.sm,
   },
-  selectedCardTitle: {
+  cardInfoTitle: {
     ...TextStyles.headline,
     color: Colors.brand.accent,
     marginLeft: Spacing.xs,
   },
-  selectedCardContent: {
-    alignItems: 'center',
-  },
-  selectedCardName: {
+  cardName: {
     ...TextStyles.headline,
     color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: Spacing.xxs,
   },
-  selectedCardNameEn: {
+  cardNameEn: {
     ...TextStyles.body,
     color: Colors.text.accent,
     textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  cardMeaning: {
+    ...TextStyles.body,
+    color: Colors.text.accent,
+    textAlign: 'center',
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.medium,
+  },
+
+  // 하단 액션 버튼들
+  bottomActions: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(15, 12, 27, 0.95)',
+    padding: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(244, 208, 63, 0.3)',
+  },
+  primaryButton: {
     marginBottom: Spacing.md,
   },
-  selectedCardMeaning: {
-    ...TextStyles.body,
-    color: Colors.text.accent,
-    textAlign: 'center',
-    marginTop: Spacing.lg,
+  secondaryActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.lg,
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.brand.secondary + '1A',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: 'rgba(155, 141, 184, 0.2)',
     borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: Colors.text.accent + '33',
+    borderColor: 'rgba(155, 141, 184, 0.3)',
   },
-  actionContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  resetButtonContainer: {
-    alignItems: 'center',
-  },
-  saveLoadContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    marginVertical: Spacing.sm,
-  },
-  guideContainer: {
-    ...GlassStyles.card,
-    ...ShadowStyles.medium,
-    padding: Spacing.lg,
-    marginTop: Spacing.sm,
-    maxHeight: 200,
-  },
-  guideHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
-  },
-  guideTitle: {
-    ...TextStyles.headline,
-    color: Colors.brand.accent,
+  secondaryButtonText: {
+    color: '#9b8db8',
+    fontSize: 14,
+    fontWeight: '500',
     marginLeft: Spacing.xs,
   },
-  guideContent: {
-    gap: Spacing.md,
-  },
-  guideText: {
-    ...TextStyles.body,
-    color: Colors.text.accent,
-  },
-  // 파이브 카드 크로스 레이아웃 스타일들
-  fiveCardCrossLayout: {
-    height: 350,
-    width: '100%',
-    position: 'relative',
-    marginVertical: Spacing.lg,
-  },
-  fiveCardPosition: {
-    position: 'absolute',
-    alignItems: 'center',
-  },
-  fiveCardPositionLabel: {
-    marginTop: Spacing.xxs,
-    backgroundColor: Colors.brand.secondary + 'CC',
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: Spacing.xxs,
-    borderRadius: BorderRadius.small,
-    maxWidth: 80,
-  },
-  fiveCardPositionText: {
-    ...TextStyles.overline,
-    color: Colors.brand.accent,
-    textAlign: 'center',
-  },
-  // 모달 스타일들
+
+  // 모달 스타일들 (기존과 동일)
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1304,39 +1118,25 @@ const styles = StyleSheet.create({
     borderLeftColor: '#ff6b6b33',
   },
   
-  // 플로팅 리딩 버튼 스타일
-  mainContainer: {
+  // AB 선택 스프레드 헤더 스타일
+  choiceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+  },
+  choiceSection: {
     flex: 1,
-    position: 'relative',
-  },
-  floatingReadingButton: {
-    position: 'absolute',
-    bottom: Spacing.xxxl,
-    right: Spacing.xl,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: Colors.brand.primary,
-    ...ShadowStyles.brandGlow,
-    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.border.focus,
-    zIndex: 1000,
   },
-  floatingButtonContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  floatingButtonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  choiceLabel: {
+    ...TextStyles.title,
+    color: Colors.brand.accent,
+    fontSize: 32,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(244, 208, 63, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
 });
 

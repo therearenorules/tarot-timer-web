@@ -1,0 +1,256 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🔮 미스틱 타로 앱 글로벌 스타일 */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-primary, #0f0f1a);
+    color: var(--text-primary, #ffffff);
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--brand-secondary, #1a1f3a) 0%, var(--brand-primary, #4a1a4f) 50%, var(--brand-secondary, #1a1f3a) 100%);
+  }
+
+  /* CSS 변수 정의 - 디자인 토큰 시스템 */
+  :root {
+    /* Brand Colors */
+    --brand-primary: #4A1A4F;
+    --brand-secondary: #1A1F3A;
+    --brand-accent: #D4AF37;
+    --brand-white: #FFFFFF;
+    
+    /* Light Mode (기본값) */
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #FAFAFA;
+    --bg-elevated: #FFFFFF;
+    --text-primary: #1A1F3A;
+    --text-secondary: #4A1A4F;
+    --text-tertiary: #6B6B7D;
+    --border-default: #E8E1E8;
+    --border-focus: #4A1A4F;
+    --divider: #E8E1E8;
+    
+    /* Spacing System */
+    --space-xxs: 2px;
+    --space-xs: 4px;
+    --space-s: 8px;
+    --space-m: 16px;
+    --space-l: 24px;
+    --space-xl: 32px;
+    --space-xxl: 40px;
+    --space-xxxl: 48px;
+    
+    /* Typography */
+    --font-regular: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    
+    /* Effects */
+    --radius-small: 4px;
+    --radius-medium: 8px;
+    --radius-large: 16px;
+    --radius-full: 9999px;
+    
+    --shadow-card: 0 2px 8px rgba(74, 26, 79, 0.12);
+    --shadow-elevated: 0 4px 16px rgba(74, 26, 79, 0.16);
+    --shadow-modal: 0 8px 32px rgba(74, 26, 79, 0.24);
+  }
+
+  /* Dark Mode Override (현재 앱 스타일) */
+  body {
+    --bg-primary: #0F0F1A;
+    --bg-secondary: #1A1F3A;
+    --bg-elevated: #1A1F3A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #C8B8D4;
+    --text-tertiary: #8A8A9A;
+    --border-default: #2A2F4A;
+    --border-focus: #7A5A7F;
+    --divider: #2A2F4A;
+  }
+}
+
+@layer components {
+  /* 🎨 미스틱 버튼 컴포넌트 */
+  .btn-mystical {
+    @apply px-button-horizontal py-button-vertical rounded-large font-semibold;
+    @apply bg-aurum-glow text-brand-primary;
+    @apply hover:scale-105 active:scale-95;
+    @apply transition-all duration-200 ease-out;
+    @apply shadow-card hover:shadow-elevated;
+  }
+
+  .btn-mystical-secondary {
+    @apply px-m py-s rounded-medium font-medium;
+    @apply bg-dark-bg-elevated/50 border border-brand-accent/30;
+    @apply text-brand-white hover:bg-dark-bg-elevated/80 hover:border-brand-accent/50;
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* 🌟 미스틱 카드 컴포넌트 */
+  .card-mystical {
+    @apply bg-dark-bg-elevated/30 backdrop-blur-md;
+    @apply border border-brand-accent/20 rounded-large;
+    @apply shadow-card;
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-mystical:hover {
+    @apply border-brand-accent/40 shadow-elevated;
+    @apply transform scale-[1.02];
+  }
+
+  /* ✨ 글로우 효과 */
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(74, 26, 79, 0.4);
+  }
+
+  .shadow-glow-gold {
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), 0 0 60px rgba(212, 175, 55, 0.2);
+  }
+
+  /* 🎯 터치 피드백 */
+  .touch-feedback {
+    @apply transition-transform duration-150 ease-out;
+    @apply active:scale-95 active:brightness-90;
+  }
+
+  /* 📱 탭바 스타일 */
+  .tab-bar {
+    @apply fixed bottom-0 left-0 right-0;
+    @apply bg-dark-bg-primary/90 backdrop-blur-lg;
+    @apply border-t border-brand-accent/20;
+    @apply safe-area-pb;
+    z-index: 50;
+  }
+
+  /* 🔄 스크롤바 커스터마이징 */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(26, 31, 58, 0.3);
+    border-radius: 2px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.5);
+    border-radius: 2px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.8);
+  }
+}
+
+@layer utilities {
+  /* 🛡️ 안전 영역 지원 */
+  .safe-area-pt {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .safe-area-pb {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-pl {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .safe-area-pr {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* 🎭 텍스트 그라디언트 */
+  .text-gradient {
+    @apply bg-aurum-glow;
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* 🌊 블러 배경 */
+  .backdrop-mystical {
+    backdrop-filter: blur(10px) saturate(1.5);
+  }
+
+  /* 📝 텍스트 줄임 */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* 🎪 애니메이션 정의 */
+@keyframes mystical-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes cosmic-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+}
+
+@keyframes aurum-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+  }
+}
+
+.animate-mystical-pulse {
+  animation: mystical-pulse 2s ease-in-out infinite;
+}
+
+.animate-cosmic-float {
+  animation: cosmic-float 3s ease-in-out infinite;
+}
+
+.animate-aurum-glow {
+  animation: aurum-glow 2s ease-in-out infinite;
+}

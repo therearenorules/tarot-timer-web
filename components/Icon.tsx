@@ -5,7 +5,7 @@ import Svg, { Path, Circle, Rect, Line, Polyline, G } from 'react-native-svg';
 
 export type IconName = 
   | 'timer' | 'clock'
-  | 'cards' | 'tarot-cards'
+  | 'cards' | 'tarot-cards' | 'tarot-card'
   | 'journal' | 'book-open'
   | 'settings'
   | 'refresh' | 'rotate-ccw'
@@ -57,6 +57,17 @@ const renderIcon = (name: IconName, size: number, color: string) => {
           <Rect x="11" y="6" width="9" height="14" rx="2" stroke={color} strokeWidth={strokeWidth} />
           <Path d="M8 8v2M8 14v2" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
           <Circle cx="16" cy="13" r="1.5" fill={color} />
+        </Svg>
+      );
+
+    case 'tarot-card':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Rect x="6" y="3" width="12" height="18" rx="2" stroke={color} strokeWidth={strokeWidth} fill="none" />
+          <Path d="M12 7l2 3-2 3-2-3z" fill={color} />
+          <Circle cx="10" cy="16" r="1" fill={color} />
+          <Circle cx="14" cy="16" r="1" fill={color} />
+          <Path d="M9 6h6M9 18h6" stroke={color} strokeWidth={strokeWidth * 0.8} strokeLinecap="round" />
         </Svg>
       );
     

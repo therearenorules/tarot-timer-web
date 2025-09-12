@@ -1,115 +1,238 @@
-// components/TarotJournal.tsx - 타로 저널 컴포넌트
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  TextInput, 
   TouchableOpacity, 
   ScrollView, 
-  Alert,
-  KeyboardAvoidingView,
-  Platform
+  Modal,
+  Dimensions,
+  TextInput,
+  Alert
 } from 'react-native';
-import { Icon } from './Icon';
-import { GradientButton } from './GradientButton';
+import { TarotCardComponent } from './TarotCard';
 import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
 import { 
   Colors, 
   GlassStyles, 
   ShadowStyles, 
-  TextStyles, 
-  CompositeStyles,
+  TextStyles,
   Spacing,
   BorderRadius 
 } from './DesignSystem';
 
-export interface JournalEntry {
-  id: string;
-  date: string;
-  title: string;
-  content: string;
-  mood: string;
-  insights: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+const { width: screenWidth } = Dimensions.get('window');
 
-export interface JournalStats {
-  totalEntries: number;
-  moodDistribution: { [key: string]: number };
-  recentTags: string[];
-  streakDays: number;
-}
-
-const MOOD_OPTIONS = [
-  { value: 'positive', label: '긍정적', emoji: '😊', color: '#4ade80' },
-  { value: 'neutral', label: '중립적', emoji: '😐', color: '#94a3b8' },
-  { value: 'reflective', label: '성찰적', emoji: '🤔', color: '#f59e0b' },
-  { value: 'curious', label: '궁금한', emoji: '🧐', color: '#3b82f6' },
-  { value: 'worried', label: '걱정스런', emoji: '😟', color: '#ef4444' },
-];
-
-const POPULAR_TAGS = [
-  '사랑', '관계', '직업', '건강', '가족', '미래', '과거', '현재',
-  '성장', '변화', '도전', '기회', '결정', '소통', '내면', '영성',
-  '창조', '여행', '학습', '휴식', '치유', '감사', '용서', '희망'
-];
-
-const FILTER_OPTIONS = [
-  { value: 'all', label: '전체' },
-  { value: 'recent', label: '최근 7일' },
-  { value: 'month', label: '이번 달' },
-  { value: 'positive', label: '긍정적 기분' },
-  { value: 'negative', label: '부정적 기분' },
-];
-
-export const TarotJournal: React.FC = () => {
-  // 듀얼 탭 상태 - 명세서 기준
-  const [activeTab, setActiveTab] = useState<'daily' | 'spreads'>('daily');
-  const [dailyReadings, setDailyReadings] = useState<any[]>([]);
-  const [spreadReadings, setSpreadReadings] = useState<any[]>([]);
-  const [selectedReading, setSelectedReading] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 기존 저널 기능 상태들 (legacy support)
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
-  const [currentEntry, setCurrentEntry] = useState<Partial<JournalEntry>>({
-    title: '',
-    content: '',
-    mood: 'neutral',
-    insights: '',
-    tags: [],
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  // 검색 및 필터 상태
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [newTag, setNewTag] = useState('');
-  const [stats, setStats] = useState<JournalStats>({
-    totalEntries: 0,
-    moodDistribution: {},
-    recentTags: [],
-    streakDays: 0,
-  });
+// 데일리 타로 뷰어 모달
+const DailyTarotViewer = ({ visible, reading, onClose }) => {
+  const [selectedHour, setSelectedHour] = useState(0);
+  const [memoText, setMemoText] = useState('');
+  const [cardMemos, setCardMemos] = useState({});
 
   useEffect(() => {
-    loadJournalEntries();
+    if (reading && reading.memos) {
+      setCardMemos(reading.memos);
+    }
+  }, [reading]);
+
+  useEffect(() => {
+    if (selectedHour !== null && cardMemos[selectedHour]) {
+      setMemoText(cardMemos[selectedHour]);
+    } else {
+      setMemoText('');
+    }
+  }, [selectedHour, cardMemos]);
+
+  const handleCardPress = (hour) => {
+    setSelectedHour(hour);
+  };
+
+  const saveMemo = () => {
+    const updatedMemos = { ...cardMemos, [selectedHour]: memoText };
+    setCardMemos(updatedMemos);
+    // 실제 저장 로직은 여기에 구현
+    Alert.alert('저장 완료', `${selectedHour}시 메모가 저장되었습니다.`);
+  };
+
+  if (!reading) return null;
+
+  const selectedCard = reading.hourlyCards?.[selectedHour];
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={onClose}
+    >
+      <View style={styles.dailyViewerContainer}>
+        {/* 제목 */}
+        <View style={styles.dailyViewerHeader}>
+          <Text style={styles.dailyViewerTitle}>24시간 타로</Text>
+          <Text style={styles.dailyViewerDate}>{reading.displayDate}</Text>
+        </View>
+
+        {/* 24시간 카드 가로 스크롤 */}
+        <View style={styles.cardScrollSection}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.cardScrollContainer}
+          >
+            {Array.from({ length: 24 }, (_, hour) => {
+              const card = reading.hourlyCards?.[hour];
+              const hasMemo = cardMemos[hour] && cardMemos[hour].trim().length > 0;
+              const isSelected = selectedHour === hour;
+              
+              if (!card) return null;
+              
+              return (
+                <TouchableOpacity
+                  key={hour}
+                  style={[
+                    styles.hourlyCardItem,
+                    isSelected && styles.hourlyCardSelected
+                  ]}
+                  onPress={() => handleCardPress(hour)}
+                >
+                  <Text style={styles.hourLabel}>
+                    {hour === 0 ? '자정' : 
+                     hour === 12 ? '정오' : 
+                     hour < 12 ? `${hour}시` : `${hour - 12}시`}
+                  </Text>
+                  
+                  <View style={styles.cardImageContainer}>
+                    <TarotCardComponent 
+                      card={card}
+                      size="small"
+                      showText={false}
+                    />
+                    {hasMemo && (
+                      <View style={styles.memoIndicator}>
+                        <Text style={styles.memoIndicatorText}>📝</Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* 선택된 카드 정보 */}
+        {selectedCard && (
+          <View style={styles.selectedCardInfo}>
+            <Text style={styles.selectedTimeText}>
+              {selectedHour === 0 ? '자정' : 
+               selectedHour === 12 ? '정오' : 
+               selectedHour < 12 ? `오전 ${selectedHour}시` : `오후 ${selectedHour - 12}시`}
+            </Text>
+            <Text style={styles.selectedCardName}>{selectedCard.nameKr}</Text>
+          </View>
+        )}
+
+        {/* 메모 섹션 */}
+        <View style={styles.memoSection}>
+          <Text style={styles.memoSectionTitle}>메모</Text>
+          <TextInput
+            style={styles.memoInput}
+            value={memoText}
+            onChangeText={setMemoText}
+            placeholder="이 시간의 타로 카드에 대한 메모를 입력하세요..."
+            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+            multiline
+            textAlignVertical="top"
+          />
+          <TouchableOpacity style={styles.memoSaveButton} onPress={saveMemo}>
+            <Text style={styles.memoSaveButtonText}>메모 저장</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 우측 하단 닫기 버튼 */}
+        <TouchableOpacity style={styles.floatingCloseButton} onPress={onClose}>
+          <Text style={styles.floatingCloseButtonText}>×</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+};
+
+// 스프레드 뷰어 모달
+const SpreadViewer = ({ visible, spread, onClose }) => {
+  if (!spread) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={styles.spreadViewerContainer}>
+        <View style={styles.spreadViewerHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={{ fontSize: 20, color: '#9b8db8' }}>×</Text>
+          </TouchableOpacity>
+          <Text style={styles.spreadViewerTitle}>{spread.title}</Text>
+        </View>
+        
+        <ScrollView style={styles.spreadViewerContent}>
+          <Text style={styles.spreadName}>{spread.spreadName}</Text>
+          
+          {/* 스프레드 배치도 */}
+          <View style={styles.spreadLayout}>
+            {spread.positions?.map((position, index) => (
+              <View 
+                key={position.id || index}
+                style={[
+                  styles.spreadCardPosition,
+                  {
+                    position: 'absolute',
+                    left: `${position.x || 50}%`,
+                    top: `${position.y || 50}%`,
+                    transform: [
+                      { translateX: -30 },
+                      { translateY: -40 }
+                    ]
+                  }
+                ]}
+              >
+                {position.card && (
+                  <TarotCardComponent 
+                    card={position.card}
+                    size="small"
+                    showText={false}
+                  />
+                )}
+                {position.name && (
+                  <Text style={styles.spreadPositionName}>{position.name}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+};
+
+const TarotJournal = () => {
+  const [activeTab, setActiveTab] = useState('daily');
+  const [dailyReadings, setDailyReadings] = useState([]);
+  const [spreadReadings, setSpreadReadings] = useState([]);
+  const [selectedReading, setSelectedReading] = useState(null);
+  const [selectedSpread, setSelectedSpread] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
     loadDailyReadings();
     loadSpreadReadings();
   }, []);
 
-  // 일일 타로 리딩 로드
   const loadDailyReadings = async () => {
     try {
       setIsLoading(true);
-      const readings: any[] = [];
+      const readings = [];
       
       // 최근 30일간의 일일 타로 데이터 로드
       for (let i = 0; i < 30; i++) {
@@ -148,354 +271,53 @@ export const TarotJournal: React.FC = () => {
     }
   };
 
-  // 스프레드 리딩 로드
   const loadSpreadReadings = async () => {
     try {
-      // 스프레드 데이터는 현재 TarotSpread 컴포넌트에서 저장하지 않고 있으므로
-      // 추후 스프레드 저장 기능 구현 시 연동 예정
-      setSpreadReadings([]);
+      const spreads = await TarotUtils.loadSavedSpreads();
+      setSpreadReadings(spreads);
     } catch (error) {
       console.error('스프레드 리딩 로드 실패:', error);
     }
   };
 
-  // 검색 및 필터링 useEffect
-  useEffect(() => {
-    applyFilters();
-  }, [entries, searchQuery, selectedFilter, selectedTags]);
-
-  useEffect(() => {
-    calculateStats();
-  }, [entries]);
-
-  // 검색 및 필터링 적용
-  const applyFilters = () => {
-    let filtered = [...entries];
-
-    // 검색어 필터링
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(entry =>
-        entry.title.toLowerCase().includes(query) ||
-        entry.content.toLowerCase().includes(query) ||
-        entry.insights.toLowerCase().includes(query) ||
-        entry.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // 태그 필터링
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(entry =>
-        selectedTags.some(tag => entry.tags.includes(tag))
-      );
-    }
-
-    // 날짜/기분 필터링
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    switch (selectedFilter) {
-      case 'recent':
-        filtered = filtered.filter(entry => new Date(entry.updatedAt) >= sevenDaysAgo);
-        break;
-      case 'month':
-        filtered = filtered.filter(entry => new Date(entry.updatedAt) >= monthStart);
-        break;
-      case 'positive':
-        filtered = filtered.filter(entry => ['positive', 'curious'].includes(entry.mood));
-        break;
-      case 'negative':
-        filtered = filtered.filter(entry => ['worried', 'reflective'].includes(entry.mood));
-        break;
-    }
-
-    setFilteredEntries(filtered);
-  };
-
-  // 통계 계산
-  const calculateStats = () => {
-    if (entries.length === 0) {
-      setStats({
-        totalEntries: 0,
-        moodDistribution: {},
-        recentTags: [],
-        streakDays: 0,
-      });
-      return;
-    }
-
-    // 기분 분포 계산
-    const moodDistribution: { [key: string]: number } = {};
-    entries.forEach(entry => {
-      moodDistribution[entry.mood] = (moodDistribution[entry.mood] || 0) + 1;
-    });
-
-    // 최근 태그 수집
-    const allTags: string[] = [];
-    entries.forEach(entry => allTags.push(...entry.tags));
-    const tagCounts: { [key: string]: number } = {};
-    allTags.forEach(tag => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-    });
-    
-    const recentTags = Object.entries(tagCounts)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 8)
-      .map(([tag]) => tag);
-
-    // 연속 작성일 계산
-    const sortedDates = entries
-      .map(entry => new Date(entry.date).getTime())
-      .sort((a, b) => b - a);
-    
-    let streakDays = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (let i = 0; i < sortedDates.length; i++) {
-      const entryDate = new Date(sortedDates[i]);
-      entryDate.setHours(0, 0, 0, 0);
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.appTitle}>Sacred Journal</Text>
+      <Text style={styles.appSubtitle}>우주 지혜를 통한 성찰로운 여정</Text>
       
-      const expectedDate = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-      
-      if (entryDate.getTime() === expectedDate.getTime()) {
-        streakDays++;
-      } else {
-        break;
-      }
-    }
-
-    setStats({
-      totalEntries: entries.length,
-      moodDistribution,
-      recentTags,
-      streakDays,
-    });
-  };
-
-  // 태그 관리
-  const addTag = (tag: string) => {
-    if (tag.trim() && !currentEntry.tags?.includes(tag.trim())) {
-      setCurrentEntry(prev => ({
-        ...prev,
-        tags: [...(prev.tags || []), tag.trim()]
-      }));
-    }
-    setNewTag('');
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setCurrentEntry(prev => ({
-      ...prev,
-      tags: prev.tags?.filter(tag => tag !== tagToRemove) || []
-    }));
-  };
-
-  const toggleTagFilter = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
-  };
-
-  // 저널 엔트리 로드
-  const loadJournalEntries = async () => {
-    try {
-      const today = TarotUtils.getTodayDateString();
-      const storageKey = STORAGE_KEYS.TAROT_JOURNAL + today;
-      const savedData = await simpleStorage.getItem(storageKey);
-      
-      if (savedData) {
-        const journalData: JournalEntry[] = JSON.parse(savedData);
-        setEntries(journalData.sort((a, b) => 
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        ));
-      }
-    } catch (error) {
-      console.error('저널 로드 실패:', error);
-    }
-  };
-
-  // 저널 엔트리 저장
-  const saveJournalEntries = async (updatedEntries: JournalEntry[]) => {
-    try {
-      const today = TarotUtils.getTodayDateString();
-      const storageKey = STORAGE_KEYS.TAROT_JOURNAL + today;
-      await simpleStorage.setItem(storageKey, JSON.stringify(updatedEntries));
-    } catch (error) {
-      console.error('저널 저장 실패:', error);
-      throw error;
-    }
-  };
-
-  // 새 엔트리 저장
-  const saveEntry = async () => {
-    if (!currentEntry.title?.trim() || !currentEntry.content?.trim()) {
-      Alert.alert('입력 오류', '제목과 내용을 모두 입력해주세요.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const now = new Date().toISOString();
-      const today = TarotUtils.getTodayDateString();
-      
-      if (editingId) {
-        // 기존 엔트리 수정
-        const updatedEntries = entries.map(entry =>
-          entry.id === editingId
-            ? {
-                ...entry,
-                title: currentEntry.title!,
-                content: currentEntry.content!,
-                mood: currentEntry.mood!,
-                insights: currentEntry.insights!,
-                updatedAt: now,
-              }
-            : entry
-        );
-        setEntries(updatedEntries);
-        await saveJournalEntries(updatedEntries);
-        Alert.alert('수정 완료', '저널이 성공적으로 수정되었습니다.');
-      } else {
-        // 새 엔트리 추가
-        const newEntry: JournalEntry = {
-          id: `journal_${Date.now()}`,
-          date: today,
-          title: currentEntry.title!,
-          content: currentEntry.content!,
-          mood: currentEntry.mood!,
-          insights: currentEntry.insights || '',
-          tags: currentEntry.tags || [],
-          createdAt: now,
-          updatedAt: now,
-        };
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'daily' && styles.activeTab]}
+          onPress={() => setActiveTab('daily')}
+        >
+          <Text style={[
+            styles.tabText,
+            activeTab === 'daily' && styles.activeTabText
+          ]}>
+            데일리 타로
+          </Text>
+        </TouchableOpacity>
         
-        const updatedEntries = [newEntry, ...entries];
-        setEntries(updatedEntries);
-        await saveJournalEntries(updatedEntries);
-        Alert.alert('저장 완료', '저널이 성공적으로 저장되었습니다.');
-      }
-      
-      // 폼 초기화
-      resetForm();
-    } catch (error) {
-      console.error('저널 저장/수정 실패:', error);
-      Alert.alert('오류', '저널을 저장하는 중 문제가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'spreads' && styles.activeTab]}
+          onPress={() => setActiveTab('spreads')}
+        >
+          <Text style={[
+            styles.tabText,
+            activeTab === 'spreads' && styles.activeTabText
+          ]}>
+            스프레드 기록
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-  // 엔트리 삭제
-  const deleteEntry = async (entryId: string) => {
-    Alert.alert(
-      '삭제 확인',
-      '이 저널 엔트리를 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const updatedEntries = entries.filter(entry => entry.id !== entryId);
-              setEntries(updatedEntries);
-              await saveJournalEntries(updatedEntries);
-            } catch (error) {
-              console.error('삭제 실패:', error);
-              Alert.alert('오류', '엔트리 삭제 중 문제가 발생했습니다.');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  // 엔트리 편집 시작
-  const startEditing = (entry: JournalEntry) => {
-    setCurrentEntry({
-      title: entry.title,
-      content: entry.content,
-      mood: entry.mood,
-      insights: entry.insights,
-      tags: entry.tags || [],
-    });
-    setEditingId(entry.id);
-    setIsEditing(true);
-  };
-
-  // 폼 초기화
-  const resetForm = () => {
-    setCurrentEntry({
-      title: '',
-      content: '',
-      mood: 'neutral',
-      insights: '',
-      tags: [],
-    });
-    setIsEditing(false);
-    setEditingId(null);
-    setNewTag('');
-  };
-
-  const selectedMood = MOOD_OPTIONS.find(mood => mood.value === currentEntry.mood) || MOOD_OPTIONS[1];
-
-  // 듀얼 탭 렌더링 - 명세서 기준
-  const renderDualTabContent = () => {
-    return (
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* 듀얼 탭 헤더 */}
-        <View style={styles.dualTabContainer}>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 'daily' && styles.tabButtonActive
-            ]}
-            onPress={() => setActiveTab('daily')}
-          >
-            <Icon name="clock" size={18} color={activeTab === 'daily' ? '#fff' : '#9b8db8'} />
-            <Text style={[
-              styles.tabButtonText,
-              activeTab === 'daily' && styles.tabButtonTextActive
-            ]}>
-              ⏰ 일일 리딩
-            </Text>
-            <Text style={styles.tabCount}>{dailyReadings.length}개 기록</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === 'spreads' && styles.tabButtonActive
-            ]}
-            onPress={() => setActiveTab('spreads')}
-          >
-            <Icon name="tarot-cards" size={18} color={activeTab === 'spreads' ? '#fff' : '#9b8db8'} />
-            <Text style={[
-              styles.tabButtonText,
-              activeTab === 'spreads' && styles.tabButtonTextActive
-            ]}>
-              🔮 스프레드 기록
-            </Text>
-            <Text style={styles.tabCount}>{spreadReadings.length}개 기록</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 탭 내용 */}
-        {activeTab === 'daily' ? renderDailyReadingsTab() : renderSpreadReadingsTab()}
-      </ScrollView>
-    );
-  };
-
-  // 일일 리딩 탭 렌더링
-  const renderDailyReadingsTab = () => {
+  const renderDailyReadings = () => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>📖 일일 리딩을 불러오는 중...</Text>
+          <Text style={styles.loadingText}>데일리 타로를 불러오는 중...</Text>
         </View>
       );
     }
@@ -503,45 +325,49 @@ export const TarotJournal: React.FC = () => {
     if (dailyReadings.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>⏰</Text>
-          <Text style={styles.emptyTitle}>저장된 일일 리딩이 없습니다</Text>
-          <Text style={styles.emptySubtitle}>
-            Timer 탭에서 24시간 타로를 저장하면{'\n'}여기에서 다시 볼 수 있습니다
+          <Text style={styles.emptyIcon}>🕐</Text>
+          <Text style={styles.emptyTitle}>데일리 리딩</Text>
+          <Text style={styles.emptyText}>
+            저장된 데일리 타로가 없습니다{'\n'}
+            타이머 탭에서 24시간 타로를 저장해보세요
           </Text>
         </View>
       );
     }
 
     return (
-      <View style={styles.readingsContainer}>
+      <ScrollView style={styles.readingsContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>데일리 리딩</Text>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{dailyReadings.length}개 기록</Text>
+          </View>
+        </View>
+
         {dailyReadings.map((reading, index) => (
           <TouchableOpacity
             key={reading.id || index}
-            style={styles.dailyReadingCard}
+            style={styles.dailyCard}
             onPress={() => setSelectedReading(reading)}
-            activeOpacity={0.8}
           >
-            {/* 카드 헤더 */}
-            <View style={styles.readingCardHeader}>
-              <View style={styles.readingDateContainer}>
-                <Text style={styles.readingDate}>{reading.displayDate}</Text>
-                <Text style={styles.readingLabel}>24시간 타로 리딩</Text>
+            <View style={styles.dailyCardHeader}>
+              <View style={styles.dateInfo}>
+                <Text style={styles.dateText}>{reading.displayDate}</Text>
+                <Text style={styles.typeLabel}>24시간 타로 리딩</Text>
               </View>
-              <View style={styles.readingStatus}>
-                <Text style={styles.readingStatusIcon}>✅</Text>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>완료</Text>
               </View>
             </View>
 
             {/* 카드 미리보기 */}
-            <View style={styles.cardPreviewContainer}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardPreview}>
-                {reading.hourlyCards?.slice(0, 8).map((card: any, cardIndex: number) => (
-                  <View key={cardIndex} style={styles.miniCard}>
-                    <Text style={styles.miniCardIcon}>🎴</Text>
-                  </View>
+            <View style={styles.cardPreview}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {reading.hourlyCards?.slice(0, 8).map((card, cardIndex) => (
+                  <View key={cardIndex} style={styles.previewCard} />
                 ))}
                 {reading.hourlyCards?.length > 8 && (
-                  <Text style={styles.moreCardsText}>+{reading.hourlyCards.length - 8}더</Text>
+                  <Text style={styles.moreText}>+{reading.hourlyCards.length - 8}</Text>
                 )}
               </ScrollView>
             </View>
@@ -558,1058 +384,651 @@ export const TarotJournal: React.FC = () => {
 
             {/* 메모 카운트 */}
             {reading.memos && Object.keys(reading.memos).length > 0 && (
-              <View style={styles.memoCount}>
-                <Text style={styles.memoCountText}>
-                  ⏰ {Object.keys(reading.memos).length}개 시간대 메모
+              <View style={styles.memoInfo}>
+                <Text style={styles.memoCount}>
+                  🕐 {Object.keys(reading.memos).length}개 시간대 메모
                 </Text>
-                <Icon name="chevron-right" size={16} color="#f4d03f" />
+                <Text style={{ fontSize: 16, color: '#f4d03f' }}>›</Text>
               </View>
             )}
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
     );
   };
 
-  // 스프레드 리딩 탭 렌더링
-  const renderSpreadReadingsTab = () => {
+  const renderSpreadReadings = () => {
     if (spreadReadings.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🔮</Text>
-          <Text style={styles.emptyTitle}>저장된 스프레드 기록이 없습니다</Text>
-          <Text style={styles.emptySubtitle}>
-            Spreads 탭에서 타로 스프레드를 저장하면{'\n'}여기에서 다시 볼 수 있습니다
+          <Text style={styles.emptyTitle}>스프레드 기록</Text>
+          <Text style={styles.emptyText}>
+            저장된 스프레드가 없습니다{'\n'}
+            스프레드 탭에서 리딩을 저장해보세요
           </Text>
         </View>
       );
     }
 
-    // 스프레드 리딩 구현은 추후 스프레드 저장 기능과 함께 구현 예정
     return (
-      <View style={styles.comingSoonContainer}>
-        <Text style={styles.comingSoonIcon}>🔮</Text>
-        <Text style={styles.comingSoonTitle}>스프레드 기록 기능</Text>
-        <Text style={styles.comingSoonText}>
-          곧 업데이트 예정입니다{'\n'}스프레드 저장 기능과 함께 제공됩니다
-        </Text>
-      </View>
+      <ScrollView style={styles.readingsContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            <Text style={{ fontSize: 16, color: '#f4d03f' }}>🃏</Text>
+            <Text style={styles.sectionTitle}>스프레드 기록</Text>
+          </View>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{spreadReadings.length}개 기록</Text>
+          </View>
+        </View>
+
+        {spreadReadings.map((spread, index) => (
+          <TouchableOpacity
+            key={spread.id || index}
+            style={styles.spreadCard}
+            onPress={() => setSelectedSpread(spread)}
+          >
+            <View style={styles.spreadCardHeader}>
+              <View style={styles.spreadInfo}>
+                <Text style={styles.spreadTitle}>{spread.title}</Text>
+                <Text style={styles.spreadDate}>
+                  {new Date(spread.createdAt).toLocaleDateString('ko-KR')}
+                </Text>
+              </View>
+              <View style={styles.cardCountBadge}>
+                <Text style={styles.cardCountText}>{spread.positions?.length || 0}카드 시전함</Text>
+              </View>
+            </View>
+
+            {/* 스프레드 미니 프리뷰 */}
+            <View style={styles.spreadPreview}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {spread.positions?.slice(0, 4).map((position, cardIndex) => (
+                  <View key={cardIndex} style={styles.spreadPreviewCard} />
+                ))}
+                {spread.positions?.length > 4 && (
+                  <Text style={styles.moreText}>+{spread.positions.length - 4}</Text>
+                )}
+              </ScrollView>
+            </View>
+
+            <View style={styles.spreadFooter}>
+              <Text style={styles.spreadType}>{spread.spreadName}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     );
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      {renderDualTabContent()}
+    <View style={styles.container}>
+      {renderHeader()}
       
-      {/* 상세보기 모달 (일일 타로 뷰어) */}
-      {selectedReading && selectedReading.type === 'daily' && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.dailyTarotViewer}>
-            <View style={styles.viewerHeader}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => setSelectedReading(null)}
-              >
-                <Icon name="arrow-left" size={20} color="#f4d03f" />
-                <Text style={styles.backButtonText}>돌아가기</Text>
-              </TouchableOpacity>
-              <Text style={styles.viewerTitle}>{selectedReading.displayDate} 일일 타로</Text>
-            </View>
-            
-            <Text style={styles.comingSoonText}>
-              🚧 일일 타로 상세 뷰어는 곧 구현 예정입니다
-            </Text>
-          </View>
-        </View>
-      )}
-    </KeyboardAvoidingView>
-  );
+      <View style={styles.content}>
+        {activeTab === 'daily' ? renderDailyReadings() : renderSpreadReadings()}
+      </View>
 
-  // 기존 저널 폼 (legacy) - 추후 제거 예정
-  const renderLegacyJournalForm = () => (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* 통계 및 상태 표시 */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statusText}>
-            {entries.length > 0 ? (
-              `✨ ${stats.totalEntries}개의 저널 | 🔥 ${stats.streakDays}일 연속`
-            ) : (
-              '🌟 첫 번째 저널을 작성해보세요'
-            )}
-          </Text>
-          {stats.recentTags.length > 0 && (
-            <View style={styles.recentTagsContainer}>
-              <Text style={styles.recentTagsLabel}>최근 태그:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {stats.recentTags.map(tag => (
-                  <TouchableOpacity
-                    key={tag}
-                    style={[
-                      styles.recentTag,
-                      selectedTags.includes(tag) && styles.recentTagSelected
-                    ]}
-                    onPress={() => toggleTagFilter(tag)}
-                  >
-                    <Text style={[
-                      styles.recentTagText,
-                      selectedTags.includes(tag) && styles.recentTagTextSelected
-                    ]}>
-                      {tag}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
+      {/* 데일리 타로 뷰어 모달 */}
+      <DailyTarotViewer
+        visible={!!selectedReading}
+        reading={selectedReading}
+        onClose={() => setSelectedReading(null)}
+      />
 
-        {/* 검색 및 필터 */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <Icon name="search" size={16} color="#9b8db8" />
-            <TextInput
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="제목, 내용, 태그로 검색..."
-              placeholderTextColor="#9b8db8"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Icon name="x" size={16} color="#9b8db8" />
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => setShowFilters(!showFilters)}
-          >
-            <Icon name="filter" size={16} color="#f4d03f" />
-          </TouchableOpacity>
-        </View>
-
-        {/* 필터 옵션 */}
-        {showFilters && (
-          <View style={styles.filtersContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {FILTER_OPTIONS.map(option => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.filterOption,
-                    selectedFilter === option.value && styles.filterOptionSelected
-                  ]}
-                  onPress={() => setSelectedFilter(option.value)}
-                >
-                  <Text style={[
-                    styles.filterOptionText,
-                    selectedFilter === option.value && styles.filterOptionTextSelected
-                  ]}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* 메인 저널 폼 */}
-        <View style={styles.formContainer}>
-          <View style={styles.formHeader}>
-            <Icon name="book-open" size={20} color="#f4d03f" />
-            <Text style={styles.formTitle}>
-              {isEditing ? '저널 수정하기' : '새로운 저널 작성'}
-            </Text>
-          </View>
-          
-          {/* 제목 입력 */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>제목</Text>
-            <TextInput
-              style={styles.titleInput}
-              value={currentEntry.title}
-              onChangeText={(text) => setCurrentEntry(prev => ({ ...prev, title: text }))}
-              placeholder="저널 제목을 입력하세요"
-              placeholderTextColor="#9b8db8"
-              maxLength={50}
-            />
-          </View>
-
-          {/* 기분/상태 선택 */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>현재 기분</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.moodSelector}
-            >
-              {MOOD_OPTIONS.map((mood) => (
-                <TouchableOpacity
-                  key={mood.value}
-                  style={[
-                    styles.moodOption,
-                    currentEntry.mood === mood.value && styles.moodOptionSelected
-                  ]}
-                  onPress={() => setCurrentEntry(prev => ({ ...prev, mood: mood.value }))}
-                >
-                  <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-                  <Text style={[
-                    styles.moodLabel,
-                    currentEntry.mood === mood.value && styles.moodLabelSelected
-                  ]}>
-                    {mood.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* 내용 입력 */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>타로 리딩 내용</Text>
-            <TextInput
-              style={styles.contentInput}
-              value={currentEntry.content}
-              onChangeText={(text) => setCurrentEntry(prev => ({ ...prev, content: text }))}
-              placeholder="오늘의 타로 리딩에 대해 자세히 기록해보세요..."
-              placeholderTextColor="#9b8db8"
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* 통찰/깨달음 입력 */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>통찰과 깨달음</Text>
-            <TextInput
-              style={styles.insightsInput}
-              value={currentEntry.insights}
-              onChangeText={(text) => setCurrentEntry(prev => ({ ...prev, insights: text }))}
-              placeholder="이 리딩을 통해 얻은 깨달음이나 앞으로의 다짐을 적어보세요..."
-              placeholderTextColor="#9b8db8"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* 태그 관리 */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>태그 (주제별 분류)</Text>
-            
-            {/* 현재 선택된 태그들 */}
-            {currentEntry.tags && currentEntry.tags.length > 0 && (
-              <View style={styles.selectedTagsContainer}>
-                {currentEntry.tags.map((tag, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.selectedTag}
-                    onPress={() => removeTag(tag)}
-                  >
-                    <Text style={styles.selectedTagText}>{tag}</Text>
-                    <Icon name="x" size={12} color="#f4d03f" />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {/* 새 태그 입력 */}
-            <View style={styles.tagInputContainer}>
-              <TextInput
-                style={styles.tagInput}
-                value={newTag}
-                onChangeText={setNewTag}
-                placeholder="새 태그 입력..."
-                placeholderTextColor="#9b8db8"
-                onSubmitEditing={() => addTag(newTag)}
-                returnKeyType="done"
-              />
-              <TouchableOpacity
-                style={styles.addTagButton}
-                onPress={() => addTag(newTag)}
-                disabled={!newTag.trim()}
-              >
-                <Icon name="plus" size={16} color="#f4d03f" />
-              </TouchableOpacity>
-            </View>
-
-            {/* 인기 태그들 */}
-            <View style={styles.popularTagsContainer}>
-              <Text style={styles.popularTagsLabel}>인기 태그:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {POPULAR_TAGS.filter(tag => !currentEntry.tags?.includes(tag)).slice(0, 10).map(tag => (
-                  <TouchableOpacity
-                    key={tag}
-                    style={styles.popularTag}
-                    onPress={() => addTag(tag)}
-                  >
-                    <Text style={styles.popularTagText}>{tag}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-
-          {/* 액션 버튼들 */}
-          <View style={styles.actionButtons}>
-            <GradientButton
-              onPress={saveEntry}
-              title={isLoading ? '저장 중...' : isEditing ? '수정 완료' : '저널 저장'}
-              icon={isLoading ? 'rotate-ccw' : 'save'}
-              disabled={isLoading}
-              size="large"
-            />
-            
-            {isEditing && (
-              <View style={styles.cancelButtonContainer}>
-                <GradientButton
-                  onPress={resetForm}
-                  title="취소"
-                  icon="x"
-                  variant="secondary"
-                  size="medium"
-                />
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* 확장 가능한 저장된 엔트리 목록 */}
-        {entries.length > 0 && (
-          <ScrollView style={styles.entriesContainer} showsVerticalScrollIndicator={false}>
-            <View style={styles.entriesHeader}>
-              <Icon name="book" size={20} color="#f4d03f" />
-              <Text style={styles.entriesTitle}>
-                저장된 저널 ({filteredEntries.length}/{entries.length})
-              </Text>
-              {(searchQuery || selectedFilter !== 'all' || selectedTags.length > 0) && (
-                <TouchableOpacity
-                  style={styles.clearFiltersButton}
-                  onPress={() => {
-                    setSearchQuery('');
-                    setSelectedFilter('all');
-                    setSelectedTags([]);
-                  }}
-                >
-                  <Text style={styles.clearFiltersText}>전체 보기</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            {filteredEntries.map((entry) => (
-              <View key={entry.id} style={styles.entryCard}>
-                <View style={styles.entryHeader}>
-                  <View style={styles.entryTitleRow}>
-                    <Text style={styles.entryTitle}>{entry.title}</Text>
-                    <View style={styles.entryMood}>
-                      <Text style={styles.entryMoodEmoji}>
-                        {MOOD_OPTIONS.find(m => m.value === entry.mood)?.emoji || '😐'}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.entryDate}>
-                    {new Date(entry.updatedAt).toLocaleString('ko-KR')}
-                  </Text>
-                </View>
-                
-                <Text style={styles.entryContent} numberOfLines={3}>
-                  {entry.content}
-                </Text>
-
-                {/* 태그 표시 */}
-                {entry.tags && entry.tags.length > 0 && (
-                  <View style={styles.entryTagsContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {entry.tags.map((tag, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.entryTag}
-                          onPress={() => toggleTagFilter(tag)}
-                        >
-                          <Text style={styles.entryTagText}>#{tag}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                )}
-                
-                {entry.insights && (
-                  <View style={styles.entryInsights}>
-                    <Text style={styles.entryInsightsLabel}>💡 통찰</Text>
-                    <Text style={styles.entryInsightsText} numberOfLines={2}>
-                      {entry.insights}
-                    </Text>
-                  </View>
-                )}
-                
-                <View style={styles.entryActions}>
-                  <TouchableOpacity
-                    style={styles.entryActionButton}
-                    onPress={() => startEditing(entry)}
-                  >
-                    <Icon name="edit" size={16} color="#f4d03f" />
-                    <Text style={styles.entryActionText}>수정</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.entryActionButton}
-                    onPress={() => deleteEntry(entry.id)}
-                  >
-                    <Icon name="trash" size={16} color="#ef4444" />
-                    <Text style={[styles.entryActionText, { color: '#ef4444' }]}>삭제</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {/* 스프레드 뷰어 모달 */}
+      <SpreadViewer
+        visible={!!selectedSpread}
+        spread={selectedSpread}
+        onClose={() => setSelectedSpread(null)}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.glass.primary,
   },
-  scrollView: {
-    flex: 1,
+  header: {
+    paddingTop: Spacing.xl,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xl,
-  },
-  
-  // Status and form styles
-  statusText: {
-    ...TextStyles.body,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-  },
-  formHeader: {
-    flexDirection: 'row',
+    paddingBottom: Spacing.lg,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.brand.accent + '1A',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
   },
-  formTitle: {
-    ...TextStyles.headline,
+  appTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
     color: Colors.brand.accent,
-    marginLeft: Spacing.sm,
-  },
-  formContainer: {
-    ...GlassStyles.cardElevated,
-    ...ShadowStyles.brandGlow,
-    marginBottom: Spacing.xxl,
-  },
-  
-  // Input styles
-  inputGroup: {
-    marginBottom: Spacing.lg,
-  },
-  inputLabel: {
-    ...TextStyles.headline,
-    color: Colors.brand.accent,
-    marginBottom: Spacing.sm,
-  },
-  titleInput: {
-    ...GlassStyles.cardSecondary,
-    backgroundColor: Colors.glass.secondary,
-    borderColor: Colors.border.soft,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: 16,
-    color: Colors.text.primary,
-    fontWeight: '500',
-  },
-  contentInput: {
-    ...GlassStyles.cardSecondary,
-    backgroundColor: Colors.glass.secondary,
-    borderColor: Colors.border.soft,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: 14,
-    color: Colors.text.primary,
-    minHeight: 120,
-    lineHeight: 20,
-    textAlignVertical: 'top',
-  },
-  insightsInput: {
-    ...GlassStyles.cardSecondary,
-    backgroundColor: Colors.glass.secondary,
-    borderColor: Colors.border.soft,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: 14,
-    color: Colors.text.primary,
-    minHeight: 80,
-    lineHeight: 20,
-    textAlignVertical: 'top',
-  },
-  
-  // Mood selection styles
-  moodSelector: {
-    flexDirection: 'row',
-  },
-  moodOption: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginRight: Spacing.sm,
-    backgroundColor: Colors.glass.tertiary,
-    borderWidth: 1,
-    borderColor: Colors.border.subtle,
-    borderRadius: BorderRadius.md,
-    minWidth: 70,
-  },
-  moodOptionSelected: {
-    backgroundColor: Colors.brand.secondary + '80',
-    borderColor: Colors.border.focus,
-    borderWidth: 2,
-  },
-  moodEmoji: {
-    fontSize: 20,
     marginBottom: Spacing.xs,
   },
-  moodLabel: {
-    ...TextStyles.caption,
+  appSubtitle: {
+    fontSize: 14,
     color: Colors.text.secondary,
+    marginBottom: Spacing.xl,
     textAlign: 'center',
   },
-  moodLabelSelected: {
-    color: Colors.text.primary,
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xs,
+    width: '100%',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    borderRadius: BorderRadius.md,
+  },
+  activeTab: {
+    backgroundColor: Colors.brand.accent,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.secondary,
+  },
+  activeTabText: {
+    color: '#000',
     fontWeight: 'bold',
   },
-  
-  // Action buttons
-  actionButtons: {
-    alignItems: 'center',
-    gap: Spacing.md,
+  content: {
+    flex: 1,
   },
-  cancelButtonContainer: {
-    alignItems: 'center',
-  },
-  
-  // Entry list styles
-  entriesContainer: {
-    marginTop: Spacing.sm,
-    maxHeight: 300,
-    ...GlassStyles.cardSecondary,
-    ...ShadowStyles.soft,
-  },
-  entriesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
-  },
-  entriesTitle: {
-    ...TextStyles.headline,
-    color: Colors.brand.accent,
-    marginLeft: Spacing.sm,
-  },
-  entryCard: {
-    ...GlassStyles.cardElevated,
-    ...ShadowStyles.brandGlow,
-    marginBottom: Spacing.lg,
-  },
-  entryHeader: {
-    marginBottom: Spacing.md,
-  },
-  entryTitleRow: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
-  entryTitle: {
-    ...TextStyles.headline,
-    color: Colors.text.primary,
-    flex: 1,
-  },
-  entryMood: {
-    marginLeft: Spacing.sm,
-  },
-  entryMoodEmoji: {
-    fontSize: 20,
-  },
-  entryDate: {
-    ...TextStyles.caption,
-    color: Colors.text.secondary,
-  },
-  entryContent: {
-    ...TextStyles.body,
-    color: Colors.text.tertiary,
+    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
   },
-  entryInsights: {
-    backgroundColor: Colors.brand.secondary + '1A',
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border.soft,
-  },
-  entryInsightsLabel: {
-    ...TextStyles.caption,
-    color: Colors.brand.accent,
-    fontWeight: 'bold',
-    marginBottom: Spacing.xs,
-  },
-  entryInsightsText: {
-    ...TextStyles.body,
-    color: Colors.text.tertiary,
-    fontSize: 13,
-  },
-  entryActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.soft,
-    paddingTop: Spacing.md,
-  },
-  entryActionButton: {
+  sectionTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.glass.tertiary,
+    gap: Spacing.sm,
   },
-  entryActionText: {
-    ...TextStyles.body,
-    color: Colors.brand.accent,
-    marginLeft: Spacing.xs,
-    fontWeight: '500',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+  },
+  countBadge: {
+    backgroundColor: Colors.brand.accent,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+  },
+  countText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  readingsContainer: {
+    flex: 1,
+    paddingBottom: Spacing.xl,
   },
   
-  // Search and filter styles
-  statsContainer: {
-    ...GlassStyles.cardSecondary,
-    marginBottom: Spacing.lg,
+  // 데일리 카드 스타일
+  dailyCard: {
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
   },
-  recentTagsContainer: {
-    marginTop: Spacing.sm,
+  dailyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.md,
   },
-  recentTagsLabel: {
-    ...TextStyles.caption,
+  dateInfo: {
+    flex: 1,
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  typeLabel: {
+    fontSize: 12,
     color: Colors.text.secondary,
-    marginBottom: Spacing.sm,
   },
-  recentTag: {
-    backgroundColor: Colors.brand.secondary + '4D',
-    borderRadius: BorderRadius.md,
+  statusBadge: {
+    backgroundColor: '#4ade80',
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
-    marginRight: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border.soft,
-  },
-  recentTagSelected: {
-    backgroundColor: Colors.brand.secondary + '80',
-    borderColor: Colors.border.focus,
-  },
-  recentTagText: {
-    ...TextStyles.caption,
-    color: Colors.text.tertiary,
-  },
-  recentTagTextSelected: {
-    color: Colors.text.primary,
-    fontWeight: 'bold',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...GlassStyles.cardSecondary,
-    paddingHorizontal: Spacing.md,
-  },
-  searchInput: {
-    flex: 1,
-    ...TextStyles.body,
-    color: Colors.text.primary,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-  },
-  filterButton: {
-    backgroundColor: Colors.brand.secondary + '80',
-    borderRadius: BorderRadius.md,
-    padding: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
-  },
-  filtersContainer: {
-    marginBottom: Spacing.md,
-  },
-  filterOption: {
-    ...GlassStyles.cardCompact,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    marginRight: Spacing.sm,
-  },
-  filterOptionSelected: {
-    backgroundColor: Colors.brand.secondary + '80',
-    borderColor: Colors.border.focus,
-  },
-  filterOptionText: {
-    ...TextStyles.caption,
-    color: Colors.text.tertiary,
-  },
-  filterOptionTextSelected: {
-    color: Colors.text.primary,
-    fontWeight: 'bold',
-  },
-  
-  // Tag management styles
-  selectedTagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  selectedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.brand.secondary + '80',
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
-    gap: Spacing.xs,
-  },
-  selectedTagText: {
-    ...TextStyles.caption,
-    color: Colors.text.primary,
-    fontWeight: 'bold',
-  },
-  tagInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  tagInput: {
-    flex: 1,
-    ...GlassStyles.cardSecondary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    fontSize: 14,
-    color: Colors.text.primary,
-  },
-  addTagButton: {
-    backgroundColor: Colors.brand.secondary + '80',
     borderRadius: BorderRadius.sm,
-    padding: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
   },
-  popularTagsContainer: {
-    marginTop: Spacing.xs,
+  statusText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#000',
   },
-  popularTagsLabel: {
-    ...TextStyles.caption,
-    color: Colors.text.secondary,
-    marginBottom: Spacing.sm,
+  cardPreview: {
+    marginBottom: Spacing.md,
   },
-  popularTag: {
+  previewCard: {
+    width: 20,
+    height: 30,
     backgroundColor: Colors.glass.tertiary,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    borderRadius: 2,
     marginRight: Spacing.xs,
     borderWidth: 1,
     borderColor: Colors.border.subtle,
   },
-  popularTagText: {
-    ...TextStyles.caption,
+  moreText: {
+    fontSize: 12,
     color: Colors.text.secondary,
-    fontSize: 11,
+    alignSelf: 'center',
+    marginLeft: Spacing.sm,
   },
-  entryTagsContainer: {
+  insightPreview: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     marginBottom: Spacing.sm,
   },
-  entryTag: {
-    backgroundColor: Colors.brand.secondary + '4D',
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    marginRight: Spacing.xs,
-    marginBottom: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border.soft,
+  insightIcon: {
+    fontSize: 16,
+    marginRight: Spacing.sm,
   },
-  entryTagText: {
-    ...TextStyles.caption,
-    color: Colors.text.tertiary,
-    fontWeight: '500',
-    fontSize: 11,
-  },
-  clearFiltersButton: {
-    backgroundColor: Colors.brand.secondary + '80',
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
-  },
-  clearFiltersText: {
-    ...TextStyles.caption,
-    color: Colors.text.primary,
-    fontWeight: 'bold',
-    fontSize: 11,
-  },
-  
-  // Dual tab styles
-  dualTabContainer: {
-    flexDirection: 'row',
-    ...GlassStyles.cardSecondary,
-    padding: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  tabButton: {
+  insightText: {
     flex: 1,
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.glass.tertiary,
-    marginHorizontal: Spacing.xs,
-  },
-  tabButtonActive: {
-    backgroundColor: Colors.brand.secondary + '80',
-    borderWidth: 1,
-    borderColor: Colors.border.focus,
-    ...ShadowStyles.soft,
-  },
-  tabButtonText: {
-    ...TextStyles.body,
+    fontSize: 13,
     color: Colors.text.secondary,
-    fontWeight: '600',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
+    fontStyle: 'italic',
   },
-  tabButtonTextActive: {
-    color: Colors.text.primary,
-    fontWeight: 'bold',
+  memoInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(244, 208, 63, 0.2)',
   },
-  tabCount: {
-    ...TextStyles.caption,
-    color: Colors.text.tertiary,
-    opacity: 0.8,
+  memoCount: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.brand.accent,
   },
   
-  // Loading and empty states
+  // 스프레드 카드 스타일
+  spreadCard: {
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+  },
+  spreadCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.md,
+  },
+  spreadInfo: {
+    flex: 1,
+  },
+  spreadTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  spreadDate: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  cardCountBadge: {
+    backgroundColor: 'rgba(244, 208, 63, 0.2)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.brand.accent,
+  },
+  cardCountText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.brand.accent,
+  },
+  spreadPreview: {
+    marginBottom: Spacing.md,
+  },
+  spreadPreviewCard: {
+    width: 20,
+    height: 30,
+    backgroundColor: Colors.glass.tertiary,
+    borderRadius: 2,
+    marginRight: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.border.subtle,
+  },
+  spreadFooter: {
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(244, 208, 63, 0.2)',
+  },
+  spreadType: {
+    fontSize: 12,
+    color: Colors.brand.accent,
+    fontWeight: '500',
+  },
+  
+  // 빈 상태
   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: Spacing.section,
+    paddingVertical: Spacing.xxl,
   },
   loadingText: {
-    ...TextStyles.headline,
-    color: Colors.text.tertiary,
-    textAlign: 'center',
+    fontSize: 16,
+    color: Colors.text.secondary,
   },
   emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: Spacing.section,
+    paddingHorizontal: Spacing.xl,
   },
   emptyIcon: {
     fontSize: 48,
     marginBottom: Spacing.lg,
   },
   emptyTitle: {
-    ...TextStyles.title,
+    fontSize: 18,
+    fontWeight: 'bold',
     color: Colors.brand.accent,
     marginBottom: Spacing.sm,
-    textAlign: 'center',
   },
-  emptySubtitle: {
-    ...TextStyles.body,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  comingSoonContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: Spacing.section,
-  },
-  comingSoonIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.lg,
-  },
-  comingSoonTitle: {
-    ...TextStyles.title,
-    color: Colors.brand.accent,
-    marginBottom: Spacing.sm,
-    textAlign: 'center',
-  },
-  comingSoonText: {
-    ...TextStyles.body,
+  emptyText: {
+    fontSize: 14,
     color: Colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   
-  // Reading card styles
-  readingsContainer: {
+  // 데일리 타로 뷰어 모달
+  dailyViewerContainer: {
+    flex: 1,
+    backgroundColor: '#1a1625', // 메인 앱과 동일한 배경색
+  },
+  dailyViewerHeader: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
     paddingBottom: Spacing.lg,
   },
-  dailyReadingCard: {
-    ...GlassStyles.cardInteractive,
-    ...ShadowStyles.soft,
-    marginBottom: Spacing.md,
-  },
-  readingCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.md,
-  },
-  readingDateContainer: {
-    flex: 1,
-  },
-  readingDate: {
-    ...TextStyles.headline,
+  dailyViewerTitle: {
+    fontSize: 22,
+    fontFamily: 'NotoSansKR_700Bold',
+    fontWeight: 'bold',
     color: Colors.brand.accent,
+    textAlign: 'center',
+  },
+  dailyViewerDate: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_400Regular',
+    color: Colors.text.secondary,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+  
+  // 24시간 카드 가로 스크롤
+  cardScrollSection: {
+    paddingVertical: Spacing.lg,
+  },
+  cardScrollContainer: {
+    paddingHorizontal: Spacing.lg,
+  },
+  hourlyCardItem: {
+    alignItems: 'center',
+    marginRight: Spacing.md,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(45, 27, 71, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    minWidth: 80,
+  },
+  hourlyCardSelected: {
+    borderColor: Colors.brand.accent,
+    borderWidth: 2,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+  },
+  hourLabel: {
+    fontSize: 10,
+    fontFamily: 'NotoSansKR_400Regular',
+    color: Colors.text.secondary,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  cardImageContainer: {
+    position: 'relative',
     marginBottom: Spacing.xs,
   },
-  readingLabel: {
-    ...TextStyles.caption,
-    color: Colors.text.tertiary,
-  },
-  readingStatus: {
-    marginLeft: Spacing.sm,
-  },
-  readingStatusIcon: {
-    fontSize: 20,
-  },
-  
-  // Card preview styles
-  cardPreviewContainer: {
-    marginBottom: Spacing.md,
-  },
-  cardPreview: {
-    flexGrow: 0,
-  },
-  miniCard: {
-    width: 24,
-    height: 36,
-    backgroundColor: Colors.glass.tertiary,
-    borderRadius: BorderRadius.xs,
+  memoIndicator: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: Colors.brand.accent,
+    borderRadius: 10,
+    width: 16,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border.subtle,
   },
-  miniCardIcon: {
-    fontSize: 12,
-  },
-  moreCardsText: {
-    ...TextStyles.caption,
-    color: Colors.text.secondary,
-    alignSelf: 'center',
-    marginLeft: Spacing.sm,
+  memoIndicatorText: {
+    fontSize: 8,
   },
   
-  // Insight preview styles
-  insightPreview: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.brand.secondary + '1A',
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border.soft,
-  },
-  insightIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
-    marginTop: 2,
-  },
-  insightText: {
-    flex: 1,
-    ...TextStyles.body,
-    color: Colors.text.tertiary,
-    fontSize: 13,
-    fontStyle: 'italic',
-  },
-  memoCount: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  // 선택된 카드 정보
+  selectedCardInfo: {
     alignItems: 'center',
-    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.soft,
+    borderTopColor: 'rgba(212, 175, 55, 0.2)',
   },
-  memoCountText: {
-    ...TextStyles.caption,
-    color: Colors.brand.accent,
+  selectedTimeText: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
+    fontWeight: '600',
+    color: Colors.brand.primary,
+  },
+  selectedCardName: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_500Medium',
+    color: Colors.text.primary,
+    marginTop: Spacing.xs,
+  },
+  
+  // 메모 섹션
+  memoSection: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  memoSectionTitle: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: Spacing.md,
+  },
+  memoInput: {
+    flex: 1,
+    backgroundColor: 'rgba(45, 27, 71, 0.4)',
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    padding: Spacing.md,
+    color: Colors.text.primary,
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_400Regular',
+    textAlignVertical: 'top',
+    minHeight: 100,
+  },
+  memoSaveButton: {
+    backgroundColor: Colors.brand.primary,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  memoSaveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
   },
   
-  // Modal and viewer styles
-  modalOverlay: {
+  // 우측 하단 플로팅 닫기 버튼
+  floatingCloseButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    bottom: 30,
+    right: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(45, 27, 71, 0.9)',
+    borderWidth: 2,
+    borderColor: Colors.brand.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...ShadowStyles.medium,
+  },
+  floatingCloseButtonText: {
+    fontSize: 24,
+    fontFamily: 'NotoSansKR_700Bold',
+    color: Colors.brand.accent,
+    fontWeight: 'bold',
+  },
+  
+  // 메모 모달
+  memoModalOverlay: {
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
+    paddingHorizontal: Spacing.lg,
   },
-  dailyTarotViewer: {
-    ...GlassStyles.cardElevated,
-    ...ShadowStyles.extreme,
-    margin: Spacing.lg,
-    maxHeight: '80%',
+  memoModal: {
+    backgroundColor: 'rgba(15, 12, 27, 0.95)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: Colors.brand.accent,
   },
-  viewerHeader: {
+  memoModalHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.lg,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.soft,
   },
-  backButton: {
+  memoModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+  },
+  modalCloseButton: {
+    padding: Spacing.sm,
+  },
+  memoInput: {
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    fontSize: 16,
+    color: Colors.text.primary,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+    marginBottom: Spacing.lg,
+  },
+  memoModalActions: {
+    alignItems: 'center',
+  },
+  memoSaveButton: {
+    backgroundColor: Colors.brand.accent,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    minWidth: 120,
+  },
+  memoSaveButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+  },
+  
+  // 스프레드 뷰어 모달
+  spreadViewerContainer: {
+    flex: 1,
+    backgroundColor: Colors.glass.primary,
+  },
+  spreadViewerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: Spacing.md,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(244, 208, 63, 0.3)',
   },
-  backButtonText: {
-    ...TextStyles.body,
-    color: Colors.brand.accent,
-    marginLeft: Spacing.sm,
-    fontWeight: '600',
-  },
-  viewerTitle: {
-    ...TextStyles.title,
+  spreadViewerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: Colors.text.primary,
+  },
+  spreadViewerContent: {
+    flex: 1,
+    padding: Spacing.lg,
+  },
+  spreadName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.brand.accent,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+  },
+  spreadLayout: {
+    height: 300,
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+    position: 'relative',
+  },
+  spreadCardPosition: {
+    alignItems: 'center',
+  },
+  spreadPositionName: {
+    fontSize: 8,
+    color: Colors.brand.accent,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: 2,
   },
 });
 

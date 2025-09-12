@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { Icon } from './Icon';
 import { GradientButton } from './GradientButton';
 import { 
@@ -11,25 +11,27 @@ import {
   Spacing,
   BorderRadius 
 } from './DesignSystem';
+import { useTheme, ThemeStorage } from './ThemeSystem';
+import { soundManager, TarotFeedback } from '../utils/SoundEffects';
 
 // Settings 저장 키
 const SETTINGS_STORAGE_KEYS = {
   PREMIUM_STATUS: '@tarot_premium_status',
-  DARK_MODE: '@tarot_dark_mode', 
   LANGUAGE: '@tarot_language',
   NOTIFICATIONS_SPREAD: '@tarot_notifications_spread',
   SOUND_EFFECTS: '@tarot_sound_effects',
   HAPTIC_FEEDBACK: '@tarot_haptic_feedback',
+  SOUND_VOLUME: '@tarot_sound_volume',
 };
 
 // Settings 상태 타입
 interface SettingsState {
   isPremium: boolean;
-  darkMode: boolean;
   language: 'ko' | 'en';
   notificationsSpread: boolean;
   soundEffects: boolean;
   hapticFeedback: boolean;
+  soundVolume: number;
 }
 
 // 간단한 스토리지 (AsyncStorage 대신)
@@ -51,13 +53,15 @@ const settingsStorage = {
 };
 
 export function TarotSettings() {
+  const { theme, isDark, toggleTheme, setDarkTheme, setLightTheme, colors, styles: themeStyles } = useTheme('dark');
+  
   const [settings, setSettings] = useState<SettingsState>({
     isPremium: false,
-    darkMode: true, // 기본값: 다크모드
     language: 'ko',
     notificationsSpread: false,
-    soundEffects: false,
-    hapticFeedback: false,
+    soundEffects: true,
+    hapticFeedback: true,
+    soundVolume: 0.7,
   });
 
   // 설정 로드
@@ -69,13 +73,18 @@ export function TarotSettings() {
     try {
       const loadedSettings: SettingsState = {
         isPremium: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.PREMIUM_STATUS)) === 'true',
-        darkMode: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.DARK_MODE)) !== 'false', // 기본 true
         language: ((await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.LANGUAGE)) as 'ko' | 'en') || 'ko',
         notificationsSpread: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.NOTIFICATIONS_SPREAD)) === 'true',
-        soundEffects: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.SOUND_EFFECTS)) === 'true',
-        hapticFeedback: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.HAPTIC_FEEDBACK)) === 'true',
+        soundEffects: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.SOUND_EFFECTS)) !== 'false', // 기본 true
+        hapticFeedback: (await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.HAPTIC_FEEDBACK)) !== 'false', // 기본 true
+        soundVolume: parseFloat((await settingsStorage.getItem(SETTINGS_STORAGE_KEYS.SOUND_VOLUME)) || '0.7'),
       };
       setSettings(loadedSettings);
+      
+      // 사운드 매니저 초기 설정
+      soundManager.setSoundEnabled(loadedSettings.soundEffects);
+      soundManager.setHapticEnabled(loadedSettings.hapticFeedback);
+      soundManager.setVolume(loadedSettings.soundVolume);
     } catch (error) {
       console.error('Settings load failed:', error);
     }
@@ -84,6 +93,22 @@ export function TarotSettings() {
   const updateSetting = async <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
+    
+    // 사운드 매니저 업데이트
+    if (key === 'soundEffects') {
+      soundManager.setSoundEnabled(value as boolean);
+      if (value) {
+        TarotFeedback.cardSelect(); // 테스트 사운드 재생
+      }
+    } else if (key === 'hapticFeedback') {
+      soundManager.setHapticEnabled(value as boolean);
+      if (value) {
+        TarotFeedback.cardSelect(); // 테스트 햅틱 재생
+      }
+    } else if (key === 'soundVolume') {
+      soundManager.setVolume(value as number);
+      TarotFeedback.cardSelect(); // 볼륨 테스트
+    }
     
     // 저장
     try {
@@ -94,6 +119,18 @@ export function TarotSettings() {
     } catch (error) {
       console.error('Setting save failed:', error);
     }
+  };
+
+  // 테마 변경 핸들러
+  const handleThemeToggle = async () => {
+    toggleTheme();
+    await ThemeStorage.saveTheme(isDark ? 'light' : 'dark');
+    TarotFeedback.cardSelect();
+    Alert.alert(
+      '🌓 테마 변경',
+      `테마가 ${isDark ? '라이트' : '다크'} 모드로 변경되었습니다.`,
+      [{ text: '확인' }]
+    );
   };
 
   // 프리미엄 관리 버튼 핸들러
@@ -209,11 +246,11 @@ export function TarotSettings() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background.primary }]} showsVerticalScrollIndicator={false}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>⚙️ 설정</Text>
-        <Text style={styles.headerSubtitle}>당신만의 신비로운 경험을 조정하세요</Text>
+        <Text style={[styles.headerTitle, { color: colors.text.hero }]}>⚙️ 설정</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.text.secondary }]}>당신만의 신비로운 경험을 조정하세요</Text>
       </View>
 
       {/* 프리미엄 멤버십 */}
@@ -250,29 +287,35 @@ export function TarotSettings() {
 
       {/* 디스플레이 & 테마 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🌙 디스플레이 & 테마</Text>
-        <View style={styles.settingCard}>
+        <Text style={[styles.sectionTitle, { color: colors.brand.accent }]}>🌓 디스플레이 & 테마</Text>
+        <View style={[styles.settingCard, { backgroundColor: colors.glass.primary, borderColor: colors.border.soft }]}>
           <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>다크모드</Text>
+            <View style={styles.settingLabelWithIcon}>
+              <Icon name={isDark ? "moon" : "sun"} size={18} color={colors.brand.accent} />
+              <Text style={[styles.settingLabel, { color: colors.text.primary }]}>테마 모드</Text>
+            </View>
             <View style={styles.settingValue}>
-              <Text style={styles.settingValueText}>
-                {settings.darkMode ? '[●○] 항상' : '[○●] 끄기'}
+              <Text style={[styles.settingValueText, { color: colors.text.tertiary }]}>
+                {isDark ? '[●○] 다크' : '[○●] 라이트'}
               </Text>
               <Switch
-                value={settings.darkMode}
-                onValueChange={(value) => updateSetting('darkMode', value)}
-                trackColor={{ false: '#333', true: '#7b2cbf' }}
-                thumbColor={settings.darkMode ? '#f4d03f' : '#999'}
+                value={isDark}
+                onValueChange={handleThemeToggle}
+                trackColor={{ false: colors.border.medium, true: colors.brand.secondary }}
+                thumbColor={isDark ? colors.brand.accent : colors.text.muted}
               />
             </View>
           </View>
-          <View style={styles.settingDivider} />
+          <View style={[styles.settingDivider, { backgroundColor: colors.border.soft }]} />
           <TouchableOpacity style={styles.settingItem} onPress={handleLanguageChange}>
-            <Text style={styles.settingLabel}>언어</Text>
+            <View style={styles.settingLabelWithIcon}>
+              <Icon name="globe" size={18} color={colors.brand.accent} />
+              <Text style={[styles.settingLabel, { color: colors.text.primary }]}>언어</Text>
+            </View>
             <View style={styles.settingValue}>
-              <Text style={styles.settingValueText}>
+              <Text style={[styles.settingValueText, { color: colors.text.tertiary }]}>
                 {settings.language === 'ko' ? '한국어' : 'English'} 
-                <Text style={styles.languageToggle}> [🌍 {settings.language === 'ko' ? 'EN' : 'KO'}]</Text>
+                <Text style={[styles.languageToggle, { color: colors.brand.accent }]}> [🌍 {settings.language === 'ko' ? 'EN' : 'KO'}]</Text>
               </Text>
             </View>
           </TouchableOpacity>
@@ -302,37 +345,95 @@ export function TarotSettings() {
 
       {/* 사운드 & 햅틱 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔊 사운드 & 햅틱</Text>
-        <View style={styles.settingCard}>
+        <Text style={[styles.sectionTitle, { color: colors.brand.accent }]}>🔊 사운드 & 햅틱</Text>
+        <View style={[styles.settingCard, { backgroundColor: colors.glass.primary, borderColor: colors.border.soft }]}>
           <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>사운드 이펙트</Text>
+            <View style={styles.settingLabelWithIcon}>
+              <Icon name={settings.soundEffects ? "volume2" : "volume-x"} size={18} color={colors.brand.accent} />
+              <Text style={[styles.settingLabel, { color: colors.text.primary }]}>사운드 이펙트</Text>
+            </View>
             <View style={styles.settingValue}>
-              <Text style={styles.settingValueText}>
-                {settings.soundEffects ? '[●○]' : '[○●]'}
+              <Text style={[styles.settingValueText, { color: colors.text.tertiary }]}>
+                {settings.soundEffects ? '[●○] ON' : '[○●] OFF'}
               </Text>
               <Switch
                 value={settings.soundEffects}
                 onValueChange={(value) => updateSetting('soundEffects', value)}
-                trackColor={{ false: '#333', true: '#7b2cbf' }}
-                thumbColor={settings.soundEffects ? '#f4d03f' : '#999'}
+                trackColor={{ false: colors.border.medium, true: colors.brand.secondary }}
+                thumbColor={settings.soundEffects ? colors.brand.accent : colors.text.muted}
               />
             </View>
           </View>
-          <View style={styles.settingDivider} />
+          
+          {/* 볼륨 컨트롤 */}
+          {settings.soundEffects && (
+            <>
+              <View style={[styles.settingDivider, { backgroundColor: colors.border.soft }]} />
+              <View style={styles.settingItem}>
+                <View style={styles.settingLabelWithIcon}>
+                  <Icon name="volume2" size={18} color={colors.brand.accent} />
+                  <Text style={[styles.settingLabel, { color: colors.text.primary }]}>볼륨</Text>
+                </View>
+                <View style={styles.volumeControl}>
+                  <Text style={[styles.volumeText, { color: colors.text.tertiary }]}>
+                    {Math.round(settings.soundVolume * 100)}%
+                  </Text>
+                  <View style={styles.volumeButtons}>
+                    <TouchableOpacity 
+                      style={[styles.volumeButton, { borderColor: colors.border.soft }]}
+                      onPress={() => {
+                        const newVolume = Math.max(0, settings.soundVolume - 0.2);
+                        updateSetting('soundVolume', newVolume);
+                      }}
+                    >
+                      <Text style={[styles.volumeButtonText, { color: colors.text.primary }]}>-</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.volumeButton, { borderColor: colors.border.soft }]}
+                      onPress={() => {
+                        const newVolume = Math.min(1, settings.soundVolume + 0.2);
+                        updateSetting('soundVolume', newVolume);
+                      }}
+                    >
+                      <Text style={[styles.volumeButtonText, { color: colors.text.primary }]}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </>
+          )}
+          
+          <View style={[styles.settingDivider, { backgroundColor: colors.border.soft }]} />
           <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>햅틱 피드백</Text>
+            <View style={styles.settingLabelWithIcon}>
+              <Icon name={settings.hapticFeedback ? "zap" : "zap-off"} size={18} color={colors.brand.accent} />
+              <Text style={[styles.settingLabel, { color: colors.text.primary }]}>햅틱 피드백</Text>
+            </View>
             <View style={styles.settingValue}>
-              <Text style={styles.settingValueText}>
-                {settings.hapticFeedback ? '[●○]' : '[○●]'}
+              <Text style={[styles.settingValueText, { color: colors.text.tertiary }]}>
+                {settings.hapticFeedback ? '[●○] ON' : '[○●] OFF'}
               </Text>
               <Switch
                 value={settings.hapticFeedback}
                 onValueChange={(value) => updateSetting('hapticFeedback', value)}
-                trackColor={{ false: '#333', true: '#7b2cbf' }}
-                thumbColor={settings.hapticFeedback ? '#f4d03f' : '#999'}
+                trackColor={{ false: colors.border.medium, true: colors.brand.secondary }}
+                thumbColor={settings.hapticFeedback ? colors.brand.accent : colors.text.muted}
               />
             </View>
           </View>
+          
+          {/* 사운드 테스트 버튼 */}
+          <View style={[styles.settingDivider, { backgroundColor: colors.border.soft }]} />
+          <TouchableOpacity 
+            style={styles.testSoundButton} 
+            onPress={() => {
+              TarotFeedback.mysticalMoment();
+            }}
+          >
+            <Icon name="play" size={18} color={colors.brand.accent} />
+            <Text style={[styles.testSoundText, { color: colors.text.primary }]}>사운드 테스트</Text>
+            <Text style={[styles.testSoundSubtext, { color: colors.text.tertiary }]}>미스틱한 차임 소리</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -410,7 +511,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...TextStyles.title,
-    color: Colors.brand.accent,
     marginBottom: Spacing.md,
   },
   
@@ -455,8 +555,10 @@ const styles = StyleSheet.create({
   
   // Setting card styles
   settingCard: {
-    ...GlassStyles.cardInteractive,
-    ...ShadowStyles.soft,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    padding: 0,
+    overflow: 'hidden',
   },
   settingItem: {
     flexDirection: 'row',
@@ -465,9 +567,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.lg,
   },
+  
+  // 새로운 스타일: 아이콘과 레이블 그룹
+  settingLabelWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
   settingLabel: {
     ...TextStyles.headline,
-    color: Colors.text.primary,
   },
   settingValue: {
     flexDirection: 'row',
@@ -476,17 +584,60 @@ const styles = StyleSheet.create({
   },
   settingValueText: {
     ...TextStyles.body,
-    color: Colors.text.tertiary,
     fontWeight: '600',
   },
   languageToggle: {
-    color: Colors.brand.accent,
     fontWeight: 'bold',
   },
   settingDivider: {
     height: 1,
-    backgroundColor: Colors.border.soft,
     marginHorizontal: Spacing.lg,
+  },
+  
+  // 볼륨 컨트롤 스타일
+  volumeControl: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    minWidth: 120,
+  },
+  volumeText: {
+    ...TextStyles.caption,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  volumeButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  volumeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  volumeButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  
+  // 사운드 테스트 버튼
+  testSoundButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  testSoundText: {
+    ...TextStyles.headline,
+    flex: 1,
+  },
+  testSoundSubtext: {
+    ...TextStyles.caption,
+    fontStyle: 'italic',
   },
   
   // Menu item styles

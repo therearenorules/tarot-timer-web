@@ -35,7 +35,22 @@
       "WebSearch",
       "Bash(claude doctor)",
       "Bash(claude mcp:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(start http://localhost:8084)",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(start http://localhost:8086)",
+      "Bash(start http://localhost:8087)",
+      "Bash(start http://localhost:3000)",
+      "Bash(start http://localhost:3001)",
+      "Bash(del \"C:\\Users\\cntus\\Desktop\\tarot-timer-web\\components\\JournalAnalytics.tsx\")",
+      "mcp__playwright__browser_wait_for",
+      "Bash(start http://localhost:3003)",
+      "Bash(npx watchman watch-del-all:*)",
+      "Bash(npx react-native start:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(find:*)",
+      "Bash(ren:*)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []
