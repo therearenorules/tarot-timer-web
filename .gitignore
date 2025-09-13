@@ -54,3 +54,4 @@ temp/
 
 # Playwright
 .playwright-mcp/
+backups/
