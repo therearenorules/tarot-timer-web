@@ -193,22 +193,41 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
                     transform: [
                       { translateX: -30 },
                       { translateY: -40 }
-                    ]
+                    ],
+                    zIndex: spread.spreadName?.includes('켈틱') && position.id === 2 ? 10 : 1
                   }
                 ]}
               >
-                {position.card && (
-                  <TarotCardComponent 
-                    card={position.card}
-                    size="small"
-                    showText={false}
-                  />
-                )}
-                {position.name && (
-                  <Text style={styles.spreadPositionName}>{position.name}</Text>
-                )}
+                <View style={spread.spreadName?.includes('켈틱') && position.id === 2 ? styles.rotatedCard : null}>
+                  {position.card && (
+                    <TarotCardComponent 
+                      card={position.card}
+                      size="small"
+                      showText={false}
+                      noBorder={spread.spreadName?.includes('켈틱') || spread.spreadName?.includes('컵오브릴레이션십')}
+                    />
+                  )}
+                </View>
               </View>
             ))}
+          </View>
+
+          {/* 메모/인사이트 섹션 */}
+          {spread.insights && (
+            <View style={styles.insightsSection}>
+              <Text style={styles.insightsSectionTitle}>📝 메모 & 인사이트</Text>
+              <View style={styles.insightsContainer}>
+                <Text style={styles.insightsText}>{spread.insights}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* 생성 날짜 */}
+          <View style={styles.metadataSection}>
+            <Text style={styles.metadataLabel}>생성일</Text>
+            <Text style={styles.metadataValue}>
+              {new Date(spread.createdAt).toLocaleString('ko-KR')}
+            </Text>
           </View>
         </ScrollView>
       </View>
@@ -981,7 +1000,7 @@ const styles = StyleSheet.create({
   // 스프레드 뷰어 모달
   spreadViewerContainer: {
     flex: 1,
-    backgroundColor: Colors.glass.primary,
+    backgroundColor: 'rgba(15, 12, 27, 0.95)',
   },
   spreadViewerHeader: {
     flexDirection: 'row',
@@ -1010,7 +1029,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   spreadLayout: {
-    height: 300,
+    height: 500,
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
@@ -1019,6 +1038,9 @@ const styles = StyleSheet.create({
   },
   spreadCardPosition: {
     alignItems: 'center',
+  },
+  rotatedCard: {
+    transform: [{ rotate: '90deg' }], // 켈틱 크로스 2번 카드 90도 회전
   },
   spreadPositionName: {
     fontSize: 8,
@@ -1029,6 +1051,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
     borderRadius: 2,
+  },
+  
+  // 인사이트 섹션
+  insightsSection: {
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  insightsSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.brand.accent,
+    marginBottom: Spacing.md,
+  },
+  insightsContainer: {
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    borderRadius: BorderRadius.medium,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+    padding: Spacing.md,
+  },
+  insightsText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    lineHeight: 20,
+  },
+  
+  // 메타데이터 섹션
+  metadataSection: {
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    backgroundColor: 'rgba(155, 141, 184, 0.1)',
+    borderRadius: BorderRadius.medium,
+    borderWidth: 1,
+    borderColor: 'rgba(155, 141, 184, 0.3)',
+  },
+  metadataLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.xs,
+  },
+  metadataValue: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    fontWeight: '500',
   },
 });
 

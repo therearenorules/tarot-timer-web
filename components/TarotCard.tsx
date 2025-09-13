@@ -7,10 +7,11 @@ import { TarotCardBack } from './TarotCardBack';
 
 interface TarotCardProps {
   card: TarotCardType | null;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'tiny' | 'small' | 'small-medium' | 'medium' | 'medium-large' | 'large' | 'extra-large';
   showText?: boolean;
   onPress?: () => void;
   showBack?: boolean;
+  noBorder?: boolean;
 }
 
 export const TarotCardComponent: React.FC<TarotCardProps> = ({ 
@@ -18,7 +19,8 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
   size = 'medium', 
   showText = true,
   onPress,
-  showBack = false
+  showBack = false,
+  noBorder = false
 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -26,15 +28,27 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
     // 실제 타로 카드 비율 0.596 (1144x1919)에 맞게 조정
     const aspectRatio = 0.596;
     switch (size) {
+      case 'tiny':
+        const tinyHeight = 80;
+        return { width: Math.round(tinyHeight * aspectRatio), height: tinyHeight };
       case 'small':
         const smallHeight = 100;
         return { width: Math.round(smallHeight * aspectRatio), height: smallHeight };
+      case 'small-medium':
+        const smallMediumHeight = 150;
+        return { width: Math.round(smallMediumHeight * aspectRatio), height: smallMediumHeight };
       case 'medium':
         const mediumHeight = 200;
         return { width: Math.round(mediumHeight * aspectRatio), height: mediumHeight };
+      case 'medium-large':
+        const mediumLargeHeight = 250;
+        return { width: Math.round(mediumLargeHeight * aspectRatio), height: mediumLargeHeight };
       case 'large':
         const largeHeight = 300;
         return { width: Math.round(largeHeight * aspectRatio), height: largeHeight };
+      case 'extra-large':
+        const extraLargeHeight = 350;
+        return { width: Math.round(extraLargeHeight * aspectRatio), height: extraLargeHeight };
       default:
         const defaultHeight = 200;
         return { width: Math.round(defaultHeight * aspectRatio), height: defaultHeight };
@@ -74,7 +88,11 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
   }
 
   const CardContent = (
-    <View style={[styles.cardContainer, { width: Math.floor(imageSize.width + 20) }]}>
+    <View style={[
+      styles.cardContainer, 
+      { width: Math.floor(imageSize.width + (noBorder ? 0 : 20)) },
+      noBorder && styles.noBorderContainer
+    ]}>
       <View style={[styles.cardImageContainer, imageSize]}>
         {imageError ? (
           // 이미지 로딩 실패 시 대체 컨텐츠
@@ -92,7 +110,7 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
           />
         )}
         
-        {!imageError && (
+        {!imageError && !noBorder && (
           <View style={styles.cardOverlay}>
             <Icon name="sparkles" size={16} color="#f4d03f" />
           </View>
@@ -139,6 +157,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
+  },
+  noBorderContainer: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderColor: 'transparent',
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    padding: 0,
+    borderRadius: 8,
   },
   cardImageContainer: {
     borderRadius: 8,

@@ -24,6 +24,11 @@ export interface SpreadPosition {
   card: TarotCard | null;
   x?: number;
   y?: number;
+  // 상대적 위치 시스템을 위한 새로운 속성들
+  isCenter?: boolean;        // 중심 카드 여부
+  relativeTo?: number;       // 기준이 되는 카드 ID
+  offsetX?: number;          // X축 오프셋
+  offsetY?: number;          // Y축 오프셋
 }
 
 export type SpreadType = 'one-card' | 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'cup-of-relationship' | 'choice';
@@ -53,9 +58,9 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Three Card Spread',
     description: '과거-현재-미래의 흐름 파악',
     positions: [
-      { id: 1, name: '과거', nameEn: 'Past', description: '과거의 영향과 배경', card: null, x: 25, y: 50 },
+      { id: 1, name: '과거', nameEn: 'Past', description: '과거의 영향과 배경', card: null, x: 30, y: 50 },
       { id: 2, name: '현재', nameEn: 'Present', description: '현재 상황과 에너지', card: null, x: 50, y: 50 },
-      { id: 3, name: '미래', nameEn: 'Future', description: '미래의 가능성과 방향', card: null, x: 75, y: 50 }
+      { id: 3, name: '미래', nameEn: 'Future', description: '미래의 가능성과 방향', card: null, x: 70, y: 50 }
     ]
   },
   {
@@ -64,10 +69,10 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Four Card Spread',
     description: '상황의 네 가지 측면 분석',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Current Situation', description: '지금의 전체적인 상황', card: null, x: 25, y: 30 },
-      { id: 2, name: '장애물', nameEn: 'Obstacles', description: '극복해야 할 도전', card: null, x: 75, y: 30 },
-      { id: 3, name: '조언', nameEn: 'Advice', description: '필요한 행동이나 자세', card: null, x: 25, y: 70 },
-      { id: 4, name: '결과', nameEn: 'Outcome', description: '예상되는 결과', card: null, x: 75, y: 70 }
+      { id: 1, name: '현재 상황', nameEn: 'Current Situation', description: '지금의 전체적인 상황', card: null, x: 20, y: 50 },
+      { id: 2, name: '장애물', nameEn: 'Obstacles', description: '극복해야 할 도전', card: null, x: 40, y: 50 },
+      { id: 3, name: '조언', nameEn: 'Advice', description: '필요한 행동이나 자세', card: null, x: 60, y: 50 },
+      { id: 4, name: '결과', nameEn: 'Outcome', description: '예상되는 결과', card: null, x: 80, y: 50 }
     ]
   },
   {
@@ -76,11 +81,11 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Five Card V Spread',
     description: '현재 상황의 다면적 분석',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Present', description: '중심이 되는 현재 상황', card: null, x: 50, y: 65 },
-      { id: 2, name: '과거 영향', nameEn: 'Past Influence', description: '영향을 미친 과거', card: null, x: 30, y: 40 },
-      { id: 3, name: '미래 가능성', nameEn: 'Future Possibility', description: '다가올 가능성', card: null, x: 70, y: 40 },
-      { id: 4, name: '숨겨진 요소', nameEn: 'Hidden Factor', description: '보이지 않는 영향', card: null, x: 15, y: 15 },
-      { id: 5, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 85, y: 15 }
+      { id: 1, name: '현재 상황', nameEn: 'Present', description: '중심이 되는 현재 상황', card: null, x: 50, y: 70 },
+      { id: 2, name: '과거 영향', nameEn: 'Past Influence', description: '영향을 미친 과거', card: null, x: 30, y: 45 },
+      { id: 3, name: '미래 가능성', nameEn: 'Future Possibility', description: '다가올 가능성', card: null, x: 70, y: 45 },
+      { id: 4, name: '숨겨진 요소', nameEn: 'Hidden Factor', description: '보이지 않는 영향', card: null, x: 20, y: 20 },
+      { id: 5, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 80, y: 20 }
     ]
   },
   {
@@ -89,16 +94,16 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Celtic Cross',
     description: '종합적이고 깊이 있는 분석',
     positions: [
-      { id: 1, name: '현재 상황', nameEn: 'Present Situation', description: '지금의 상황과 에너지', card: null, x: 35, y: 45 },
-      { id: 2, name: '도전과 장애', nameEn: 'Cross/Challenge', description: '극복해야 할 도전', card: null, x: 55, y: 45 },
-      { id: 3, name: '원인', nameEn: 'Distant Past', description: '상황의 근본 원인', card: null, x: 15, y: 45 },
-      { id: 4, name: '가능한 결과', nameEn: 'Possible Outcome', description: '가능한 미래', card: null, x: 35, y: 20 },
-      { id: 5, name: '최근 과거', nameEn: 'Recent Past', description: '최근의 영향', card: null, x: 35, y: 70 },
-      { id: 6, name: '가까운 미래', nameEn: 'Near Future', description: '다가올 변화', card: null, x: 75, y: 45 },
-      { id: 7, name: '당신의 접근', nameEn: 'Your Approach', description: '당신의 태도와 방법', card: null, x: 80, y: 70 },
-      { id: 8, name: '외부 영향', nameEn: 'External Influences', description: '주변 환경의 영향', card: null, x: 80, y: 50 },
-      { id: 9, name: '희망과 두려움', nameEn: 'Hopes & Fears', description: '내면의 희망과 걱정', card: null, x: 80, y: 30 },
-      { id: 10, name: '최종 결과', nameEn: 'Final Outcome', description: '최종적인 결과', card: null, x: 80, y: 10 }
+      { id: 1, name: '현재 상황', nameEn: 'Present Situation', description: '지금의 상황과 에너지', card: null, x: 40, y: 50 },
+      { id: 2, name: '방해물', nameEn: 'Obstacles', description: '극복해야 할 방해물', card: null, x: 40, y: 50 },
+      { id: 3, name: '문제의 핵심', nameEn: 'Core Issue', description: '문제의 핵심과 본질', card: null, x: 40, y: 75 },
+      { id: 4, name: '과거', nameEn: 'Past', description: '과거의 영향', card: null, x: 20, y: 50 },
+      { id: 5, name: '현재', nameEn: 'Present', description: '현재의 상황', card: null, x: 40, y: 25 },
+      { id: 6, name: '미래', nameEn: 'Future', description: '미래의 가능성', card: null, x: 60, y: 50 },
+      { id: 7, name: '질문자 관점', nameEn: 'Your Perspective', description: '질문자의 관점과 태도', card: null, x: 85, y: 75 },
+      { id: 8, name: '외부 상황', nameEn: 'External Situation', description: '주변의 외부 상황', card: null, x: 85, y: 55 },
+      { id: 9, name: '질문자 바람, 두려움', nameEn: 'Hopes & Fears', description: '질문자의 바람과 두려움', card: null, x: 85, y: 35 },
+      { id: 10, name: '최종 예측', nameEn: 'Final Prediction', description: '최종적인 예측과 결과', card: null, x: 85, y: 15 }
     ]
   },
   {
@@ -107,17 +112,17 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'Cup of Relationship Spread',
     description: '인간관계, 연애 문제',
     positions: [
-      { id: 1, name: '당신의 감정', nameEn: 'Your Feelings', description: '당신의 현재 감정', card: null, x: 15, y: 15 },
-      { id: 2, name: '상대의 감정', nameEn: 'Their Feelings', description: '상대방의 감정', card: null, x: 85, y: 15 },
-      { id: 3, name: '관계의 기초', nameEn: 'Foundation', description: '관계의 토대', card: null, x: 50, y: 25 },
-      { id: 4, name: '과거의 영향', nameEn: 'Past Influence', description: '과거가 미치는 영향', card: null, x: 15, y: 40 },
+      { id: 1, name: '당신의 감정', nameEn: 'Your Feelings', description: '당신의 현재 감정', card: null, x: 20, y: 85 },
+      { id: 2, name: '상대의 감정', nameEn: 'Their Feelings', description: '상대방의 감정', card: null, x: 80, y: 85 },
+      { id: 3, name: '관계의 기초', nameEn: 'Foundation', description: '관계의 토대', card: null, x: 50, y: 85 },
+      { id: 4, name: '과거의 영향', nameEn: 'Past Influence', description: '과거가 미치는 영향', card: null, x: 50, y: 65 },
       { id: 5, name: '현재의 상황', nameEn: 'Present Situation', description: '지금의 관계 상태', card: null, x: 50, y: 40 },
-      { id: 6, name: '미래의 가능성', nameEn: 'Future Potential', description: '앞으로의 가능성', card: null, x: 85, y: 40 },
-      { id: 7, name: '장애물', nameEn: 'Obstacles', description: '관계의 걸림돌', card: null, x: 15, y: 55 },
-      { id: 8, name: '조언', nameEn: 'Advice', description: '관계 개선을 위한 조언', card: null, x: 50, y: 55 },
-      { id: 9, name: '외부 영향', nameEn: 'External Factors', description: '주변의 영향', card: null, x: 85, y: 55 },
-      { id: 10, name: '숨겨진 요소', nameEn: 'Hidden Elements', description: '보이지 않는 요소', card: null, x: 30, y: 75 },
-      { id: 11, name: '최종 결과', nameEn: 'Final Outcome', description: '관계의 최종 결과', card: null, x: 70, y: 75 }
+      { id: 6, name: '미래의 가능성', nameEn: 'Future Potential', description: '앞으로의 가능성', card: null, x: 65, y: 57 },
+      { id: 7, name: '장애물', nameEn: 'Obstacles', description: '관계의 걸림돌', card: null, x: 35, y: 25 },
+      { id: 8, name: '조언', nameEn: 'Advice', description: '관계 개선을 위한 조언', card: null, x: 65, y: 25 },
+      { id: 9, name: '외부 영향', nameEn: 'External Factors', description: '주변의 영향', card: null, x: 20, y: 10 },
+      { id: 10, name: '숨겨진 요소', nameEn: 'Hidden Elements', description: '보이지 않는 요소', card: null, x: 80, y: 10 },
+      { id: 11, name: '최종 결과', nameEn: 'Final Outcome', description: '관계의 최종 결과', card: null, x: 50, y: 10 }
     ]
   },
   {
@@ -126,13 +131,13 @@ const SPREAD_LAYOUTS: SpreadLayout[] = [
     nameEn: 'AB Choice Spread',
     description: '두 가지 선택지 중 결정',
     positions: [
-      { id: 1, name: '상황', nameEn: 'Situation', description: '현재 상황', card: null, x: 50, y: 15 },
-      { id: 2, name: 'A 선택지', nameEn: 'Choice A', description: '첫 번째 선택', card: null, x: 25, y: 35 },
-      { id: 3, name: 'A 결과', nameEn: 'A Outcome', description: 'A 선택의 결과', card: null, x: 25, y: 55 },
-      { id: 4, name: 'A 조언', nameEn: 'A Advice', description: 'A 선택 시 조언', card: null, x: 25, y: 75 },
-      { id: 5, name: 'B 선택지', nameEn: 'Choice B', description: '두 번째 선택', card: null, x: 75, y: 35 },
-      { id: 6, name: 'B 결과', nameEn: 'B Outcome', description: 'B 선택의 결과', card: null, x: 75, y: 55 },
-      { id: 7, name: 'B 조언', nameEn: 'B Advice', description: 'B 선택 시 조언', card: null, x: 75, y: 75 }
+      { id: 1, name: '', nameEn: '', description: '', card: null, x: 20, y: 20 },
+      { id: 2, name: '', nameEn: '', description: '', card: null, x: 20, y: 50 },
+      { id: 3, name: '', nameEn: '', description: '', card: null, x: 20, y: 80 },
+      { id: 4, name: '', nameEn: '', description: '', card: null, x: 80, y: 20 },
+      { id: 5, name: '', nameEn: '', description: '', card: null, x: 80, y: 50 },
+      { id: 6, name: '', nameEn: '', description: '', card: null, x: 80, y: 80 },
+      { id: 7, name: '', nameEn: '', description: '', card: null, x: 50, y: 50 }
     ]
   }
 ];
@@ -227,7 +232,7 @@ export const TarotSpread: React.FC = () => {
       
       Alert.alert(
         '✨ 저장 완료!',
-        `"${saveTitle}" 스프레드가 저널에 저장되었습니다.`,
+        `"${saveTitle}" 스프레드가 다이어리에 저장되었습니다.`,
         [{ text: '확인' }]
       );
     } catch (error) {
@@ -360,6 +365,20 @@ export const TarotSpread: React.FC = () => {
   const hasAnyCards = spreadCards.some(position => position.card !== null);
   const selectedCard = selectedPosition ? spreadCards.find(p => p.id === selectedPosition) : null;
 
+  // 카드 수에 따른 동적 사이즈 결정
+  const getCardSizeBySpreadType = () => {
+    // 켈틱크로스는 small보다 약간 큰 크기 사용
+    if (currentSpreadType === 'celtic-cross') return 'small';
+    
+    const cardCount = spreadCards.length;
+    if (cardCount === 1) return 'extra-large';     // 원 카드
+    if (cardCount === 3) return 'medium-large';    // 쓰리 카드 - 한 단계 축소
+    if (cardCount === 4) return 'medium';          // 포 카드 - 한 단계 축소
+    if (cardCount === 5) return 'small-medium';    // 파이브 카드 - 한 단계 축소
+    if (cardCount <= 7) return 'small-medium';     // AB 선택
+    return 'small';                                // 컵오브릴레이션십 (11장)
+  };
+
   // 스프레드 선택 화면
   if (!selectedSpread) {
     return (
@@ -370,13 +389,14 @@ export const TarotSpread: React.FC = () => {
       >
         {/* 헤더 */}
         <Animated.View style={[styles.headerContainer, headerFadeIn]}>
+          <Text style={styles.mainTitle}>🔮 타로 스프레드</Text>
           <Text style={styles.subtitle}>"우주의 메시지를 받을 준비하세요"</Text>
         </Animated.View>
 
         {/* 스프레드 리스트 (세로 배치) */}
         <View style={styles.spreadList}>
           {SPREAD_LAYOUTS.map((layout, index) => {
-            const isPremium = layout.id === 'love';
+            const isPremium = false; // 테스트용으로 모든 기능 활성화
             const { onPressIn, onPressOut, animatedStyle: touchFeedback } = touchFeedbackHooks[index];
             const { animatedStyle: cardEntrance } = cardEntranceHooks[index];
             
@@ -412,16 +432,16 @@ export const TarotSpread: React.FC = () => {
                     styles.spreadCardTitle,
                     isPremium && styles.spreadCardTitlePremium
                   ]}>
-                    {layout.name}
+                    {layout.name.replace(/[🎯⚖️🔮✨🌟💖🤔]/g, '').trim()}
                   </Text>
                   {isPremium && (
                     <View style={styles.premiumBadge}>
-                      <Text style={styles.premiumText}>[👑PRO]</Text>
+                      <Text style={styles.premiumText}>PREMIUM</Text>
                     </View>
                   )}
                   {!isPremium && (
                     <View style={styles.freeBadge}>
-                      <Text style={styles.freeText}>[FREE]</Text>
+                      <Text style={styles.freeText}>FREE</Text>
                     </View>
                   )}
                 </View>
@@ -487,7 +507,7 @@ export const TarotSpread: React.FC = () => {
               setSelectedPosition(null);
             }}
           >
-            <Icon name="arrow-left" size={20} color="#f4d03f" />
+            <Icon name="chevron-left" size={20} color="#f4d03f" />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Text style={styles.spreadTitle}>{selectedSpread.name.replace(/[🎯⚖️🔮✨🌟💖🤔]/g, '').trim()}</Text>
@@ -496,7 +516,10 @@ export const TarotSpread: React.FC = () => {
         </View>
 
         {/* 카드 배치 영역 - 중앙 집중형 레이아웃 */}
-        <View style={styles.cardSpreadArea}>
+        <View style={[
+          styles.cardSpreadArea,
+          styles.cardSpreadAreaLarge
+        ]}>
           <View style={styles.cardGrid}>
             {spreadCards.map((position) => (
               <View 
@@ -508,9 +531,11 @@ export const TarotSpread: React.FC = () => {
                     left: `${position.x || 50}%`, 
                     top: `${position.y || 50}%`,
                     transform: [
-                      { translateX: -50 }, 
-                      { translateY: -75 }
-                    ]
+                      { translateX: -40 }, 
+                      { translateY: -60 }
+                    ],
+                    // 켈틱 크로스에서 2번 카드를 1번 카드 위에 겹치도록 z-index 설정
+                    zIndex: currentSpreadType === 'celtic-cross' && position.id === 2 ? 10 : 1
                   }
                 ]}
               >
@@ -519,17 +544,16 @@ export const TarotSpread: React.FC = () => {
                   onPress={() => handleCardPress(position.id, position.card !== null)}
                   activeOpacity={0.8}
                 >
-                  <TarotCardComponent
-                    card={position.card}
-                    size="small"
-                    showText={false}
-                    showBack={position.card === null}
-                  />
-                  <View style={styles.positionIndicator}>
-                    <Text style={styles.positionNumber}>{position.id}</Text>
+                  <View style={currentSpreadType === 'celtic-cross' && position.id === 2 ? styles.rotatedCard : null}>
+                    <TarotCardComponent
+                      card={position.card}
+                      size={getCardSizeBySpreadType()}
+                      showText={false}
+                      showBack={position.card === null}
+                      noBorder={currentSpreadType === 'celtic-cross' || currentSpreadType === 'cup-of-relationship'}
+                    />
                   </View>
                 </TouchableOpacity>
-                <Text style={styles.positionLabel}>{position.name}</Text>
               </View>
             ))}
           </View>
@@ -538,10 +562,6 @@ export const TarotSpread: React.FC = () => {
         {/* 선택된 카드 상세 정보 */}
         {selectedCard && selectedCard.card && (
           <View style={styles.selectedCardInfo}>
-            <View style={styles.cardInfoHeader}>
-              <Icon name="star" size={16} color="#f4d03f" />
-              <Text style={styles.cardInfoTitle}>{selectedCard.name}</Text>
-            </View>
             <Text style={styles.cardName}>{selectedCard.card.nameKr}</Text>
             <Text style={styles.cardNameEn}>({selectedCard.card.name})</Text>
             <Text style={styles.cardMeaning}>{selectedCard.card.meaningKr}</Text>
@@ -636,7 +656,7 @@ export const TarotSpread: React.FC = () => {
                     <Icon name="bookmark" size={48} color="#666" />
                     <Text style={styles.emptyStateText}>저장된 스프레드가 없습니다</Text>
                     <Text style={styles.emptyStateSubText}>
-                      카드를 뽑고 "스프레드 저장" 버튼을 눌러 스프레드를 저장해보세요
+                      카드를 뽑고 "다이어리에 저장" 버튼을 눌러 스프레드를 저장해보세요
                     </Text>
                   </View>
                 ) : (
@@ -683,32 +703,21 @@ export const TarotSpread: React.FC = () => {
 
       {/* 하단 액션 버튼들 */}
       <View style={styles.bottomActions}>
-        <GradientButton
-          onPress={drawFullSpread}
-          title={isDrawing ? '뽑는 중...' : '⚡ 전체 카드 뽑기'}
-          disabled={isDrawing}
-          size="large"
-          style={styles.primaryButton}
-        />
-        
-        <View style={styles.secondaryActions}>
-          {hasAnyCards && (
-            <TouchableOpacity 
-              style={styles.secondaryButton}
-              onPress={() => setIsSaveModalVisible(true)}
-            >
-              <Icon name="folder-open" size={16} color="#9b8db8" />
-              <Text style={styles.secondaryButtonText}>스프레드 저장</Text>
-            </TouchableOpacity>
-          )}
+        <View style={styles.horizontalButtonContainer}>
+          <GradientButton
+            onPress={() => setIsSaveModalVisible(true)}
+            title="스프레드 저장"
+            size="medium"
+            style={[styles.halfButton, styles.saveButton]}
+          />
           
-          <TouchableOpacity 
-            style={styles.secondaryButton}
-            onPress={() => setIsLoadModalVisible(true)}
-          >
-            <Icon name="book-open" size={16} color="#9b8db8" />
-            <Text style={styles.secondaryButtonText}>저널</Text>
-          </TouchableOpacity>
+          <GradientButton
+            onPress={drawFullSpread}
+            title={isDrawing ? '뽑는 중...' : '카드 뽑기'}
+            disabled={isDrawing}
+            size="medium"
+            style={styles.halfButton}
+          />
         </View>
       </View>
     </View>
@@ -864,13 +873,16 @@ const styles = StyleSheet.create({
   // 카드 배치 영역
   cardSpreadArea: {
     flex: 1,
-    minHeight: 600,
+    minHeight: 500,
     marginBottom: Spacing.xl,
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.large,
     borderWidth: 2,
     borderColor: 'rgba(244, 208, 63, 0.3)',
     padding: Spacing.lg,
+  },
+  cardSpreadAreaLarge: {
+    minHeight: 700, // 켈틱크로스와 컵오브릴레이션십에서 더 큰 높이
   },
   cardGrid: {
     flex: 1,
@@ -883,6 +895,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     marginBottom: Spacing.xs,
+  },
+  rotatedCardSlot: {
+    // 회전된 카드를 위한 추가 공간
+  },
+  cardContainer: {
+    // 카드를 감싸는 컨테이너
+  },
+  rotatedCard: {
+    transform: [{ rotate: '90deg' }], // 켈틱 크로스 2번 카드 90도 회전
   },
   positionIndicator: {
     position: 'absolute',
@@ -910,9 +931,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.small,
-    maxWidth: 90,
+    maxWidth: 80,
+  },
+  positionIndicator: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 20,
+    height: 20,
+    backgroundColor: Colors.brand.accent,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  positionNumber: {
+    color: '#000',
     fontSize: 10,
-    lineHeight: 12,
+    fontWeight: 'bold',
   },
 
   // 선택된 카드 정보
@@ -922,17 +959,6 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.brand.accent,
-  },
-  cardInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  cardInfoTitle: {
-    ...TextStyles.headline,
-    color: Colors.brand.accent,
-    marginLeft: Spacing.xs,
   },
   cardName: {
     ...TextStyles.headline,
@@ -969,6 +995,19 @@ const styles = StyleSheet.create({
   primaryButton: {
     marginBottom: Spacing.md,
   },
+  horizontalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    gap: Spacing.md,
+  },
+  halfButton: {
+    flex: 1,
+  },
+  saveButton: {
+    opacity: 0.7,
+  },
   secondaryActions: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1000,7 +1039,8 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   modalContainer: {
-    ...GlassStyles.card,
+    backgroundColor: 'rgba(15, 12, 27, 0.95)',
+    borderRadius: BorderRadius.large,
     ...ShadowStyles.extreme,
     width: '100%',
     maxWidth: 400,
@@ -1117,7 +1157,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: '#ff6b6b33',
   },
-  
   // AB 선택 스프레드 헤더 스타일
   choiceHeader: {
     flexDirection: 'row',

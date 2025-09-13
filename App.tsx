@@ -83,7 +83,7 @@ const TabBar = memo(({
   const tabs = [
     { id: 'timer', name: '타이머', icon: 'clock' as const },
     { id: 'spread', name: '스프레드', icon: 'tarot-cards' as const },
-    { id: 'journal', name: '저널', icon: 'book-open' as const },
+    { id: 'journal', name: '다이어리', icon: 'book-open' as const },
     { id: 'settings', name: '설정', icon: 'settings' as const }
   ];
 
@@ -116,7 +116,7 @@ const AppHeader = memo(({ activeTab }: { activeTab: string }) => {
     switch (tab) {
       case 'timer': return '타로 타이머';
       case 'spread': return '타로 스프레드';
-      case 'journal': return '타로 저널';
+      case 'journal': return '타로 다이어리';
       case 'settings': return '설정';
       default: return '타로 타이머';
     }
@@ -168,7 +168,7 @@ function AppContent() {
         </TabErrorBoundary>
       ),
       journal: (
-        <TabErrorBoundary tabName="저널">
+        <TabErrorBoundary tabName="다이어리">
           <Suspense fallback={<LoadingSpinner />}>
             <JournalTab />
           </Suspense>

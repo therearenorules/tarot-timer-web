@@ -40,11 +40,19 @@ export interface SavedSpread {
   title: string;
   spreadType: string;
   spreadName: string;
-  date: string; // ISO 문자열
-  question?: string; // 사용자 질문
-  cards: TarotCard[];
+  spreadNameEn: string;
+  positions: {
+    id: number;
+    name: string;
+    nameEn: string;
+    description: string;
+    card: TarotCard | null;
+    x?: number;
+    y?: number;
+  }[];
   insights: string; // 전체 인사이트
-  savedAt: string; // ISO 문자열
+  createdAt: string; // ISO 문자열
+  tags: string[];
 }
 
 // 타로 카드 기본 데이터 (78장 중 주요 카드들)
