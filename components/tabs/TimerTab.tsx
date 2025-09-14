@@ -22,14 +22,14 @@ const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth * 0.35; // 화면 너비의 35% (더 얇게)
 
 // 카드 상세 모달 컴포넌트
-const CardDetailModal = memo(({ 
-  visible, 
-  card, 
-  hour, 
-  memo, 
-  onClose, 
-  onMemoChange, 
-  onSave 
+const CardDetailModal = memo(({
+  visible,
+  card,
+  hour,
+  memo,
+  onClose,
+  onMemoChange,
+  onSave
 }: {
   visible: boolean;
   card: any;
@@ -39,32 +39,90 @@ const CardDetailModal = memo(({
   onMemoChange: (memo: string) => void;
   onSave: () => void;
 }) => {
+  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+
+  useEffect(() => {
+    const onChange = (result: any) => {
+      setScreenData(result.window);
+    };
+
+    const subscription = Dimensions.addEventListener('change', onChange);
+    return () => subscription?.remove();
+  }, []);
+
+  // 화면 크기에 따른 모달 스타일 계산
+  const getModalStyle = () => {
+    const { width, height } = screenData;
+
+    if (Platform.OS === 'web') {
+      return {
+        width: '100%',
+        maxWidth: 400,
+        height: 'auto',
+      };
+    }
+
+    // 모바일에서 화면 크기별 조정
+    let modalWidth = '95%';
+    let modalHeight = '75%';
+    let minHeight = 500;
+
+    if (width < 350) {
+      // 매우 작은 화면 (iPhone SE 등)
+      modalWidth = '98%';
+      modalHeight = '80%';
+      minHeight = 450;
+    } else if (width > 500) {
+      // 태블릿이나 큰 화면
+      modalWidth = '85%';
+      modalHeight = '70%';
+      minHeight = 550;
+    }
+
+    return {
+      width: modalWidth,
+      height: modalHeight,
+      minHeight,
+      maxWidth: width > 500 ? 500 : undefined, // 태블릿에서 최대 너비 제한
+    };
+  };
+
   if (!card) return null;
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="slide"
       transparent={true}
       onRequestClose={onClose}
+      supportedOrientations={['portrait']}
+      statusBarTranslucent={false}
     >
-      <TouchableOpacity 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
       >
-        <TouchableOpacity 
-          style={styles.modalContainer}
+        <TouchableOpacity
+          style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
+          onPress={onClose}
         >
+          <TouchableOpacity
+            style={[styles.modalContainer, getModalStyle()]}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.modalContent}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.modalScrollContent}
+          >
             <View style={styles.modalCardContainer}>
               <TarotCardComponent 
                 card={card}
@@ -108,8 +166,9 @@ const CardDetailModal = memo(({
               <Text style={styles.saveButtonText}>저장</Text>
             </TouchableOpacity>
           </ScrollView>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 });
@@ -716,24 +775,23 @@ const styles = StyleSheet.create({
   // 모달 스타일
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(26, 22, 37, 0.9)',
+    backgroundColor: 'rgba(26, 22, 37, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.lg,
+    paddingHorizontal: Platform.OS === 'web' ? Spacing.md : Spacing.xs, // 모바일에서 더 적은 가로 패딩
+    paddingVertical: Platform.OS === 'ios' ? 60 : 40, // Safe area 고려하되 너무 크지 않게
   },
   modalContainer: {
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '90%',
-    backgroundColor: 'rgba(45, 27, 71, 0.95)',
+    // 크기는 동적으로 설정되므로 기본 스타일만 유지
+    backgroundColor: 'rgba(45, 27, 71, 0.98)',
     borderRadius: BorderRadius.xl,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.brand.accent,
     shadowColor: Colors.brand.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -755,8 +813,12 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    padding: Spacing.lg,
+    padding: Platform.OS === 'web' ? Spacing.lg : Spacing.md, // 모바일에서 패딩 줄이기
     paddingTop: 0,
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    paddingBottom: Platform.OS === 'web' ? Spacing.lg : Spacing.xl, // 모바일에서 하단 여백 증가
   },
   modalCardContainer: {
     alignItems: 'center',
@@ -817,10 +879,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: 'rgba(244, 208, 63, 0.3)',
-    padding: Spacing.lg,
+    padding: Platform.OS === 'web' ? Spacing.lg : Spacing.md, // 모바일에서 패딩 조정
     fontSize: 16,
     color: Colors.text.primary,
-    minHeight: 120,
+    minHeight: Platform.OS === 'web' ? 120 : 100, // 모바일에서 높이 조정
+    height: Platform.OS === 'web' ? undefined : 140, // 모바일에서 고정 높이
     textAlignVertical: 'top',
   },
   saveButton: {

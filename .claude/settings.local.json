@@ -60,7 +60,9 @@
       "Bash(npx prisma:*)",
       "Bash(lsof:*)",
       "Bash(kill:*)",
-      "Bash(open http://localhost:8082)"
+      "Bash(open http://localhost:8082)",
+      "Bash(PORT=3001 npm start)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

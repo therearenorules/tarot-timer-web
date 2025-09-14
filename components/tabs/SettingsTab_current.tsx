@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,37 +7,77 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  Dimensions
+  Dimensions,
+  Switch,
+  Platform
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import {
   Colors,
+  TextStyles,
+  GlassStyles,
+  ShadowStyles,
   Spacing,
   BorderRadius
 } from '../DesignSystem';
 import LanguageSelector from '../LanguageSelector';
+// import { useNotification } from '../../contexts/NotificationContext';
+// import { usePremium } from '../../contexts/PremiumContext';
 
 const SettingsTab: React.FC = () => {
   const { t } = useTranslation();
+  // TODO: Re-enable after fixing web compatibility
+  // const {
+  //   settings,
+  //   hasPermissions,
+  //   pushToken,
+  //   isLoading,
+  //   requestPermissions,
+  //   updateSettings,
+  //   sendTestNotification,
+  // } = useNotification();
+  // const { subscriptionStatus } = usePremium();
+
+  // Temporary mock data for testing
+  const settings = {
+    hourlyEnabled: true,
+    midnightResetEnabled: true,
+    saveReminderEnabled: true,
+    weekendEnabled: true,
+    timezone: 'Asia/Seoul',
+    quietHoursStart: 22,
+    quietHoursEnd: 8,
+  };
+  const hasPermissions = false;
+  const pushToken = null;
+  const isLoading = false;
+  const requestPermissions = () => console.log('Request permissions');
+  const updateSettings = (newSettings: any) => console.log('Update settings:', newSettings);
+  const sendTestNotification = () => console.log('Send test notification');
+  const subscriptionStatus = null;
+
+  // 프리미엄 관련 상태
   const [isPremium, setIsPremium] = useState(false);
+
+  // 화면 및 테마 설정
   const [darkModeEnabled, setDarkModeEnabled] = useState(true);
 
-  // 알림 설정 상태
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [hourlyNotifications, setHourlyNotifications] = useState(true);
-  const [midnightReset, setMidnightReset] = useState(true);
-  const [saveReminders, setSaveReminders] = useState(true);
-  const [weekendNotifications, setWeekendNotifications] = useState(true);
-  const [selectedTimezone, setSelectedTimezone] = useState('Asia/Seoul');
-  const [quietHoursStart, setQuietHoursStart] = useState(22);
-  const [quietHoursEnd, setQuietHoursEnd] = useState(8);
+  // 타로 카드 설정
+  const [cardStyle, setCardStyle] = useState('classic');
+  const [cardAnimation, setCardAnimation] = useState(true);
 
-  // 모달 상태
+  // 데이터 관리 설정
+  const [autoBackup, setAutoBackup] = useState(true);
+
+  // 알림 설정 모달 상태
   const [showTimezoneModal, setShowTimezoneModal] = useState(false);
   const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
+  const [selectedTimezone, setSelectedTimezone] = useState(settings.timezone);
   const [tempQuietHours, setTempQuietHours] = useState({
-    start: quietHoursStart,
-    end: quietHoursEnd,
+    start: settings.quietHoursStart,
+    end: settings.quietHoursEnd,
   });
 
   // 시간대 목록
@@ -63,36 +103,25 @@ const SettingsTab: React.FC = () => {
     );
   };
 
-  const handleRequestPermissions = () => {
+  const handleDataExport = () => {
+    Alert.alert('데이터 내보내기', '모든 데이터를 내보내시겠습니까?');
+  };
+
+  const handleDataImport = () => {
+    Alert.alert('데이터 가져오기', '백업 파일을 선택해주세요.');
+  };
+
+  const handleDeleteAllData = () => {
     Alert.alert(
-      '알림 권한 요청',
-      '타로 타이머가 알림을 보내려면 권한이 필요합니다.',
+      '모든 데이터 삭제',
+      '정말로 모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
       [
         { text: '취소', style: 'cancel' },
-        {
-          text: '허용',
-          onPress: () => {
-            setNotificationsEnabled(true);
-            Alert.alert('권한 허용됨', '알림 설정을 구성하실 수 있습니다.');
-          }
-        }
+        { text: '삭제', style: 'destructive', onPress: () => {
+          Alert.alert('삭제 완료', '모든 데이터가 삭제되었습니다.');
+        }}
       ]
     );
-  };
-
-  const handleSendTestNotification = () => {
-    if (!notificationsEnabled) {
-      Alert.alert('알림 권한 필요', '먼저 알림 권한을 허용해주세요.');
-      return;
-    }
-    Alert.alert('테스트 알림', '🔮 타로 타이머 테스트 알림입니다!');
-  };
-
-  const handleSaveQuietHours = () => {
-    setQuietHoursStart(tempQuietHours.start);
-    setQuietHoursEnd(tempQuietHours.end);
-    setShowQuietHoursModal(false);
-    Alert.alert('저장 완료', '조용한 시간이 설정되었습니다.');
   };
 
   return (
@@ -107,18 +136,18 @@ const SettingsTab: React.FC = () => {
       </View>
 
       {/* 프리미엄 멤버십 섹션 */}
-      <View style={styles.settingsSection}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionIcon}>
-            <Text style={styles.sectionIconText}>👑</Text>
+      <View style={styles.premiumSection}>
+        <View style={styles.premiumHeader}>
+          <View style={styles.crownIcon}>
+            <Text style={styles.crownText}>👑</Text>
           </View>
-          <Text style={styles.sectionTitle}>프리미엄 멤버십</Text>
+          <Text style={styles.premiumTitle}>프리미엄 멤버십</Text>
           {isPremium ? (
             <View style={styles.activeBadge}>
               <Text style={styles.activeBadgeText}>활성화</Text>
             </View>
           ) : (
-            <TouchableOpacity
+            <TouchableOpacity 
               style={styles.upgradeBadge}
               onPress={handleUpgradePremium}
             >
@@ -126,7 +155,7 @@ const SettingsTab: React.FC = () => {
             </TouchableOpacity>
           )}
         </View>
-
+        
         <View style={styles.premiumFeatures}>
           <View style={styles.featureRow}>
             <Text style={styles.featureBullet}>•</Text>
@@ -142,7 +171,7 @@ const SettingsTab: React.FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity
+        <TouchableOpacity 
           style={styles.premiumButton}
           onPress={handleUpgradePremium}
         >
@@ -166,7 +195,7 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingTitle}>다크 모드</Text>
             <Text style={styles.settingSubtitle}>Always on for mystical experience</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity 
             style={[styles.toggleButton, darkModeEnabled && styles.toggleButtonActive]}
             onPress={() => setDarkModeEnabled(!darkModeEnabled)}
           >
@@ -192,7 +221,7 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.sectionIconText}>🔔</Text>
           </View>
           <Text style={styles.sectionTitle}>알림 설정</Text>
-          {!isPremium && (
+          {subscriptionStatus && !subscriptionStatus.features.hasNotifications && (
             <View style={styles.premiumBadge}>
               <Text style={styles.premiumBadgeText}>Premium</Text>
             </View>
@@ -203,19 +232,24 @@ const SettingsTab: React.FC = () => {
         <View style={styles.permissionSection}>
           <View style={styles.permissionContent}>
             <Text style={styles.permissionTitle}>
-              {notificationsEnabled ? '✅ 알림 권한 허용됨' : '⚠️ 알림 권한 필요'}
+              {hasPermissions ? '✅ 알림 권한 허용됨' : '⚠️ 알림 권한 필요'}
             </Text>
             <Text style={styles.permissionSubtitle}>
-              {notificationsEnabled
+              {hasPermissions
                 ? '푸시 알림을 받을 수 있습니다'
                 : '알림을 받으려면 권한을 허용해주세요'
               }
             </Text>
+            {pushToken && (
+              <Text style={styles.tokenText} numberOfLines={1}>
+                Token: {pushToken.substring(0, 20)}...
+              </Text>
+            )}
           </View>
-          {!notificationsEnabled && (
+          {!hasPermissions && (
             <TouchableOpacity
               style={styles.permissionButton}
-              onPress={handleRequestPermissions}
+              onPress={requestPermissions}
             >
               <Text style={styles.permissionButtonText}>권한 요청</Text>
             </TouchableOpacity>
@@ -228,16 +262,13 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingTitle}>시간별 타로 알림</Text>
             <Text style={styles.settingSubtitle}>매 시간마다 타로 카드 알림 받기</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.toggleButton, hourlyNotifications && notificationsEnabled && styles.toggleButtonActive]}
-            onPress={() => setHourlyNotifications(!hourlyNotifications)}
-            disabled={!notificationsEnabled}
-          >
-            <View style={[
-              styles.toggleThumb,
-              hourlyNotifications && notificationsEnabled && styles.toggleThumbActive
-            ]} />
-          </TouchableOpacity>
+          <Switch
+            value={settings.hourlyEnabled}
+            onValueChange={(value) => updateSettings({ hourlyEnabled: value })}
+            trackColor={{ false: '#4a4458', true: '#f4d03f' }}
+            thumbColor={settings.hourlyEnabled ? '#7b2cbf' : '#9b8db8'}
+            disabled={!hasPermissions}
+          />
         </View>
 
         {/* 자정 리셋 알림 */}
@@ -246,16 +277,13 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingTitle}>자정 리셋 알림</Text>
             <Text style={styles.settingSubtitle}>새로운 하루 시작 시 알림</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.toggleButton, midnightReset && notificationsEnabled && styles.toggleButtonActive]}
-            onPress={() => setMidnightReset(!midnightReset)}
-            disabled={!notificationsEnabled}
-          >
-            <View style={[
-              styles.toggleThumb,
-              midnightReset && notificationsEnabled && styles.toggleThumbActive
-            ]} />
-          </TouchableOpacity>
+          <Switch
+            value={settings.midnightResetEnabled}
+            onValueChange={(value) => updateSettings({ midnightResetEnabled: value })}
+            trackColor={{ false: '#4a4458', true: '#f4d03f' }}
+            thumbColor={settings.midnightResetEnabled ? '#7b2cbf' : '#9b8db8'}
+            disabled={!hasPermissions}
+          />
         </View>
 
         {/* 일기 저장 리마인더 */}
@@ -264,16 +292,13 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingTitle}>일기 저장 리마인더</Text>
             <Text style={styles.settingSubtitle}>매일 저녁 일기 작성 알림</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.toggleButton, saveReminders && notificationsEnabled && styles.toggleButtonActive]}
-            onPress={() => setSaveReminders(!saveReminders)}
-            disabled={!notificationsEnabled}
-          >
-            <View style={[
-              styles.toggleThumb,
-              saveReminders && notificationsEnabled && styles.toggleThumbActive
-            ]} />
-          </TouchableOpacity>
+          <Switch
+            value={settings.saveReminderEnabled}
+            onValueChange={(value) => updateSettings({ saveReminderEnabled: value })}
+            trackColor={{ false: '#4a4458', true: '#f4d03f' }}
+            thumbColor={settings.saveReminderEnabled ? '#7b2cbf' : '#9b8db8'}
+            disabled={!hasPermissions}
+          />
         </View>
 
         {/* 주말 알림 */}
@@ -282,32 +307,25 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingTitle}>주말 알림</Text>
             <Text style={styles.settingSubtitle}>주말에도 알림 받기</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.toggleButton, weekendNotifications && notificationsEnabled && hourlyNotifications && styles.toggleButtonActive]}
-            onPress={() => setWeekendNotifications(!weekendNotifications)}
-            disabled={!notificationsEnabled || !hourlyNotifications}
-          >
-            <View style={[
-              styles.toggleThumb,
-              weekendNotifications && notificationsEnabled && hourlyNotifications && styles.toggleThumbActive
-            ]}>
-              <Text style={styles.toggleIcon}>
-                {weekendNotifications && notificationsEnabled && hourlyNotifications ? '📅' : '🚫'}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <Switch
+            value={settings.weekendEnabled}
+            onValueChange={(value) => updateSettings({ weekendEnabled: value })}
+            trackColor={{ false: '#4a4458', true: '#f4d03f' }}
+            thumbColor={settings.weekendEnabled ? '#7b2cbf' : '#9b8db8'}
+            disabled={!hasPermissions || !settings.hourlyEnabled}
+          />
         </View>
 
         {/* 시간대 설정 */}
         <TouchableOpacity
           style={styles.settingItem}
           onPress={() => setShowTimezoneModal(true)}
-          disabled={!notificationsEnabled}
+          disabled={!hasPermissions}
         >
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>시간대</Text>
             <Text style={styles.settingSubtitle}>
-              {timezones.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone}
+              {timezones.find(tz => tz.value === settings.timezone)?.label || settings.timezone}
             </Text>
           </View>
           <Text style={styles.chevron}>›</Text>
@@ -316,16 +334,13 @@ const SettingsTab: React.FC = () => {
         {/* 조용한 시간 */}
         <TouchableOpacity
           style={styles.settingItem}
-          onPress={() => {
-            setTempQuietHours({ start: quietHoursStart, end: quietHoursEnd });
-            setShowQuietHoursModal(true);
-          }}
-          disabled={!notificationsEnabled || !hourlyNotifications}
+          onPress={() => setShowQuietHoursModal(true)}
+          disabled={!hasPermissions || !settings.hourlyEnabled}
         >
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>조용한 시간</Text>
             <Text style={styles.settingSubtitle}>
-              {String(quietHoursStart).padStart(2, '0')}:00 - {String(quietHoursEnd).padStart(2, '0')}:00
+              {String(settings.quietHoursStart).padStart(2, '0')}:00 - {String(settings.quietHoursEnd).padStart(2, '0')}:00
             </Text>
           </View>
           <Text style={styles.chevron}>›</Text>
@@ -334,10 +349,102 @@ const SettingsTab: React.FC = () => {
         {/* 테스트 알림 */}
         <TouchableOpacity
           style={styles.testButton}
-          onPress={handleSendTestNotification}
-          disabled={!notificationsEnabled}
+          onPress={sendTestNotification}
+          disabled={!hasPermissions || isLoading}
         >
-          <Text style={styles.testButtonText}>테스트 알림 보내기</Text>
+          <Text style={styles.testButtonText}>
+            {isLoading ? '전송 중...' : '테스트 알림 보내기'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 타로 카드 설정 */}
+      <View style={styles.settingsSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>🃏</Text>
+          </View>
+          <Text style={styles.sectionTitle}>타로 카드</Text>
+        </View>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>카드 스타일</Text>
+            <Text style={styles.settingSubtitle}>클래식 라이더-웨이트</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>카드 애니메이션</Text>
+            <Text style={styles.settingSubtitle}>카드 뒤집기 효과</Text>
+          </View>
+          <TouchableOpacity 
+            style={[styles.toggleButton, cardAnimation && styles.toggleButtonActive]}
+            onPress={() => setCardAnimation(!cardAnimation)}
+          >
+            <View style={[styles.toggleThumb, cardAnimation && styles.toggleThumbActive]}>
+              <Text style={styles.toggleIcon}>{cardAnimation ? '🃏' : '🎴'}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>카드 의미 언어</Text>
+            <Text style={styles.settingSubtitle}>한국어 + 영어</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 데이터 관리 */}
+      <View style={styles.settingsSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>💾</Text>
+          </View>
+          <Text style={styles.sectionTitle}>데이터 관리</Text>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>자동 백업</Text>
+            <Text style={styles.settingSubtitle}>클라우드 자동 저장</Text>
+          </View>
+          <TouchableOpacity 
+            style={[styles.toggleButton, autoBackup && styles.toggleButtonActive]}
+            onPress={() => setAutoBackup(!autoBackup)}
+          >
+            <View style={[styles.toggleThumb, autoBackup && styles.toggleThumbActive]}>
+              <Text style={styles.toggleIcon}>{autoBackup ? '☁️' : '💾'}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.settingItem} onPress={handleDataExport}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>데이터 내보내기</Text>
+            <Text style={styles.settingSubtitle}>모든 리딩과 저널 백업</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem} onPress={handleDataImport}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>데이터 가져오기</Text>
+            <Text style={styles.settingSubtitle}>백업 파일에서 복원</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem} onPress={handleDeleteAllData}>
+          <View style={styles.settingContent}>
+            <Text style={[styles.settingTitle, styles.dangerText]}>모든 데이터 삭제</Text>
+            <Text style={styles.settingSubtitle}>되돌릴 수 없습니다</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
       </View>
 
@@ -362,6 +469,22 @@ const SettingsTab: React.FC = () => {
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>개발자</Text>
             <Text style={styles.settingSubtitle}>Tarot Timer Team</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>개인정보 처리방침</Text>
+            <Text style={styles.settingSubtitle}>데이터 보호 정책</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>오픈소스 라이센스</Text>
+            <Text style={styles.settingSubtitle}>사용된 라이브러리</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
@@ -399,8 +522,8 @@ const SettingsTab: React.FC = () => {
                   ]}
                   onPress={() => {
                     setSelectedTimezone(timezone.value);
+                    updateSettings({ timezone: timezone.value });
                     setShowTimezoneModal(false);
-                    Alert.alert('시간대 변경됨', `${timezone.label}로 설정되었습니다.`);
                   }}
                 >
                   <Text style={[
@@ -427,7 +550,7 @@ const SettingsTab: React.FC = () => {
         onRequestClose={() => setShowQuietHoursModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { maxHeight: Dimensions.get('window').height * 0.8 }]}>
+          <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>조용한 시간 설정</Text>
               <TouchableOpacity
@@ -438,7 +561,7 @@ const SettingsTab: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.modalContent}>
               <Text style={styles.quietHoursDescription}>
                 이 시간 동안에는 알림을 받지 않습니다
               </Text>
@@ -500,14 +623,20 @@ const SettingsTab: React.FC = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonPrimary]}
-                  onPress={handleSaveQuietHours}
+                  onPress={() => {
+                    updateSettings({
+                      quietHoursStart: tempQuietHours.start,
+                      quietHoursEnd: tempQuietHours.end,
+                    });
+                    setShowQuietHoursModal(false);
+                  }}
                 >
                   <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>
                     저장
                   </Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
+            </View>
           </View>
         </View>
       </Modal>
@@ -551,37 +680,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'NotoSansKR_400Regular',
   },
-
-  // 설정 섹션
-  settingsSection: {
+  
+  // 프리미엄 섹션
+  premiumSection: {
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(244, 208, 63, 0.3)',
+    borderWidth: 2,
+    borderColor: Colors.brand.accent,
   },
-  sectionHeader: {
+  premiumHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
-  sectionIcon: {
+  crownIcon: {
     marginRight: Spacing.sm,
   },
-  sectionIconText: {
-    fontSize: 18,
+  crownText: {
+    fontSize: 20,
   },
-  sectionTitle: {
+  premiumTitle: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    color: Colors.brand.accent,
     fontFamily: 'NotoSansKR_700Bold',
   },
-
-  // 프리미엄 관련
   activeBadge: {
     backgroundColor: '#4ade80',
     paddingHorizontal: Spacing.sm,
@@ -638,7 +765,35 @@ const styles = StyleSheet.create({
     color: Colors.brand.accent,
     fontFamily: 'NotoSansKR_700Bold',
   },
-
+  
+  // 설정 섹션
+  settingsSection: {
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  sectionIcon: {
+    marginRight: Spacing.sm,
+  },
+  sectionIconText: {
+    fontSize: 18,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    fontFamily: 'NotoSansKR_700Bold',
+  },
+  
   // 설정 항목
   settingItem: {
     flexDirection: 'row',
@@ -667,11 +822,30 @@ const styles = StyleSheet.create({
     color: Colors.text.muted,
     marginLeft: Spacing.sm,
   },
+  languageButton: {
+    backgroundColor: Colors.brand.accent,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    marginLeft: Spacing.sm,
+  },
+  languageButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#000',
+    fontFamily: 'NotoSansKR_700Bold',
+  },
   languageSelector: {
     flex: 1,
   },
-
-  // 토글 버튼
+  dangerText: {
+    color: '#ef4444',
+  },
+  bottomSpace: {
+    height: 100,
+  },
+  
+  // 커스텀 토글 버튼
   toggleButton: {
     width: 60,
     height: 32,
@@ -714,7 +888,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // 알림 관련 스타일
+  // Notification-specific styles
   permissionSection: {
     backgroundColor: 'rgba(244, 208, 63, 0.1)',
     borderRadius: BorderRadius.lg,
@@ -738,6 +912,11 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     marginBottom: Spacing.xs,
     fontFamily: 'NotoSansKR_400Regular',
+  },
+  tokenText: {
+    fontSize: 12,
+    color: Colors.text.muted,
+    fontFamily: 'Courier',
   },
   permissionButton: {
     backgroundColor: Colors.brand.accent,
@@ -782,14 +961,14 @@ const styles = StyleSheet.create({
     fontFamily: 'NotoSansKR_700Bold',
   },
 
-  // 모달 스타일
+  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: 'rgba(15, 12, 27, 0.95)',
+    backgroundColor: Colors.surface.secondary,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     maxHeight: '80%',
@@ -830,7 +1009,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
 
-  // 시간대 모달 스타일
+  // Timezone modal styles
   timezoneOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -860,7 +1039,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // 조용한 시간 모달 스타일
+  // Quiet hours modal styles
   quietHoursDescription: {
     fontSize: 14,
     color: Colors.text.secondary,
@@ -938,10 +1117,6 @@ const styles = StyleSheet.create({
   modalButtonTextPrimary: {
     color: '#000',
     fontFamily: 'NotoSansKR_700Bold',
-  },
-
-  bottomSpace: {
-    height: 100,
   },
 });
 

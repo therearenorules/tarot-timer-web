@@ -7,6 +7,8 @@ import { Icon } from './components/Icon';
 import { SacredGeometryBackground } from './components/SacredGeometryBackground';
 import { MysticalTexture } from './components/MysticalTexture';
 import { TarotProvider } from './contexts/TarotContext';
+// import { NotificationProvider } from './contexts/NotificationContext';
+// import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
 import {
   Colors,

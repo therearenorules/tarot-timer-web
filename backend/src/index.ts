@@ -10,6 +10,7 @@ import dailySessionRoutes from './routes/dailySessionRoutes.js';
 import spreadRoutes from './routes/spreadRoutes';
 import syncRoutes from './routes/syncRoutes.js';
 import performanceRoutes, { setPerformanceMonitor } from './routes/performanceRoutes';
+import tarotRoutes from './routes/tarotRoutes';
 import WebSocketService from './services/WebSocketService';
 import CacheService from './services/CacheService';
 import { PerformanceMonitorService } from './services/PerformanceMonitorService';
@@ -111,6 +112,7 @@ app.use('/api/daily-sessions', dailySessionRoutes);
 app.use('/api/spreads', spreadRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/performance', performanceRoutes);
+app.use('/api/tarot', tarotRoutes);
 
 // WebSocket status endpoint
 app.get('/api/websocket/status', (req, res) => {
@@ -137,7 +139,8 @@ app.get('/api', (req, res) => {
       sync: '/api/sync/*',
       websocket: '/api/websocket/status',
       cache: '/api/cache/*',
-      performance: '/api/performance/*'
+      performance: '/api/performance/*',
+      tarot: '/api/tarot/*'
     },
     realtime: {
       enabled: true,
