@@ -1,0 +1,271 @@
+{
+  "app": {
+    "name": "Tarot Timer",
+    "subtitle": "Tarot Timer",
+    "description": "Aplicación de temporizador de cartas de tarot de 24 horas y diario"
+  },
+  "navigation": {
+    "timer": "Temporizador",
+    "spread": "Tirada",
+    "journal": "Diario",
+    "settings": "Configuración"
+  },
+  "timer": {
+    "title": "Temporizador de Tarot",
+    "subtitle": "Meditación de tarot de 24 horas",
+    "start": "Iniciar",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "stop": "Detener",
+    "reset": "Reiniciar",
+    "complete": "Completar",
+    "remainingTime": "Tiempo Restante",
+    "elapsed": "Tiempo Transcurrido",
+    "session": "Sesión",
+    "totalTime": "Tiempo Total",
+    "settings": {
+      "duration": "Duración del Temporizador",
+      "sound": "Sonido de Notificación",
+      "vibration": "Vibración",
+      "autoStart": "Inicio Automático",
+      "backgroundMode": "Modo de Fondo"
+    },
+    "notifications": {
+      "started": "Temporizador iniciado",
+      "paused": "Temporizador pausado",
+      "resumed": "Temporizador reanudado",
+      "completed": "Temporizador completado",
+      "halfway": "A mitad de camino"
+    }
+  },
+  "spread": {
+    "title": "Tirada de Tarot",
+    "subtitle": "Explora la sabiduría de las cartas",
+    "selectSpread": "Seleccionar Tirada",
+    "drawCard": "Sacar Carta",
+    "shuffleCards": "Barajar Cartas",
+    "resetSpread": "Reiniciar Tirada",
+    "interpretation": "Interpretación",
+    "cardMeaning": "Significado de la Carta",
+    "position": "Posición",
+    "saveReading": "Guardar Lectura",
+    "types": {
+      "singleCard": "Una Sola Carta",
+      "threeCard": "Tirada de Tres Cartas",
+      "crossSpread": "Tirada de Cruz",
+      "celticCross": "Cruz Celta",
+      "relationship": "Tirada de Relación",
+      "career": "Tirada de Carrera",
+      "yearlyForecast": "Pronóstico Anual"
+    },
+    "positions": {
+      "past": "Pasado",
+      "present": "Presente",
+      "future": "Futuro",
+      "situation": "Situación",
+      "challenge": "Desafío",
+      "outcome": "Resultado",
+      "advice": "Consejo",
+      "external": "Influencia Externa",
+      "internal": "Yo Interior",
+      "hopes": "Esperanzas y Temores"
+    },
+    "actions": {
+      "draw": "Sacar",
+      "shuffle": "Barajar",
+      "reset": "Reiniciar",
+      "save": "Guardar",
+      "share": "Compartir"
+    }
+  },
+  "journal": {
+    "title": "Diario de Tarot",
+    "subtitle": "Registra tu viaje de tarot",
+    "newEntry": "Nueva Entrada",
+    "todayEntry": "Entrada de Hoy",
+    "searchEntries": "Buscar Entradas",
+    "filterByDate": "Filtrar por Fecha",
+    "filterByTag": "Filtrar por Etiqueta",
+    "noEntries": "Aún no hay entradas",
+    "createFirst": "Crea tu primera entrada",
+    "entry": {
+      "title": "Título",
+      "content": "Contenido",
+      "date": "Fecha",
+      "tags": "Etiquetas",
+      "mood": "Estado de Ánimo",
+      "cards": "Cartas Relacionadas",
+      "reflection": "Reflexión",
+      "insights": "Percepciones",
+      "gratitude": "Gratitud"
+    },
+    "actions": {
+      "save": "Guardar",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "share": "Compartir",
+      "export": "Exportar"
+    },
+    "mood": {
+      "excellent": "Excelente",
+      "good": "Bueno",
+      "neutral": "Neutral",
+      "challenging": "Desafiante",
+      "difficult": "Difícil"
+    },
+    "prompts": {
+      "dailyReflection": "¿Cómo pasaste tu día?",
+      "cardInsight": "¿Qué mensaje recibiste de la carta de hoy?",
+      "gratitude": "¿Por qué estás agradecido hoy?",
+      "challenge": "¿Qué desafío enfrentaste hoy?",
+      "growth": "¿Qué crecimiento experimentaste?"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Personaliza tu aplicación",
+    "general": {
+      "title": "General",
+      "language": "Idioma",
+      "theme": "Tema",
+      "notifications": "Notificaciones",
+      "sound": "Sonido",
+      "vibration": "Vibración"
+    },
+    "timer": {
+      "title": "Configuración del Temporizador",
+      "defaultDuration": "Duración por Defecto",
+      "autoStart": "Inicio Automático",
+      "backgroundMode": "Modo de Fondo",
+      "notifications": "Notificaciones de Finalización",
+      "soundEffect": "Efecto de Sonido"
+    },
+    "cards": {
+      "title": "Configuración de Cartas",
+      "deckType": "Tipo de Baraja",
+      "shuffleAnimation": "Animación de Barajado",
+      "cardBack": "Dorso de Carta",
+      "autoSave": "Guardado Automático"
+    },
+    "journal": {
+      "title": "Configuración del Diario",
+      "autoBackup": "Copia de Seguridad Automática",
+      "exportFormat": "Formato de Exportación",
+      "privacy": "Privacidad",
+      "syncCloud": "Sincronización en la Nube"
+    },
+    "account": {
+      "title": "Cuenta",
+      "profile": "Perfil",
+      "subscription": "Suscripción",
+      "dataSync": "Sincronización de Datos",
+      "backup": "Copia de Seguridad",
+      "export": "Exportar Datos"
+    },
+    "about": {
+      "title": "Acerca de",
+      "version": "Versión",
+      "developer": "Desarrollador",
+      "support": "Soporte",
+      "privacy": "Política de Privacidad",
+      "terms": "Términos de Servicio",
+      "licenses": "Licencias"
+    },
+    "theme": {
+      "auto": "Automático",
+      "light": "Tema Claro",
+      "dark": "Tema Oscuro",
+      "mystical": "Tema Místico"
+    },
+    "language": {
+      "korean": "한국어",
+      "english": "English",
+      "japanese": "日本語",
+      "chinese": "中文",
+      "spanish": "Español"
+    }
+  },
+  "pwa": {
+    "install": "Instalar",
+    "installPrompt": "¿Agregar a la pantalla de inicio?",
+    "offline": "Sin conexión",
+    "online": "En línea",
+    "updateAvailable": "Actualización Disponible",
+    "reload": "Recargar",
+    "share": "Compartir"
+  },
+  "common": {
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "share": "Compartir",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "retry": "Reintentar",
+    "refresh": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "tomorrow": "Mañana",
+    "thisWeek": "Esta Semana",
+    "thisMonth": "Este Mes",
+    "thisYear": "Este Año",
+    "justNow": "Justo ahora",
+    "minutesAgo": "hace {{count}} minuto",
+    "minutesAgo_plural": "hace {{count}} minutos",
+    "hoursAgo": "hace {{count}} hora",
+    "hoursAgo_plural": "hace {{count}} horas",
+    "daysAgo": "hace {{count}} día",
+    "daysAgo_plural": "hace {{count}} días",
+    "weeksAgo": "hace {{count}} semana",
+    "weeksAgo_plural": "hace {{count}} semanas",
+    "monthsAgo": "hace {{count}} mes",
+    "monthsAgo_plural": "hace {{count}} meses"
+  },
+  "cards": {
+    "majorArcana": "Arcanos Mayores",
+    "minorArcana": "Arcanos Menores",
+    "cups": "Copas",
+    "wands": "Bastos",
+    "swords": "Espadas",
+    "pentacles": "Pentáculos",
+    "reversed": "Invertida",
+    "upright": "Derecha"
+  },
+  "analytics": {
+    "sessionStarted": "Sesión iniciada",
+    "cardDrawn": "Carta sacada",
+    "journalEntry": "Entrada de diario creada",
+    "settingsChanged": "Configuración cambiada",
+    "timerCompleted": "Temporizador completado"
+  },
+  "errors": {
+    "generic": "Ocurrió un error",
+    "network": "Error de red",
+    "offline": "Estás sin conexión",
+    "notFound": "No encontrado",
+    "unauthorized": "Se requiere autenticación",
+    "serverError": "Error del servidor",
+    "validation": "Por favor verifica tu entrada",
+    "timeout": "Tiempo de espera agotado"
+  },
+  "notifications": {
+    "timerComplete": "¡Temporizador completado!",
+    "newInsight": "Nueva percepción descubierta",
+    "dailyReminder": "Hora del tarot diario",
+    "weeklyReflection": "Hora de reflexión semanal",
+    "backupComplete": "Copia de seguridad completada",
+    "syncComplete": "Sincronización completada"
+  }
+}

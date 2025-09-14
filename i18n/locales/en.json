@@ -1,0 +1,271 @@
+{
+  "app": {
+    "name": "Tarot Timer",
+    "subtitle": "Tarot Timer",
+    "description": "24-hour tarot card timer and journal app"
+  },
+  "navigation": {
+    "timer": "Timer",
+    "spread": "Spread",
+    "journal": "Journal",
+    "settings": "Settings"
+  },
+  "timer": {
+    "title": "Tarot Timer",
+    "subtitle": "24-hour tarot meditation",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "reset": "Reset",
+    "complete": "Complete",
+    "remainingTime": "Remaining Time",
+    "elapsed": "Elapsed",
+    "session": "Session",
+    "totalTime": "Total Time",
+    "settings": {
+      "duration": "Timer Duration",
+      "sound": "Notification Sound",
+      "vibration": "Vibration",
+      "autoStart": "Auto Start",
+      "backgroundMode": "Background Mode"
+    },
+    "notifications": {
+      "started": "Timer started",
+      "paused": "Timer paused",
+      "resumed": "Timer resumed",
+      "completed": "Timer completed",
+      "halfway": "Halfway through"
+    }
+  },
+  "spread": {
+    "title": "Tarot Spread",
+    "subtitle": "Explore the wisdom of the cards",
+    "selectSpread": "Select Spread",
+    "drawCard": "Draw Card",
+    "shuffleCards": "Shuffle Cards",
+    "resetSpread": "Reset Spread",
+    "interpretation": "Interpretation",
+    "cardMeaning": "Card Meaning",
+    "position": "Position",
+    "saveReading": "Save Reading",
+    "types": {
+      "singleCard": "Single Card",
+      "threeCard": "Three Card Spread",
+      "crossSpread": "Cross Spread",
+      "celticCross": "Celtic Cross",
+      "relationship": "Relationship Spread",
+      "career": "Career Spread",
+      "yearlyForecast": "Yearly Forecast"
+    },
+    "positions": {
+      "past": "Past",
+      "present": "Present",
+      "future": "Future",
+      "situation": "Situation",
+      "challenge": "Challenge",
+      "outcome": "Outcome",
+      "advice": "Advice",
+      "external": "External Influence",
+      "internal": "Inner Self",
+      "hopes": "Hopes & Fears"
+    },
+    "actions": {
+      "draw": "Draw",
+      "shuffle": "Shuffle",
+      "reset": "Reset",
+      "save": "Save",
+      "share": "Share"
+    }
+  },
+  "journal": {
+    "title": "Tarot Journal",
+    "subtitle": "Record your tarot journey",
+    "newEntry": "New Entry",
+    "todayEntry": "Today's Entry",
+    "searchEntries": "Search Entries",
+    "filterByDate": "Filter by Date",
+    "filterByTag": "Filter by Tag",
+    "noEntries": "No entries yet",
+    "createFirst": "Create your first entry",
+    "entry": {
+      "title": "Title",
+      "content": "Content",
+      "date": "Date",
+      "tags": "Tags",
+      "mood": "Mood",
+      "cards": "Related Cards",
+      "reflection": "Reflection",
+      "insights": "Insights",
+      "gratitude": "Gratitude"
+    },
+    "actions": {
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "share": "Share",
+      "export": "Export"
+    },
+    "mood": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "neutral": "Neutral",
+      "challenging": "Challenging",
+      "difficult": "Difficult"
+    },
+    "prompts": {
+      "dailyReflection": "How did you spend your day?",
+      "cardInsight": "What message did you receive from today's card?",
+      "gratitude": "What are you grateful for today?",
+      "challenge": "What challenge did you face today?",
+      "growth": "What growth did you experience?"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Personalize your app",
+    "general": {
+      "title": "General",
+      "language": "Language",
+      "theme": "Theme",
+      "notifications": "Notifications",
+      "sound": "Sound",
+      "vibration": "Vibration"
+    },
+    "timer": {
+      "title": "Timer Settings",
+      "defaultDuration": "Default Duration",
+      "autoStart": "Auto Start",
+      "backgroundMode": "Background Mode",
+      "notifications": "Completion Notifications",
+      "soundEffect": "Sound Effect"
+    },
+    "cards": {
+      "title": "Card Settings",
+      "deckType": "Deck Type",
+      "shuffleAnimation": "Shuffle Animation",
+      "cardBack": "Card Back",
+      "autoSave": "Auto Save"
+    },
+    "journal": {
+      "title": "Journal Settings",
+      "autoBackup": "Auto Backup",
+      "exportFormat": "Export Format",
+      "privacy": "Privacy",
+      "syncCloud": "Cloud Sync"
+    },
+    "account": {
+      "title": "Account",
+      "profile": "Profile",
+      "subscription": "Subscription",
+      "dataSync": "Data Sync",
+      "backup": "Backup",
+      "export": "Export Data"
+    },
+    "about": {
+      "title": "About",
+      "version": "Version",
+      "developer": "Developer",
+      "support": "Support",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "licenses": "Licenses"
+    },
+    "theme": {
+      "auto": "Auto",
+      "light": "Light Theme",
+      "dark": "Dark Theme",
+      "mystical": "Mystical Theme"
+    },
+    "language": {
+      "korean": "한국어",
+      "english": "English",
+      "japanese": "日本語",
+      "chinese": "中文",
+      "spanish": "Español"
+    }
+  },
+  "pwa": {
+    "install": "Install",
+    "installPrompt": "Add to home screen?",
+    "offline": "Offline",
+    "online": "Online",
+    "updateAvailable": "Update Available",
+    "reload": "Reload",
+    "share": "Share"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "share": "Share",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minute ago",
+    "minutesAgo_plural": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hour ago",
+    "hoursAgo_plural": "{{count}} hours ago",
+    "daysAgo": "{{count}} day ago",
+    "daysAgo_plural": "{{count}} days ago",
+    "weeksAgo": "{{count}} week ago",
+    "weeksAgo_plural": "{{count}} weeks ago",
+    "monthsAgo": "{{count}} month ago",
+    "monthsAgo_plural": "{{count}} months ago"
+  },
+  "cards": {
+    "majorArcana": "Major Arcana",
+    "minorArcana": "Minor Arcana",
+    "cups": "Cups",
+    "wands": "Wands",
+    "swords": "Swords",
+    "pentacles": "Pentacles",
+    "reversed": "Reversed",
+    "upright": "Upright"
+  },
+  "analytics": {
+    "sessionStarted": "Session started",
+    "cardDrawn": "Card drawn",
+    "journalEntry": "Journal entry created",
+    "settingsChanged": "Settings changed",
+    "timerCompleted": "Timer completed"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "network": "Network error",
+    "offline": "You are offline",
+    "notFound": "Not found",
+    "unauthorized": "Authentication required",
+    "serverError": "Server error",
+    "validation": "Please check your input",
+    "timeout": "Request timeout"
+  },
+  "notifications": {
+    "timerComplete": "Timer completed!",
+    "newInsight": "New insight discovered",
+    "dailyReminder": "Time for your daily tarot",
+    "weeklyReflection": "Time for weekly reflection",
+    "backupComplete": "Backup completed",
+    "syncComplete": "Sync completed"
+  }
+}

@@ -1,0 +1,45 @@
+
+    <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1a1625;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#7b2cbf;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f4d03f;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#7b2cbf;stop-opacity:1" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="512" height="512" fill="url(#bg-gradient)" rx="76.8" />
+
+      <!-- Mystical border -->
+      <rect x="25.6" y="25.6"
+            width="460.8" height="460.8"
+            fill="none" stroke="#f4d03f" stroke-width="5.12"
+            rx="61.44" opacity="0.6"/>
+
+      
+        <!-- Main Tarot symbol -->
+        <circle cx="256" cy="256" r="71.67999999999999"
+                fill="none" stroke="url(#icon-gradient)" stroke-width="12.8" filter="url(#glow)"/>
+        <polygon points="256,215.04 225.28,276.48 286.72,276.48"
+                 fill="url(#icon-gradient)" filter="url(#glow)"/>
+        <circle cx="256" cy="307.2" r="10.24" fill="#f4d03f"/>
+      
+
+      <!-- Mystical sparkles -->
+      <circle cx="102.4" cy="128" r="7.68" fill="#f4d03f" opacity="0.8"/>
+      <circle cx="409.6" cy="153.6" r="5.12" fill="#f4d03f" opacity="0.6"/>
+      <circle cx="384" cy="409.6" r="6.144" fill="#f4d03f" opacity="0.7"/>
+      <circle cx="128" cy="384" r="4.096" fill="#f4d03f" opacity="0.9"/>
+    </svg>
+  

@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Alert
 } from 'react-native';
-import { 
-  Colors, 
-  TextStyles, 
-  GlassStyles, 
-  ShadowStyles, 
+import { useTranslation } from 'react-i18next';
+import {
+  Colors,
+  TextStyles,
+  GlassStyles,
+  ShadowStyles,
   Spacing,
-  BorderRadius 
+  BorderRadius
 } from '../DesignSystem';
+import LanguageSelector from '../LanguageSelector';
 
 const SettingsTab: React.FC = () => {
+  const { t } = useTranslation();
+
   // 프리미엄 관련 상태
   const [isPremium, setIsPremium] = useState(false);
 
   // 화면 및 테마 설정
   const [darkModeEnabled, setDarkModeEnabled] = useState(true);
-  const [language, setLanguage] = useState('한국어');
 
   // 알림 설정
   const [spreadNotification, setSpreadNotification] = useState(true);
@@ -73,8 +76,8 @@ const SettingsTab: React.FC = () => {
         <View style={styles.iconContainer}>
           <Text style={styles.headerIcon}>⚙️</Text>
         </View>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.subtitle}>당신의 신비로운 경험을 맞춤화하세요</Text>
+        <Text style={styles.title}>{t('settings.title')}</Text>
+        <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
       </View>
 
       {/* 프리미엄 멤버십 섹션 */}
@@ -147,15 +150,13 @@ const SettingsTab: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>언어</Text>
-            <Text style={styles.settingSubtitle}>한국어</Text>
-          </View>
-          <View style={styles.languageButton}>
-            <Text style={styles.languageButtonText}>EN</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.settingItem}>
+          <LanguageSelector
+            compact={false}
+            showLabel={false}
+            style={styles.languageSelector}
+          />
+        </View>
       </View>
 
       {/* 알림 설정 */}
@@ -511,6 +512,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
     fontFamily: 'NotoSansKR_700Bold',
+  },
+  languageSelector: {
+    flex: 1,
   },
   dangerText: {
     color: '#ef4444',

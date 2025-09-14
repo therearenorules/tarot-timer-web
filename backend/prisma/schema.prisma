@@ -1,0 +1,245 @@
+// Tarot Timer Backend - Database Schema
+// Based on BACKEND_DEVELOPMENT_PLAN.md requirements
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User management table - Enhanced for production requirements
+model User {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String   @unique @db.VarChar(255)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Subscription management - Following BACKEND_DEVELOPMENT_PLAN.md spec
+  subscriptionStatus   String   @default("trial") @map("subscription_status") @db.VarChar(50)
+  trialStartDate       DateTime @default(now()) @map("trial_start_date")
+  trialEndDate         DateTime @default(dbgenerated("NOW() + INTERVAL '7 days'")) @map("trial_end_date")
+
+  // Localization and preferences
+  language             String   @default("ko") @db.VarChar(10)
+  timezone             String   @default("Asia/Seoul") @db.VarChar(50)
+  activeCardThemeId    String?  @map("active_card_theme_id") @db.Uuid
+
+  // Stripe integration fields
+  stripeCustomerId     String?  @unique @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id") @db.VarChar(255)
+
+  // Usage tracking
+  totalSessions        Int      @default(0) @map("total_sessions")
+  lastActive           DateTime @default(now()) @map("last_active")
+
+  // Relations
+  dailySessions        DailyTarotSession[]
+  spreadReadings       SpreadReading[]
+  themeOwnership       UserThemeOwnership[]
+  cardTheme            CardTheme? @relation(fields: [activeCardThemeId], references: [id])
+  analytics            UserAnalytic[]
+  adImpressions        AdImpression[]
+
+  @@map("users")
+}
+
+// Daily 24-hour tarot sessions - Core feature matching existing interface
+model DailyTarotSession {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  date      DateTime @db.Date
+
+  // JSON structure matching existing frontend DailyTarotSave interface
+  cards     Json     // Array of 24 TarotCard objects for each hour
+  memos     Json     @default("{}") // Object with hour indices as keys, memo strings as values
+  insights  String?  @db.Text // Overall daily insights
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Ensure one session per user per date
+  @@unique([userId, date])
+  @@map("daily_tarot_sessions")
+}
+
+// Tarot spread readings storage - Matching existing SavedSpread interface
+model SpreadReading {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+
+  title       String   @db.VarChar(255)
+  spreadType  String   @map("spread_type") @db.VarChar(50)
+  spreadName  String   @map("spread_name") @db.VarChar(255)
+  spreadNameEn String  @map("spread_name_en") @db.VarChar(255)
+
+  // JSON structure matching existing SavedSpread interface
+  positions   Json     // Array of SpreadPosition objects with cards
+  insights    String?  @db.Text
+
+  // Metadata
+  tags        String[] @default([])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([spreadType])
+  @@map("spread_readings")
+}
+
+// Card theme system for monetization
+model CardTheme {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  name            String   @db.VarChar(255)
+  nameKr          String   @map("name_kr") @db.VarChar(255)
+  nameEn          String   @map("name_en") @db.VarChar(255)
+  nameJa          String?  @map("name_ja") @db.VarChar(255) // Future Japanese support
+
+  description     String   @db.Text
+  descriptionKr   String   @map("description_kr") @db.Text
+  descriptionEn   String   @map("description_en") @db.Text
+  descriptionJa   String?  @map("description_ja") @db.Text
+
+  // Pricing and availability
+  price           Decimal  @db.Decimal(10,2)
+  isActive        Boolean  @default(true) @map("is_active")
+  isDefault       Boolean  @default(false) @map("is_default")
+
+  // Theme metadata
+  style           String   @db.VarChar(50) // 'mystical', 'modern', 'vintage', etc.
+  cardAssets      Json     // JSON object mapping card IDs to asset URLs
+  thumbnailUrl    String   @map("thumbnail_url") @db.VarChar(500)
+
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userOwnership   UserThemeOwnership[]
+  activeUsers     User[]
+
+  @@map("card_themes")
+}
+
+// User theme ownership tracking
+model UserThemeOwnership {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  cardThemeId   String    @map("card_theme_id") @db.Uuid
+
+  // Purchase information
+  purchasedAt   DateTime  @default(now()) @map("purchased_at")
+  purchasePrice Decimal   @map("purchase_price") @db.Decimal(10,2)
+
+  // Stripe tracking
+  stripePaymentIntentId String? @map("stripe_payment_intent_id") @db.VarChar(255)
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardTheme     CardTheme @relation(fields: [cardThemeId], references: [id], onDelete: Cascade)
+
+  // Ensure one ownership record per user per theme
+  @@unique([userId, cardThemeId])
+  @@map("user_theme_ownership")
+}
+
+// Subscription management
+model Subscription {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+
+  // Stripe subscription details
+  stripeSubscriptionId  String   @unique @map("stripe_subscription_id") @db.VarChar(255)
+  stripePriceId         String   @map("stripe_price_id") @db.VarChar(255)
+  stripeCustomerId      String   @map("stripe_customer_id") @db.VarChar(255)
+
+  // Subscription status and timing
+  status                String   @db.VarChar(50) // 'active', 'canceled', 'past_due', etc.
+  currentPeriodStart    DateTime @map("current_period_start")
+  currentPeriodEnd      DateTime @map("current_period_end")
+
+  // Billing
+  plan                  String   @db.VarChar(50) // 'monthly', 'yearly'
+  amount                Decimal  @db.Decimal(10,2)
+  currency              String   @default("usd") @db.VarChar(3)
+
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  canceledAt            DateTime? @map("canceled_at")
+
+  @@map("subscriptions")
+}
+
+// Analytics tracking (privacy-first, anonymized)
+model UserAnalytic {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Anonymous user tracking - SHA-256 hash for privacy
+  userHash          String   @map("user_hash") @db.VarChar(64)
+  userId            String?  @map("user_id") @db.Uuid // Optional for user-specific analytics
+
+  // Event tracking
+  eventType         String   @map("event_type") @db.VarChar(100)
+  eventData         Json     @default("{}")
+
+  // Session information
+  sessionId         String?  @map("session_id") @db.VarChar(255)
+  userAgent         String?  @map("user_agent") @db.VarChar(500)
+
+  // Localization
+  language          String   @default("ko") @db.VarChar(10)
+  timezone          String   @default("Asia/Seoul") @db.VarChar(50)
+
+  // Timestamp
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations (optional)
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Retention policy - data older than 90 days will be purged
+  @@index([createdAt])
+  @@index([eventType])
+  @@map("user_analytics")
+}
+
+// Ad impression tracking for monetization
+model AdImpression {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  adPlacement String   @map("ad_placement") @db.VarChar(50) // 'banner', 'interstitial', 'rewarded'
+  adNetwork   String?  @map("ad_network") @db.VarChar(50)  // 'admob', 'meta', etc.
+  revenue     Decimal  @default(0.0000) @db.Decimal(6, 4)
+  displayedAt DateTime @default(now()) @map("displayed_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, displayedAt])
+  @@map("ad_impressions")
+}
+
+// System configuration and feature flags
+model SystemConfig {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  key           String   @unique @db.VarChar(255)
+  value         Json
+  description   String?  @db.Text
+
+  // Metadata
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}

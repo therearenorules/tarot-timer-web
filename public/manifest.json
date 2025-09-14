@@ -1,0 +1,100 @@
+{
+  "name": "타로 타이머 - Tarot Timer",
+  "short_name": "타로타이머",
+  "description": "24시간 타로 카드 타이머 및 일지 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#7b2cbf",
+  "background_color": "#1a1625",
+  "lang": "ko-KR",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": [
+    "lifestyle",
+    "utilities",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "타이머 시작",
+      "short_name": "타이머",
+      "description": "새로운 타로 타이머 세션 시작",
+      "url": "/?tab=timer",
+      "icons": [
+        {
+          "src": "/shortcut-timer.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "카드 뽑기",
+      "short_name": "스프레드",
+      "description": "타로 카드 스프레드 진행",
+      "url": "/?tab=spread",
+      "icons": [
+        {
+          "src": "/shortcut-cards.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "다이어리",
+      "short_name": "일지",
+      "description": "타로 일지 작성",
+      "url": "/?tab=journal",
+      "icons": [
+        {
+          "src": "/shortcut-journal.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "platform": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop-1.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "platform": "wide"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "",
+  "dir": "ltr",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "tarot",
+      "url": "/?protocol=%s"
+    }
+  ]
+}

@@ -2,16 +2,21 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState, Suspense, lazy, memo, useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useFonts, NotoSansKR_400Regular, NotoSansKR_500Medium, NotoSansKR_700Bold } from '@expo-google-fonts/noto-sans-kr';
+import { useTranslation } from 'react-i18next';
 import { Icon } from './components/Icon';
 import { SacredGeometryBackground } from './components/SacredGeometryBackground';
 import { MysticalTexture } from './components/MysticalTexture';
 import { TarotProvider } from './contexts/TarotContext';
-import { 
-  Colors, 
+import { usePWA } from './hooks/usePWA';
+import {
+  Colors,
   Spacing,
   BorderRadius,
   Typography
 } from './components/DesignSystem';
+
+// Initialize i18n
+import './i18n';
 
 // Lazy Loading으로 탭 컴포넌트들 로드
 const TimerTab = lazy(() => import('./components/tabs/TimerTab'));
@@ -73,18 +78,20 @@ class TabErrorBoundary extends React.Component<
 }
 
 // 탭바 컴포넌트 (최적화된)
-const TabBar = memo(({ 
-  activeTab, 
-  onTabChange 
-}: { 
-  activeTab: string; 
-  onTabChange: (tab: string) => void; 
+const TabBar = memo(({
+  activeTab,
+  onTabChange
+}: {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }) => {
+  const { t } = useTranslation();
+
   const tabs = [
-    { id: 'timer', name: '타이머', icon: 'clock' as const },
-    { id: 'spread', name: '스프레드', icon: 'tarot-cards' as const },
-    { id: 'journal', name: '다이어리', icon: 'book-open' as const },
-    { id: 'settings', name: '설정', icon: 'settings' as const }
+    { id: 'timer', name: t('navigation.timer'), icon: 'clock' as const },
+    { id: 'spread', name: t('navigation.spread'), icon: 'tarot-cards' as const },
+    { id: 'journal', name: t('navigation.journal'), icon: 'book-open' as const },
+    { id: 'settings', name: t('navigation.settings'), icon: 'settings' as const }
   ];
 
   return (
@@ -112,25 +119,27 @@ const TabBar = memo(({
 
 // 헤더 컴포넌트 (최적화된)
 const AppHeader = memo(({ activeTab }: { activeTab: string }) => {
+  const { t } = useTranslation();
+
   const getTabTitle = useCallback((tab: string) => {
     switch (tab) {
-      case 'timer': return '타로 타이머';
-      case 'spread': return '타로 스프레드';
-      case 'journal': return '타로 다이어리';
-      case 'settings': return '설정';
-      default: return '타로 타이머';
+      case 'timer': return t('timer.title');
+      case 'spread': return t('spread.title');
+      case 'journal': return t('journal.title');
+      case 'settings': return t('settings.title');
+      default: return t('timer.title');
     }
-  }, []);
+  }, [t]);
 
   const getTabSubtitle = useCallback((tab: string) => {
     switch (tab) {
-      case 'timer': return 'Tarot Timer';
-      case 'spread': return 'Tarot Spread';
-      case 'journal': return 'Tarot Journal';
-      case 'settings': return 'Settings';
-      default: return 'Tarot Timer';
+      case 'timer': return t('timer.subtitle');
+      case 'spread': return t('spread.subtitle');
+      case 'journal': return t('journal.subtitle');
+      case 'settings': return t('settings.subtitle');
+      default: return t('timer.subtitle');
     }
-  }, []);
+  }, [t]);
 
   return (
     <View style={styles.header}>
@@ -140,10 +149,37 @@ const AppHeader = memo(({ activeTab }: { activeTab: string }) => {
   );
 });
 
+// PWA 상태 표시 컴포넌트
+const PWAStatus = memo(() => {
+  const { isOnline, isInstallable, installApp, shareApp } = usePWA();
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.pwaStatus}>
+      {!isOnline && (
+        <View style={styles.offlineIndicator}>
+          <Text style={styles.offlineText}>{t('pwa.offline')}</Text>
+        </View>
+      )}
+      {isInstallable && (
+        <TouchableOpacity
+          style={styles.installButton}
+          onPress={installApp}
+          activeOpacity={0.7}
+        >
+          <Icon name="download" size={16} color="#fff" />
+          <Text style={styles.installText}>{t('pwa.install')}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+});
+
 // 메인 앱 컴포넌트
 function AppContent() {
   const [activeTab, setActiveTab] = useState('timer');
-  
+  const pwa = usePWA();
+
   // Noto Sans KR 폰트 로드
   const [fontsLoaded] = useFonts({
     NotoSansKR_400Regular,
@@ -205,7 +241,8 @@ function AppContent() {
       <MysticalTexture opacity={0.1} />
       
       <AppHeader activeTab={activeTab} />
-      
+      <PWAStatus />
+
       <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
         {renderContent()}
       </ScrollView>
@@ -333,6 +370,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'NotoSansKR_700Bold',
     fontWeight: 'bold',
+    color: '#fff',
+  },
+
+  // PWA 스타일
+  pwaStatus: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  offlineIndicator: {
+    backgroundColor: 'rgba(255, 107, 107, 0.9)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+  },
+  offlineText: {
+    fontSize: 12,
+    fontFamily: 'NotoSansKR_500Medium',
+    color: '#fff',
+  },
+  installButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.brand.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.xs,
+  },
+  installText: {
+    fontSize: 12,
+    fontFamily: 'NotoSansKR_500Medium',
     color: '#fff',
   },
 });

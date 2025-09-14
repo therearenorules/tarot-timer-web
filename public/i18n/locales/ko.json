@@ -1,0 +1,271 @@
+{
+  "app": {
+    "name": "타로 타이머",
+    "subtitle": "Tarot Timer",
+    "description": "24시간 타로 카드 타이머 및 일지 앱"
+  },
+  "navigation": {
+    "timer": "타이머",
+    "spread": "스프레드",
+    "journal": "다이어리",
+    "settings": "설정"
+  },
+  "timer": {
+    "title": "타로 타이머",
+    "subtitle": "24시간 타로 명상",
+    "start": "시작",
+    "pause": "일시정지",
+    "resume": "재개",
+    "stop": "중지",
+    "reset": "초기화",
+    "complete": "완료",
+    "remainingTime": "남은 시간",
+    "elapsed": "경과 시간",
+    "session": "세션",
+    "totalTime": "총 시간",
+    "settings": {
+      "duration": "타이머 시간",
+      "sound": "알림 소리",
+      "vibration": "진동",
+      "autoStart": "자동 시작",
+      "backgroundMode": "백그라운드 모드"
+    },
+    "notifications": {
+      "started": "타이머가 시작되었습니다",
+      "paused": "타이머가 일시정지되었습니다",
+      "resumed": "타이머가 재개되었습니다",
+      "completed": "타이머가 완료되었습니다",
+      "halfway": "절반이 지났습니다"
+    }
+  },
+  "spread": {
+    "title": "타로 스프레드",
+    "subtitle": "카드의 지혜를 탐구하세요",
+    "selectSpread": "스프레드 선택",
+    "drawCard": "카드 뽑기",
+    "shuffleCards": "카드 섞기",
+    "resetSpread": "스프레드 초기화",
+    "interpretation": "해석",
+    "cardMeaning": "카드 의미",
+    "position": "위치",
+    "saveReading": "리딩 저장",
+    "types": {
+      "singleCard": "한 장 뽑기",
+      "threeCard": "세 장 스프레드",
+      "crossSpread": "십자 스프레드",
+      "celticCross": "켈틱 크로스",
+      "relationship": "연애 스프레드",
+      "career": "직업 스프레드",
+      "yearlyForecast": "연간 운세"
+    },
+    "positions": {
+      "past": "과거",
+      "present": "현재",
+      "future": "미래",
+      "situation": "상황",
+      "challenge": "도전",
+      "outcome": "결과",
+      "advice": "조언",
+      "external": "외부 영향",
+      "internal": "내면",
+      "hopes": "희망과 두려움"
+    },
+    "actions": {
+      "draw": "뽑기",
+      "shuffle": "섞기",
+      "reset": "초기화",
+      "save": "저장",
+      "share": "공유"
+    }
+  },
+  "journal": {
+    "title": "타로 다이어리",
+    "subtitle": "당신의 타로 여정을 기록하세요",
+    "newEntry": "새 일지",
+    "todayEntry": "오늘의 일지",
+    "searchEntries": "일지 검색",
+    "filterByDate": "날짜별 필터",
+    "filterByTag": "태그별 필터",
+    "noEntries": "아직 일지가 없습니다",
+    "createFirst": "첫 번째 일지를 작성해보세요",
+    "entry": {
+      "title": "제목",
+      "content": "내용",
+      "date": "날짜",
+      "tags": "태그",
+      "mood": "기분",
+      "cards": "관련 카드",
+      "reflection": "성찰",
+      "insights": "통찰",
+      "gratitude": "감사"
+    },
+    "actions": {
+      "save": "저장",
+      "edit": "편집",
+      "delete": "삭제",
+      "share": "공유",
+      "export": "내보내기"
+    },
+    "mood": {
+      "excellent": "최고",
+      "good": "좋음",
+      "neutral": "보통",
+      "challenging": "힘듦",
+      "difficult": "어려움"
+    },
+    "prompts": {
+      "dailyReflection": "오늘 하루를 어떻게 보냈나요?",
+      "cardInsight": "오늘 뽑은 카드에서 어떤 메시지를 받았나요?",
+      "gratitude": "오늘 감사한 것은 무엇인가요?",
+      "challenge": "오늘 마주한 도전은 무엇이었나요?",
+      "growth": "어떤 성장을 경험했나요?"
+    }
+  },
+  "settings": {
+    "title": "설정",
+    "subtitle": "앱을 개인화하세요",
+    "general": {
+      "title": "일반",
+      "language": "언어",
+      "theme": "테마",
+      "notifications": "알림",
+      "sound": "소리",
+      "vibration": "진동"
+    },
+    "timer": {
+      "title": "타이머 설정",
+      "defaultDuration": "기본 시간",
+      "autoStart": "자동 시작",
+      "backgroundMode": "백그라운드 모드",
+      "notifications": "완료 알림",
+      "soundEffect": "효과음"
+    },
+    "cards": {
+      "title": "카드 설정",
+      "deckType": "덱 종류",
+      "shuffleAnimation": "섞기 애니메이션",
+      "cardBack": "카드 뒷면",
+      "autoSave": "자동 저장"
+    },
+    "journal": {
+      "title": "일지 설정",
+      "autoBackup": "자동 백업",
+      "exportFormat": "내보내기 형식",
+      "privacy": "개인정보 보호",
+      "syncCloud": "클라우드 동기화"
+    },
+    "account": {
+      "title": "계정",
+      "profile": "프로필",
+      "subscription": "구독",
+      "dataSync": "데이터 동기화",
+      "backup": "백업",
+      "export": "데이터 내보내기"
+    },
+    "about": {
+      "title": "정보",
+      "version": "버전",
+      "developer": "개발자",
+      "support": "지원",
+      "privacy": "개인정보 처리방침",
+      "terms": "이용약관",
+      "licenses": "라이센스"
+    },
+    "theme": {
+      "auto": "자동",
+      "light": "밝은 테마",
+      "dark": "어두운 테마",
+      "mystical": "미스틱 테마"
+    },
+    "language": {
+      "korean": "한국어",
+      "english": "English",
+      "japanese": "日本語",
+      "chinese": "中文",
+      "spanish": "Español"
+    }
+  },
+  "pwa": {
+    "install": "설치",
+    "installPrompt": "홈 화면에 추가하시겠습니까?",
+    "offline": "오프라인",
+    "online": "온라인",
+    "updateAvailable": "업데이트 사용 가능",
+    "reload": "새로고침",
+    "share": "공유"
+  },
+  "common": {
+    "ok": "확인",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "share": "공유",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "warning": "경고",
+    "info": "정보",
+    "retry": "다시 시도",
+    "refresh": "새로고침",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "today": "오늘",
+    "yesterday": "어제",
+    "tomorrow": "내일",
+    "thisWeek": "이번 주",
+    "thisMonth": "이번 달",
+    "thisYear": "올해",
+    "justNow": "방금",
+    "minutesAgo": "{{count}}분 전",
+    "minutesAgo_plural": "{{count}}분 전",
+    "hoursAgo": "{{count}}시간 전",
+    "hoursAgo_plural": "{{count}}시간 전",
+    "daysAgo": "{{count}}일 전",
+    "daysAgo_plural": "{{count}}일 전",
+    "weeksAgo": "{{count}}주 전",
+    "weeksAgo_plural": "{{count}}주 전",
+    "monthsAgo": "{{count}}개월 전",
+    "monthsAgo_plural": "{{count}}개월 전"
+  },
+  "cards": {
+    "majorArcana": "메이저 아르카나",
+    "minorArcana": "마이너 아르카나",
+    "cups": "컵",
+    "wands": "완드",
+    "swords": "소드",
+    "pentacles": "펜타클",
+    "reversed": "역방향",
+    "upright": "정방향"
+  },
+  "analytics": {
+    "sessionStarted": "세션 시작됨",
+    "cardDrawn": "카드 뽑힘",
+    "journalEntry": "일지 작성됨",
+    "settingsChanged": "설정 변경됨",
+    "timerCompleted": "타이머 완료됨"
+  },
+  "errors": {
+    "generic": "오류가 발생했습니다",
+    "network": "네트워크 오류",
+    "offline": "오프라인 상태입니다",
+    "notFound": "찾을 수 없습니다",
+    "unauthorized": "인증이 필요합니다",
+    "serverError": "서버 오류",
+    "validation": "입력값을 확인해주세요",
+    "timeout": "시간이 초과되었습니다"
+  },
+  "notifications": {
+    "timerComplete": "타이머가 완료되었습니다!",
+    "newInsight": "새로운 통찰을 발견했습니다",
+    "dailyReminder": "오늘의 타로 시간입니다",
+    "weeklyReflection": "주간 성찰 시간입니다",
+    "backupComplete": "백업이 완료되었습니다",
+    "syncComplete": "동기화가 완료되었습니다"
+  }
+}

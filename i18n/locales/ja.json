@@ -1,0 +1,271 @@
+{
+  "app": {
+    "name": "タロットタイマー",
+    "subtitle": "タロットタイマー",
+    "description": "24時間タロットカードタイマー＆日記アプリ"
+  },
+  "navigation": {
+    "timer": "タイマー",
+    "spread": "スプレッド",
+    "journal": "日記",
+    "settings": "設定"
+  },
+  "timer": {
+    "title": "タロットタイマー",
+    "subtitle": "24時間タロット瞑想",
+    "start": "開始",
+    "pause": "一時停止",
+    "resume": "再開",
+    "stop": "停止",
+    "reset": "リセット",
+    "complete": "完了",
+    "remainingTime": "残り時間",
+    "elapsed": "経過時間",
+    "session": "セッション",
+    "totalTime": "総時間",
+    "settings": {
+      "duration": "タイマー時間",
+      "sound": "通知音",
+      "vibration": "振動",
+      "autoStart": "自動開始",
+      "backgroundMode": "バックグラウンドモード"
+    },
+    "notifications": {
+      "started": "タイマーが開始されました",
+      "paused": "タイマーが一時停止されました",
+      "resumed": "タイマーが再開されました",
+      "completed": "タイマーが完了しました",
+      "halfway": "半分が経過しました"
+    }
+  },
+  "spread": {
+    "title": "タロットスプレッド",
+    "subtitle": "カードの知恵を探求しましょう",
+    "selectSpread": "スプレッドを選択",
+    "drawCard": "カードを引く",
+    "shuffleCards": "カードをシャッフル",
+    "resetSpread": "スプレッドをリセット",
+    "interpretation": "解釈",
+    "cardMeaning": "カードの意味",
+    "position": "位置",
+    "saveReading": "リーディングを保存",
+    "types": {
+      "singleCard": "ワンカード",
+      "threeCard": "スリーカードスプレッド",
+      "crossSpread": "クロススプレッド",
+      "celticCross": "ケルティッククロス",
+      "relationship": "恋愛スプレッド",
+      "career": "仕事スプレッド",
+      "yearlyForecast": "年間運勢"
+    },
+    "positions": {
+      "past": "過去",
+      "present": "現在",
+      "future": "未来",
+      "situation": "状況",
+      "challenge": "挑戦",
+      "outcome": "結果",
+      "advice": "アドバイス",
+      "external": "外部の影響",
+      "internal": "内面",
+      "hopes": "希望と恐れ"
+    },
+    "actions": {
+      "draw": "引く",
+      "shuffle": "シャッフル",
+      "reset": "リセット",
+      "save": "保存",
+      "share": "共有"
+    }
+  },
+  "journal": {
+    "title": "タロット日記",
+    "subtitle": "あなたのタロットの旅を記録しましょう",
+    "newEntry": "新しい記録",
+    "todayEntry": "今日の記録",
+    "searchEntries": "記録を検索",
+    "filterByDate": "日付で絞り込み",
+    "filterByTag": "タグで絞り込み",
+    "noEntries": "まだ記録がありません",
+    "createFirst": "最初の記録を作成しましょう",
+    "entry": {
+      "title": "タイトル",
+      "content": "内容",
+      "date": "日付",
+      "tags": "タグ",
+      "mood": "気分",
+      "cards": "関連カード",
+      "reflection": "反省",
+      "insights": "洞察",
+      "gratitude": "感謝"
+    },
+    "actions": {
+      "save": "保存",
+      "edit": "編集",
+      "delete": "削除",
+      "share": "共有",
+      "export": "エクスポート"
+    },
+    "mood": {
+      "excellent": "素晴らしい",
+      "good": "良い",
+      "neutral": "普通",
+      "challenging": "困難",
+      "difficult": "辛い"
+    },
+    "prompts": {
+      "dailyReflection": "今日はどのように過ごしましたか？",
+      "cardInsight": "今日引いたカードからどんなメッセージを受け取りましたか？",
+      "gratitude": "今日感謝していることは何ですか？",
+      "challenge": "今日直面した挑戦は何でしたか？",
+      "growth": "どのような成長を経験しましたか？"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "アプリをカスタマイズ",
+    "general": {
+      "title": "一般",
+      "language": "言語",
+      "theme": "テーマ",
+      "notifications": "通知",
+      "sound": "音",
+      "vibration": "振動"
+    },
+    "timer": {
+      "title": "タイマー設定",
+      "defaultDuration": "デフォルト時間",
+      "autoStart": "自動開始",
+      "backgroundMode": "バックグラウンドモード",
+      "notifications": "完了通知",
+      "soundEffect": "効果音"
+    },
+    "cards": {
+      "title": "カード設定",
+      "deckType": "デッキタイプ",
+      "shuffleAnimation": "シャッフルアニメーション",
+      "cardBack": "カード裏面",
+      "autoSave": "自動保存"
+    },
+    "journal": {
+      "title": "日記設定",
+      "autoBackup": "自動バックアップ",
+      "exportFormat": "エクスポート形式",
+      "privacy": "プライバシー",
+      "syncCloud": "クラウド同期"
+    },
+    "account": {
+      "title": "アカウント",
+      "profile": "プロフィール",
+      "subscription": "サブスクリプション",
+      "dataSync": "データ同期",
+      "backup": "バックアップ",
+      "export": "データエクスポート"
+    },
+    "about": {
+      "title": "アプリについて",
+      "version": "バージョン",
+      "developer": "開発者",
+      "support": "サポート",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "licenses": "ライセンス"
+    },
+    "theme": {
+      "auto": "自動",
+      "light": "ライトテーマ",
+      "dark": "ダークテーマ",
+      "mystical": "ミスティカルテーマ"
+    },
+    "language": {
+      "korean": "한국어",
+      "english": "English",
+      "japanese": "日本語",
+      "chinese": "中文",
+      "spanish": "Español"
+    }
+  },
+  "pwa": {
+    "install": "インストール",
+    "installPrompt": "ホーム画面に追加しますか？",
+    "offline": "オフライン",
+    "online": "オンライン",
+    "updateAvailable": "アップデート利用可能",
+    "reload": "再読み込み",
+    "share": "共有"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "share": "共有",
+    "close": "閉じる",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "warning": "警告",
+    "info": "情報",
+    "retry": "再試行",
+    "refresh": "更新",
+    "search": "検索",
+    "filter": "フィルター",
+    "sort": "並び替え",
+    "today": "今日",
+    "yesterday": "昨日",
+    "tomorrow": "明日",
+    "thisWeek": "今週",
+    "thisMonth": "今月",
+    "thisYear": "今年",
+    "justNow": "たった今",
+    "minutesAgo": "{{count}}分前",
+    "minutesAgo_plural": "{{count}}分前",
+    "hoursAgo": "{{count}}時間前",
+    "hoursAgo_plural": "{{count}}時間前",
+    "daysAgo": "{{count}}日前",
+    "daysAgo_plural": "{{count}}日前",
+    "weeksAgo": "{{count}}週間前",
+    "weeksAgo_plural": "{{count}}週間前",
+    "monthsAgo": "{{count}}ヶ月前",
+    "monthsAgo_plural": "{{count}}ヶ月前"
+  },
+  "cards": {
+    "majorArcana": "大アルカナ",
+    "minorArcana": "小アルカナ",
+    "cups": "カップ",
+    "wands": "ワンド",
+    "swords": "ソード",
+    "pentacles": "ペンタクル",
+    "reversed": "逆位置",
+    "upright": "正位置"
+  },
+  "analytics": {
+    "sessionStarted": "セッション開始",
+    "cardDrawn": "カードを引いた",
+    "journalEntry": "日記を作成",
+    "settingsChanged": "設定を変更",
+    "timerCompleted": "タイマー完了"
+  },
+  "errors": {
+    "generic": "エラーが発生しました",
+    "network": "ネットワークエラー",
+    "offline": "オフラインです",
+    "notFound": "見つかりません",
+    "unauthorized": "認証が必要です",
+    "serverError": "サーバーエラー",
+    "validation": "入力内容を確認してください",
+    "timeout": "タイムアウトしました"
+  },
+  "notifications": {
+    "timerComplete": "タイマーが完了しました！",
+    "newInsight": "新しい洞察を発見しました",
+    "dailyReminder": "今日のタロットの時間です",
+    "weeklyReflection": "週間の振り返りの時間です",
+    "backupComplete": "バックアップが完了しました",
+    "syncComplete": "同期が完了しました"
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "app": {
+    "name": "塔罗计时器",
+    "subtitle": "塔罗计时器",
+    "description": "24小时塔罗牌计时器和日记应用"
+  },
+  "navigation": {
+    "timer": "计时器",
+    "spread": "牌阵",
+    "journal": "日记",
+    "settings": "设置"
+  },
+  "timer": {
+    "title": "塔罗计时器",
+    "subtitle": "24小时塔罗冥想",
+    "start": "开始",
+    "pause": "暂停",
+    "resume": "恢复",
+    "stop": "停止",
+    "reset": "重置",
+    "complete": "完成",
+    "remainingTime": "剩余时间",
+    "elapsed": "已用时间",
+    "session": "会话",
+    "totalTime": "总时间",
+    "settings": {
+      "duration": "计时器时长",
+      "sound": "通知声音",
+      "vibration": "振动",
+      "autoStart": "自动开始",
+      "backgroundMode": "后台模式"
+    },
+    "notifications": {
+      "started": "计时器已开始",
+      "paused": "计时器已暂停",
+      "resumed": "计时器已恢复",
+      "completed": "计时器已完成",
+      "halfway": "已过半程"
+    }
+  },
+  "spread": {
+    "title": "塔罗牌阵",
+    "subtitle": "探索卡牌的智慧",
+    "selectSpread": "选择牌阵",
+    "drawCard": "抽牌",
+    "shuffleCards": "洗牌",
+    "resetSpread": "重置牌阵",
+    "interpretation": "解释",
+    "cardMeaning": "牌意",
+    "position": "位置",
+    "saveReading": "保存占卜",
+    "types": {
+      "singleCard": "单张牌",
+      "threeCard": "三张牌阵",
+      "crossSpread": "十字牌阵",
+      "celticCross": "凯尔特十字",
+      "relationship": "恋爱牌阵",
+      "career": "事业牌阵",
+      "yearlyForecast": "年度运势"
+    },
+    "positions": {
+      "past": "过去",
+      "present": "现在",
+      "future": "未来",
+      "situation": "状况",
+      "challenge": "挑战",
+      "outcome": "结果",
+      "advice": "建议",
+      "external": "外部影响",
+      "internal": "内心",
+      "hopes": "希望与恐惧"
+    },
+    "actions": {
+      "draw": "抽取",
+      "shuffle": "洗牌",
+      "reset": "重置",
+      "save": "保存",
+      "share": "分享"
+    }
+  },
+  "journal": {
+    "title": "塔罗日记",
+    "subtitle": "记录您的塔罗之旅",
+    "newEntry": "新记录",
+    "todayEntry": "今日记录",
+    "searchEntries": "搜索记录",
+    "filterByDate": "按日期筛选",
+    "filterByTag": "按标签筛选",
+    "noEntries": "还没有记录",
+    "createFirst": "创建您的第一个记录",
+    "entry": {
+      "title": "标题",
+      "content": "内容",
+      "date": "日期",
+      "tags": "标签",
+      "mood": "心情",
+      "cards": "相关牌",
+      "reflection": "反思",
+      "insights": "感悟",
+      "gratitude": "感谢"
+    },
+    "actions": {
+      "save": "保存",
+      "edit": "编辑",
+      "delete": "删除",
+      "share": "分享",
+      "export": "导出"
+    },
+    "mood": {
+      "excellent": "极好",
+      "good": "很好",
+      "neutral": "一般",
+      "challenging": "困难",
+      "difficult": "艰难"
+    },
+    "prompts": {
+      "dailyReflection": "您今天是如何度过的？",
+      "cardInsight": "您从今天抽到的牌中得到了什么信息？",
+      "gratitude": "今天您感谢什么？",
+      "challenge": "今天您面临的挑战是什么？",
+      "growth": "您经历了什么成长？"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "个性化您的应用",
+    "general": {
+      "title": "常规",
+      "language": "语言",
+      "theme": "主题",
+      "notifications": "通知",
+      "sound": "声音",
+      "vibration": "振动"
+    },
+    "timer": {
+      "title": "计时器设置",
+      "defaultDuration": "默认时长",
+      "autoStart": "自动开始",
+      "backgroundMode": "后台模式",
+      "notifications": "完成通知",
+      "soundEffect": "音效"
+    },
+    "cards": {
+      "title": "卡牌设置",
+      "deckType": "牌组类型",
+      "shuffleAnimation": "洗牌动画",
+      "cardBack": "牌背",
+      "autoSave": "自动保存"
+    },
+    "journal": {
+      "title": "日记设置",
+      "autoBackup": "自动备份",
+      "exportFormat": "导出格式",
+      "privacy": "隐私",
+      "syncCloud": "云同步"
+    },
+    "account": {
+      "title": "账户",
+      "profile": "个人资料",
+      "subscription": "订阅",
+      "dataSync": "数据同步",
+      "backup": "备份",
+      "export": "导出数据"
+    },
+    "about": {
+      "title": "关于",
+      "version": "版本",
+      "developer": "开发者",
+      "support": "支持",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "licenses": "许可证"
+    },
+    "theme": {
+      "auto": "自动",
+      "light": "浅色主题",
+      "dark": "深色主题",
+      "mystical": "神秘主题"
+    },
+    "language": {
+      "korean": "한국어",
+      "english": "English",
+      "japanese": "日本語",
+      "chinese": "中文",
+      "spanish": "Español"
+    }
+  },
+  "pwa": {
+    "install": "安装",
+    "installPrompt": "添加到主屏幕？",
+    "offline": "离线",
+    "online": "在线",
+    "updateAvailable": "可用更新",
+    "reload": "重新加载",
+    "share": "分享"
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "share": "分享",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "retry": "重试",
+    "refresh": "刷新",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "today": "今天",
+    "yesterday": "昨天",
+    "tomorrow": "明天",
+    "thisWeek": "本周",
+    "thisMonth": "本月",
+    "thisYear": "今年",
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟前",
+    "minutesAgo_plural": "{{count}}分钟前",
+    "hoursAgo": "{{count}}小时前",
+    "hoursAgo_plural": "{{count}}小时前",
+    "daysAgo": "{{count}}天前",
+    "daysAgo_plural": "{{count}}天前",
+    "weeksAgo": "{{count}}周前",
+    "weeksAgo_plural": "{{count}}周前",
+    "monthsAgo": "{{count}}个月前",
+    "monthsAgo_plural": "{{count}}个月前"
+  },
+  "cards": {
+    "majorArcana": "大阿尔卡纳",
+    "minorArcana": "小阿尔卡纳",
+    "cups": "圣杯",
+    "wands": "权杖",
+    "swords": "宝剑",
+    "pentacles": "五角星",
+    "reversed": "逆位",
+    "upright": "正位"
+  },
+  "analytics": {
+    "sessionStarted": "会话开始",
+    "cardDrawn": "已抽牌",
+    "journalEntry": "已创建日记",
+    "settingsChanged": "设置已更改",
+    "timerCompleted": "计时器完成"
+  },
+  "errors": {
+    "generic": "发生错误",
+    "network": "网络错误",
+    "offline": "您处于离线状态",
+    "notFound": "未找到",
+    "unauthorized": "需要认证",
+    "serverError": "服务器错误",
+    "validation": "请检查您的输入",
+    "timeout": "请求超时"
+  },
+  "notifications": {
+    "timerComplete": "计时器完成！",
+    "newInsight": "发现新的感悟",
+    "dailyReminder": "是时候进行每日塔罗了",
+    "weeklyReflection": "是时候进行每周反思了",
+    "backupComplete": "备份完成",
+    "syncComplete": "同步完成"
+  }
+}

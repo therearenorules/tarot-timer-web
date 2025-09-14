@@ -50,7 +50,17 @@
       "Bash(npm cache clean:*)",
       "Bash(find:*)",
       "Bash(ren:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(open http://localhost:8083)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm start)",
+      "Bash(brew services:*)",
+      "Bash(npx prisma:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(open http://localhost:8082)"
     ],
     "deny": [],
     "ask": []
