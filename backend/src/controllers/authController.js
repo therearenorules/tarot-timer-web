@@ -1,10 +1,22 @@
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Initialize Supabase client with fallback for development
+let supabase = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_URL !== 'https://placeholder.supabase.co' && process.env.SUPABASE_URL !== 'https://example.supabase.co') {
+  try {
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+    );
+    console.log('✅ Supabase client initialized successfully');
+  } catch (error) {
+    console.warn('⚠️ Supabase initialization failed:', error.message);
+    console.warn('Running in development mode without Supabase');
+  }
+} else {
+  console.log('ℹ️ Running in development mode without Supabase (using mock authentication)');
+}
 
 // JWT utility functions
 const generateAccessToken = (userId, email) => {
@@ -350,10 +362,148 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+// Guest user creation
+const createGuestUser = async (req, res) => {
+  try {
+    // Generate unique guest ID
+    const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // TODO: Store guest ID in database with minimal info
+    console.log(`Creating guest user: ${guestId}`);
+
+    res.status(201).json({
+      message: 'Guest user created successfully',
+      guestId
+    });
+  } catch (error) {
+    console.error('Guest user creation error:', error);
+    res.status(500).json({
+      error: 'Internal server error during guest user creation',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+};
+
+// Upgrade guest user to registered user
+const upgradeGuestToUser = async (req, res) => {
+  try {
+    const { guestId, email, password } = req.body;
+
+    // Validate input
+    if (!guestId || !email || !password) {
+      return res.status(400).json({
+        error: 'Guest ID, email and password are required',
+        code: 'MISSING_CREDENTIALS'
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        error: 'Invalid email format',
+        code: 'INVALID_EMAIL'
+      });
+    }
+
+    // Password validation
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: 'Password must be at least 6 characters long',
+        code: 'WEAK_PASSWORD'
+      });
+    }
+
+    // TODO: Check if guest user exists and get guest data
+    console.log(`Upgrading guest user ${guestId} to registered user with email ${email}`);
+
+    // Create user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (authError) {
+      console.error('Supabase auth error:', authError);
+      return res.status(400).json({
+        error: authError.message,
+        code: 'AUTH_ERROR'
+      });
+    }
+
+    // Create user in our database with guest data migration
+    const { data: user, error: dbError } = await supabase
+      .from('users')
+      .insert([{
+        id: authData.user.id,
+        email: authData.user.email,
+        language: 'ko',
+        timezone: 'Asia/Seoul',
+        subscription_status: 'trial',
+        trial_start_date: new Date().toISOString(),
+        // TODO: Migrate guest user data here
+      }])
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Database insert error:', dbError);
+      return res.status(500).json({
+        error: 'Failed to create user in database',
+        code: 'DB_INSERT_ERROR'
+      });
+    }
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user.id, user.email);
+    const refreshToken = generateRefreshToken(user.id);
+
+    // TODO: Clean up guest user data
+    console.log(`Successfully upgraded guest ${guestId} to user ${user.id}`);
+
+    res.status(201).json({
+      message: 'Guest user upgraded successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        language: user.language,
+        timezone: user.timezone,
+        subscriptionStatus: user.subscription_status,
+        trialEndDate: user.trial_end_date,
+        createdAt: user.created_at
+      },
+      tokens: {
+        accessToken,
+        refreshToken,
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+      }
+    });
+
+  } catch (error) {
+    console.error('Guest upgrade error:', error);
+
+    // Handle Prisma unique constraint violations
+    if (error?.code === 'P2002') {
+      return res.status(409).json({
+        error: 'User with this email already exists',
+        code: 'USER_EXISTS'
+      });
+    }
+
+    res.status(500).json({
+      error: 'Internal server error during guest upgrade',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   refreshToken,
   logout,
-  getCurrentUser
+  getCurrentUser,
+  createGuestUser,
+  upgradeGuestToUser
 };

@@ -71,7 +71,9 @@
       "Bash(wmic process where:*)",
       "Bash(cmd /c:*)",
       "mcp__sequential-thinking__sequentialthinking",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "mcp__playwright__browser_press_key",
+      "Bash(npx ts-node:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,10 +2,25 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Supabase client with fallback for development
+let supabase: any = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_URL !== 'https://placeholder.supabase.co' && process.env.SUPABASE_URL !== 'https://example.supabase.co') {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+
+    if (supabaseUrl && supabaseKey) {
+      supabase = createClient(supabaseUrl, supabaseKey);
+      console.log('✅ Auth middleware: Supabase client initialized');
+    } else {
+      console.warn('⚠️ Auth middleware: Missing Supabase credentials, using JWT-only authentication');
+    }
+  } catch (error) {
+    console.warn('⚠️ Auth middleware: Supabase initialization failed, using JWT-only authentication');
+  }
+} else {
+  console.log('ℹ️ Auth middleware: Running in development mode with JWT-only authentication');
+}
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;

@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { useAuth } from './AuthContext';
+
+// API URL 헬퍼 함수
+const getApiUrl = (): string => {
+  const apiUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+  return apiUrl;
+};
 
 // 구독 등급 enum (백엔드와 동일)
 export enum SubscriptionTier {
@@ -143,13 +151,20 @@ export const usePremiumAccess = (feature: string): boolean => {
 };
 
 export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { getAuthHeaders, isAuthenticated, user } = useAuth();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 컴포넌트 마운트 시 구독 상태 로드
+  // 인증 상태 변화 시 구독 상태 로드
   useEffect(() => {
-    loadSubscriptionStatus();
-  }, []);
+    if (isAuthenticated && user) {
+      loadSubscriptionStatus();
+    } else {
+      // 비인증 사용자는 기본 FREE 구독으로 설정
+      setSubscriptionStatus(DEFAULT_SUBSCRIPTION);
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user]);
 
   // 구독 상태 로드
   const loadSubscriptionStatus = async () => {
@@ -157,7 +172,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
       setIsLoading(true);
 
       // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscription/status`, {
+      const response = await fetch(`${getApiUrl()}/api/subscription/status`, {
         headers: {
           'Content-Type': 'application/json',
           // Authorization: `Bearer ${token}`,
@@ -183,7 +198,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
   const canSave = async (): Promise<boolean> => {
     try {
       // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscription/can-save`, {
+      const response = await fetch(`${getApiUrl()}/api/subscription/can-save`, {
         headers: {
           'Content-Type': 'application/json',
           // Authorization: `Bearer ${token}`,
@@ -211,7 +226,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
   const canAccessSpread = async (spreadType: SpreadType): Promise<boolean> => {
     try {
       // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscription/can-access-spread`, {
+      const response = await fetch(`${getApiUrl()}/api/subscription/can-access-spread`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +281,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
   const incrementSaveUsage = async (type: 'daily' | 'spread'): Promise<void> => {
     try {
       // TODO: JWT 토큰 추가 필요
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscription/increment-usage`, {
+      await fetch(`${getApiUrl()}/api/subscription/increment-usage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +368,7 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
   const startTrial = async (): Promise<void> => {
     try {
       // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscription/start-trial`, {
+      const response = await fetch(`${getApiUrl()}/api/subscription/start-trial`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -376,15 +391,18 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
   // 프리미엄 업그레이드
   const upgradeToPremium = async (durationMonths: number): Promise<void> => {
     try {
+      if (!isAuthenticated) {
+        throw new Error('Authentication required for premium upgrade');
+      }
+
       // TODO: 실제 결제 처리
       console.log(`💎 Upgrading to premium for ${durationMonths} months`);
 
-      // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/subscription/upgrade-premium`, {
+      const response = await fetch(`${getApiUrl()}/api/subscription/upgrade-premium`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ durationMonths }),
       });

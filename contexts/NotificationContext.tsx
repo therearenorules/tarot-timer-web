@@ -3,6 +3,13 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { useAuth } from './AuthContext';
+
+// API URL 헬퍼 함수
+const getApiUrl = (): string => {
+  const apiUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+  return apiUrl;
+};
 
 // 알림 설정 인터페이스
 interface NotificationSettings {
@@ -134,13 +141,20 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
 }
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { getAuthHeaders, isAuthenticated } = useAuth();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notifications.Notification | null>(null);
-  const [hasPermission, setHasPermission] = useState(false);
+  const [hasPermission, setHasPermission] = useState(Platform.OS === 'web' ? false : false); // 웹에서는 기본값 false
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
 
   // 컴포넌트 마운트 시 초기 설정
   useEffect(() => {
+    // 웹 환경에서는 푸시 토큰 등록을 스킵
+    if (Platform.OS === 'web') {
+      console.log('Web platform detected, skipping push token registration');
+      return;
+    }
+
     // 푸시 토큰 등록
     registerForPushNotificationsAsync()
       .then(token => {
@@ -151,24 +165,29 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         console.error('Error registering for push notifications:', error);
       });
 
-    // 알림 리스너 설정
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
-      setNotification(notification);
-    });
+    // 웹이 아닌 환경에서만 알림 리스너 설정
+    if (Platform.OS !== 'web') {
+      const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+        console.log('Notification received:', notification);
+        setNotification(notification);
+      });
 
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification response:', response);
-      // 알림 클릭 시 특정 화면으로 네비게이션 가능
-    });
+      const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+        console.log('Notification response:', response);
+        // 알림 클릭 시 특정 화면으로 네비게이션 가능
+      });
 
-    // 저장된 설정 로드
-    loadNotificationSettings();
+      // 저장된 설정 로드
+      loadNotificationSettings();
 
-    return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
-    };
+      return () => {
+        Notifications.removeNotificationSubscription(notificationListener);
+        Notifications.removeNotificationSubscription(responseListener);
+      };
+    } else {
+      // 웹 환경에서는 설정만 로드
+      loadNotificationSettings();
+    }
   }, []);
 
   // 저장된 알림 설정 로드
@@ -188,14 +207,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     // TODO: AsyncStorage에 설정 저장
     // await AsyncStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
 
-    // 백엔드에 설정 동기화
-    if (expoPushToken) {
+    // 백엔드에 설정 동기화 (인증된 사용자만)
+    if (expoPushToken && isAuthenticated) {
       try {
-        await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/notifications/preferences`, {
+        await fetch(`${getApiUrl()}/api/notifications/preferences`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            // TODO: JWT 토큰 추가
+            ...getAuthHeaders(),
           },
           body: JSON.stringify(updatedSettings),
         });
@@ -207,6 +226,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // 알림 권한 요청
   const requestPermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'web') {
+      console.log('Web platform: Push notifications not supported');
+      return false;
+    }
+
     try {
       const token = await registerForPushNotificationsAsync();
       setExpoPushToken(token);
@@ -221,6 +245,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // 테스트 알림 발송
   const sendTestNotification = async () => {
+    if (Platform.OS === 'web') {
+      console.log('Web platform: Test notification simulated');
+      return;
+    }
+
     if (!hasPermission) {
       console.log('No notification permission');
       return;
@@ -248,13 +277,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return;
     }
 
-    // 로컬 스케줄링은 제한적이므로 백엔드에 요청
+    // 로컬 스케줄링은 제한적이므로 백엔드에 요청 (인증된 사용자만)
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping backend notification scheduling');
+      return;
+    }
+
     try {
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/notifications/schedule-hourly`, {
+      await fetch(`${getApiUrl()}/api/notifications/schedule-hourly`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // TODO: JWT 토큰 추가
+          ...getAuthHeaders(),
         },
       });
       console.log('Hourly notifications scheduled via backend');
@@ -265,11 +299,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // 시간별 알림 취소
   const cancelHourlyNotifications = async () => {
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping backend notification cancellation');
+      return;
+    }
+
     try {
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/notifications/cancel-hourly`, {
+      await fetch(`${getApiUrl()}/api/notifications/cancel-hourly`, {
         method: 'DELETE',
         headers: {
-          // TODO: JWT 토큰 추가
+          ...getAuthHeaders(),
         },
       });
       console.log('Hourly notifications cancelled via backend');
@@ -285,12 +324,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return;
     }
 
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping token registration');
+      return;
+    }
+
     try {
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/notifications/register-token`, {
+      await fetch(`${getApiUrl()}/api/notifications/register-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // TODO: JWT 토큰 추가
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           expoPushToken,
@@ -309,11 +353,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // 백엔드에서 토큰 제거
   const unregisterTokenFromBackend = async () => {
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping token unregistration');
+      return;
+    }
+
     try {
-      await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/notifications/unregister-token`, {
+      await fetch(`${getApiUrl()}/api/notifications/unregister-token`, {
         method: 'DELETE',
         headers: {
-          // TODO: JWT 토큰 추가
+          ...getAuthHeaders(),
         },
       });
       console.log('Push token unregistered from backend');

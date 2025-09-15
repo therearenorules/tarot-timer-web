@@ -8,8 +8,9 @@ import { Icon } from './components/Icon';
 import { SacredGeometryBackground } from './components/SacredGeometryBackground';
 import { MysticalTexture } from './components/MysticalTexture';
 import { TarotProvider } from './contexts/TarotContext';
-// import { NotificationProvider } from './contexts/NotificationContext';
-// import { PremiumProvider } from './contexts/PremiumContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { PremiumProvider } from './contexts/PremiumContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { usePWA } from './hooks/usePWA';
 import {
   Colors,
@@ -262,11 +263,17 @@ function AppContent() {
 // 전역 에러 경계가 있는 최상위 컴포넌트
 export default function App() {
   return (
-    <TarotProvider>
-      <TabErrorBoundary tabName={i18next.t('app.name')}>
-        <AppContent />
-      </TabErrorBoundary>
-    </TarotProvider>
+    <AuthProvider>
+      <TarotProvider>
+        <NotificationProvider>
+          <PremiumProvider>
+            <TabErrorBoundary tabName={i18next.t('app.name')}>
+              <AppContent />
+            </TabErrorBoundary>
+          </PremiumProvider>
+        </NotificationProvider>
+      </TarotProvider>
+    </AuthProvider>
   );
 }
 

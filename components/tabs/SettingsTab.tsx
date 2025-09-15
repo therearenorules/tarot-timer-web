@@ -16,21 +16,41 @@ import {
   BorderRadius
 } from '../DesignSystem';
 import LanguageSelector from '../LanguageSelector';
+import { useNotifications } from '../../contexts/NotificationContext';
+import { usePremium } from '../../contexts/PremiumContext';
 
 const SettingsTab: React.FC = () => {
   const { t } = useTranslation();
-  const [isPremium, setIsPremium] = useState(false);
+
+  // Context hooks
+  const {
+    settings: notificationSettings,
+    hasPermission,
+    requestPermission,
+    sendTestNotification,
+    updateSettings: updateNotificationSettings
+  } = useNotifications();
+  const {
+    subscriptionStatus,
+    isLoading: premiumLoading,
+    showUpgradePrompt,
+    startTrial
+  } = usePremium();
+
   const [darkModeEnabled, setDarkModeEnabled] = useState(true);
 
-  // Notification settings state
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // 기본으로 활성화
-  const [hourlyNotifications, setHourlyNotifications] = useState(true);
+  // Context에서 가져온 값들을 로컬 상태 대신 사용
+  const notificationsEnabled = hasPermission;
+  const hourlyNotifications = notificationSettings?.hourlyEnabled ?? true;
+  const weekendNotifications = notificationSettings?.weekendEnabled ?? true;
+  const quietHoursStart = notificationSettings?.quietHoursStart ?? 22;
+  const quietHoursEnd = notificationSettings?.quietHoursEnd ?? 8;
+  const isPremium = subscriptionStatus?.tier === 'premium' || subscriptionStatus?.tier === 'trial';
+
+  // 로컬 상태는 Context에 없는 항목들만 유지
   const [midnightReset, setMidnightReset] = useState(true);
   const [saveReminders, setSaveReminders] = useState(true);
-  const [weekendNotifications, setWeekendNotifications] = useState(true);
-  const [dailyTaroReminder, setDailyTaroReminder] = useState(true); // Daily tarot reminder added
-  const [quietHoursStart, setQuietHoursStart] = useState(22);
-  const [quietHoursEnd, setQuietHoursEnd] = useState(8);
+  const [dailyTaroReminder, setDailyTaroReminder] = useState(true);
 
   // Modal state
   const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
@@ -40,46 +60,68 @@ const SettingsTab: React.FC = () => {
   });
 
   const handleUpgradePremium = () => {
+    const upgradePrompt = showUpgradePrompt('premium_features');
     Alert.alert(
-      t('settings.premium.upgradeTitle'),
-      t('settings.premium.upgradeMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('settings.premium.upgrade'), onPress: () => setIsPremium(true) }
-      ]
-    );
-  };
-
-  const handleRequestPermissions = () => {
-    Alert.alert(
-      t('settings.notifications.permissionTitle'),
-      t('settings.notifications.permissionMessage'),
+      upgradePrompt.title,
+      upgradePrompt.message,
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('settings.notifications.allow'),
-          onPress: () => {
-            setNotificationsEnabled(true);
-            Alert.alert(t('settings.notifications.permissionGranted'), t('settings.notifications.configureMessage'));
+          text: t('settings.premium.startTrial'),
+          onPress: async () => {
+            try {
+              await startTrial();
+              Alert.alert(t('settings.premium.trialStarted'));
+            } catch (error) {
+              Alert.alert(t('settings.premium.trialError'));
+            }
           }
-        }
+        },
+        { text: t('settings.premium.upgrade'), onPress: () => {
+          // TODO: 실제 결제 처리 구현
+          Alert.alert(t('settings.premium.comingSoon'));
+        }}
       ]
     );
   };
 
-  const handleSendTestNotification = () => {
+  const handleRequestPermissions = async () => {
+    try {
+      const granted = await requestPermission();
+      if (granted) {
+        Alert.alert(t('settings.notifications.permissionGranted'), t('settings.notifications.configureMessage'));
+      } else {
+        Alert.alert(t('settings.notifications.permissionDenied'));
+      }
+    } catch (error) {
+      Alert.alert(t('settings.notifications.permissionError'));
+    }
+  };
+
+  const handleSendTestNotification = async () => {
     if (!notificationsEnabled) {
       Alert.alert(t('settings.notifications.permissionRequired'), t('settings.notifications.permissionFirst'));
       return;
     }
-    Alert.alert(t('settings.notifications.testTitle'), t('settings.notifications.testMessage'));
+    try {
+      await sendTestNotification();
+      Alert.alert(t('settings.notifications.testTitle'), t('settings.notifications.testMessage'));
+    } catch (error) {
+      Alert.alert(t('settings.notifications.testError'));
+    }
   };
 
-  const handleSaveQuietHours = () => {
-    setQuietHoursStart(tempQuietHours.start);
-    setQuietHoursEnd(tempQuietHours.end);
-    setShowQuietHoursModal(false);
-    Alert.alert(t('settings.notifications.saveComplete'), t('settings.notifications.quietHoursSaved'));
+  const handleSaveQuietHours = async () => {
+    try {
+      await updateNotificationSettings({
+        quietHoursStart: tempQuietHours.start,
+        quietHoursEnd: tempQuietHours.end
+      });
+      setShowQuietHoursModal(false);
+      Alert.alert(t('settings.notifications.saveComplete'), t('settings.notifications.quietHoursSaved'));
+    } catch (error) {
+      Alert.alert(t('settings.notifications.saveError'));
+    }
   };
 
   return (
@@ -202,7 +244,15 @@ const SettingsTab: React.FC = () => {
           </View>
           <TouchableOpacity
             style={[styles.toggleButton, hourlyNotifications && notificationsEnabled && styles.toggleButtonActive]}
-            onPress={() => setHourlyNotifications(!hourlyNotifications)}
+            onPress={async () => {
+              try {
+                await updateNotificationSettings({
+                  hourlyEnabled: !hourlyNotifications
+                });
+              } catch (error) {
+                Alert.alert(t('settings.notifications.updateError'));
+              }
+            }}
             disabled={!notificationsEnabled}
           >
             <View style={[
@@ -256,7 +306,15 @@ const SettingsTab: React.FC = () => {
           </View>
           <TouchableOpacity
             style={[styles.toggleButton, weekendNotifications && notificationsEnabled && hourlyNotifications && styles.toggleButtonActive]}
-            onPress={() => setWeekendNotifications(!weekendNotifications)}
+            onPress={async () => {
+              try {
+                await updateNotificationSettings({
+                  weekendEnabled: !weekendNotifications
+                });
+              } catch (error) {
+                Alert.alert(t('settings.notifications.updateError'));
+              }
+            }}
             disabled={!notificationsEnabled || !hourlyNotifications}
           >
             <View style={[

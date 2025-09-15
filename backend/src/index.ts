@@ -11,6 +11,8 @@ import spreadRoutes from './routes/spreadRoutes';
 import syncRoutes from './routes/syncRoutes.js';
 import performanceRoutes, { setPerformanceMonitor } from './routes/performanceRoutes';
 import tarotRoutes from './routes/tarotRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import subscriptionRoutes from './routes/subscriptionRoutes';
 import WebSocketService from './services/WebSocketService';
 import CacheService from './services/CacheService';
 import { PerformanceMonitorService } from './services/PerformanceMonitorService';
@@ -113,6 +115,8 @@ app.use('/api/spreads', spreadRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/tarot', tarotRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // WebSocket status endpoint
 app.get('/api/websocket/status', (req, res) => {
@@ -140,7 +144,9 @@ app.get('/api', (req, res) => {
       websocket: '/api/websocket/status',
       cache: '/api/cache/*',
       performance: '/api/performance/*',
-      tarot: '/api/tarot/*'
+      tarot: '/api/tarot/*',
+      notifications: '/api/notifications/*',
+      subscription: '/api/subscription/*'
     },
     realtime: {
       enabled: true,

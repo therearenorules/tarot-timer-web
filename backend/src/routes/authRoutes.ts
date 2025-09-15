@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refreshToken, getCurrentUser, logout } from '../controllers/authController.js';
+import { register, login, refreshToken, getCurrentUser, logout, createGuestUser, upgradeGuestToUser } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -8,6 +8,8 @@ const router = Router();
 router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh-token', refreshToken);
+router.post('/guest', createGuestUser);
+router.post('/upgrade-guest', upgradeGuestToUser);
 
 // Protected routes
 router.get('/me', authenticateToken, getCurrentUser);

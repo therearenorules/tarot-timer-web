@@ -1,22 +1,14 @@
 import express from 'express';
 import NotificationService from '../services/NotificationService';
-// TODO: 실제 인증 미들웨어 import
-// import { authenticateJWT } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
-
-// 임시 인증 미들웨어 (실제로는 JWT 미들웨어 사용)
-const authenticateUser = (req: any, res: any, next: any) => {
-  // TODO: 실제 JWT 토큰 검증 로직
-  req.user = { id: 'temp-user-id' }; // 임시 사용자 ID
-  next();
-};
 
 /**
  * POST /api/notifications/register-token
  * Expo 푸시 토큰 등록
  */
-router.post('/register-token', authenticateUser, async (req, res) => {
+router.post('/register-token', authenticateToken, async (req, res) => {
   try {
     const { expoPushToken, deviceInfo } = req.body;
     const userId = req.user.id;
@@ -47,7 +39,7 @@ router.post('/register-token', authenticateUser, async (req, res) => {
  * DELETE /api/notifications/unregister-token
  * 푸시 토큰 제거
  */
-router.delete('/unregister-token', authenticateUser, async (req, res) => {
+router.delete('/unregister-token', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -69,7 +61,7 @@ router.delete('/unregister-token', authenticateUser, async (req, res) => {
  * PUT /api/notifications/preferences
  * 알림 설정 업데이트
  */
-router.put('/preferences', authenticateUser, async (req, res) => {
+router.put('/preferences', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const preferences = req.body;
@@ -94,7 +86,7 @@ router.put('/preferences', authenticateUser, async (req, res) => {
  * GET /api/notifications/preferences
  * 현재 알림 설정 조회
  */
-router.get('/preferences', authenticateUser, async (req, res) => {
+router.get('/preferences', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -123,7 +115,7 @@ router.get('/preferences', authenticateUser, async (req, res) => {
  * POST /api/notifications/schedule-hourly
  * 시간별 알림 스케줄링 활성화
  */
-router.post('/schedule-hourly', authenticateUser, async (req, res) => {
+router.post('/schedule-hourly', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -146,7 +138,7 @@ router.post('/schedule-hourly', authenticateUser, async (req, res) => {
  * DELETE /api/notifications/cancel-hourly
  * 시간별 알림 스케줄링 취소
  */
-router.delete('/cancel-hourly', authenticateUser, async (req, res) => {
+router.delete('/cancel-hourly', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -169,7 +161,7 @@ router.delete('/cancel-hourly', authenticateUser, async (req, res) => {
  * POST /api/notifications/test-send
  * 테스트 알림 전송 (개발용)
  */
-router.post('/test-send', authenticateUser, async (req, res) => {
+router.post('/test-send', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { type = 'test' } = req.body;
@@ -232,7 +224,7 @@ router.post('/test-send', authenticateUser, async (req, res) => {
  * PUT /api/user/timezone
  * 사용자 시간대 설정
  */
-router.put('/timezone', authenticateUser, async (req, res) => {
+router.put('/timezone', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { timezone } = req.body;
@@ -264,7 +256,7 @@ router.put('/timezone', authenticateUser, async (req, res) => {
  * GET /api/user/timezone
  * 현재 사용자 시간대 조회
  */
-router.get('/timezone', authenticateUser, async (req, res) => {
+router.get('/timezone', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -287,7 +279,7 @@ router.get('/timezone', authenticateUser, async (req, res) => {
  * GET /api/notifications/status
  * 알림 시스템 상태 확인
  */
-router.get('/status', authenticateUser, async (req, res) => {
+router.get('/status', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
