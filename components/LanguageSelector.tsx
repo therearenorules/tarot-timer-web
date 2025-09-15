@@ -47,12 +47,15 @@ export const LanguageSelector = memo(({
     setIsLoading(true);
 
     try {
-      const success = await LanguageUtils.changeLanguage(languageCode);
-      if (success) {
-        console.log(`Language changed to: ${languageCode}`);
-        // Analytics tracking
-        // trackUserAction('language_changed', languageCode);
+      // i18n 언어 직접 변경 (실시간 텍스트 변경)
+      await i18n.changeLanguage(languageCode);
+      
+      // 로컬 스토리지에 저장 (웹 환경)
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('i18nextLng', languageCode);
       }
+      
+      console.log(`Language changed to: ${languageCode}`);
     } catch (error) {
       console.error('Failed to change language:', error);
     } finally {

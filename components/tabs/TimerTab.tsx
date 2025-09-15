@@ -11,6 +11,9 @@ import {
   Modal,
   Dimensions
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useTarotI18n } from '../../hooks/useTarotI18n';
+import { LanguageUtils } from '../../i18n';
 import { Colors, Spacing, BorderRadius } from '../DesignSystem';
 import { useTimer } from '../../hooks/useTimer';
 import { useTarotCards } from '../../hooks/useTarotCards';
@@ -39,6 +42,8 @@ const CardDetailModal = memo(({
   onMemoChange: (memo: string) => void;
   onSave: () => void;
 }) => {
+  const { t } = useTranslation();
+  const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
 
   useEffect(() => {
@@ -129,32 +134,34 @@ const CardDetailModal = memo(({
                 size="large"
                 showText={false}
               />
-              <Text style={styles.modalCardName}>{card.nameKr}</Text>
-              <Text style={styles.modalCardNameEn}>{card.name}</Text>
+              <Text style={styles.modalCardName}>{getCardName(card)}</Text>
+              {!isEnglish && (
+                <Text style={styles.modalCardNameEn}>{card.name}</Text>
+              )}
             </View>
 
             <View style={styles.modalMeaningSection}>
               <View style={styles.meaningTags}>
                 <View style={styles.meaningTag}>
-                  <Text style={styles.meaningTagText}>희망</Text>
+                  <Text style={styles.meaningTagText}>{t('cards.hope')}</Text>
                 </View>
                 <View style={styles.meaningTag}>
-                  <Text style={styles.meaningTagText}>용감</Text>
+                  <Text style={styles.meaningTagText}>{t('cards.courage')}</Text>
                 </View>
                 <View style={styles.meaningTag}>
-                  <Text style={styles.meaningTagText}>자유</Text>
+                  <Text style={styles.meaningTagText}>{t('cards.freedom')}</Text>
                 </View>
               </View>
-              <Text style={styles.modalCardMeaning}>{card.meaningKr}</Text>
+              <Text style={styles.modalCardMeaning}>{getCardMeaning(card)}</Text>
             </View>
 
             <View style={styles.modalMemoSection}>
-              <Text style={styles.modalMemoTitle}>메모</Text>
+              <Text style={styles.modalMemoTitle}>{t('journal.entry.memo')}</Text>
               <TextInput
                 style={styles.modalMemoInput}
                 value={memo}
                 onChangeText={onMemoChange}
-                placeholder="이 시간에 대한 생각이나 느낌을 적어보세요..."
+                placeholder={t('timer.memoPlaceholder')}
                 placeholderTextColor={Colors.text.tertiary}
                 multiline
                 numberOfLines={4}
@@ -163,7 +170,7 @@ const CardDetailModal = memo(({
             </View>
 
             <TouchableOpacity style={styles.saveButton} onPress={onSave}>
-              <Text style={styles.saveButtonText}>저장</Text>
+              <Text style={styles.saveButtonText}>{t('common.save')}</Text>
             </TouchableOpacity>
           </ScrollView>
           </TouchableOpacity>
@@ -187,6 +194,8 @@ const EnergyFlowSection = memo(({
   cardMemos: Record<number, string>;
   onRedraw: () => void;
 }) => {
+  const { t } = useTranslation();
+  const { getCardName } = useTarotI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
   // 현재 시간이 바뀔 때마다 스크롤 위치 조정
@@ -200,9 +209,9 @@ const EnergyFlowSection = memo(({
   return (
     <View style={styles.energyFlowSection}>
       <View style={styles.energyFlowHeader}>
-        <Text style={styles.energyFlowTitle}>24시간 에너지 흐름</Text>
+        <Text style={styles.energyFlowTitle}>{t('timer.energyFlow')}</Text>
         <TouchableOpacity style={styles.redrawButton} onPress={onRedraw}>
-          <Text style={styles.redrawButtonText}>다시 뽑기</Text>
+          <Text style={styles.redrawButtonText}>{t('timer.redraw')}</Text>
         </TouchableOpacity>
       </View>
       
@@ -234,9 +243,9 @@ const EnergyFlowSection = memo(({
                 styles.energyCardTimeText,
                 isCurrentHour ? styles.currentEnergyCardTimeText : null
               ]}>
-                {hour === 0 ? '자정' : 
-                 hour === 12 ? '정오' : 
-                 hour < 12 ? `오전 ${hour}시` : `오후 ${hour - 12}시`}
+                {hour === 0 ? t('timer.midnight') : 
+                 hour === 12 ? t('timer.noon') : 
+                 hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 })}
               </Text>
             </View>
             
@@ -252,7 +261,7 @@ const EnergyFlowSection = memo(({
               styles.energyCardName,
               isCurrentHour ? styles.currentEnergyCardName : null
             ]} numberOfLines={1}>
-              {card.nameKr}
+              {getCardName(card)}
             </Text>
             
             {/* 메모 버튼 */}
@@ -276,7 +285,25 @@ const EnergyFlowSection = memo(({
 });
 
 const TimerTab = memo(() => {
+  const { t } = useTranslation();
+  const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
   const { currentTime, currentHour, formattedTime } = useTimer();
+  
+  // 랜덤 헤드라인과 서브타이틀 선택
+  const getRandomWelcomeText = () => {
+    const titles = t('timer.welcomeTitles', { returnObjects: true }) as string[];
+    const subtitles = t('timer.welcomeSubtitles', { returnObjects: true }) as string[];
+    
+    const randomTitleIndex = Math.floor(Math.random() * titles.length);
+    const randomSubtitleIndex = Math.floor(Math.random() * subtitles.length);
+    
+    return {
+      title: titles[randomTitleIndex],
+      subtitle: subtitles[randomSubtitleIndex]
+    };
+  };
+  
+  const [welcomeText] = useState(() => getRandomWelcomeText());
   const {
     dailyCards,
     isLoading,
@@ -316,12 +343,7 @@ const TimerTab = memo(() => {
     setModalVisible(false);
   };
 
-  const currentDate = new Date().toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long'
-  });
+  const currentDate = LanguageUtils.formatDate(new Date());
 
   return (
     <KeyboardAvoidingView 
@@ -337,11 +359,11 @@ const TimerTab = memo(() => {
         {/* 현재 시간 카드 또는 빈 상태 */}
         {hasCardsForToday && currentCard ? (
           <View style={styles.currentCardSection}>
-            <Text style={styles.currentTimeLabel}>현재 시간</Text>
+            <Text style={styles.currentTimeLabel}>{t('timer.currentTime')}</Text>
             <Text style={styles.currentTimeText}>
-              {currentHour === 0 ? '자정' : 
-               currentHour === 12 ? '정오' : 
-               currentHour < 12 ? `오전 ${currentHour}시` : `오후 ${currentHour - 12}시`}
+              {currentHour === 0 ? t('timer.midnight') : 
+               currentHour === 12 ? t('timer.noon') : 
+               currentHour < 12 ? t('timer.am', { hour: currentHour }) : t('timer.pm', { hour: currentHour - 12 })}
             </Text>
             
             <TouchableOpacity 
@@ -353,12 +375,14 @@ const TimerTab = memo(() => {
                 size="large"
                 showText={false}
               />
-              <Text style={styles.currentCardName}>{currentCard.nameKr}</Text>
-              <Text style={styles.currentCardNameEn}>{currentCard.name}</Text>
+              <Text style={styles.currentCardName}>{getCardName(currentCard)}</Text>
+              {!isEnglish && (
+                <Text style={styles.currentCardNameEn}>{currentCard.name}</Text>
+              )}
             </TouchableOpacity>
             
             <Text style={styles.currentCardMeaning}>
-              {currentCard.meaningKr}
+              {getCardMeaning(currentCard)}
             </Text>
             
             {/* 메모 남기기 버튼 */}
@@ -367,7 +391,7 @@ const TimerTab = memo(() => {
               onPress={() => handleCardPress(currentHour)}
             >
               <Text style={styles.memoActionButtonText}>
-                {cardMemos[currentHour] ? '📝 메모 수정하기' : '📄 메모 남기기'}
+                {cardMemos[currentHour] ? t('timer.editMemo') : t('timer.addMemo')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -390,9 +414,9 @@ const TimerTab = memo(() => {
                 </View>
               </View>
             </View>
-            <Text style={styles.emptyStateTitle}>운명을 받혀보세요</Text>
+            <Text style={styles.emptyStateTitle}>{welcomeText.title}</Text>
             <Text style={styles.emptyStateSubtitle}>
-              오늘 하루 각 시간에 흐르는 우주의 에너지를 발견하세요
+              {welcomeText.subtitle}
             </Text>
             
             <TouchableOpacity
@@ -409,7 +433,7 @@ const TimerTab = memo(() => {
                   />
                 )}
                 <Text style={[styles.drawButtonText, !isLoading && { marginLeft: 8 }]}>
-                  {isLoading ? '카드 준비 중...' : '24시간 타로 뽑기'}
+                  {isLoading ? t('timer.preparing') : t('timer.drawCards')}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -431,7 +455,7 @@ const TimerTab = memo(() => {
         {hasCardsForToday && (
           <View style={styles.bottomGuideSection}>
             <Text style={styles.bottomGuideText}>
-              "매 순간마다 우주의 에너지가 흐릅니다. 마음을 열고 지혜를 받아들이세요."
+              {t('timer.guideText')}
             </Text>
           </View>
         )}
@@ -440,7 +464,7 @@ const TimerTab = memo(() => {
         {hasCardsForToday && (
           <View style={styles.saveSection}>
             <TouchableOpacity style={styles.dailySaveButton}>
-              <Text style={styles.dailySaveButtonText}>데일리 타로 저장하기</Text>
+              <Text style={styles.dailySaveButtonText}>{t('timer.saveDailyTarot')}</Text>
             </TouchableOpacity>
           </View>
         )}

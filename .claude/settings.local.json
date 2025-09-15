@@ -62,7 +62,16 @@
       "Bash(kill:*)",
       "Bash(open http://localhost:8082)",
       "Bash(PORT=3001 npm start)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(start http://localhost:8081)",
+      "Bash(ipconfig)",
+      "Bash(xcopy:*)",
+      "Bash(start http://localhost:8088)",
+      "Bash(start http://localhost:8090)",
+      "Bash(wmic process where:*)",
+      "Bash(cmd /c:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

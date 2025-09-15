@@ -12,7 +12,7 @@
   },
   "timer": {
     "title": "Tarot Timer",
-    "subtitle": "24-hour tarot meditation",
+    "subtitle": "24-hour tarot messages",
     "start": "Start",
     "pause": "Pause",
     "resume": "Resume",
@@ -23,6 +23,28 @@
     "elapsed": "Elapsed",
     "session": "Session",
     "totalTime": "Total Time",
+    "currentTime": "Current Time",
+    "midnight": "Midnight",
+    "noon": "Noon",
+    "am": "{{hour}} AM",
+    "pm": "{{hour}} PM",
+    "energyFlow": "24-Hour Energy Flow",
+    "redraw": "Redraw",
+    "editMemo": "📝 Edit Memo",
+    "addMemo": "📄 Add Memo",
+    "welcomeTitles": [
+      "Your time flows uniquely",
+      "Today's story unfolds"
+    ],
+    "welcomeSubtitles": [
+      "24 hours a day, special messages await you",
+      "Take time each hour to see the world from a new perspective"
+    ],
+    "preparing": "Preparing cards...",
+    "drawCards": "Draw 24-Hour Tarot",
+    "guideText": "Cosmic energy flows in every moment. Open your heart and embrace wisdom.",
+    "saveDailyTarot": "Save Daily Tarot",
+    "memoPlaceholder": "Write down your thoughts or feelings about this hour...",
     "settings": {
       "duration": "Timer Duration",
       "sound": "Notification Sound",
@@ -41,6 +63,7 @@
   "spread": {
     "title": "Tarot Spread",
     "subtitle": "Explore the wisdom of the cards",
+    "cardCount": "Cards {{drawn}} / {{total}}",
     "selectSpread": "Select Spread",
     "drawCard": "Draw Card",
     "shuffleCards": "Shuffle Cards",
@@ -50,13 +73,29 @@
     "position": "Position",
     "saveReading": "Save Reading",
     "types": {
-      "singleCard": "Single Card",
+      "singleCard": "One Card Tarot",
       "threeCard": "Three Card Spread",
+      "fourCard": "Four Card Spread",
+      "fiveCard": "Five Card V Spread",
       "crossSpread": "Cross Spread",
       "celticCross": "Celtic Cross",
-      "relationship": "Relationship Spread",
+      "relationship": "Cup of Relationship Spread",
       "career": "Career Spread",
-      "yearlyForecast": "Yearly Forecast"
+      "yearlyForecast": "Yearly Forecast",
+      "choice": "AB Choice Spread"
+    },
+    "descriptions": {
+      "singleCard": "Simple question or today's message",
+      "threeCard": "Understanding the flow of past-present-future",
+      "fourCard": "Analysis of four aspects of the situation",
+      "fiveCard": "Multi-faceted analysis of current situation",
+      "celticCross": "Comprehensive and in-depth analysis",
+      "relationship": "Relationships and love issues",
+      "choice": "Decision between two choices",
+      "message": "Wisdom from the universe",
+      "pastInfluence": "Past influences and background",
+      "presentSituation": "Current situation and energy",
+      "futurePossibility": "Future possibilities and direction"
     },
     "positions": {
       "past": "Past",
@@ -68,15 +107,61 @@
       "advice": "Advice",
       "external": "External Influence",
       "internal": "Inner Self",
-      "hopes": "Hopes & Fears"
+      "hopes": "Hopes & Fears",
+      "message": "Message",
+      "currentSituation": "Current Situation",
+      "obstacles": "Obstacles"
     },
     "actions": {
       "draw": "Draw",
       "shuffle": "Shuffle",
       "reset": "Reset",
       "save": "Save",
-      "share": "Share"
-    }
+      "share": "Share",
+      "start": "Start Reading",
+      "saveSpread": "Save Spread",
+      "drawCards": "Draw Cards"
+    },
+    "errors": {
+      "enterTitle": "Please enter a title.",
+      "noCardsToSave": "No cards to save. Please draw cards first.",
+      "saveFailed": "An error occurred while saving the spread.",
+      "unsupportedType": "Unsupported spread type.",
+      "loadFailed": "An error occurred while loading the spread.",
+      "deleteFailed": "An error occurred while deleting the spread.",
+      "drawFailed": "An error occurred while drawing cards."
+    },
+    "messages": {
+      "deleteComplete": "Delete Complete",
+      "saveSuccess": "Save Complete",
+      "saveComplete": "\"{{title}}\" spread has been saved to diary.",
+      "loadSuccess": "Load Complete",
+      "loadComplete": "\"{{title}}\" spread has been loaded.",
+      "deleteSuccess": "Spread has been deleted.",
+      "complete": "Complete"
+    },
+    "deleteConfirm": {
+      "title": "Delete Confirmation",
+      "message": "Are you sure you want to delete \"{{title}}\" spread?"
+    },
+    "premium": {
+      "title": "Premium Feature",
+      "message": "This spread is a premium feature.\nPlease try the free spreads!",
+      "infoText": "Discover more spreads and advanced features\nwith Premium"
+    },
+    "saveModal": {
+      "title": "Save Spread",
+      "titleLabel": "Title *",
+      "titlePlaceholder": "Enter spread title",
+      "insightsLabel": "Insights",
+      "insightsPlaceholder": "Record insights or interpretations from this spread (optional)"
+    },
+    "loadModal": {
+      "title": "Saved Spreads",
+      "emptyTitle": "No saved spreads",
+      "emptySubtitle": "Draw cards and tap \"Save to Diary\" to save your spreads"
+    },
+    "drawing": "Drawing..."
   },
   "journal": {
     "title": "Tarot Journal",
@@ -97,7 +182,8 @@
       "cards": "Related Cards",
       "reflection": "Reflection",
       "insights": "Insights",
-      "gratitude": "Gratitude"
+      "gratitude": "Gratitude",
+      "memo": "Memo"
     },
     "actions": {
       "save": "Save",
@@ -119,11 +205,102 @@
       "gratitude": "What are you grateful for today?",
       "challenge": "What challenge did you face today?",
       "growth": "What growth did you experience?"
-    }
+    },
+    "tabs": {
+      "daily": "Daily Tarot",
+      "spreads": "Spread Records"
+    },
+    "loading": {
+      "daily": "Loading daily tarot...",
+      "dailyTarot": "Loading daily tarot..."
+    },
+    "empty": {
+      "dailyTitle": "Daily Readings",
+      "dailyMessage": "No saved daily tarot records\nSave a 24-hour tarot from Timer tab",
+      "spreadTitle": "Spread Records",
+      "spreadMessage": "No saved spreads\nSave a reading from Spread tab"
+    },
+    "sections": {
+      "dailyReadings": "Daily Readings",
+      "spreadReadings": "Spread Records"
+    },
+    "labels": {
+      "dailyTarotReading": "24-Hour Tarot Reading"
+    },
+    "status": {
+      "completed": "Complete"
+    },
+    "recordCount": "{{count}} records",
+    "moreCards": "+{{count}}",
+    "memoCount": "🕐 {{count}} hourly memos",
+    "cardsCast": "{{count}} cards cast",
+    "dailyTarotTitle": "Daily Tarot",
+    "memoSaved": "Saved",
+    "memoSavedMessage": "Memo for {{hour}} o'clock saved",
+    "saveMemo": "Save Memo",
+    "memoPlaceholder": "Write down your thoughts or feelings about this hour...",
+    "insightsTitle": "Insights",
+    "createdDate": "Created Date"
   },
   "settings": {
     "title": "Settings",
     "subtitle": "Personalize your app",
+    "premium": {
+      "title": "Premium Membership",
+      "upgradeTitle": "Premium Upgrade",
+      "upgradeMessage": "Would you like to use premium features?\n• Unlock all spreads\n• Advanced analytics\n• Unlimited storage\n• Remove ads",
+      "upgrade": "Upgrade",
+      "active": "Active",
+      "manage": "Manage Premium",
+      "features": {
+        "unlockSpreads": "Unlock premium spreads",
+        "adFree": "Ad-free experience",
+        "unlimitedStorage": "Unlimited storage"
+      }
+    },
+    "display": {
+      "title": "Display & Theme",
+      "darkMode": "Dark Mode",
+      "alwaysOn": "Always on for mystical experience"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "permissionTitle": "Notification Permission Request",
+      "permissionMessage": "Tarot Timer needs permission to send notifications.",
+      "allow": "Allow",
+      "permissionGranted": "✅ Notification permission granted",
+      "permissionRequired": "⚠️ Notification permission required",
+      "configureMessage": "You can configure notification settings.",
+      "canReceive": "You can receive push notifications",
+      "needPermission": "Please allow permission to receive notifications",
+      "requestPermission": "Request Permission",
+      "permissionFirst": "Please allow notification permission first.",
+      "testTitle": "Test Notification",
+      "testMessage": "🔮 Tarot Timer test notification!",
+      "saveComplete": "Save Complete",
+      "quietHoursSaved": "Quiet hours have been set.",
+      "hourlyTarot": "Hourly Tarot Notifications",
+      "hourlyDescription": "Receive tarot card notifications every hour",
+      "midnightReset": "Midnight Reset Notification",
+      "midnightDescription": "Notification when a new day begins",
+      "dailyReminder": "Daily Tarot Journal Reminder",
+      "dailyDescription": "Daily journal writing reminder at 8 PM",
+      "weekend": "Weekend Notifications",
+      "weekendDescription": "Receive notifications on weekends too",
+      "quietHours": "Quiet Hours",
+      "sendTest": "Send Test Notification",
+      "quietHoursSettings": "Quiet Hours Settings",
+      "quietHoursDescription": "No notifications will be received during this time",
+      "quietHoursTime": "Quiet hours: {{start}}:00 - {{end}}:00",
+      "timeline24h": "24-Hour Timeline",
+      "start": "Start",
+      "end": "End"
+    },
+    "about": {
+      "title": "App Info",
+      "version": "Version Info",
+      "developer": "Developer"
+    },
     "general": {
       "title": "General",
       "language": "Language",
@@ -241,7 +418,24 @@
     "swords": "Swords",
     "pentacles": "Pentacles",
     "reversed": "Reversed",
-    "upright": "Upright"
+    "upright": "Upright",
+    "hope": "Hope",
+    "courage": "Courage",
+    "freedom": "Freedom",
+    "drawCard": "Draw a Card",
+    "imageLoadError": "Image Load Failed",
+    "redrawAllTitle": "🔄 Draw New 24 Cards",
+    "redrawAllMessage": "You already have today's cards. Would you like to replace them with new 24 cards?\n\n⚠️ All existing cards and memos will be replaced with new cards.",
+    "redrawSingleTitle": "🔄 Redraw Card",
+    "redrawSingleMessage": "Would you like to replace the \"{{cardName}}\" card at {{hour}} with a new card?",
+    "newCardTitle": "🎴 New Card!",
+    "newCardMessage": "New card for {{hour}}: {{cardName}}",
+    "completeTitle": "🔮 24 Cards of Destiny Complete!",
+    "completeMessage": "Your tarot cards for today are ready.\nCurrent card for {{hour}} o'clock: {{cardName}}",
+    "redrawCards": "Draw New",
+    "redrawCard": "Redraw",
+    "redrawError": "An error occurred while redrawing the card.",
+    "drawError": "An error occurred while drawing cards."
   },
   "analytics": {
     "sessionStarted": "Session started",
@@ -258,7 +452,11 @@
     "unauthorized": "Authentication required",
     "serverError": "Server error",
     "validation": "Please check your input",
-    "timeout": "Request timeout"
+    "timeout": "Request timeout",
+    "tabLoadError": "⚠️ Error occurred",
+    "tabLoadMessage": "An error occurred while loading the {{tabName}} tab.",
+    "retry": "Try Again",
+    "fontLoading": "Loading fonts..."
   },
   "notifications": {
     "timerComplete": "Timer completed!",

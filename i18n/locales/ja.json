@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "タロットタイマー",
-    "subtitle": "タロットタイマー",
+    "subtitle": "Tarot Timer",
     "description": "24時間タロットカードタイマー＆日記アプリ"
   },
   "navigation": {
@@ -11,8 +11,8 @@
     "settings": "設定"
   },
   "timer": {
-    "title": "タロットタイマー",
-    "subtitle": "24時間タロット瞑想",
+    "title": "Tarot Timer",
+    "subtitle": "24時間タロットメッセージ",
     "start": "開始",
     "pause": "一時停止",
     "resume": "再開",
@@ -23,6 +23,28 @@
     "elapsed": "経過時間",
     "session": "セッション",
     "totalTime": "総時間",
+    "currentTime": "現在時刻",
+    "midnight": "真夜中",
+    "noon": "正午",
+    "am": "午前{{hour}}時",
+    "pm": "午後{{hour}}時",
+    "energyFlow": "24時間エネルギーフロー",
+    "redraw": "再度引く",
+    "editMemo": "📝 メモを編集",
+    "addMemo": "📄 メモを追加",
+    "welcomeTitles": [
+      "あなただけの時間が流れます",
+      "今日の物語が始まります"
+    ],
+    "welcomeSubtitles": [
+      "一日24時間、あなたのための特別なメッセージが待っています",
+      "毎時間新しい視点で世界を見る時間を持ちましょう"
+    ],
+    "preparing": "カード準備中...",
+    "drawCards": "24時間タロットを引く",
+    "guideText": "瞬間瞬間に宇宙のエネルギーが流れます。心を開いて知恵を受け入れてください。",
+    "saveDailyTarot": "デイリータロットを保存",
+    "memoPlaceholder": "この時間についての思いや感覚を書いてみてください...",
     "settings": {
       "duration": "タイマー時間",
       "sound": "通知音",
@@ -39,8 +61,9 @@
     }
   },
   "spread": {
-    "title": "タロットスプレッド",
+    "title": "Tarot Spread",
     "subtitle": "カードの知恵を探求しましょう",
+    "cardCount": "カード {{drawn}} / {{total}}",
     "selectSpread": "スプレッドを選択",
     "drawCard": "カードを引く",
     "shuffleCards": "カードをシャッフル",
@@ -50,13 +73,29 @@
     "position": "位置",
     "saveReading": "リーディングを保存",
     "types": {
-      "singleCard": "ワンカード",
+      "singleCard": "ワンカードタロット",
       "threeCard": "スリーカードスプレッド",
-      "crossSpread": "クロススプレッド",
+      "fourCard": "フォーカードスプレッド",
+      "fiveCard": "ファイブカードVスプレッド",
+      "crossSpread": "十字スプレッド",
       "celticCross": "ケルティッククロス",
-      "relationship": "恋愛スプレッド",
+      "relationship": "カップオブリレーションシップスプレッド",
       "career": "仕事スプレッド",
-      "yearlyForecast": "年間運勢"
+      "yearlyForecast": "年間運勢",
+      "choice": "AB選択スプレッド"
+    },
+    "descriptions": {
+      "singleCard": "シンプルな質問や今日のメッセージ",
+      "threeCard": "過去-現在-未来の流れの把握",
+      "fourCard": "状況の4つの側面を分析",
+      "fiveCard": "現在状況の多面的分析",
+      "celticCross": "総合的で深い分析",
+      "relationship": "人間関係、恋愛問題",
+      "choice": "2つの選択肢からの決定",
+      "message": "宇宙が伝える知恵",
+      "pastInfluence": "過去の影響と背景",
+      "presentSituation": "現在の状況とエネルギー",
+      "futurePossibility": "未来の可能性と方向性"
     },
     "positions": {
       "past": "過去",
@@ -68,18 +107,64 @@
       "advice": "アドバイス",
       "external": "外部の影響",
       "internal": "内面",
-      "hopes": "希望と恐れ"
+      "hopes": "希望と恐れ",
+      "message": "メッセージ",
+      "currentSituation": "現在の状況",
+      "obstacles": "障害"
     },
     "actions": {
       "draw": "引く",
       "shuffle": "シャッフル",
       "reset": "リセット",
       "save": "保存",
-      "share": "共有"
-    }
+      "share": "共有",
+      "start": "リーディングを開始",
+      "saveSpread": "スプレッドを保存",
+      "drawCards": "カードを引く"
+    },
+    "errors": {
+      "enterTitle": "タイトルを入力してください。",
+      "noCardsToSave": "保存するカードがありません。まずカードを引いてください。",
+      "saveFailed": "スプレッド保存中に問題が発生しました。",
+      "unsupportedType": "サポートされていないスプレッドタイプです。",
+      "loadFailed": "スプレッド読み込み中に問題が発生しました。",
+      "deleteFailed": "スプレッド削除中に問題が発生しました。",
+      "drawFailed": "カードを引く際に問題が発生しました。"
+    },
+    "messages": {
+      "deleteComplete": "削除完了",
+      "saveSuccess": "保存完了",
+      "saveComplete": "「{{title}}」スプレッドが日記に保存されました。",
+      "loadSuccess": "読み込み完了",
+      "loadComplete": "「{{title}}」スプレッドを読み込みました。",
+      "deleteSuccess": "スプレッドが削除されました。",
+      "complete": "完成"
+    },
+    "deleteConfirm": {
+      "title": "削除確認",
+      "message": "「{{title}}」スプレッドを削除しますか？"
+    },
+    "premium": {
+      "title": "プレミアム機能",
+      "message": "このスプレッドはプレミアム機能です。\n無料スプレッドをご利用ください！",
+      "infoText": "より多様なスプレッドと高度な機能を\nプレミアムでお楽しみください"
+    },
+    "saveModal": {
+      "title": "スプレッドを保存",
+      "titleLabel": "タイトル *",
+      "titlePlaceholder": "スプレッドのタイトルを入力してください",
+      "insightsLabel": "洞察",
+      "insightsPlaceholder": "このスプレッドで得た洞察や解釈を記録してください（任意）"
+    },
+    "loadModal": {
+      "title": "保存されたスプレッド",
+      "emptyTitle": "保存されたスプレッドがありません",
+      "emptySubtitle": "カードを引いて「日記に保存」ボタンを押してスプレッドを保存してください"
+    },
+    "drawing": "引いています..."
   },
   "journal": {
-    "title": "タロット日記",
+    "title": "Tarot Diary",
     "subtitle": "あなたのタロットの旅を記録しましょう",
     "newEntry": "新しい記録",
     "todayEntry": "今日の記録",
@@ -97,7 +182,8 @@
       "cards": "関連カード",
       "reflection": "反省",
       "insights": "洞察",
-      "gratitude": "感謝"
+      "gratitude": "感謝",
+      "memo": "メモ"
     },
     "actions": {
       "save": "保存",
@@ -107,7 +193,7 @@
       "export": "エクスポート"
     },
     "mood": {
-      "excellent": "素晴らしい",
+      "excellent": "最高",
       "good": "良い",
       "neutral": "普通",
       "challenging": "困難",
@@ -119,11 +205,102 @@
       "gratitude": "今日感謝していることは何ですか？",
       "challenge": "今日直面した挑戦は何でしたか？",
       "growth": "どのような成長を経験しましたか？"
-    }
+    },
+    "tabs": {
+      "daily": "デイリータロット",
+      "spreads": "スプレッド記録"
+    },
+    "loading": {
+      "daily": "デイリータロットを読み込み中...",
+      "dailyTarot": "デイリータロットを読み込み中..."
+    },
+    "empty": {
+      "dailyTitle": "デイリーリーディング",
+      "dailyMessage": "保存されたデイリータロットがありません\nタイマータブで24時間タロットを保存してください",
+      "spreadTitle": "スプレッド記録",
+      "spreadMessage": "保存されたスプレッドがありません\nスプレッドタブでリーディングを保存してください"
+    },
+    "sections": {
+      "dailyReadings": "デイリーリーディング",
+      "spreadReadings": "スプレッド記録"
+    },
+    "labels": {
+      "dailyTarotReading": "24時間タロットリーディング"
+    },
+    "status": {
+      "completed": "完了"
+    },
+    "recordCount": "{{count}}件の記録",
+    "moreCards": "+{{count}}",
+    "memoCount": "🕐 {{count}}時間帯のメモ",
+    "cardsCast": "{{count}}カード使用",
+    "dailyTarotTitle": "デイリータロット",
+    "memoSaved": "保存完了",
+    "memoSavedMessage": "{{hour}}時のメモが保存されました",
+    "saveMemo": "メモを保存",
+    "memoPlaceholder": "この時間についての思いや感覚を書いてみてください...",
+    "insightsTitle": "洞察",
+    "createdDate": "作成日"
   },
   "settings": {
-    "title": "設定",
-    "subtitle": "アプリをカスタマイズ",
+    "title": "Settings",
+    "subtitle": "アプリをカスタマイズしましょう",
+    "premium": {
+      "title": "プレミアムメンバーシップ",
+      "upgradeTitle": "プレミアムアップグレード",
+      "upgradeMessage": "プレミアム機能をご利用になりますか？\n• すべてのスプレッドのロック解除\n• 高度な分析機能\n• 無制限保存\n• 広告削除",
+      "upgrade": "アップグレード",
+      "active": "有効",
+      "manage": "プレミアム管理",
+      "features": {
+        "unlockSpreads": "プレミアムスプレッドのロック解除",
+        "adFree": "広告なしの体験",
+        "unlimitedStorage": "無制限ストレージ"
+      }
+    },
+    "display": {
+      "title": "画面とテーマ",
+      "darkMode": "ダークモード",
+      "alwaysOn": "ミスティカルな体験のため常にオン"
+    },
+    "notifications": {
+      "title": "通知設定",
+      "permissionTitle": "通知許可のリクエスト",
+      "permissionMessage": "タロットタイマーが通知を送信するには許可が必要です。",
+      "allow": "許可",
+      "permissionGranted": "✅ 通知許可が与えられました",
+      "permissionRequired": "⚠️ 通知許可が必要です",
+      "configureMessage": "通知設定を構成できます。",
+      "canReceive": "プッシュ通知を受信できます",
+      "needPermission": "通知を受信するには許可してください",
+      "requestPermission": "許可をリクエスト",
+      "permissionFirst": "まず通知許可を与えてください。",
+      "testTitle": "テスト通知",
+      "testMessage": "🔮 タロットタイマーのテスト通知です！",
+      "saveComplete": "保存完了",
+      "quietHoursSaved": "静寂時間が設定されました。",
+      "hourlyTarot": "毎時タロット通知",
+      "hourlyDescription": "毎時間タロットカード通知を受信",
+      "midnightReset": "真夜中リセット通知",
+      "midnightDescription": "新しい一日の開始時に通知",
+      "dailyReminder": "デイリータロット日記保存リマインダー",
+      "dailyDescription": "毎日午後8時に日記作成通知",
+      "weekend": "週末通知",
+      "weekendDescription": "週末も通知を受信",
+      "quietHours": "静寂時間",
+      "sendTest": "テスト通知を送信",
+      "quietHoursSettings": "静寂時間設定",
+      "quietHoursDescription": "この時間帯は通知を受信しません",
+      "quietHoursTime": "静寂時間: {{start}}:00 - {{end}}:00",
+      "timeline24h": "24時間タイムライン",
+      "start": "開始",
+      "end": "終了"
+    },
+    "about": {
+      "title": "アプリ情報",
+      "version": "バージョン情報",
+      "developer": "開発者"
+    },
     "general": {
       "title": "一般",
       "language": "言語",
@@ -151,7 +328,7 @@
       "title": "日記設定",
       "autoBackup": "自動バックアップ",
       "exportFormat": "エクスポート形式",
-      "privacy": "プライバシー",
+      "privacy": "プライバシー保護",
       "syncCloud": "クラウド同期"
     },
     "account": {
@@ -163,7 +340,7 @@
       "export": "データエクスポート"
     },
     "about": {
-      "title": "アプリについて",
+      "title": "情報",
       "version": "バージョン",
       "developer": "開発者",
       "support": "サポート",
@@ -241,24 +418,45 @@
     "swords": "ソード",
     "pentacles": "ペンタクル",
     "reversed": "逆位置",
-    "upright": "正位置"
+    "upright": "正位置",
+    "hope": "希望",
+    "courage": "勇気",
+    "freedom": "自由",
+    "drawCard": "カードを引いてください",
+    "imageLoadError": "画像の読み込みに失敗しました",
+    "redrawAllTitle": "🔄 新しい24枚のカードを引く",
+    "redrawAllMessage": "今日のカードが既にあります。新しい24枚のカードに交換しますか？\n\n⚠️ 既存のカードとメモがすべて新しいカードに交換されます。",
+    "redrawSingleTitle": "🔄 カードを再度引く",
+    "redrawSingleMessage": "{{hour}}の「{{cardName}}」カードを新しいカードに交換しますか？",
+    "newCardTitle": "🎴 新しいカード！",
+    "newCardMessage": "{{hour}}の新しいカード: {{cardName}}",
+    "completeTitle": "🔮 運命の24枚完成！",
+    "completeMessage": "今日一日のタロットカードが準備されました。\n現在{{hour}}時のカード: {{cardName}}",
+    "redrawCards": "新しく引く",
+    "redrawCard": "再度引く",
+    "redrawError": "カードを再度引く際に問題が発生しました。",
+    "drawError": "カードを引く際に問題が発生しました。"
   },
   "analytics": {
     "sessionStarted": "セッション開始",
     "cardDrawn": "カードを引いた",
-    "journalEntry": "日記を作成",
-    "settingsChanged": "設定を変更",
+    "journalEntry": "日記作成",
+    "settingsChanged": "設定変更",
     "timerCompleted": "タイマー完了"
   },
   "errors": {
     "generic": "エラーが発生しました",
     "network": "ネットワークエラー",
-    "offline": "オフラインです",
+    "offline": "オフライン状態です",
     "notFound": "見つかりません",
     "unauthorized": "認証が必要です",
     "serverError": "サーバーエラー",
-    "validation": "入力内容を確認してください",
-    "timeout": "タイムアウトしました"
+    "validation": "入力値を確認してください",
+    "timeout": "タイムアウトしました",
+    "tabLoadError": "⚠️ エラー発生",
+    "tabLoadMessage": "{{tabName}}タブの読み込み中に問題が発生しました。",
+    "retry": "再試行",
+    "fontLoading": "フォント読み込み中..."
   },
   "notifications": {
     "timerComplete": "タイマーが完了しました！",

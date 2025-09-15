@@ -1,7 +1,7 @@
 {
   "name": "tarot-timer-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.8.3",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

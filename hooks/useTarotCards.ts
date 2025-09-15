@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { TarotCard, TarotUtils, DailyTarotSave, simpleStorage, STORAGE_KEYS } from '../utils/tarotData';
+import i18next from 'i18next';
+import { useTarotI18n } from './useTarotI18n';
 
 export interface UseTarotCardsReturn {
   dailyCards: TarotCard[];
@@ -23,6 +25,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [cardMemos, setCardMemos] = useState<Record<number, string>>({});
 
+  const { getCardName } = useTarotI18n();
   const hasCardsForToday = dailyCards.length > 0;
   const currentCard = selectedCardIndex !== null ? dailyCards[selectedCardIndex] : null;
 
@@ -63,12 +66,12 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   const drawDailyCards = useCallback(() => {
     if (hasCardsForToday) {
       Alert.alert(
-        '🔄 새로운 24장 카드 뽑기',
-        '이미 오늘의 카드가 있습니다. 새로운 24장 카드로 교체하시겠습니까?\n\n⚠️ 기존 카드와 메모가 모두 새로운 카드로 교체됩니다.',
+        i18next.t('cards.redrawAllTitle'),
+        i18next.t('cards.redrawAllMessage'),
         [
-          { text: '취소', style: 'cancel' },
+          { text: i18next.t('common.cancel'), style: 'cancel' },
           {
-            text: '새로 뽑기',
+            text: i18next.t('cards.redrawCards'),
             style: 'destructive',
             onPress: performDrawDailyCards
           }
@@ -91,13 +94,16 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       await saveDailyCards(newCards, {});
       
       Alert.alert(
-        '🔮 운명의 24장 완성!',
-        `오늘 하루의 타로 카드가 준비되었습니다.\n현재 ${currentHour}시의 카드: ${newCards[currentHour].nameKr}`,
-        [{ text: '확인' }]
+        i18next.t('cards.completeTitle'),
+        i18next.t('cards.completeMessage', { 
+          hour: currentHour,
+          cardName: getCardName(newCards[currentHour])
+        }),
+        [{ text: i18next.t('common.ok') }]
       );
     } catch (error) {
       console.error('카드 뽑기 실패:', error);
-      Alert.alert('오류', '카드를 뽑는 중 문제가 발생했습니다.');
+      Alert.alert(i18next.t('common.error'), i18next.t('cards.drawError'));
     } finally {
       setIsLoading(false);
     }
@@ -124,15 +130,19 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
 
   // 개별 카드 다시 뽑기
   const redrawSingleCard = useCallback(async (hourIndex: number) => {
-    const currentCardName = dailyCards[hourIndex]?.nameKr || '알 수 없는 카드';
+    const currentCard = dailyCards[hourIndex];
+    const currentCardName = currentCard ? getCardName(currentCard) : '알 수 없는 카드';
     
     Alert.alert(
-      '🔄 카드 다시 뽑기',
-      `${TarotUtils.formatHour(hourIndex)}의 "${currentCardName}" 카드를 새로운 카드로 교체하시겠습니까?`,
+      i18next.t('cards.redrawSingleTitle'),
+      i18next.t('cards.redrawSingleMessage', {
+        hour: TarotUtils.formatHour(hourIndex),
+        cardName: currentCardName
+      }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: i18next.t('common.cancel'), style: 'cancel' },
         {
-          text: '다시 뽑기',
+          text: i18next.t('cards.redrawCard'),
           onPress: async () => {
             try {
               const newCard = TarotUtils.getRandomCards(1)[0];
@@ -143,19 +153,22 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
               await saveDailyCards(updatedCards);
               
               Alert.alert(
-                '🎴 새로운 카드!',
-                `${TarotUtils.formatHour(hourIndex)}의 새로운 카드: ${newCard.nameKr}`,
-                [{ text: '확인' }]
+                i18next.t('cards.newCardTitle'),
+                i18next.t('cards.newCardMessage', {
+                  hour: TarotUtils.formatHour(hourIndex),
+                  cardName: getCardName(newCard)
+                }),
+                [{ text: i18next.t('common.ok') }]
               );
             } catch (error) {
               console.error('카드 다시 뽑기 실패:', error);
-              Alert.alert('오류', '카드를 다시 뽑는 중 문제가 발생했습니다.');
+              Alert.alert(i18next.t('common.error'), i18next.t('cards.redrawError'));
             }
           }
         }
       ]
     );
-  }, [dailyCards, saveDailyCards]);
+  }, [dailyCards, saveDailyCards, getCardName]);
 
   // 메모 업데이트
   const updateMemo = useCallback(async (hourIndex: number, memo: string) => {

@@ -10,7 +10,9 @@ import {
   TextInput,
   Alert
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
+import { LanguageUtils } from '../i18n';
 import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
 import { 
   Colors, 
@@ -25,6 +27,7 @@ const { width: screenWidth } = Dimensions.get('window');
 
 // 데일리 타로 뷰어 모달
 const DailyTarotViewer = ({ visible, reading, onClose }) => {
+  const { t } = useTranslation();
   const [selectedHour, setSelectedHour] = useState(0);
   const [memoText, setMemoText] = useState('');
   const [cardMemos, setCardMemos] = useState({});
@@ -51,7 +54,7 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
     const updatedMemos = { ...cardMemos, [selectedHour]: memoText };
     setCardMemos(updatedMemos);
     // 실제 저장 로직은 여기에 구현
-    Alert.alert('저장 완료', `${selectedHour}시 메모가 저장되었습니다.`);
+    Alert.alert(t('journal.memoSaved'), t('journal.memoSavedMessage', { hour: selectedHour }));
   };
 
   if (!reading) return null;
@@ -68,7 +71,7 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
       <View style={styles.dailyViewerContainer}>
         {/* 제목 */}
         <View style={styles.dailyViewerHeader}>
-          <Text style={styles.dailyViewerTitle}>24시간 타로</Text>
+          <Text style={styles.dailyViewerTitle}>{t('journal.dailyTarotTitle')}</Text>
           <Text style={styles.dailyViewerDate}>{reading.displayDate}</Text>
         </View>
 
@@ -96,9 +99,9 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
                   onPress={() => handleCardPress(hour)}
                 >
                   <Text style={styles.hourLabel}>
-                    {hour === 0 ? '자정' : 
-                     hour === 12 ? '정오' : 
-                     hour < 12 ? `${hour}시` : `${hour - 12}시`}
+                    {hour === 0 ? t('timer.midnight') : 
+                     hour === 12 ? t('timer.noon') : 
+                     hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 })}
                   </Text>
                   
                   <View style={styles.cardImageContainer}>
@@ -123,9 +126,9 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
         {selectedCard && (
           <View style={styles.selectedCardInfo}>
             <Text style={styles.selectedTimeText}>
-              {selectedHour === 0 ? '자정' : 
-               selectedHour === 12 ? '정오' : 
-               selectedHour < 12 ? `오전 ${selectedHour}시` : `오후 ${selectedHour - 12}시`}
+              {selectedHour === 0 ? t('timer.midnight') : 
+               selectedHour === 12 ? t('timer.noon') : 
+               selectedHour < 12 ? t('timer.am', { hour: selectedHour }) : t('timer.pm', { hour: selectedHour - 12 })}
             </Text>
             <Text style={styles.selectedCardName}>{selectedCard.nameKr}</Text>
           </View>
@@ -133,18 +136,18 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
 
         {/* 메모 섹션 */}
         <View style={styles.memoSection}>
-          <Text style={styles.memoSectionTitle}>메모</Text>
+          <Text style={styles.memoSectionTitle}>{t('journal.entry.memo')}</Text>
           <TextInput
             style={styles.memoInput}
             value={memoText}
             onChangeText={setMemoText}
-            placeholder="이 시간의 타로 카드에 대한 메모를 입력하세요..."
+            placeholder={t('journal.memoPlaceholder')}
             placeholderTextColor="rgba(255, 255, 255, 0.5)"
             multiline
             textAlignVertical="top"
           />
           <TouchableOpacity style={styles.memoSaveButton} onPress={saveMemo}>
-            <Text style={styles.memoSaveButtonText}>메모 저장</Text>
+            <Text style={styles.memoSaveButtonText}>{t('journal.saveMemo')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -159,6 +162,7 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
 
 // 스프레드 뷰어 모달
 const SpreadViewer = ({ visible, spread, onClose }) => {
+  const { t } = useTranslation();
   if (!spread) return null;
 
   return (
@@ -215,7 +219,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
           {/* 메모/인사이트 섹션 */}
           {spread.insights && (
             <View style={styles.insightsSection}>
-              <Text style={styles.insightsSectionTitle}>📝 메모 & 인사이트</Text>
+              <Text style={styles.insightsSectionTitle}>📝 {t('journal.insightsTitle')}</Text>
               <View style={styles.insightsContainer}>
                 <Text style={styles.insightsText}>{spread.insights}</Text>
               </View>
@@ -224,7 +228,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
 
           {/* 생성 날짜 */}
           <View style={styles.metadataSection}>
-            <Text style={styles.metadataLabel}>생성일</Text>
+            <Text style={styles.metadataLabel}>{t('journal.createdDate')}</Text>
             <Text style={styles.metadataValue}>
               {new Date(spread.createdAt).toLocaleString('ko-KR')}
             </Text>
@@ -236,6 +240,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
 };
 
 const TarotJournal = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('daily');
   const [dailyReadings, setDailyReadings] = useState([]);
   const [spreadReadings, setSpreadReadings] = useState([]);
@@ -267,12 +272,7 @@ const TarotJournal = () => {
             readings.push({
               ...dailySave,
               type: 'daily',
-              displayDate: date.toLocaleDateString('ko-KR', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric', 
-                weekday: 'long' 
-              })
+              displayDate: LanguageUtils.formatDate(date)
             });
           }
         } catch (error) {
@@ -284,7 +284,7 @@ const TarotJournal = () => {
         new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
       ));
     } catch (error) {
-      console.error('일일 리딩 로드 실패:', error);
+      console.error('Daily reading load failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -295,15 +295,12 @@ const TarotJournal = () => {
       const spreads = await TarotUtils.loadSavedSpreads();
       setSpreadReadings(spreads);
     } catch (error) {
-      console.error('스프레드 리딩 로드 실패:', error);
+      console.error('Spread reading load failed:', error);
     }
   };
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <Text style={styles.appTitle}>Sacred Journal</Text>
-      <Text style={styles.appSubtitle}>우주 지혜를 통한 성찰로운 여정</Text>
-      
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'daily' && styles.activeTab]}
@@ -313,7 +310,7 @@ const TarotJournal = () => {
             styles.tabText,
             activeTab === 'daily' && styles.activeTabText
           ]}>
-            데일리 타로
+{t('journal.tabs.daily')}
           </Text>
         </TouchableOpacity>
         
@@ -325,7 +322,7 @@ const TarotJournal = () => {
             styles.tabText,
             activeTab === 'spreads' && styles.activeTabText
           ]}>
-            스프레드 기록
+{t('journal.tabs.spreads')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -336,7 +333,7 @@ const TarotJournal = () => {
     if (isLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>데일리 타로를 불러오는 중...</Text>
+          <Text style={styles.loadingText}>{t('journal.loading.dailyTarot')}</Text>
         </View>
       );
     }
@@ -345,10 +342,9 @@ const TarotJournal = () => {
       return (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🕐</Text>
-          <Text style={styles.emptyTitle}>데일리 리딩</Text>
+          <Text style={styles.emptyTitle}>{t('journal.empty.dailyTitle')}</Text>
           <Text style={styles.emptyText}>
-            저장된 데일리 타로가 없습니다{'\n'}
-            타이머 탭에서 24시간 타로를 저장해보세요
+            {t('journal.empty.dailyMessage')}
           </Text>
         </View>
       );
@@ -357,9 +353,9 @@ const TarotJournal = () => {
     return (
       <ScrollView style={styles.readingsContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>데일리 리딩</Text>
+          <Text style={styles.sectionTitle}>{t('journal.sections.dailyReadings')}</Text>
           <View style={styles.countBadge}>
-            <Text style={styles.countText}>{dailyReadings.length}개 기록</Text>
+            <Text style={styles.countText}>{t('journal.recordCount', { count: dailyReadings.length })}</Text>
           </View>
         </View>
 
@@ -372,10 +368,10 @@ const TarotJournal = () => {
             <View style={styles.dailyCardHeader}>
               <View style={styles.dateInfo}>
                 <Text style={styles.dateText}>{reading.displayDate}</Text>
-                <Text style={styles.typeLabel}>24시간 타로 리딩</Text>
+                <Text style={styles.typeLabel}>{t('journal.labels.dailyTarotReading')}</Text>
               </View>
               <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>완료</Text>
+                <Text style={styles.statusText}>{t('journal.status.completed')}</Text>
               </View>
             </View>
 
@@ -386,7 +382,7 @@ const TarotJournal = () => {
                   <View key={cardIndex} style={styles.previewCard} />
                 ))}
                 {reading.hourlyCards?.length > 8 && (
-                  <Text style={styles.moreText}>+{reading.hourlyCards.length - 8}</Text>
+                  <Text style={styles.moreText}>{t('journal.moreCards', { count: reading.hourlyCards.length - 8 })}</Text>
                 )}
               </ScrollView>
             </View>
@@ -405,7 +401,7 @@ const TarotJournal = () => {
             {reading.memos && Object.keys(reading.memos).length > 0 && (
               <View style={styles.memoInfo}>
                 <Text style={styles.memoCount}>
-                  🕐 {Object.keys(reading.memos).length}개 시간대 메모
+                  {t('journal.memoCount', { count: Object.keys(reading.memos).length })}
                 </Text>
                 <Text style={{ fontSize: 16, color: '#f4d03f' }}>›</Text>
               </View>
@@ -421,10 +417,9 @@ const TarotJournal = () => {
       return (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🔮</Text>
-          <Text style={styles.emptyTitle}>스프레드 기록</Text>
+          <Text style={styles.emptyTitle}>{t('journal.empty.spreadTitle')}</Text>
           <Text style={styles.emptyText}>
-            저장된 스프레드가 없습니다{'\n'}
-            스프레드 탭에서 리딩을 저장해보세요
+            {t('journal.empty.spreadMessage')}
           </Text>
         </View>
       );
@@ -435,10 +430,10 @@ const TarotJournal = () => {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
             <Text style={{ fontSize: 16, color: '#f4d03f' }}>🃏</Text>
-            <Text style={styles.sectionTitle}>스프레드 기록</Text>
+            <Text style={styles.sectionTitle}>{t('journal.sections.spreadReadings')}</Text>
           </View>
           <View style={styles.countBadge}>
-            <Text style={styles.countText}>{spreadReadings.length}개 기록</Text>
+            <Text style={styles.countText}>{t('journal.recordCount', { count: spreadReadings.length })}</Text>
           </View>
         </View>
 
@@ -452,11 +447,11 @@ const TarotJournal = () => {
               <View style={styles.spreadInfo}>
                 <Text style={styles.spreadTitle}>{spread.title}</Text>
                 <Text style={styles.spreadDate}>
-                  {new Date(spread.createdAt).toLocaleDateString('ko-KR')}
+                  {LanguageUtils.formatDate(new Date(spread.createdAt), { year: 'numeric', month: 'short', day: 'numeric' })}
                 </Text>
               </View>
               <View style={styles.cardCountBadge}>
-                <Text style={styles.cardCountText}>{spread.positions?.length || 0}카드 시전함</Text>
+                <Text style={styles.cardCountText}>{t('journal.cardsCast', { count: spread.positions?.length || 0 })}</Text>
               </View>
             </View>
 
@@ -467,7 +462,7 @@ const TarotJournal = () => {
                   <View key={cardIndex} style={styles.spreadPreviewCard} />
                 ))}
                 {spread.positions?.length > 4 && (
-                  <Text style={styles.moreText}>+{spread.positions.length - 4}</Text>
+                  <Text style={styles.moreText}>{t('journal.moreCards', { count: spread.positions.length - 4 })}</Text>
                 )}
               </ScrollView>
             </View>
