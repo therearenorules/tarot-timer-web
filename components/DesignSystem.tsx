@@ -40,8 +40,17 @@ export const Colors = {
     caption: 'rgba(255, 255, 255, 0.5)',      // 캡션
     accent: '#D4AF37',                         // 악센트 텍스트
     disabled: 'rgba(255, 255, 255, 0.4)',     // 비활성 텍스트
+    inverse: '#000000',                        // 역 색상 텍스트 (검은 배경에 대한)
   },
   
+  // 배경 색상 시스템
+  background: {
+    primary: '#1a1625',                         // 주요 배경
+    secondary: '#2d1b47',                       // 보조 배경
+    surface: '#3d2a5a',                         // 서피스 배경
+    overlay: 'rgba(0, 0, 0, 0.8)',            // 오버레이 배경
+  },
+
   // 상태별 색상
   state: {
     success: 'rgba(16, 185, 129, 0.5)',
@@ -315,7 +324,18 @@ export const TextStyles = StyleSheet.create({
 });
 
 // 📝 Typography 별칭 (호환성을 위한)
-export const Typography = TextStyles;
+export const Typography = {
+  ...TextStyles,
+  sizes: {
+    xs: 11,
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    xxl: 20,
+    hero: 28,
+  }
+};
 
 // 🎯 조합형 스타일 (자주 사용되는 조합들)
 export const CompositeStyles = StyleSheet.create({

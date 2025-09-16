@@ -104,11 +104,11 @@ export const FloatingParticles: React.FC<FloatingParticlesProps> = ({
           withSequence(
             withTiming(-particle.range, { 
               duration: adjustedDuration,
-              easing: Easing.inOut(Easing.sine)
+              easing: Easing.inOut(Easing.sin)
             }),
             withTiming(0, { 
               duration: adjustedDuration,
-              easing: Easing.inOut(Easing.sine)
+              easing: Easing.inOut(Easing.sin)
             })
           ),
           -1
@@ -122,15 +122,15 @@ export const FloatingParticles: React.FC<FloatingParticlesProps> = ({
           withSequence(
             withTiming(-particle.range * 0.3, { 
               duration: adjustedDuration * 1.2,
-              easing: Easing.inOut(Easing.sine)
+              easing: Easing.inOut(Easing.sin)
             }),
             withTiming(particle.range * 0.3, { 
               duration: adjustedDuration * 1.2,
-              easing: Easing.inOut(Easing.sine)
+              easing: Easing.inOut(Easing.sin)
             }),
             withTiming(0, { 
               duration: adjustedDuration * 1.2,
-              easing: Easing.inOut(Easing.sine)
+              easing: Easing.inOut(Easing.sin)
             })
           ),
           -1

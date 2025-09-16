@@ -3,11 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCard, TarotUtils, SavedSpread } from '../utils/tarotData';
-import { LanguageUtils } from '../i18n';
+import { LanguageUtils } from '../i18n/index';
 import { useTarotI18n } from '../hooks/useTarotI18n';
+import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
+import AdManager from '../utils/adManager';
 import { Icon } from './Icon';
 import { GradientButton } from './GradientButton';
 import { TarotCardComponent } from './TarotCard';
+import AdBanner from './AdBanner';
 import { 
   Colors, 
   GlassStyles, 
@@ -167,6 +170,7 @@ export const TarotSpread: React.FC = () => {
   const [saveInsights, setSaveInsights] = useState('');
   const [savedSpreads, setSavedSpreads] = useState<SavedSpread[]>([]);
   const [isLoadModalVisible, setIsLoadModalVisible] = useState(false);
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null);
 
   // 애니메이션 훅들
   const { animatedStyle: headerFadeIn } = useFadeIn({ delay: 100 });
@@ -176,10 +180,43 @@ export const TarotSpread: React.FC = () => {
   const touchFeedbackHooks = SPREAD_LAYOUTS.map(() => useTouchFeedback());
   const cardEntranceHooks = SPREAD_LAYOUTS.map((_, index) => useCardEntrance(index * 100 + 300));
 
-  // 컴포넌트 마운트 시 저장된 스프레드 불러오기
+  // 컴포넌트 마운트 시 데이터 불러오기
   useEffect(() => {
     loadSavedSpreadsData();
+    loadPremiumStatus();
+    initializeAdManager();
   }, []);
+
+  // 광고 매니저 초기화
+  const initializeAdManager = async () => {
+    try {
+      await AdManager.initialize();
+      console.log('📺 AdManager 초기화 완료');
+    } catch (error) {
+      console.error('📺 AdManager 초기화 실패:', error);
+    }
+  };
+
+  // 프리미엄 상태 불러오기
+  const loadPremiumStatus = async () => {
+    try {
+      const status = await LocalStorageManager.getPremiumStatus();
+      setPremiumStatus(status);
+    } catch (error) {
+      console.error('프리미엄 상태 확인 실패:', error);
+    }
+  };
+
+  // 프리미엄이 필요한 스프레드인지 확인
+  const isPremiumSpread = (spreadId: SpreadType): boolean => {
+    const premiumSpreads: SpreadType[] = ['celtic-cross', 'cup-of-relationship', 'choice'];
+    return premiumSpreads.includes(spreadId);
+  };
+
+  // 사용자가 프리미엄 권한을 가지고 있는지 확인
+  const hasPremiumAccess = (): boolean => {
+    return premiumStatus?.is_premium === true;
+  };
 
   // 저장된 스프레드 목록 불러오기
   const loadSavedSpreadsData = async () => {
@@ -321,10 +358,13 @@ export const TarotSpread: React.FC = () => {
         ...position,
         card: newCards[index]
       }));
-      
+
       setSpreadCards(updatedSpread);
       setSelectedPosition(null);
-      
+
+      // 액션 카운터 증가 (전면광고 표시 로직)
+      await AdManager.incrementActionCounter();
+
       Alert.alert(
         `🔮 ${selectedSpread?.name} ${t('spread.messages.complete')}!`,
         `${selectedSpread?.description}`,
@@ -339,15 +379,18 @@ export const TarotSpread: React.FC = () => {
   };
 
   // 개별 카드 뽑기
-  const drawSingleCard = (positionId: number) => {
+  const drawSingleCard = async (positionId: number) => {
     const randomCard = TarotUtils.getRandomCards(1)[0];
-    const updatedSpread = spreadCards.map(position => 
-      position.id === positionId 
+    const updatedSpread = spreadCards.map(position =>
+      position.id === positionId
         ? { ...position, card: randomCard }
         : position
     );
     setSpreadCards(updatedSpread);
     setSelectedPosition(null);
+
+    // 액션 카운터 증가 (전면광고 표시 로직)
+    await AdManager.incrementActionCounter();
   };
 
   // 스프레드 초기화
@@ -361,13 +404,13 @@ export const TarotSpread: React.FC = () => {
   };
 
   // 카드 선택 처리
-  const handleCardPress = (positionId: number, hasCard: boolean) => {
+  const handleCardPress = async (positionId: number, hasCard: boolean) => {
     if (hasCard) {
       // 이미 카드가 있는 경우 - 카드 정보 표시
       setSelectedPosition(selectedPosition === positionId ? null : positionId);
     } else {
       // 카드가 없는 경우 - 새 카드 뽑기
-      drawSingleCard(positionId);
+      await drawSingleCard(positionId);
     }
   };
 
@@ -400,7 +443,9 @@ export const TarotSpread: React.FC = () => {
         {/* 스프레드 리스트 (세로 배치) */}
         <View style={styles.spreadList}>
           {SPREAD_LAYOUTS.map((layout, index) => {
-            const isPremium = false; // 테스트용으로 모든 기능 활성화
+            const isLayoutPremium = isPremiumSpread(layout.id);
+            const hasAccess = hasPremiumAccess();
+            const isLocked = isLayoutPremium && !hasAccess;
             const { onPressIn, onPressOut, animatedStyle: touchFeedback } = touchFeedbackHooks[index];
             const { animatedStyle: cardEntrance } = cardEntranceHooks[index];
             
@@ -409,10 +454,10 @@ export const TarotSpread: React.FC = () => {
                 <TouchableOpacity
                   style={[
                     styles.spreadCard,
-                    isPremium && styles.spreadCardPremium
+                    isLocked && styles.spreadCardPremium
                   ]}
                   onPress={() => {
-                  if (isPremium) {
+                  if (isLocked) {
                     Alert.alert(
                       '💎 ' + t('spread.premium.title'),
                       t('spread.premium.message'),
@@ -434,18 +479,23 @@ export const TarotSpread: React.FC = () => {
                   <View style={styles.spreadCardHeader}>
                   <Text style={[
                     styles.spreadCardTitle,
-                    isPremium && styles.spreadCardTitlePremium
+                    isLocked && styles.spreadCardTitlePremium
                   ]}>
                     {layout.name.replace(/[🎯⚖️🔮✨🌟💖🤔]/g, '').trim()}
                   </Text>
-                  {isPremium && (
+                  {isLocked && (
                     <View style={styles.premiumBadge}>
                       <Text style={styles.premiumText}>PREMIUM</Text>
                     </View>
                   )}
-                  {!isPremium && (
+                  {!isLayoutPremium && (
                     <View style={styles.freeBadge}>
                       <Text style={styles.freeText}>FREE</Text>
+                    </View>
+                  )}
+                  {isLayoutPremium && hasAccess && (
+                    <View style={styles.premiumUnlockedBadge}>
+                      <Text style={styles.premiumUnlockedText}>PREMIUM ✓</Text>
                     </View>
                   )}
                 </View>
@@ -457,7 +507,7 @@ export const TarotSpread: React.FC = () => {
                     title={t('spread.actions.start')}
                     size="medium"
                     onPress={() => {
-                      if (isPremium) {
+                      if (isLocked) {
                         Alert.alert(
                           '💎 ' + t('spread.premium.title'),
                           t('spread.premium.message'),
@@ -469,7 +519,7 @@ export const TarotSpread: React.FC = () => {
                         setCurrentSpreadType(layout.id);
                       }
                     }}
-                    disabled={isPremium}
+                    disabled={isLocked}
                   />
                   </View>
                 </Animated.View>
@@ -478,6 +528,13 @@ export const TarotSpread: React.FC = () => {
             );
           })}
         </View>
+
+        {/* 무료 사용자 배너 광고 */}
+        {!hasPremiumAccess() && (
+          <View style={styles.adBannerContainer}>
+            <AdBanner size="banner" style={styles.adBanner} />
+          </View>
+        )}
 
         {/* 프리미엄 안내 카드 */}
         <Animated.View style={[styles.premiumInfoCard, cardEntranceAnimation]}>
@@ -568,6 +625,13 @@ export const TarotSpread: React.FC = () => {
               <Text style={styles.cardNameEn}>({selectedCard.card.name})</Text>
             )}
             <Text style={styles.cardMeaning}>{getCardMeaning(selectedCard.card)}</Text>
+          </View>
+        )}
+
+        {/* 무료 사용자 배너 광고 (스프레드 상세 화면) */}
+        {!hasPremiumAccess() && (
+          <View style={styles.adBannerContainer}>
+            <AdBanner size="banner" style={styles.adBanner} />
           </View>
         )}
 
@@ -823,6 +887,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  premiumUnlockedBadge: {
+    backgroundColor: Colors.brand.accent + '4D',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.xxs,
+    borderRadius: BorderRadius.small,
+    borderWidth: 1,
+    borderColor: Colors.brand.accent,
+  },
+  premiumUnlockedText: {
+    color: Colors.brand.accent,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   premiumInfoCard: {
     ...CompositeStyles.infoCard,
     marginTop: Spacing.lg,
@@ -837,6 +914,19 @@ const styles = StyleSheet.create({
     ...TextStyles.body,
     color: Colors.text.accent,
     textAlign: 'center',
+  },
+
+  // 광고 배너 스타일
+  adBannerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  adBanner: {
+    backgroundColor: 'transparent',
+    borderRadius: BorderRadius.medium,
+    overflow: 'hidden',
   },
 
   // 스프레드 상세 화면 스타일

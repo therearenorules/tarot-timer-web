@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  Dimensions
+  Dimensions,
+  Switch
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,6 +19,12 @@ import {
 import LanguageSelector from '../LanguageSelector';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { usePremium } from '../../contexts/PremiumContext';
+import RewardedAd from '../ads/RewardedAd';
+// import SupabaseTest from '../SupabaseTest';
+import HybridDataManager, { SyncStatus } from '../../utils/hybridDataManager';
+import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
+// import { PremiumUpgrade } from '../PremiumUpgrade';
+import PremiumTest from '../PremiumTest';
 
 const SettingsTab: React.FC = () => {
   const { t } = useTranslation();
@@ -38,6 +45,13 @@ const SettingsTab: React.FC = () => {
   } = usePremium();
 
   const [darkModeEnabled, setDarkModeEnabled] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
+    isEnabled: false,
+    pendingChanges: 0,
+    syncInProgress: false
+  });
+  const [cloudBackupEnabled, setCloudBackupEnabled] = useState(false);
+  const [realPremiumStatus, setRealPremiumStatus] = useState<PremiumStatus | null>(null);
 
   // Context에서 가져온 값들을 로컬 상태 대신 사용
   const notificationsEnabled = hasPermission;
@@ -45,7 +59,7 @@ const SettingsTab: React.FC = () => {
   const weekendNotifications = notificationSettings?.weekendEnabled ?? true;
   const quietHoursStart = notificationSettings?.quietHoursStart ?? 22;
   const quietHoursEnd = notificationSettings?.quietHoursEnd ?? 8;
-  const isPremium = subscriptionStatus?.tier === 'premium' || subscriptionStatus?.tier === 'trial';
+  const isPremium = realPremiumStatus?.is_premium || subscriptionStatus?.tier === 'premium' || subscriptionStatus?.tier === 'trial';
 
   // 로컬 상태는 Context에 없는 항목들만 유지
   const [midnightReset, setMidnightReset] = useState(true);
@@ -59,29 +73,39 @@ const SettingsTab: React.FC = () => {
     end: quietHoursEnd,
   });
 
-  const handleUpgradePremium = () => {
-    const upgradePrompt = showUpgradePrompt('premium_features');
+  // 실제 프리미엄 상태 로드
+  useEffect(() => {
+    loadRealPremiumStatus();
+    loadSyncStatus();
+  }, []);
+
+  const loadRealPremiumStatus = async () => {
+    try {
+      const status = await LocalStorageManager.getPremiumStatus();
+      setRealPremiumStatus(status);
+    } catch (error) {
+      console.error('프리미엄 상태 로드 오류:', error);
+    }
+  };
+
+  const loadSyncStatus = async () => {
+    try {
+      const status = await HybridDataManager.getSyncStatus();
+      setSyncStatus(status);
+      setCloudBackupEnabled(status.isEnabled);
+    } catch (error) {
+      console.error('동기화 상태 로드 오류:', error);
+    }
+  };
+
+  const handlePremiumPurchaseSuccess = async () => {
+    // 구매 성공 후 상태 새로고침
+    await loadRealPremiumStatus();
+
     Alert.alert(
-      upgradePrompt.title,
-      upgradePrompt.message,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.premium.startTrial'),
-          onPress: async () => {
-            try {
-              await startTrial();
-              Alert.alert(t('settings.premium.trialStarted'));
-            } catch (error) {
-              Alert.alert(t('settings.premium.trialError'));
-            }
-          }
-        },
-        { text: t('settings.premium.upgrade'), onPress: () => {
-          // TODO: 실제 결제 처리 구현
-          Alert.alert(t('settings.premium.comingSoon'));
-        }}
-      ]
+      '🎉 프리미엄 활성화!',
+      '프리미엄 구독이 활성화되었습니다. 이제 모든 프리미엄 기능을 이용하실 수 있습니다.',
+      [{ text: '확인' }]
     );
   };
 
@@ -124,26 +148,103 @@ const SettingsTab: React.FC = () => {
     }
   };
 
+  const handleToggleCloudBackup = async (enabled: boolean) => {
+    try {
+      if (enabled) {
+        const result = await HybridDataManager.enableCloudBackup();
+        if (result.success) {
+          setCloudBackupEnabled(true);
+          Alert.alert('클라우드 백업 활성화', result.message);
+          loadSyncStatus();
+        } else {
+          Alert.alert('클라우드 백업 오류', result.message);
+        }
+      } else {
+        Alert.alert(
+          '클라우드 백업 비활성화',
+          '클라우드 백업을 비활성화하시겠습니까? 로컬 데이터는 유지되며 클라우드 동기화만 중단됩니다.',
+          [
+            { text: '취소', style: 'cancel' },
+            {
+              text: '비활성화',
+              style: 'destructive',
+              onPress: async () => {
+                await HybridDataManager.disableCloudBackup();
+                setCloudBackupEnabled(false);
+                loadSyncStatus();
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('클라우드 백업 토글 오류:', error);
+      Alert.alert('오류', '클라우드 백업 설정 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleManualSync = async () => {
+    try {
+      const result = await HybridDataManager.manualSync();
+      Alert.alert(
+        result.success ? '동기화 완료' : '동기화 오류',
+        result.message
+      );
+      loadSyncStatus();
+    } catch (error) {
+      console.error('수동 동기화 오류:', error);
+      Alert.alert('오류', '동기화 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      const exportData = await HybridDataManager.exportData();
+      // 실제 구현에서는 파일 공유 API 사용
+      Alert.alert(
+        '데이터 내보내기',
+        '데이터를 성공적으로 내보냈습니다. (개발 중: 파일 저장 기능)'
+      );
+    } catch (error) {
+      console.error('데이터 내보내기 오류:', error);
+      Alert.alert('오류', '데이터 내보내기 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleImportData = () => {
+    Alert.alert(
+      '데이터 가져오기',
+      '백업 파일에서 데이터를 가져오시겠습니까? 현재 데이터는 백업 데이터로 덮어씌워집니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '가져오기',
+          onPress: () => {
+            // 실제 구현에서는 파일 선택 API 사용
+            Alert.alert('개발 중', '파일 선택 기능을 개발 중입니다.');
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-      {/* 프리미엄 멤버십 섹션 */}
-      <View style={styles.settingsSection}>
+      {/* 프리미엄 멤버십 섹션 - 임시 간단 버전 */}
+      <View style={[styles.settingsSection, isPremium && styles.premiumSettingsSection]}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
             <Text style={styles.sectionIconText}>👑</Text>
           </View>
-          <Text style={styles.sectionTitle}>{t('settings.premium.title')}</Text>
-          {isPremium ? (
-            <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>{t('settings.premium.active')}</Text>
-            </View>
-          ) : (
+          <Text style={styles.sectionTitle}>프리미엄 멤버십</Text>
+          {/* 업그레이드 마크는 프리미엄이 아닐 때만 표시 */}
+          {!isPremium && (
             <TouchableOpacity
-              style={styles.upgradeBadge}
-              onPress={handleUpgradePremium}
+              style={[styles.activeBadge, { backgroundColor: Colors.brand.accent }]}
+              onPress={() => Alert.alert('프리미엄', '곧 출시 예정입니다!')}
             >
-              <Text style={styles.upgradeBadgeText}>{t('settings.premium.upgrade')}</Text>
+              <Text style={[styles.activeBadgeText, { color: '#000' }]}>업그레이드</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -151,26 +252,20 @@ const SettingsTab: React.FC = () => {
         <View style={styles.premiumFeatures}>
           <View style={styles.featureRow}>
             <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.unlockSpreads')}</Text>
+            <Text style={styles.featureText}>무제한 저장</Text>
           </View>
           <View style={styles.featureRow}>
             <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.adFree')}</Text>
+            <Text style={styles.featureText}>광고 제거</Text>
           </View>
           <View style={styles.featureRow}>
             <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.unlimitedStorage')}</Text>
+            <Text style={styles.featureText}>프리미엄 스프레드</Text>
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.premiumButton}
-          onPress={handleUpgradePremium}
-        >
-          <Text style={styles.premiumButtonText}>
-            {isPremium ? t('settings.premium.manage') : t('settings.premium.upgrade')}
-          </Text>
-        </TouchableOpacity>
+        {/* 프리미엄 업그레이드 컴포넌트 - 임시 비활성화 */}
+        {/* <PremiumUpgrade /> */}
       </View>
 
       {/* 화면 및 테마 설정 */}
@@ -518,6 +613,163 @@ const SettingsTab: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* 클라우드 백업 및 동기화 섹션 - 임시 숨김 */}
+      {false && (
+        <View style={styles.settingsSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <Text style={styles.sectionIconText}>☁️</Text>
+            </View>
+            <Text style={styles.sectionTitle}>클라우드 백업 & 동기화</Text>
+            {cloudBackupEnabled && (
+              <View style={[styles.activeBadge, { backgroundColor: '#4caf50' }]}>
+                <Text style={styles.activeBadgeText}>활성</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.sectionContent}>
+            {/* 로컬 저장 우선 안내 */}
+            <View style={styles.infoBox}>
+              <Text style={styles.infoTitle}>📱 로컬 저장 우선</Text>
+              <Text style={styles.infoText}>
+                모든 데이터는 기본적으로 기기에 저장됩니다.{'\n'}
+                클라우드 백업은 선택사항이며 로그인이 필요합니다.
+              </Text>
+            </View>
+
+            {/* 클라우드 백업 토글 */}
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>클라우드 백업</Text>
+                <Text style={styles.settingDescription}>
+                  {cloudBackupEnabled
+                    ? '데이터가 클라우드에 자동 백업됩니다'
+                    : '로컬 저장만 사용 중 (권장)'}
+                </Text>
+              </View>
+              <Switch
+                value={cloudBackupEnabled}
+                onValueChange={handleToggleCloudBackup}
+                trackColor={{ false: '#404040', true: Colors.brand.primary }}
+                thumbColor={cloudBackupEnabled ? '#f4d03f' : '#d4b8ff'}
+              />
+            </View>
+
+            {/* 동기화 상태 표시 */}
+            {cloudBackupEnabled && (
+              <View style={styles.syncStatusContainer}>
+                <Text style={styles.settingLabel}>동기화 상태</Text>
+
+                <View style={styles.syncInfoRow}>
+                  <Text style={styles.syncLabel}>마지막 동기화:</Text>
+                  <Text style={styles.syncValue}>
+                    {syncStatus.lastSyncTime
+                      ? new Date(syncStatus.lastSyncTime).toLocaleString('ko-KR')
+                      : '없음'}
+                  </Text>
+                </View>
+
+                <View style={styles.syncInfoRow}>
+                  <Text style={styles.syncLabel}>대기 중인 변경사항:</Text>
+                  <Text style={styles.syncValue}>{syncStatus.pendingChanges}개</Text>
+                </View>
+
+                {syncStatus.syncInProgress && (
+                  <View style={styles.syncInfoRow}>
+                    <Text style={[styles.syncLabel, { color: Colors.brand.primary }]}>
+                      🔄 동기화 진행 중...
+                    </Text>
+                  </View>
+                )}
+
+                {syncStatus.lastError && (
+                  <View style={styles.syncInfoRow}>
+                    <Text style={[styles.syncLabel, { color: Colors.state.error }]}>
+                      ⚠️ 오류: {syncStatus.lastError}
+                    </Text>
+                  </View>
+                )}
+
+                {/* 수동 동기화 버튼 */}
+                <TouchableOpacity
+                  style={[styles.settingButton, { marginTop: 12 }]}
+                  onPress={handleManualSync}
+                  disabled={syncStatus.syncInProgress}
+                >
+                  <Text style={styles.settingButtonText}>
+                    {syncStatus.syncInProgress ? '동기화 중...' : '지금 동기화'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* 데이터 관리 섹션 */}
+            <View style={styles.dataManagementSection}>
+              <Text style={styles.settingLabel}>데이터 관리</Text>
+
+              <TouchableOpacity style={styles.settingButton} onPress={handleExportData}>
+                <Text style={styles.settingButtonText}>📤 데이터 내보내기 (백업)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingButton, { backgroundColor: 'rgba(255, 152, 0, 0.2)' }]}
+                onPress={handleImportData}
+              >
+                <Text style={[styles.settingButtonText, { color: '#ff9800' }]}>
+                  📥 데이터 가져오기 (복원)
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+
+      {/* Supabase 연결 테스트 (개발용) - 임시 비활성화 */}
+      {/* {false && <SupabaseTest />} */}
+
+      {/* 보상형 광고 섹션 */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>추가 기능</Text>
+        <RewardedAd
+          buttonText="보상 광고 시청하기"
+          rewardDescription="광고를 시청하고 추가 타로 세션을 받으세요"
+          onRewardEarned={(rewardType, amount) => {
+            console.log('🎁 보상 받음:', rewardType, amount);
+            Alert.alert(
+              '보상 받기 완료!',
+              `${amount}개의 추가 타로 세션을 받았습니다.`,
+              [{ text: '확인', style: 'default' }]
+            );
+          }}
+          onAdFailed={(error) => {
+            console.log('❌ 보상형 광고 실패:', error);
+            Alert.alert(
+              '광고 시청 실패',
+              '잠시 후 다시 시도해주세요.',
+              [{ text: '확인', style: 'default' }]
+            );
+          }}
+        />
+      </View>
+
+      {/* 프리미엄 기능 통합 테스트 (개발용) */}
+      {__DEV__ && (
+        <View style={styles.settingsSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <Text style={styles.sectionIconText}>🧪</Text>
+            </View>
+            <Text style={styles.sectionTitle}>개발자 테스트</Text>
+          </View>
+          <PremiumTest />
+        </View>
+      )}
+
+      {/* 하단 여백 */}
+      <View style={styles.bottomSpace} />
     </ScrollView>
   );
 };
@@ -601,18 +853,6 @@ const styles = StyleSheet.create({
     color: '#000',
     fontFamily: 'NotoSansKR_700Bold',
   },
-  upgradeBadge: {
-    backgroundColor: Colors.brand.accent,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
-  },
-  upgradeBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'NotoSansKR_700Bold',
-  },
   premiumFeatures: {
     marginBottom: Spacing.lg,
   },
@@ -644,6 +884,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.brand.accent,
     fontFamily: 'NotoSansKR_700Bold',
+  },
+
+  // 프리미엄 사용자용 특별 스타일
+  premiumSettingsSection: {
+    borderWidth: 2,
+    borderColor: Colors.brand.accent,
+    shadowColor: Colors.brand.accent,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 10,
+    backgroundColor: 'rgba(244, 208, 63, 0.05)',
   },
 
   // 설정 항목
@@ -980,6 +1235,85 @@ const styles = StyleSheet.create({
 
   bottomSpace: {
     height: 100,
+  },
+
+  // 기본 섹션 스타일
+  section: {
+    backgroundColor: 'rgba(15, 12, 27, 0.8)',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.3)',
+  },
+
+  // 클라우드 백업 관련 스타일
+  infoBox: {
+    backgroundColor: 'rgba(123, 44, 191, 0.15)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 184, 255, 0.3)',
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
+    color: '#f4d03f',
+    marginBottom: Spacing.xs,
+  },
+  infoText: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_400Regular',
+    color: Colors.text.secondary,
+    lineHeight: 20,
+  },
+  syncStatusContainer: {
+    backgroundColor: 'rgba(45, 27, 71, 0.4)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginTop: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.2)',
+  },
+  syncInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: Spacing.xs,
+  },
+  syncLabel: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_500Medium',
+    color: Colors.text.secondary,
+    flex: 1,
+  },
+  syncValue: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_700Bold',
+    color: '#f4d03f',
+    textAlign: 'right',
+  },
+  dataManagementSection: {
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(212, 184, 255, 0.2)',
+  },
+  settingButton: {
+    backgroundColor: 'rgba(123, 44, 191, 0.3)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 184, 255, 0.3)',
+    alignItems: 'center',
+  },
+  settingButtonText: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
+    color: '#d4b8ff',
   },
 });
 

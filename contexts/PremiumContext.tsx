@@ -1,441 +1,322 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+/**
+ * 프리미엄 구독 상태 관리 Context
+ * 앱스토어 결제 기반 전역 구독 상태 관리 및 실시간 업데이트
+ */
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
-import { useAuth } from './AuthContext';
+import IAPManager from '../utils/iapManager';
+import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
+import ReceiptValidator from '../utils/receiptValidator';
 
-// API URL 헬퍼 함수
-const getApiUrl = (): string => {
-  const apiUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-  return apiUrl;
-};
-
-// 구독 등급 enum (백엔드와 동일)
-export enum SubscriptionTier {
-  FREE = 'free',
-  TRIAL = 'trial',
-  PREMIUM = 'premium'
-}
-
-// 스프레드 타입 enum (백엔드와 동일)
-export enum SpreadType {
-  ONE_CARD = 'one_card',
-  THREE_CARD = 'three_card',
-  FOUR_CARD = 'four_card',
-  FIVE_CARD_V = 'five_card_v',
-  CELTIC_CROSS = 'celtic_cross',
-  CUP_OF_RELATIONSHIP = 'cup_of_relationship',
-  AB_CHOICE = 'ab_choice'
-}
-
-// 구독 상태 인터페이스
-interface SubscriptionStatus {
-  tier: SubscriptionTier;
-  isActive: boolean;
-
-  usage: {
-    totalSaves: number;
-    saveLimit: number;
-    remainingSaves: number;
-    dailySaves: number;
-    spreadSaves: number;
-  };
-
-  features: {
-    allowedSpreads: SpreadType[];
-    hasUnlimitedSaves: boolean;
-    hasNotifications: boolean;
-    hasPremiumSpreads: boolean;
-  };
-
-  periods: {
-    trialDaysLeft: number;
-    premiumDaysLeft: number;
-    isTrialActive: boolean;
-    isPremiumActive: boolean;
-  };
-}
-
-// 업그레이드 프롬프트 인터페이스
-interface UpgradePrompt {
-  title: string;
-  message: string;
-  features: string[];
-  currentTier: SubscriptionTier;
-  upgradeOptions: Array<{
-    duration: string;
-    price: string;
-    savings: string | null;
-  }>;
-}
-
-// 프리미엄 컨텍스트 인터페이스
+// Context 인터페이스 정의
 interface PremiumContextType {
-  // 구독 상태
-  subscriptionStatus: SubscriptionStatus | null;
+  // 현재 상태
+  premiumStatus: PremiumStatus;
   isLoading: boolean;
+  lastError: string | null;
 
-  // 권한 확인
-  canSave: () => Promise<boolean>;
-  canAccessSpread: (spreadType: SpreadType) => Promise<boolean>;
-  getRemainingFeatures: () => any;
+  // 상태 관리 함수
+  refreshStatus: () => Promise<void>;
+  purchaseSubscription: (productId: string) => Promise<boolean>;
+  restorePurchases: () => Promise<boolean>;
+  validateSubscription: () => Promise<boolean>;
 
-  // 사용량 관리
-  incrementSaveUsage: (type: 'daily' | 'spread') => Promise<void>;
-  refreshUsage: () => Promise<void>;
-
-  // 업그레이드 관리
-  showUpgradePrompt: (feature: string) => UpgradePrompt;
-  startTrial: () => Promise<void>;
-  upgradeToPremium: (durationMonths: number) => Promise<void>;
-
-  // 상태 새로고침
-  refreshSubscriptionStatus: () => Promise<void>;
+  // 편의 함수
+  isPremium: boolean;
+  isSubscriptionActive: boolean;
+  daysUntilExpiry: number | null;
+  canAccessFeature: (feature: PremiumFeature) => boolean;
 }
 
-// 기본값
-const DEFAULT_SUBSCRIPTION: SubscriptionStatus = {
-  tier: SubscriptionTier.FREE,
-  isActive: true,
-  usage: {
-    totalSaves: 0,
-    saveLimit: 7,
-    remainingSaves: 7,
-    dailySaves: 0,
-    spreadSaves: 0
-  },
-  features: {
-    allowedSpreads: [
-      SpreadType.ONE_CARD,
-      SpreadType.THREE_CARD,
-      SpreadType.FOUR_CARD,
-      SpreadType.FIVE_CARD_V
-    ],
-    hasUnlimitedSaves: false,
-    hasNotifications: true,
-    hasPremiumSpreads: false
-  },
-  periods: {
-    trialDaysLeft: 0,
-    premiumDaysLeft: 0,
-    isTrialActive: false,
-    isPremiumActive: false
-  }
+// 프리미엄 기능 타입
+export type PremiumFeature =
+  | 'unlimited_storage'
+  | 'ad_free'
+  | 'premium_themes'
+  | 'priority_support';
+
+// 기본값 정의
+const defaultPremiumStatus: PremiumStatus = {
+  is_premium: false,
+  unlimited_storage: false,
+  ad_free: false,
+  premium_themes: false
 };
 
+// Context 생성
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
 
-export const usePremium = (): PremiumContextType => {
-  const context = useContext(PremiumContext);
-  if (!context) {
-    throw new Error('usePremium must be used within a PremiumProvider');
-  }
-  return context;
-};
+// Provider 컴포넌트
+interface PremiumProviderProps {
+  children: ReactNode;
+}
 
-// 간편한 권한 체크 훅
-export const usePremiumAccess = (feature: string): boolean => {
-  const { subscriptionStatus } = usePremium();
-
-  if (!subscriptionStatus) return false;
-
-  switch (feature) {
-    case 'unlimited_saves':
-      return subscriptionStatus.features.hasUnlimitedSaves;
-    case 'premium_spreads':
-      return subscriptionStatus.features.hasPremiumSpreads;
-    case 'notifications':
-      return subscriptionStatus.features.hasNotifications;
-    default:
-      return false;
-  }
-};
-
-export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { getAuthHeaders, isAuthenticated, user } = useAuth();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+export function PremiumProvider({ children }: PremiumProviderProps) {
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus>(defaultPremiumStatus);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
 
-  // 인증 상태 변화 시 구독 상태 로드
+  // 초기 로딩
   useEffect(() => {
-    if (isAuthenticated && user) {
-      loadSubscriptionStatus();
-    } else {
-      // 비인증 사용자는 기본 FREE 구독으로 설정
-      setSubscriptionStatus(DEFAULT_SUBSCRIPTION);
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, user]);
+    initializePremiumContext();
+    setupEventListeners();
 
-  // 구독 상태 로드
-  const loadSubscriptionStatus = async () => {
+    return () => {
+      removeEventListeners();
+    };
+  }, []);
+
+  // 주기적 검증 (앱이 포그라운드로 돌아올 때)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active' && premiumStatus.is_premium) {
+        validateSubscription();
+      }
+    };
+
+    // React Native 환경에서만 AppState 사용
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      try {
+        const { AppState } = require('react-native');
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        return () => subscription?.remove();
+      } catch (error) {
+        console.log('AppState not available:', error);
+      }
+    }
+  }, [premiumStatus.is_premium]);
+
+  /**
+   * 컨텍스트 초기화
+   */
+  const initializePremiumContext = async () => {
     try {
       setIsLoading(true);
+      setLastError(null);
 
-      // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${getApiUrl()}/api/subscription/status`, {
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`,
-        },
-      });
+      // IAP 시스템 초기화
+      await IAPManager.initialize();
 
-      if (response.ok) {
-        const status = await response.json();
-        setSubscriptionStatus(status);
-      } else {
-        console.log('Using default subscription status');
-        setSubscriptionStatus(DEFAULT_SUBSCRIPTION);
-      }
+      // 현재 구독 상태 로드
+      const currentStatus = await IAPManager.getCurrentSubscriptionStatus();
+      setPremiumStatus(currentStatus);
+
+      console.log('✅ PremiumContext 초기화 완료');
+
     } catch (error) {
-      console.error('Error loading subscription status:', error);
-      setSubscriptionStatus(DEFAULT_SUBSCRIPTION);
+      console.error('❌ PremiumContext 초기화 오류:', error);
+      setLastError(error instanceof Error ? error.message : '초기화 오류');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 저장 가능 여부 확인
-  const canSave = async (): Promise<boolean> => {
-    try {
-      // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${getApiUrl()}/api/subscription/can-save`, {
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return result.canSave;
-      }
-
-      // 로컬 상태로 폴백
-      if (subscriptionStatus) {
-        return subscriptionStatus.usage.remainingSaves > 0;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error checking save permission:', error);
-      return false;
+  /**
+   * 이벤트 리스너 설정
+   */
+  const setupEventListeners = () => {
+    // 웹 환경에서만 window 이벤트 리스너 사용
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('premiumStatusChanged', handlePremiumStatusChange);
+      window.addEventListener('purchaseError', handlePurchaseError);
     }
   };
 
-  // 스프레드 접근 권한 확인
-  const canAccessSpread = async (spreadType: SpreadType): Promise<boolean> => {
-    try {
-      // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${getApiUrl()}/api/subscription/can-access-spread`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ spreadType }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return result.canAccess;
-      }
-
-      // 로컬 상태로 폴백
-      if (subscriptionStatus) {
-        return subscriptionStatus.features.allowedSpreads.includes(spreadType);
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error checking spread access:', error);
-      return false;
+  /**
+   * 이벤트 리스너 제거
+   */
+  const removeEventListeners = () => {
+    // 웹 환경에서만 window 이벤트 리스너 제거
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.removeEventListener('premiumStatusChanged', handlePremiumStatusChange);
+      window.removeEventListener('purchaseError', handlePurchaseError);
     }
   };
 
-  // 남은 기능 정보 조회
-  const getRemainingFeatures = () => {
-    if (!subscriptionStatus) return null;
-
-    return {
-      saves: {
-        remaining: subscriptionStatus.usage.remainingSaves,
-        total: subscriptionStatus.usage.saveLimit,
-        percentage: (subscriptionStatus.usage.remainingSaves / subscriptionStatus.usage.saveLimit) * 100
-      },
-      spreads: {
-        available: subscriptionStatus.features.allowedSpreads.length,
-        premium: Object.values(SpreadType).length - subscriptionStatus.features.allowedSpreads.length
-      },
-      trial: {
-        active: subscriptionStatus.periods.isTrialActive,
-        daysLeft: subscriptionStatus.periods.trialDaysLeft
-      },
-      premium: {
-        active: subscriptionStatus.periods.isPremiumActive,
-        daysLeft: subscriptionStatus.periods.premiumDaysLeft
-      }
-    };
-  };
-
-  // 사용량 증가
-  const incrementSaveUsage = async (type: 'daily' | 'spread'): Promise<void> => {
+  /**
+   * 프리미엄 상태 변경 이벤트 핸들러
+   */
+  const handlePremiumStatusChange = async (event: CustomEvent) => {
     try {
-      // TODO: JWT 토큰 추가 필요
-      await fetch(`${getApiUrl()}/api/subscription/increment-usage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ type }),
-      });
-
-      // 로컬 상태 업데이트
-      if (subscriptionStatus) {
-        const updatedStatus = { ...subscriptionStatus };
-        updatedStatus.usage.totalSaves += 1;
-        updatedStatus.usage.remainingSaves = Math.max(0, updatedStatus.usage.remainingSaves - 1);
-
-        if (type === 'daily') {
-          updatedStatus.usage.dailySaves += 1;
-        } else {
-          updatedStatus.usage.spreadSaves += 1;
-        }
-
-        setSubscriptionStatus(updatedStatus);
-      }
+      console.log('🔄 프리미엄 상태 변경 감지');
+      await refreshStatus();
     } catch (error) {
-      console.error('Error incrementing save usage:', error);
+      console.error('❌ 상태 변경 처리 오류:', error);
     }
   };
 
-  // 사용량 새로고침
-  const refreshUsage = async (): Promise<void> => {
-    await loadSubscriptionStatus();
+  /**
+   * 구매 오류 이벤트 핸들러
+   */
+  const handlePurchaseError = (event: CustomEvent) => {
+    const { error } = event.detail;
+    console.error('❌ 구매 오류 이벤트:', error);
+    setLastError(error.message || '구매 처리 중 오류가 발생했습니다.');
   };
 
-  // 업그레이드 프롬프트 표시
-  const showUpgradePrompt = (feature: string): UpgradePrompt => {
-    const prompts = {
-      premium_spreads: {
-        title: '🔮 프리미엄 스프레드',
-        message: '더 깊이 있는 통찰을 위한 고급 스프레드를 경험해보세요.',
-        features: [
-          '✨ 켈틱 크로스 스프레드',
-          '💕 관계의 컵 스프레드',
-          '⚖️ A/B 선택 스프레드',
-          '🎯 전문가급 해석 가이드'
-        ]
-      },
-      unlimited_saves: {
-        title: '💾 무제한 저장',
-        message: '소중한 타로 세션을 무제한으로 저장하고 기록해보세요.',
-        features: [
-          '📚 무제한 일기 저장',
-          '🔍 고급 검색 및 필터',
-          '📊 개인 성장 분석',
-          '☁️ 클라우드 백업'
-        ]
-      }
-    };
-
-    const basePrompt = prompts[feature] || prompts.unlimited_saves;
-
-    return {
-      ...basePrompt,
-      currentTier: subscriptionStatus?.tier || SubscriptionTier.FREE,
-      upgradeOptions: [
-        {
-          duration: '1개월',
-          price: '₩5,900',
-          savings: null
-        },
-        {
-          duration: '6개월',
-          price: '₩29,900',
-          savings: '15%'
-        },
-        {
-          duration: '1년',
-          price: '₩49,900',
-          savings: '30%'
-        }
-      ]
-    };
-  };
-
-  // 체험 시작
-  const startTrial = async (): Promise<void> => {
+  /**
+   * 구독 상태 새로고침
+   */
+  const refreshStatus = async (): Promise<void> => {
     try {
-      // TODO: JWT 토큰 추가 필요
-      const response = await fetch(`${getApiUrl()}/api/subscription/start-trial`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Authorization: `Bearer ${token}`,
-        },
-      });
+      setLastError(null);
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
+      setPremiumStatus(currentStatus);
+      console.log('✅ 구독 상태 새로고침 완료');
+    } catch (error) {
+      console.error('❌ 상태 새로고침 오류:', error);
+      setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
+    }
+  };
 
-      if (response.ok) {
-        await refreshSubscriptionStatus();
-        console.log('✅ Trial started successfully');
+  /**
+   * 구독 구매
+   */
+  const purchaseSubscription = async (productId: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      setLastError(null);
+
+      console.log('💳 구독 구매 시작:', productId);
+
+      const result = await IAPManager.purchaseSubscription(productId);
+
+      if (result.success) {
+        await refreshStatus();
+        console.log('✅ 구독 구매 성공');
+        return true;
       } else {
-        throw new Error('Failed to start trial');
+        setLastError(result.error || '구매에 실패했습니다.');
+        console.log('❌ 구독 구매 실패:', result.error);
+        return false;
       }
+
     } catch (error) {
-      console.error('Error starting trial:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : '구매 처리 중 오류가 발생했습니다.';
+      setLastError(errorMessage);
+      console.error('❌ 구독 구매 오류:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // 프리미엄 업그레이드
-  const upgradeToPremium = async (durationMonths: number): Promise<void> => {
+  /**
+   * 구매 복원
+   */
+  const restorePurchases = async (): Promise<boolean> => {
     try {
-      if (!isAuthenticated) {
-        throw new Error('Authentication required for premium upgrade');
-      }
+      setIsLoading(true);
+      setLastError(null);
 
-      // TODO: 실제 결제 처리
-      console.log(`💎 Upgrading to premium for ${durationMonths} months`);
+      console.log('🔄 구매 복원 시작...');
 
-      const response = await fetch(`${getApiUrl()}/api/subscription/upgrade-premium`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ durationMonths }),
-      });
+      const success = await IAPManager.restorePurchases();
 
-      if (response.ok) {
-        await refreshSubscriptionStatus();
-        console.log('✅ Premium upgrade successful');
+      if (success) {
+        await refreshStatus();
+        console.log('✅ 구매 복원 성공');
+        return true;
       } else {
-        throw new Error('Failed to upgrade to premium');
+        setLastError('복원할 구매 내역이 없습니다.');
+        console.log('⚠️ 복원할 구매 내역 없음');
+        return false;
       }
+
     } catch (error) {
-      console.error('Error upgrading to premium:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : '구매 복원 중 오류가 발생했습니다.';
+      setLastError(errorMessage);
+      console.error('❌ 구매 복원 오류:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // 구독 상태 새로고침
-  const refreshSubscriptionStatus = async (): Promise<void> => {
-    await loadSubscriptionStatus();
+  /**
+   * 구독 상태 검증
+   */
+  const validateSubscription = async (): Promise<boolean> => {
+    try {
+      setLastError(null);
+
+      console.log('🔍 구독 상태 검증 시작...');
+
+      const isValid = await IAPManager.forceValidateSubscription();
+
+      await refreshStatus();
+
+      console.log('✅ 구독 상태 검증 완료:', isValid ? '유효' : '무효');
+      return isValid;
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '구독 검증 중 오류가 발생했습니다.';
+      setLastError(errorMessage);
+      console.error('❌ 구독 검증 오류:', error);
+      return false;
+    }
   };
 
+  /**
+   * 편의 함수들
+   */
+  const isPremium = premiumStatus.is_premium;
+
+  const isSubscriptionActive = (): boolean => {
+    if (!premiumStatus.is_premium) return false;
+    if (!premiumStatus.expiry_date) return false;
+
+    const expiryDate = new Date(premiumStatus.expiry_date);
+    return new Date() < expiryDate;
+  };
+
+  const daysUntilExpiry = (): number | null => {
+    if (!premiumStatus.expiry_date) return null;
+
+    const expiryDate = new Date(premiumStatus.expiry_date);
+    const now = new Date();
+    const diffTime = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const canAccessFeature = (feature: PremiumFeature): boolean => {
+    if (!isPremium) return false;
+
+    switch (feature) {
+      case 'unlimited_storage':
+        return premiumStatus.unlimited_storage;
+      case 'ad_free':
+        return premiumStatus.ad_free;
+      case 'premium_themes':
+        return premiumStatus.premium_themes;
+      case 'priority_support':
+        return isPremium; // 모든 프리미엄 사용자가 이용 가능
+      default:
+        return false;
+    }
+  };
+
+  // Context 값 구성
   const contextValue: PremiumContextType = {
-    subscriptionStatus,
+    // 현재 상태
+    premiumStatus,
     isLoading,
-    canSave,
-    canAccessSpread,
-    getRemainingFeatures,
-    incrementSaveUsage,
-    refreshUsage,
-    showUpgradePrompt,
-    startTrial,
-    upgradeToPremium,
-    refreshSubscriptionStatus,
+    lastError,
+
+    // 상태 관리 함수
+    refreshStatus,
+    purchaseSubscription,
+    restorePurchases,
+    validateSubscription,
+
+    // 편의 함수
+    isPremium,
+    isSubscriptionActive: isSubscriptionActive(),
+    daysUntilExpiry: daysUntilExpiry(),
+    canAccessFeature
   };
 
   return (
@@ -443,6 +324,55 @@ export const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children })
       {children}
     </PremiumContext.Provider>
   );
+}
+
+// Hook for using the context
+export function usePremium(): PremiumContextType {
+  const context = useContext(PremiumContext);
+
+  if (context === undefined) {
+    throw new Error('usePremium must be used within a PremiumProvider');
+  }
+
+  return context;
+}
+
+// 편의 Hook들
+export function usePremiumFeature(feature: PremiumFeature): boolean {
+  const { canAccessFeature } = usePremium();
+  return canAccessFeature(feature);
+}
+
+export function usePremiumStatus(): {
+  isPremium: boolean;
+  isActive: boolean;
+  daysLeft: number | null;
+  subscriptionType: string | undefined;
+} {
+  const { isPremium, isSubscriptionActive, daysUntilExpiry, premiumStatus } = usePremium();
+
+  return {
+    isPremium,
+    isActive: isSubscriptionActive,
+    daysLeft: daysUntilExpiry,
+    subscriptionType: premiumStatus.subscription_type
+  };
+}
+
+// 간편한 권한 체크 훅 (기존 코드와의 호환성 유지)
+export const usePremiumAccess = (feature: string): boolean => {
+  const { canAccessFeature } = usePremium();
+
+  switch (feature) {
+    case 'unlimited_saves':
+      return canAccessFeature('unlimited_storage');
+    case 'premium_spreads':
+      return canAccessFeature('premium_themes');
+    case 'notifications':
+      return true; // 모든 사용자가 이용 가능
+    default:
+      return false;
+  }
 };
 
 export default PremiumProvider;

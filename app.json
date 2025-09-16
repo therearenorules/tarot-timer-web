@@ -1,35 +1,102 @@
 {
   "expo": {
-    "name": "타로 타이머",
-    "slug": "tarot-timer-web",
+    "name": "타로 타이머 - 24시간 신비로운 여정",
+    "slug": "tarot-timer-mystic",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "primaryColor": "#7b2cbf",
+    "description": "24시간 타로 타이머로 신비로운 에너지의 흐름을 경험하세요. 매 시간마다 새로운 타로 카드가 당신의 하루를 안내합니다.",
+    "keywords": [
+      "타로",
+      "tarot",
+      "timer",
+      "타이머",
+      "명상",
+      "meditation",
+      "신비",
+      "mystic",
+      "점술",
+      "fortune"
+    ],
     "extra": {
-      "EXPO_PUBLIC_API_URL": "http://localhost:3000"
+      "EXPO_PUBLIC_API_URL": "http://localhost:3000",
+      "eas": {
+        "projectId": "com.tarottimer.mystic"
+      }
     },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1a1625"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tarottimer.mystic",
+      "buildNumber": "1",
+      "requireFullScreen": false,
+      "userInterfaceStyle": "dark",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "개인화된 광고를 제공하기 위해 추적 권한이 필요합니다.",
+        "NSCameraUsageDescription": "타로 카드 촬영을 위해 카메라 권한이 필요합니다.",
+        "NSMicrophoneUsageDescription": "음성 메모 기능을 위해 마이크 권한이 필요합니다.",
+        "NSLocationWhenInUseUsageDescription": "지역별 타로 해석을 위해 위치 권한이 필요합니다.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
+        ]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.tarottimer.mystic",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#1a1625"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.mystic"
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "name": "타로 타이머",
+      "shortName": "타로타이머",
+      "lang": "ko",
+      "scope": "/",
+      "themeColor": "#7b2cbf",
+      "backgroundColor": "#1a1625",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/"
     },
-    "scheme": "tarot-timer"
+    "scheme": "tarot-timer",
+    "privacy": "unlisted",
+    "githubUrl": "https://github.com/tarot-timer/tarot-timer-app",
+    "plugins": [
+      [
+        "expo-ads-admob",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
+    ]
   }
 }

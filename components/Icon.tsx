@@ -3,7 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path, Circle, Rect, Line, Polyline, G } from 'react-native-svg';
 
-export type IconName = 
+export type IconName =
   | 'timer' | 'clock'
   | 'cards' | 'tarot-cards' | 'tarot-card'
   | 'journal' | 'book-open'
@@ -28,6 +28,7 @@ export type IconName =
   | 'shield'
   | 'shuffle'
   | 'volume2'
+  | 'download'
   | 'x';
 
 interface IconProps {
@@ -265,7 +266,16 @@ const renderIcon = (name: IconName, size: number, color: string) => {
           <Path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       );
-    
+
+    case 'download':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M7 10l5 5 5-5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M12 15V3" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      );
+
     case 'x':
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

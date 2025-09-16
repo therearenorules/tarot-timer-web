@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, Suspense, lazy, memo, useCallback } from 'react';
+import React, { useState, Suspense, lazy, memo, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useFonts, NotoSansKR_400Regular, NotoSansKR_500Medium, NotoSansKR_700Bold } from '@expo-google-fonts/noto-sans-kr';
 import { useTranslation } from 'react-i18next';
@@ -7,11 +7,14 @@ import i18next from 'i18next';
 import { Icon } from './components/Icon';
 import { SacredGeometryBackground } from './components/SacredGeometryBackground';
 import { MysticalTexture } from './components/MysticalTexture';
+import BannerAd from './components/ads/BannerAd';
 import { TarotProvider } from './contexts/TarotContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { PremiumProvider } from './contexts/PremiumContext';
-import { AuthProvider } from './contexts/AuthContext';
 import { usePWA } from './hooks/usePWA';
+import AdManager from './utils/adManager';
+import IAPManager from './utils/iapManager';
 import {
   Colors,
   Spacing,
@@ -20,7 +23,7 @@ import {
 } from './components/DesignSystem';
 
 // Initialize i18n
-import './i18n';
+import './i18n/index';
 
 // Lazy Loading으로 탭 컴포넌트들 로드
 const TimerTab = lazy(() => import('./components/tabs/TimerTab'));
@@ -129,24 +132,26 @@ const AppHeader = memo(({ activeTab }: { activeTab: string }) => {
   const { t } = useTranslation();
 
   const getTabTitle = useCallback((tab: string) => {
+    // 항상 영어 버전의 타이틀을 반환 (i18n 시스템 유지하면서 영어 강제)
     switch (tab) {
-      case 'timer': return t('timer.title');
-      case 'spread': return t('spread.title');
-      case 'journal': return t('journal.title');
-      case 'settings': return t('settings.title');
-      default: return t('timer.title');
+      case 'timer': return i18next.getFixedT('en')('timer.title');
+      case 'spread': return i18next.getFixedT('en')('spread.title');
+      case 'journal': return i18next.getFixedT('en')('journal.title');
+      case 'settings': return i18next.getFixedT('en')('settings.title');
+      default: return i18next.getFixedT('en')('timer.title');
     }
-  }, [t]);
+  }, []);
 
   const getTabSubtitle = useCallback((tab: string) => {
+    // 항상 영어 버전의 서브타이틀을 반환 (i18n 시스템 유지하면서 영어 강제)
     switch (tab) {
-      case 'timer': return t('timer.subtitle');
-      case 'spread': return t('spread.subtitle');
-      case 'journal': return t('journal.subtitle');
-      case 'settings': return t('settings.subtitle');
-      default: return t('timer.subtitle');
+      case 'timer': return i18next.getFixedT('en')('timer.subtitle');
+      case 'spread': return i18next.getFixedT('en')('spread.subtitle');
+      case 'journal': return i18next.getFixedT('en')('journal.subtitle');
+      case 'settings': return i18next.getFixedT('en')('settings.subtitle');
+      default: return i18next.getFixedT('en')('timer.subtitle');
     }
-  }, [t]);
+  }, []);
 
   return (
     <View style={styles.header}>
@@ -194,6 +199,43 @@ function AppContent() {
     NotoSansKR_700Bold,
   });
 
+  // 광고 시스템 및 IAP 초기화
+  useEffect(() => {
+    const initializeSystems = async () => {
+      try {
+        console.log('📱 시스템 초기화 시작...');
+
+        // IAP 시스템 초기화 (광고보다 먼저)
+        console.log('💳 IAP 시스템 초기화 시작...');
+        const iapSuccess = await IAPManager.initialize();
+        if (iapSuccess) {
+          console.log('✅ IAP 시스템 초기화 완료');
+        } else {
+          console.log('⚠️ IAP 시스템 초기화 실패');
+        }
+
+        // 광고 시스템 초기화
+        console.log('📱 광고 시스템 초기화 시작...');
+        const adSuccess = await AdManager.initialize();
+        if (adSuccess) {
+          console.log('✅ 광고 시스템 초기화 완료');
+        } else {
+          console.log('⚠️ 광고 시스템 초기화 실패 (프리미엄 사용자일 수 있음)');
+        }
+      } catch (error) {
+        console.error('❌ 시스템 초기화 오류:', error);
+      }
+    };
+
+    initializeSystems();
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      AdManager.dispose();
+      IAPManager.dispose();
+    };
+  }, []);
+
   const renderContent = useCallback(() => {
     const tabComponents = {
       timer: (
@@ -235,7 +277,7 @@ function AppContent() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.brand.primary} />
-          <Text style={styles.loadingText}>{i18next.t('errors.fontLoading')}</Text>
+          <Text style={styles.loadingText}>Loading fonts...</Text>
         </View>
       </SafeAreaView>
     );
@@ -253,6 +295,14 @@ function AppContent() {
       <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
         {renderContent()}
       </ScrollView>
+
+      {/* 배너 광고 */}
+      <BannerAd
+        placement="main_screen"
+        onAdLoaded={() => console.log('✅ 배너 광고 로드됨')}
+        onAdFailedToLoad={(error) => console.log('❌ 배너 광고 로드 실패:', error)}
+        onAdClicked={() => console.log('🔍 배너 광고 클릭됨')}
+      />
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
       <StatusBar style="light" backgroundColor="#1a1625" />

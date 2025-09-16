@@ -1,56 +1,63 @@
+/**
+ * 인증 컨텍스트 (Supabase 통합)
+ * 타로 타이머 웹앱용 인증 시스템
+ */
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
-
-// 사용자 정보 인터페이스 (백엔드와 일치)
-export interface User {
-  id: string;
-  email: string;
-  subscriptionStatus: 'free' | 'trial' | 'premium';
-  trialEndDate?: Date;
-  createdAt?: Date;
-  lastLoginAt?: Date;
-}
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import {
+  supabase,
+  signInWithEmail,
+  signUpWithEmail,
+  signOut,
+  resetPassword,
+  updateProfile,
+  UserProfile,
+} from '../utils/supabase';
 
 // 인증 상태 인터페이스
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: User | null;
-  token: string | null;
-  refreshToken: string | null;
+  initialized: boolean;
+  user: SupabaseUser | null;
+  profile: UserProfile | null;
+  session: Session | null;
 }
 
-// 인증 액션 인터페이스
+// 인증 컨텍스트 타입
 interface AuthContextType extends AuthState {
   // 인증 관련
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ user: SupabaseUser; session: Session }>;
   logout: () => Promise<void>;
-  register: (email: string, password: string) => Promise<boolean>;
-  refreshAccessToken: () => Promise<boolean>;
+  register: (email: string, password: string, userData?: any) => Promise<{ user: SupabaseUser; session: Session }>;
+  resetUserPassword: (email: string) => Promise<void>;
 
-  // 게스트 사용자 관리
-  createGuestUser: () => Promise<string>; // 게스트 사용자 ID 반환
+  // 게스트 사용자 관리 (로컬 저장소)
+  createGuestUser: () => Promise<string>;
   upgradeGuestToUser: (email: string, password: string) => Promise<boolean>;
 
-  // 토큰 관리
-  getAuthHeaders: () => { Authorization?: string };
-  isTokenValid: () => boolean;
-
   // 사용자 정보 관리
-  updateUserProfile: (updates: Partial<User>) => Promise<boolean>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<UserProfile>;
   refreshUserData: () => Promise<void>;
+
+  // 유틸리티
+  isEmailVerified: boolean;
 }
 
 // 기본값
 const DEFAULT_AUTH_STATE: AuthState = {
   isAuthenticated: false,
   isLoading: true,
+  initialized: false,
   user: null,
-  token: null,
-  refreshToken: null,
+  profile: null,
+  session: null,
 };
+
+// 게스트 사용자 키
+const GUEST_USER_KEY = '@tarot_timer_guest_user_id';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -62,180 +69,151 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
-// 토큰 저장소 키 상수
-const STORAGE_KEYS = {
-  ACCESS_TOKEN: '@tarot_timer_access_token',
-  REFRESH_TOKEN: '@tarot_timer_refresh_token',
-  USER_DATA: '@tarot_timer_user_data',
-  GUEST_USER_ID: '@tarot_timer_guest_user_id',
-};
-
-// API URL 헬퍼 함수
-const getApiUrl = (): string => {
-  const apiUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-  return apiUrl;
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>(DEFAULT_AUTH_STATE);
 
-  // 컴포넌트 마운트 시 저장된 토큰 및 사용자 정보 로드
-  useEffect(() => {
-    loadStoredAuthData();
-  }, []);
-
-  // 저장된 인증 데이터 로드
-  const loadStoredAuthData = async () => {
+  // 프로필 정보 가져오기
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-      const [storedToken, storedRefreshToken, storedUserData] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN),
-        AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN),
-        AsyncStorage.getItem(STORAGE_KEYS.USER_DATA),
-      ]);
-
-      if (storedToken && storedUserData) {
-        const user: User = JSON.parse(storedUserData);
-
-        // 토큰 유효성 검사
-        if (isTokenValidInternal(storedToken)) {
-          setAuthState({
-            isAuthenticated: true,
-            isLoading: false,
-            user,
-            token: storedToken,
-            refreshToken: storedRefreshToken,
-          });
-        } else {
-          // 토큰이 만료된 경우 refresh 토큰으로 갱신 시도
-          if (storedRefreshToken) {
-            const refreshed = await refreshAccessTokenInternal(storedRefreshToken);
-            if (!refreshed) {
-              // 갱신 실패 시 로그아웃
-              await clearAuthData();
-            }
-          } else {
-            await clearAuthData();
-          }
-        }
-      } else {
-        // 저장된 인증 정보가 없으면 게스트 모드
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+      if (error) {
+        console.error('프로필 조회 오류:', error);
+        return null;
       }
+
+      return data;
     } catch (error) {
-      console.error('Error loading stored auth data:', error);
-      await clearAuthData();
+      console.error('프로필 조회 중 예외:', error);
+      return null;
     }
   };
 
-  // 로그인
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
+  // 세션 상태 업데이트
+  const updateAuthState = async (session: Session | null) => {
+    setAuthState(prev => ({ ...prev, session, user: session?.user ?? null }));
 
-      const response = await fetch(`${getApiUrl()}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    if (session?.user) {
+      // 사용자가 로그인된 경우 프로필 정보 가져오기
+      const profileData = await fetchProfile(session.user.id);
+      setAuthState(prev => ({
+        ...prev,
+        profile: profileData,
+        isAuthenticated: true,
+        isLoading: false,
+      }));
+    } else {
+      setAuthState(prev => ({
+        ...prev,
+        profile: null,
+        isAuthenticated: false,
+        isLoading: false,
+      }));
+    }
+  };
 
-      if (response.ok) {
-        const { user, token, refreshToken } = await response.json();
+  // 초기화 및 인증 상태 리스너 설정
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        // 현재 세션 확인
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-        // 토큰과 사용자 정보 저장
-        await Promise.all([
-          AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-          AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken),
-          AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user)),
-        ]);
+        if (error) {
+          console.error('세션 확인 오류:', error);
+        }
 
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          user,
-          token,
-          refreshToken,
+        await updateAuthState(session);
+
+        // 인증 상태 변경 리스너 설정
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('인증 상태 변경:', event, session?.user?.email);
+
+          switch (event) {
+            case 'SIGNED_IN':
+              await updateAuthState(session);
+              break;
+            case 'SIGNED_OUT':
+              await updateAuthState(null);
+              break;
+            case 'TOKEN_REFRESHED':
+              await updateAuthState(session);
+              break;
+            case 'USER_UPDATED':
+              if (session?.user) {
+                const profileData = await fetchProfile(session.user.id);
+                setAuthState(prev => ({ ...prev, profile: profileData }));
+              }
+              break;
+            default:
+              break;
+          }
         });
 
-        return true;
-      } else {
-        const errorData = await response.json();
-        console.error('Login error:', errorData);
-        setAuthState(prev => ({ ...prev, isLoading: false }));
-        return false;
+        setAuthState(prev => ({ ...prev, initialized: true }));
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('인증 초기화 오류:', error);
+        setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
       }
+    };
+
+    initializeAuth();
+  }, []);
+
+  // 로그인
+  const login = async (email: string, password: string) => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+      const result = await signInWithEmail(email, password);
+      return result;
     } catch (error) {
-      console.error('Login network error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      return false;
+      throw error;
     }
   };
 
   // 회원가입
-  const register = async (email: string, password: string): Promise<boolean> => {
+  const register = async (email: string, password: string, userData?: any) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
-
-      const response = await fetch(`${getApiUrl()}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const { user, token, refreshToken } = await response.json();
-
-        // 토큰과 사용자 정보 저장
-        await Promise.all([
-          AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-          AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken),
-          AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user)),
-        ]);
-
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          user,
-          token,
-          refreshToken,
-        });
-
-        return true;
-      } else {
-        const errorData = await response.json();
-        console.error('Register error:', errorData);
-        setAuthState(prev => ({ ...prev, isLoading: false }));
-        return false;
-      }
+      const result = await signUpWithEmail(email, password, userData);
+      return result;
     } catch (error) {
-      console.error('Register network error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      return false;
+      throw error;
     }
   };
 
   // 로그아웃
   const logout = async (): Promise<void> => {
     try {
-      // 서버에 로그아웃 요청 (토큰 무효화)
-      if (authState.token) {
-        await fetch(`${getApiUrl()}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authState.token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+      await signOut();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('로그아웃 오류:', error);
+      throw error;
     } finally {
-      await clearAuthData();
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // 비밀번호 재설정
+  const resetUserPassword = async (email: string) => {
+    try {
+      await resetPassword(email);
+    } catch (error) {
+      console.error('비밀번호 재설정 오류:', error);
+      throw error;
     }
   };
 
@@ -243,31 +221,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const createGuestUser = async (): Promise<string> => {
     try {
       // 기존 게스트 ID가 있는지 확인
-      const existingGuestId = await AsyncStorage.getItem(STORAGE_KEYS.GUEST_USER_ID);
+      const existingGuestId = await AsyncStorage.getItem(GUEST_USER_KEY);
       if (existingGuestId) {
         return existingGuestId;
       }
 
-      // 새로운 게스트 사용자 생성
-      const response = await fetch(`${getApiUrl()}/api/auth/guest`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const { guestId } = await response.json();
-        await AsyncStorage.setItem(STORAGE_KEYS.GUEST_USER_ID, guestId);
-        return guestId;
-      } else {
-        throw new Error('Failed to create guest user');
-      }
+      // 새로운 게스트 ID 생성
+      const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      await AsyncStorage.setItem(GUEST_USER_KEY, guestId);
+      return guestId;
     } catch (error) {
-      console.error('Error creating guest user:', error);
+      console.error('게스트 사용자 생성 오류:', error);
       // 로컬 게스트 ID 생성
       const localGuestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      await AsyncStorage.setItem(STORAGE_KEYS.GUEST_USER_ID, localGuestId);
+      await AsyncStorage.setItem(GUEST_USER_KEY, localGuestId);
       return localGuestId;
     }
   };
@@ -275,198 +242,55 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // 게스트를 정식 사용자로 업그레이드
   const upgradeGuestToUser = async (email: string, password: string): Promise<boolean> => {
     try {
-      const guestId = await AsyncStorage.getItem(STORAGE_KEYS.GUEST_USER_ID);
+      const guestId = await AsyncStorage.getItem(GUEST_USER_KEY);
       if (!guestId) {
         return false;
       }
 
-      const response = await fetch(`${getApiUrl()}/api/auth/upgrade-guest`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ guestId, email, password }),
-      });
+      // 회원가입 진행
+      const result = await register(email, password, { upgraded_from_guest: guestId });
 
-      if (response.ok) {
-        const { user, token, refreshToken } = await response.json();
-
-        // 게스트 ID 제거 및 정식 사용자 토큰 저장
-        await Promise.all([
-          AsyncStorage.removeItem(STORAGE_KEYS.GUEST_USER_ID),
-          AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
-          AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken),
-          AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user)),
-        ]);
-
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          user,
-          token,
-          refreshToken,
-        });
-
+      // 성공 시 게스트 ID 제거
+      if (result) {
+        await AsyncStorage.removeItem(GUEST_USER_KEY);
         return true;
-      } else {
-        return false;
       }
+
+      return false;
     } catch (error) {
-      console.error('Error upgrading guest user:', error);
+      console.error('게스트 업그레이드 오류:', error);
       return false;
     }
   };
 
-  // 토큰 갱신
-  const refreshAccessToken = async (): Promise<boolean> => {
-    if (!authState.refreshToken) {
-      return false;
+  // 프로필 업데이트
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+    if (!authState.user) {
+      throw new Error('로그인이 필요합니다.');
     }
-    return refreshAccessTokenInternal(authState.refreshToken);
-  };
 
-  // 내부 토큰 갱신 함수
-  const refreshAccessTokenInternal = async (refreshToken: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (response.ok) {
-        const { token: newToken, refreshToken: newRefreshToken, user } = await response.json();
-
-        // 새로운 토큰 저장
-        await Promise.all([
-          AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newToken),
-          AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken),
-          AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user)),
-        ]);
-
-        setAuthState({
-          isAuthenticated: true,
-          isLoading: false,
-          user,
-          token: newToken,
-          refreshToken: newRefreshToken,
-        });
-
-        return true;
-      } else {
-        await clearAuthData();
-        return false;
-      }
+      const updatedProfile = await updateProfile(authState.user.id, updates);
+      setAuthState(prev => ({ ...prev, profile: updatedProfile }));
+      return updatedProfile;
     } catch (error) {
-      console.error('Token refresh error:', error);
-      await clearAuthData();
-      return false;
+      console.error('프로필 업데이트 오류:', error);
+      throw error;
     }
   };
 
-  // 인증 헤더 생성
-  const getAuthHeaders = () => {
-    if (authState.token) {
-      return { Authorization: `Bearer ${authState.token}` };
+  // 프로필 새로고침
+  const refreshUserData = async () => {
+    if (!authState.user) {
+      return;
     }
-    return {};
-  };
 
-  // 토큰 유효성 검사
-  const isTokenValid = (): boolean => {
-    return authState.token ? isTokenValidInternal(authState.token) : false;
-  };
-
-  // 내부 토큰 유효성 검사
-  const isTokenValidInternal = (token: string): boolean => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-      return payload.exp > currentTime;
+      const profileData = await fetchProfile(authState.user.id);
+      setAuthState(prev => ({ ...prev, profile: profileData }));
     } catch (error) {
-      return false;
+      console.error('프로필 새로고침 오류:', error);
     }
-  };
-
-  // 사용자 프로필 업데이트
-  const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
-    try {
-      if (!authState.token) {
-        return false;
-      }
-
-      const response = await fetch(`${getApiUrl()}/api/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authState.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(updatedUser));
-
-        setAuthState(prev => ({
-          ...prev,
-          user: updatedUser,
-        }));
-
-        return true;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      console.error('Error updating user profile:', error);
-      return false;
-    }
-  };
-
-  // 사용자 데이터 새로고침
-  const refreshUserData = async (): Promise<void> => {
-    try {
-      if (!authState.token) {
-        return;
-      }
-
-      const response = await fetch(`${getApiUrl()}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${authState.token}`,
-        },
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
-
-        setAuthState(prev => ({
-          ...prev,
-          user,
-        }));
-      }
-    } catch (error) {
-      console.error('Error refreshing user data:', error);
-    }
-  };
-
-  // 인증 데이터 정리
-  const clearAuthData = async (): Promise<void> => {
-    await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN),
-      AsyncStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN),
-      AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA),
-    ]);
-
-    setAuthState({
-      isAuthenticated: false,
-      isLoading: false,
-      user: null,
-      token: null,
-      refreshToken: null,
-    });
   };
 
   const contextValue: AuthContextType = {
@@ -474,13 +298,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     logout,
     register,
-    refreshAccessToken,
+    resetUserPassword,
     createGuestUser,
     upgradeGuestToUser,
-    getAuthHeaders,
-    isTokenValid,
     updateUserProfile,
     refreshUserData,
+    isEmailVerified: authState.user?.email_confirmed_at !== null,
   };
 
   return (
@@ -488,6 +311,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// 인증 필요 컴포넌트 래퍼
+interface RequireAuthProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+export const RequireAuth: React.FC<RequireAuthProps> = ({
+  children,
+  fallback = <div>로그인이 필요합니다.</div>
+}) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
+};
+
+// 인증 상태별 조건부 렌더링 훅
+export const useAuthGuard = () => {
+  const { isAuthenticated, isLoading, initialized } = useAuth();
+
+  return {
+    isLoading: isLoading || !initialized,
+    isAuthenticated,
+    showLogin: initialized && !isLoading && !isAuthenticated,
+    showApp: initialized && !isLoading && isAuthenticated,
+  };
 };
 
 export default AuthProvider;

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
-import { LanguageUtils } from '../i18n';
+import { LanguageUtils } from '../i18n/index';
 import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
 import { 
   Colors, 

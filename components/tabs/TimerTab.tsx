@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTarotI18n } from '../../hooks/useTarotI18n';
-import { LanguageUtils } from '../../i18n';
+import { LanguageUtils } from '../../i18n/index';
 import { Colors, Spacing, BorderRadius } from '../DesignSystem';
 import { useTimer } from '../../hooks/useTimer';
 import { useTarotCards } from '../../hooks/useTarotCards';
 import { TarotUtils } from '../../utils/tarotData';
 import { TarotCardComponent } from '../TarotCard';
 import { Icon } from '../Icon';
+import InterstitialAd from '../ads/InterstitialAd';
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth * 0.35; // 화면 너비의 35% (더 얇게)
@@ -287,8 +288,22 @@ const EnergyFlowSection = memo(({
 const TimerTab = memo(() => {
   const { t } = useTranslation();
   const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
-  const { currentTime, currentHour, formattedTime } = useTimer();
-  
+  const { currentTime, currentHour, formattedTime, onSessionComplete, removeSessionCompleteCallback } = useTimer();
+
+  // 세션 완료 시 전면 광고 콜백 등록
+  useEffect(() => {
+    const sessionCompleteHandler = () => {
+      console.log('🕒 타로 세션 완료 감지 - 전면 광고 준비');
+      // InterstitialAd 컴포넌트에서 자동으로 처리됨
+    };
+
+    onSessionComplete(sessionCompleteHandler);
+
+    return () => {
+      removeSessionCompleteCallback(sessionCompleteHandler);
+    };
+  }, [onSessionComplete, removeSessionCompleteCallback]);
+
   // 랜덤 헤드라인과 서브타이틀 선택
   const getRandomWelcomeText = () => {
     const titles = t('timer.welcomeTitles', { returnObjects: true }) as string[];
@@ -346,10 +361,19 @@ const TimerTab = memo(() => {
   const currentDate = LanguageUtils.formatDate(new Date());
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* 세션 완료 시 전면 광고 */}
+      <InterstitialAd
+        placement="session_complete"
+        trigger="session_complete"
+        onAdShown={() => console.log('✅ 타로 세션 완료 - 전면 광고 표시됨')}
+        onAdDismissed={() => console.log('🔄 전면 광고 닫힘')}
+        onAdFailed={(error) => console.log('❌ 전면 광고 실패:', error)}
+        onRevenueEarned={(amount) => console.log('💰 전면 광고 수익:', amount)}
+      />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 날짜 섹션 */}
         <View style={styles.dateSection}>
@@ -464,7 +488,7 @@ const TimerTab = memo(() => {
         {hasCardsForToday && (
           <View style={styles.saveSection}>
             <TouchableOpacity style={styles.dailySaveButton}>
-              <Text style={styles.dailySaveButtonText}>{t('timer.saveDailyTarot')}</Text>
+              <Text style={styles.dailySaveButtonText}>Save Daily Tarot</Text>
             </TouchableOpacity>
           </View>
         )}

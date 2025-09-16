@@ -5,7 +5,7 @@ import React, { useState, memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './Icon';
-import { LANGUAGES, LanguageUtils } from '../i18n';
+import { LANGUAGES, LanguageUtils } from '../i18n/index';
 import {
   Colors,
   Spacing,
