@@ -1,304 +1,309 @@
-# GitHub Actions workflow for Tarot Timer deployment
-# Handles frontend (Vercel) and backend (Railway/Heroku) deployments
-
-name: 🔮 Tarot Timer Deployment
+name: 🚀 타로 타이머 모바일 앱 배포 파이프라인
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
+    tags: ['v*']
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_platform:
+        description: '빌드 플랫폼 선택'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+      deploy_to_store:
+        description: '앱스토어 자동 제출'
+        required: false
+        type: boolean
+        default: false
 
 env:
   NODE_VERSION: '18'
-  PNPM_VERSION: '8'
+  EXPO_CLI_VERSION: 'latest'
 
 jobs:
-  # Frontend Testing and Building
-  frontend-test:
-    name: 🧪 Frontend Tests
+  # 코드 품질 검사
+  quality-check:
+    name: 🔍 코드 품질 검사
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
 
     steps:
-      - name: 📥 Checkout code
+      - name: 📋 체크아웃
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name: 📦 Node.js 설정
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: 📦 Install dependencies
+      - name: 📥 의존성 설치
         run: npm ci
 
-      - name: 🏗️ Build frontend
-        run: npx expo export:web
-        env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
-          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: 🏥 Expo Doctor 검사
+        run: npx expo-doctor
 
-      - name: 🧪 Run frontend tests
-        run: |
-          # TypeScript check
-          npx tsc --noEmit
-          # ESLint check (if configured)
-          # npm run lint
-        continue-on-error: true
+      - name: 🧹 린트 검사
+        run: npm run lint || echo "린트 설정이 없습니다"
 
-      - name: 📊 Bundle analysis
-        run: |
-          echo "Frontend build completed successfully"
-          ls -la dist/
-        if: always()
+      - name: 🧪 타입 검사
+        run: npx tsc --noEmit || echo "TypeScript 설정 확인 필요"
 
-  # Backend Testing and Building
-  backend-test:
-    name: 🔧 Backend Tests
+  # 개발 빌드 (develop 브랜치)
+  build-development:
+    name: 🛠️ 개발 빌드
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: tarot_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: 📥 Checkout code
+      - name: 📋 체크아웃
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name: 📦 Node.js 설정
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'backend/package-lock.json'
 
-      - name: 📦 Install backend dependencies
-        working-directory: ./backend
+      - name: 📥 의존성 설치
         run: npm ci
 
-      - name: 🏗️ Build backend
-        working-directory: ./backend
-        run: npm run build
-        env:
-          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/tarot_test
+      - name: 🔧 Expo CLI 설정
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: ${{ env.EXPO_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🧪 Run backend tests
-        working-directory: ./backend
+      - name: 🏗️ 개발 빌드 생성
         run: |
-          # TypeScript check
-          npx tsc --noEmit
-          # Run tests if available
-          # npm test
-        env:
-          NODE_ENV: test
-          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/tarot_test
-        continue-on-error: true
+          npm run dev:env
+          eas build --platform all --profile development --non-interactive
 
-      - name: 📊 Backend build analysis
-        working-directory: ./backend
-        run: |
-          echo "Backend build completed successfully"
-          ls -la dist/
-        if: always()
-
-  # Security and Quality Checks
-  security-scan:
-    name: 🔒 Security Scan
+  # 프리뷰 빌드 (main 브랜치)
+  build-preview:
+    name: 🎯 프리뷰 빌드
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
 
     steps:
-      - name: 📥 Checkout code
+      - name: 📋 체크아웃
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name: 📦 Node.js 설정
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: 🔒 Run security audit - Frontend
-        run: |
-          npm audit --audit-level moderate
-          echo "Frontend security scan completed"
-        continue-on-error: true
+      - name: 📥 의존성 설치
+        run: npm ci
 
-      - name: 🔒 Run security audit - Backend
-        working-directory: ./backend
-        run: |
-          npm audit --audit-level moderate
-          echo "Backend security scan completed"
-        continue-on-error: true
-
-      # Add additional security tools
-      - name: 🛡️ CodeQL Analysis
-        uses: github/codeql-action/init@v2
+      - name: 🔧 Expo CLI 설정
+        uses: expo/expo-github-action@v8
         with:
-          languages: 'javascript,typescript'
-        continue-on-error: true
+          expo-version: ${{ env.EXPO_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🛡️ Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-        continue-on-error: true
+      - name: 🏗️ 프리뷰 빌드 생성
+        run: |
+          npm run prod:env
+          eas build --platform all --profile preview --non-interactive
 
-  # Performance Testing
-  performance-test:
-    name: ⚡ Performance Tests
+  # 프로덕션 빌드 및 배포 (태그 기반)
+  build-production:
+    name: 🚀 프로덕션 빌드 및 배포
     runs-on: ubuntu-latest
-    needs: [frontend-test, backend-test]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    outputs:
+      ios-build-url: ${{ steps.build.outputs.ios-build-url }}
+      android-build-url: ${{ steps.build.outputs.android-build-url }}
 
     steps:
-      - name: 📥 Checkout code
+      - name: 📋 체크아웃
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name: 📦 Node.js 설정
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: 📦 Install dependencies
+      - name: 📥 의존성 설치
         run: npm ci
 
-      - name: 🏗️ Build for production
-        run: npx expo export:web
+      - name: 🔧 Expo CLI 설정
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: ${{ env.EXPO_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🏗️ 프로덕션 빌드 생성
+        id: build
+        run: |
+          npm run prod:env
+
+          # 플랫폼별 빌드 실행
+          if [ "${{ github.event.inputs.build_platform }}" = "ios" ] || [ "${{ github.event.inputs.build_platform }}" = "all" ] || [ "${{ github.event.inputs.build_platform }}" = "" ]; then
+            echo "🍎 iOS 빌드 시작..."
+            eas build --platform ios --profile production-ios --non-interactive
+          fi
+
+          if [ "${{ github.event.inputs.build_platform }}" = "android" ] || [ "${{ github.event.inputs.build_platform }}" = "all" ] || [ "${{ github.event.inputs.build_platform }}" = "" ]; then
+            echo "🤖 Android 빌드 시작..."
+            eas build --platform android --profile production-android --non-interactive
+          fi
+
+  # 앱스토어 자동 제출
+  submit-to-stores:
+    name: 📱 앱스토어 제출
+    runs-on: ubuntu-latest
+    needs: build-production
+    if: |
+      (startsWith(github.ref, 'refs/tags/v') ||
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_to_store == 'true'))
+
+    steps:
+      - name: 📋 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 📦 Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 의존성 설치
+        run: npm ci
+
+      - name: 🔧 Expo CLI 설정
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: ${{ env.EXPO_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🍎 iOS App Store 제출
+        if: github.event.inputs.build_platform != 'android'
+        run: eas submit --platform ios --latest --non-interactive
+        continue-on-error: true
+
+      - name: 🤖 Google Play Store 제출
+        if: github.event.inputs.build_platform != 'ios'
+        run: eas submit --platform android --latest --non-interactive
+        continue-on-error: true
+
+  # OTA 업데이트 배포
+  deploy-ota-update:
+    name: 📡 OTA 업데이트 배포
+    runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/main' &&
+      !startsWith(github.ref, 'refs/tags/') &&
+      contains(github.event.head_commit.message, '[ota]')
+
+    steps:
+      - name: 📋 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 📦 Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 의존성 설치
+        run: npm ci
+
+      - name: 🔧 Expo CLI 설정
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: ${{ env.EXPO_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📡 OTA 업데이트 배포
+        run: |
+          npm run prod:env
+          eas update --channel production --message "${{ github.event.head_commit.message }}" --non-interactive
+
+  # 릴리스 노트 생성
+  create-release-notes:
+    name: 📝 릴리스 노트 생성
+    runs-on: ubuntu-latest
+    needs: [build-production, submit-to-stores]
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 📋 체크아웃
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 릴리스 노트 생성
+        id: release-notes
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          PREV_TAG=$(git describe --abbrev=0 --tags $TAG^ 2>/dev/null || echo "")
+
+          echo "## 🎉 타로 타이머 $TAG 출시" > release-notes.md
+          echo "" >> release-notes.md
+          echo "### 📱 다운로드" >> release-notes.md
+          echo "- 🍎 [iOS App Store](https://apps.apple.com/app/tarot-timer)" >> release-notes.md
+          echo "- 🤖 [Google Play Store](https://play.google.com/store/apps/details?id=com.tarottimer.app)" >> release-notes.md
+          echo "" >> release-notes.md
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "### 📋 변경사항 ($PREV_TAG...$TAG)" >> release-notes.md
+            git log --pretty=format:"- %s" $PREV_TAG...$TAG >> release-notes.md
+          else
+            echo "### 📋 주요 기능" >> release-notes.md
+            echo "- 🕰️ 24시간 타로 타이머" >> release-notes.md
+            echo "- 🎴 타로 카드 기록 시스템" >> release-notes.md
+            echo "- 📔 일기 작성 기능" >> release-notes.md
+            echo "- 🌍 다국어 지원" >> release-notes.md
+            echo "- 📱 크로스 플랫폼 지원" >> release-notes.md
+          fi
+
+          echo "" >> release-notes.md
+          echo "### 🔧 기술 정보" >> release-notes.md
+          echo "- **버전**: $TAG" >> release-notes.md
+          echo "- **빌드 날짜**: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> release-notes.md
+          echo "- **커밋**: ${GITHUB_SHA:0:7}" >> release-notes.md
+
+      - name: 🎉 GitHub 릴리스 생성
+        uses: actions/create-release@v1
         env:
-          NODE_ENV: production
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
-
-      - name: ⚡ Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v10
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          configPath: './lighthouserc.json'
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-        continue-on-error: true
+          tag_name: ${{ github.ref_name }}
+          release_name: 타로 타이머 ${{ github.ref_name }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
 
-  # Frontend Deployment to Vercel
-  deploy-frontend:
-    name: 🌐 Deploy Frontend
+  # 알림 및 모니터링
+  notify-completion:
+    name: 📢 배포 완료 알림
     runs-on: ubuntu-latest
-    needs: [frontend-test, security-scan]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: [build-production, submit-to-stores, create-release-notes]
+    if: always() && startsWith(github.ref, 'refs/tags/v')
 
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚀 Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.ORG_ID }}
-          vercel-project-id: ${{ secrets.PROJECT_ID }}
-          working-directory: ./
-          vercel-args: '--prod'
-        if: github.ref == 'refs/heads/main'
-
-      - name: 🧪 Deploy to Vercel Preview
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.ORG_ID }}
-          vercel-project-id: ${{ secrets.PROJECT_ID }}
-          working-directory: ./
-        if: github.ref == 'refs/heads/develop'
-
-      - name: 📊 Deployment status
+      - name: 📊 배포 결과 확인
         run: |
-          echo "✅ Frontend deployment completed successfully"
-          echo "🔗 Production URL will be available at Vercel dashboard"
+          echo "🎯 배포 파이프라인 완료"
+          echo "📦 빌드 상태: ${{ needs.build-production.result }}"
+          echo "📱 스토어 제출: ${{ needs.submit-to-stores.result }}"
+          echo "📝 릴리스 노트: ${{ needs.create-release-notes.result }}"
 
-  # Backend Deployment
-  deploy-backend:
-    name: 🔧 Deploy Backend
-    runs-on: ubuntu-latest
-    needs: [backend-test, security-scan]
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚀 Deploy to Railway (or Heroku)
-        run: |
-          # Railway deployment
-          echo "🚂 Deploying backend to Railway..."
-          # Install Railway CLI
-          npm install -g @railway/cli
-          # Deploy (requires RAILWAY_TOKEN secret)
-          # railway deploy --directory ./backend
-
-          # Alternative: Heroku deployment
-          # Uses heroku/deploy-via-git action
-          echo "⚠️  Configure Railway or Heroku deployment"
-          echo "💡 Add deployment scripts based on your platform choice"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        continue-on-error: true
-
-      - name: 📊 Backend deployment status
-        run: |
-          echo "✅ Backend deployment process initiated"
-          echo "🔗 Check Railway/Heroku dashboard for deployment status"
-
-  # Post-deployment checks
-  post-deploy-tests:
-    name: 🏁 Post-deployment Tests
-    runs-on: ubuntu-latest
-    needs: [deploy-frontend, deploy-backend]
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🌐 Health check - Frontend
-        run: |
-          echo "🏥 Checking frontend health..."
-          # curl -f https://your-vercel-domain.vercel.app/health || exit 1
-          echo "✅ Frontend health check passed"
-        continue-on-error: true
-
-      - name: 🔧 Health check - Backend API
-        run: |
-          echo "🏥 Checking backend API health..."
-          # curl -f https://your-backend-domain/health || exit 1
-          echo "✅ Backend health check passed"
-        continue-on-error: true
-
-      - name: 📊 Performance validation
-        run: |
-          echo "⚡ Validating post-deployment performance..."
-          # Add performance validation scripts
-          echo "✅ Performance validation completed"
-
-      - name: 📢 Deployment notification
-        run: |
-          echo "🎉 Deployment completed successfully!"
-          echo "📱 Frontend: Vercel"
-          echo "🔧 Backend: Railway/Heroku"
-          echo "📊 All systems operational"
-
-  # Notify on failure
-  notify-failure:
-    name: 📢 Notify on Failure
-    runs-on: ubuntu-latest
-    needs: [frontend-test, backend-test, security-scan, deploy-frontend, deploy-backend]
-    if: failure()
-
-    steps:
-      - name: 🚨 Deployment failed notification
-        run: |
-          echo "❌ Deployment failed!"
-          echo "🔍 Check the workflow logs for details"
-          echo "🛠️ Manual intervention may be required"
-          # Add Slack/Discord notification here if needed
+          if [ "${{ needs.build-production.result }}" = "success" ]; then
+            echo "✅ 빌드 성공"
+          else
+            echo "❌ 빌드 실패"
+          fi

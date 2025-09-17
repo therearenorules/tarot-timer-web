@@ -1,6 +1,6 @@
 // components/GradientButton.tsx - 고급 그라데이션 버튼 컴포넌트
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { Icon, IconName } from './Icon';
 import { Colors, ShadowStyles, BorderRadius, Spacing } from './DesignSystem';
 
@@ -11,6 +11,7 @@ interface GradientButtonProps {
   disabled?: boolean;
   variant?: 'primary' | 'secondary';
   size?: 'small' | 'medium' | 'large';
+  style?: StyleProp<ViewStyle>;
 }
 
 export const GradientButton: React.FC<GradientButtonProps> = ({
@@ -19,7 +20,8 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   icon,
   disabled = false,
   variant = 'primary',
-  size = 'medium'
+  size = 'medium',
+  style
 }) => {
   const getButtonStyle = () => {
     const baseStyle = [styles.button];
@@ -39,7 +41,11 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
     if (disabled) {
       baseStyle.push(styles.disabledButton);
     }
-    
+
+    if (style) {
+      baseStyle.push(style);
+    }
+
     return baseStyle;
   };
 

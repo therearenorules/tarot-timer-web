@@ -42,7 +42,7 @@
     ],
     "preparing": "카드 준비 중...",
     "drawCards": "24시간 타로 뽑기",
-    "guideText": "매 순간마다 우주의 에너지가 흐릅니다. 마음을 열고 지혜를 받아들이세요.",
+    "guideText": "매 순간마다 우주의 에너지가 흐릅니다.\n마음을 열고 지혜를 받아들이세요.",
     "saveDailyTarot": "데일리 타로 저장하기",
     "memoPlaceholder": "이 시간에 대한 생각이나 느낌을 적어보세요...",
     "settings": {
@@ -164,7 +164,7 @@
     "drawing": "뽑는 중..."
   },
   "journal": {
-    "title": "Tarot Diary",
+    "title": "타로 다이어리",
     "subtitle": "당신의 타로 여정을 기록하세요",
     "newEntry": "새 일지",
     "todayEntry": "오늘의 일지",
@@ -325,7 +325,7 @@
       "autoSave": "자동 저장"
     },
     "journal": {
-      "title": "일지 설정",
+      "title": "다이어리 설정",
       "autoBackup": "자동 백업",
       "exportFormat": "내보내기 형식",
       "privacy": "개인정보 보호",
@@ -440,7 +440,7 @@
   "analytics": {
     "sessionStarted": "세션 시작됨",
     "cardDrawn": "카드 뽑힘",
-    "journalEntry": "일지 작성됨",
+    "journalEntry": "다이어리 작성됨",
     "settingsChanged": "설정 변경됨",
     "timerCompleted": "타이머 완료됨"
   },

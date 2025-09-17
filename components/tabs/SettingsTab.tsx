@@ -19,12 +19,32 @@ import {
 import LanguageSelector from '../LanguageSelector';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { usePremium } from '../../contexts/PremiumContext';
-import RewardedAd from '../ads/RewardedAd';
+// 조건부 import - 보상형 광고 안전 로딩
+let RewardedAd: any = null;
+try {
+  const rewardedAdModule = require('../ads/RewardedAd');
+  RewardedAd = rewardedAdModule.default || rewardedAdModule;
+} catch (error) {
+  console.warn('⚠️ RewardedAd 컴포넌트 로드 실패 (보상형 광고 비활성화):', error);
+}
 // import SupabaseTest from '../SupabaseTest';
 import HybridDataManager, { SyncStatus } from '../../utils/hybridDataManager';
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 // import { PremiumUpgrade } from '../PremiumUpgrade';
 import PremiumTest from '../PremiumTest';
+import AdminDashboard from '../AdminDashboard';
+// 조건부 import - 모바일 환경에서 안전하게 로드
+let SubscriptionPlans: any = null;
+let SubscriptionManagement: any = null;
+
+try {
+  const subscriptionPlans = require('../subscription/SubscriptionPlans');
+  const subscriptionManagement = require('../subscription/SubscriptionManagement');
+  SubscriptionPlans = subscriptionPlans.default || subscriptionPlans.SubscriptionPlans;
+  SubscriptionManagement = subscriptionManagement.default || subscriptionManagement.SubscriptionManagement;
+} catch (error) {
+  console.warn('⚠️ 구독 컴포넌트 로드 실패 (시뮬레이션 모드):', error);
+}
 
 const SettingsTab: React.FC = () => {
   const { t } = useTranslation();
@@ -38,10 +58,11 @@ const SettingsTab: React.FC = () => {
     updateSettings: updateNotificationSettings
   } = useNotifications();
   const {
-    subscriptionStatus,
-    isLoading: premiumLoading,
-    showUpgradePrompt,
-    startTrial
+    premiumStatus,
+    isPremium,
+    isSubscriptionActive,
+    daysUntilExpiry,
+    isLoading: premiumLoading
   } = usePremium();
 
   const [darkModeEnabled, setDarkModeEnabled] = useState(true);
@@ -51,20 +72,21 @@ const SettingsTab: React.FC = () => {
     syncInProgress: false
   });
   const [cloudBackupEnabled, setCloudBackupEnabled] = useState(false);
-  const [realPremiumStatus, setRealPremiumStatus] = useState<PremiumStatus | null>(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showManagementModal, setShowManagementModal] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [adminClickCount, setAdminClickCount] = useState(0);
 
   // Context에서 가져온 값들을 로컬 상태 대신 사용
   const notificationsEnabled = hasPermission;
   const hourlyNotifications = notificationSettings?.hourlyEnabled ?? true;
-  const weekendNotifications = notificationSettings?.weekendEnabled ?? true;
+  const dailyTaroReminder = notificationSettings?.dailyReminderEnabled ?? true;
   const quietHoursStart = notificationSettings?.quietHoursStart ?? 22;
   const quietHoursEnd = notificationSettings?.quietHoursEnd ?? 8;
-  const isPremium = realPremiumStatus?.is_premium || subscriptionStatus?.tier === 'premium' || subscriptionStatus?.tier === 'trial';
 
   // 로컬 상태는 Context에 없는 항목들만 유지
   const [midnightReset, setMidnightReset] = useState(true);
   const [saveReminders, setSaveReminders] = useState(true);
-  const [dailyTaroReminder, setDailyTaroReminder] = useState(true);
 
   // Modal state
   const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
@@ -73,20 +95,10 @@ const SettingsTab: React.FC = () => {
     end: quietHoursEnd,
   });
 
-  // 실제 프리미엄 상태 로드
+  // 동기화 상태 로드
   useEffect(() => {
-    loadRealPremiumStatus();
     loadSyncStatus();
   }, []);
-
-  const loadRealPremiumStatus = async () => {
-    try {
-      const status = await LocalStorageManager.getPremiumStatus();
-      setRealPremiumStatus(status);
-    } catch (error) {
-      console.error('프리미엄 상태 로드 오류:', error);
-    }
-  };
 
   const loadSyncStatus = async () => {
     try {
@@ -98,15 +110,31 @@ const SettingsTab: React.FC = () => {
     }
   };
 
-  const handlePremiumPurchaseSuccess = async () => {
-    // 구매 성공 후 상태 새로고침
-    await loadRealPremiumStatus();
-
+  const handleSubscriptionSuccess = () => {
+    setShowSubscriptionModal(false);
     Alert.alert(
-      '🎉 프리미엄 활성화!',
-      '프리미엄 구독이 활성화되었습니다. 이제 모든 프리미엄 기능을 이용하실 수 있습니다.',
+      '🎉 구독 완료!',
+      '프리미엄 구독이 활성화되었습니다. 모든 프리미엄 기능을 자유롭게 이용하세요!',
       [{ text: '확인' }]
     );
+  };
+
+  const handleUpgradePress = () => {
+    // 구독 컴포넌트가 로드되지 않은 경우 대체 동작
+    if (!SubscriptionPlans || !SubscriptionManagement) {
+      Alert.alert(
+        '구독 서비스',
+        '현재 환경에서는 구독 기능을 사용할 수 없습니다. 웹 브라우저에서 이용해주세요.',
+        [{ text: '확인' }]
+      );
+      return;
+    }
+
+    if (!isPremium) {
+      setShowSubscriptionModal(true);
+    } else {
+      setShowManagementModal(true);
+    }
   };
 
   const handleRequestPermissions = async () => {
@@ -231,41 +259,93 @@ const SettingsTab: React.FC = () => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-      {/* 프리미엄 멤버십 섹션 - 임시 간단 버전 */}
+      {/* 프리미엄 구독 관리 섹션 */}
       <View style={[styles.settingsSection, isPremium && styles.premiumSettingsSection]}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
             <Text style={styles.sectionIconText}>👑</Text>
           </View>
-          <Text style={styles.sectionTitle}>프리미엄 멤버십</Text>
-          {/* 업그레이드 마크는 프리미엄이 아닐 때만 표시 */}
-          {!isPremium && (
+          <Text style={styles.sectionTitle}>프리미엄 구독</Text>
+          {isPremium ? (
+            <View style={[styles.activeBadge, { backgroundColor: Colors.state.success }]}>
+              <Text style={styles.activeBadgeText}>활성</Text>
+            </View>
+          ) : (
             <TouchableOpacity
               style={[styles.activeBadge, { backgroundColor: Colors.brand.accent }]}
-              onPress={() => Alert.alert('프리미엄', '곧 출시 예정입니다!')}
+              onPress={handleUpgradePress}
             >
-              <Text style={[styles.activeBadgeText, { color: '#000' }]}>업그레이드</Text>
+              <Text style={[styles.activeBadgeText, { color: '#000' }]}>구독하기</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={styles.premiumFeatures}>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>무제한 저장</Text>
-          </View>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>광고 제거</Text>
-          </View>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>프리미엄 스프레드</Text>
-          </View>
-        </View>
+        {isPremium ? (
+          // 프리미엄 사용자 - 구독 상태 표시
+          <View style={styles.premiumStatusContainer}>
+            <View style={styles.premiumInfo}>
+              <Text style={styles.premiumStatusTitle}>구독 상태</Text>
+              <Text style={styles.premiumStatusValue}>
+                {isSubscriptionActive ? '활성' : '만료됨'}
+              </Text>
+            </View>
 
-        {/* 프리미엄 업그레이드 컴포넌트 - 임시 비활성화 */}
-        {/* <PremiumUpgrade /> */}
+            {premiumStatus.subscription_type && (
+              <View style={styles.premiumInfo}>
+                <Text style={styles.premiumStatusTitle}>구독 타입</Text>
+                <Text style={styles.premiumStatusValue}>
+                  {premiumStatus.subscription_type === 'monthly' ? '월간' : '연간'} 구독
+                </Text>
+              </View>
+            )}
+
+            {daysUntilExpiry !== null && (
+              <View style={styles.premiumInfo}>
+                <Text style={styles.premiumStatusTitle}>남은 기간</Text>
+                <Text style={[
+                  styles.premiumStatusValue,
+                  daysUntilExpiry <= 7 && { color: Colors.state.warning }
+                ]}>
+                  {daysUntilExpiry > 0 ? `${daysUntilExpiry}일` : '만료됨'}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.manageSubscriptionButton}
+              onPress={() => setShowManagementModal(true)}
+            >
+              <Text style={styles.manageSubscriptionButtonText}>구독 관리</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // 일반 사용자 - 프리미엄 기능 소개
+          <View style={styles.premiumFeatures}>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>무제한 타로 저장</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>광고 완전 제거</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>프리미엄 스프레드</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>프리미엄 테마</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.upgradeButton}
+              onPress={handleUpgradePress}
+            >
+              <Text style={styles.upgradeButtonText}>프리미엄 구독하기</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* 화면 및 테마 설정 */}
@@ -308,28 +388,6 @@ const SettingsTab: React.FC = () => {
           <Text style={styles.sectionTitle}>{t('settings.notifications.title')}</Text>
         </View>
 
-        {/* 알림 권한 상태 */}
-        <View style={styles.permissionSection}>
-          <View style={styles.permissionContent}>
-            <Text style={styles.permissionTitle}>
-              {notificationsEnabled ? t('settings.notifications.permissionGranted') : t('settings.notifications.permissionRequired')}
-            </Text>
-            <Text style={styles.permissionSubtitle}>
-              {notificationsEnabled
-                ? t('settings.notifications.canReceive')
-                : t('settings.notifications.needPermission')
-              }
-            </Text>
-          </View>
-          {!notificationsEnabled && (
-            <TouchableOpacity
-              style={styles.permissionButton}
-              onPress={handleRequestPermissions}
-            >
-              <Text style={styles.permissionButtonText}>{t('settings.notifications.requestPermission')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
         {/* 시간별 알림 */}
         <View style={styles.settingItem}>
@@ -338,7 +396,7 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingSubtitle}>{t('settings.notifications.hourlyDescription')}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.toggleButton, hourlyNotifications && notificationsEnabled && styles.toggleButtonActive]}
+            style={[styles.toggleButton, hourlyNotifications && styles.toggleButtonActive]}
             onPress={async () => {
               try {
                 await updateNotificationSettings({
@@ -348,11 +406,10 @@ const SettingsTab: React.FC = () => {
                 Alert.alert(t('settings.notifications.updateError'));
               }
             }}
-            disabled={!notificationsEnabled}
           >
             <View style={[
               styles.toggleThumb,
-              hourlyNotifications && notificationsEnabled && styles.toggleThumbActive
+              hourlyNotifications && styles.toggleThumbActive
             ]} />
           </TouchableOpacity>
         </View>
@@ -364,13 +421,12 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingSubtitle}>{t('settings.notifications.midnightDescription')}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.toggleButton, midnightReset && notificationsEnabled && styles.toggleButtonActive]}
+            style={[styles.toggleButton, midnightReset && styles.toggleButtonActive]}
             onPress={() => setMidnightReset(!midnightReset)}
-            disabled={!notificationsEnabled}
           >
             <View style={[
               styles.toggleThumb,
-              midnightReset && notificationsEnabled && styles.toggleThumbActive
+              midnightReset && styles.toggleThumbActive
             ]} />
           </TouchableOpacity>
         </View>
@@ -379,45 +435,51 @@ const SettingsTab: React.FC = () => {
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>{t('settings.notifications.dailyReminder')}</Text>
-            <Text style={styles.settingSubtitle}>{t('settings.notifications.dailyDescription')}</Text>
+            <Text style={styles.settingSubtitle}>
+              {notificationsEnabled
+                ? t('settings.notifications.dailyDescription')
+                : '알림 권한 없음 - 설정만 저장됩니다'
+              }
+            </Text>
           </View>
           <TouchableOpacity
-            style={[styles.toggleButton, dailyTaroReminder && notificationsEnabled && styles.toggleButtonActive]}
-            onPress={() => setDailyTaroReminder(!dailyTaroReminder)}
-            disabled={!notificationsEnabled}
+            style={[styles.toggleButton, dailyTaroReminder && styles.toggleButtonActive]}
+            onPress={async () => {
+              try {
+                console.log('🔄 데일리 리마인더 토글 클릭:', {
+                  현재값: dailyTaroReminder,
+                  새값: !dailyTaroReminder,
+                  알림권한: notificationsEnabled
+                });
+
+                await updateNotificationSettings({
+                  dailyReminderEnabled: !dailyTaroReminder
+                });
+
+                console.log('✅ 데일리 리마인더 설정 업데이트 완료');
+
+                // 권한이 없는 경우 안내 메시지
+                if (!notificationsEnabled) {
+                  Alert.alert(
+                    '설정 저장 완료',
+                    '설정이 저장되었습니다. 실제 알림을 받으려면 알림 권한을 허용해주세요.',
+                    [{ text: '확인' }]
+                  );
+                }
+              } catch (error) {
+                console.error('❌ 데일리 리마인더 설정 오류:', error);
+                Alert.alert('오류', '설정을 저장하는 중 문제가 발생했습니다.');
+              }
+            }}
           >
             <View style={[
               styles.toggleThumb,
-              dailyTaroReminder && notificationsEnabled && styles.toggleThumbActive
+              dailyTaroReminder && styles.toggleThumbActive,
+              !notificationsEnabled && styles.toggleThumbDisabled
             ]} />
           </TouchableOpacity>
         </View>
 
-        {/* 주말 알림 */}
-        <View style={styles.settingItem}>
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.notifications.weekend')}</Text>
-            <Text style={styles.settingSubtitle}>{t('settings.notifications.weekendDescription')}</Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.toggleButton, weekendNotifications && notificationsEnabled && hourlyNotifications && styles.toggleButtonActive]}
-            onPress={async () => {
-              try {
-                await updateNotificationSettings({
-                  weekendEnabled: !weekendNotifications
-                });
-              } catch (error) {
-                Alert.alert(t('settings.notifications.updateError'));
-              }
-            }}
-            disabled={!notificationsEnabled || !hourlyNotifications}
-          >
-            <View style={[
-              styles.toggleThumb,
-              weekendNotifications && notificationsEnabled && hourlyNotifications && styles.toggleThumbActive
-            ]} />
-          </TouchableOpacity>
-        </View>
 
 
         {/* 조용한 시간 */}
@@ -427,7 +489,6 @@ const SettingsTab: React.FC = () => {
             setTempQuietHours({ start: quietHoursStart, end: quietHoursEnd });
             setShowQuietHoursModal(true);
           }}
-          disabled={!notificationsEnabled}
         >
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>{t('settings.notifications.quietHours')}</Text>
@@ -477,6 +538,38 @@ const SettingsTab: React.FC = () => {
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />
 
+      {/* 구독 선택 모달 */}
+      {SubscriptionPlans && (
+        <Modal
+          visible={showSubscriptionModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowSubscriptionModal(false)}
+        >
+          <SubscriptionPlans
+            onClose={() => setShowSubscriptionModal(false)}
+            onPurchaseSuccess={handleSubscriptionSuccess}
+          />
+        </Modal>
+      )}
+
+      {/* 구독 관리 모달 */}
+      {SubscriptionManagement && (
+        <Modal
+          visible={showManagementModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowManagementModal(false)}
+        >
+          <SubscriptionManagement
+            onClose={() => setShowManagementModal(false)}
+            onUpgrade={() => {
+              setShowManagementModal(false);
+              setShowSubscriptionModal(true);
+            }}
+          />
+        </Modal>
+      )}
 
       {/* 조용한 시간 설정 모달 */}
       <Modal
@@ -486,7 +579,7 @@ const SettingsTab: React.FC = () => {
         onRequestClose={() => setShowQuietHoursModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { maxHeight: Dimensions.get('window').height * 0.8 }]}>
+          <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('settings.notifications.quietHoursSettings')}</Text>
               <TouchableOpacity
@@ -731,29 +824,31 @@ const SettingsTab: React.FC = () => {
       {/* {false && <SupabaseTest />} */}
 
       {/* 보상형 광고 섹션 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>추가 기능</Text>
-        <RewardedAd
-          buttonText="보상 광고 시청하기"
-          rewardDescription="광고를 시청하고 추가 타로 세션을 받으세요"
-          onRewardEarned={(rewardType, amount) => {
-            console.log('🎁 보상 받음:', rewardType, amount);
-            Alert.alert(
-              '보상 받기 완료!',
-              `${amount}개의 추가 타로 세션을 받았습니다.`,
-              [{ text: '확인', style: 'default' }]
-            );
-          }}
-          onAdFailed={(error) => {
-            console.log('❌ 보상형 광고 실패:', error);
-            Alert.alert(
-              '광고 시청 실패',
-              '잠시 후 다시 시도해주세요.',
-              [{ text: '확인', style: 'default' }]
-            );
-          }}
-        />
-      </View>
+      {RewardedAd && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>추가 기능</Text>
+          <RewardedAd
+            buttonText="보상 광고 시청하기"
+            rewardDescription="광고를 시청하고 추가 타로 세션을 받으세요"
+            onRewardEarned={(rewardType, amount) => {
+              console.log('🎁 보상 받음:', rewardType, amount);
+              Alert.alert(
+                '보상 받기 완료!',
+                `${amount}개의 추가 타로 세션을 받았습니다.`,
+                [{ text: '확인', style: 'default' }]
+              );
+            }}
+            onAdFailed={(error) => {
+              console.log('❌ 보상형 광고 실패:', error);
+              Alert.alert(
+                '광고 시청 실패',
+                '잠시 후 다시 시도해주세요.',
+                [{ text: '확인', style: 'default' }]
+              );
+            }}
+          />
+        </View>
+      )}
 
       {/* 프리미엄 기능 통합 테스트 (개발용) */}
       {__DEV__ && (
@@ -767,6 +862,63 @@ const SettingsTab: React.FC = () => {
           <PremiumTest />
         </View>
       )}
+
+      {/* 숨겨진 관리자 진입점 - 앱 정보 섹션 */}
+      <View style={styles.settingsSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>ℹ️</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => {
+              setAdminClickCount(prev => {
+                const newCount = prev + 1;
+                if (newCount >= 7) {
+                  setShowAdminDashboard(true);
+                  setAdminClickCount(0);
+                }
+                return newCount;
+              });
+            }}
+          >
+            <Text style={styles.sectionTitle}>앱 정보</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>버전</Text>
+            <Text style={styles.settingSubtitle}>1.0.0</Text>
+          </View>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>개발자</Text>
+            <Text style={styles.settingSubtitle}>Tarot Timer Team</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 관리자 대시보드 모달 */}
+      <Modal
+        visible={showAdminDashboard}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>관리자 대시보드</Text>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setShowAdminDashboard(false)}
+            >
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <AdminDashboard />
+        </View>
+      </Modal>
 
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />
@@ -871,18 +1023,58 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontFamily: 'NotoSansKR_400Regular',
   },
-  premiumButton: {
-    backgroundColor: 'rgba(244, 208, 63, 0.2)',
-    borderWidth: 1,
-    borderColor: Colors.brand.accent,
+  upgradeButton: {
+    backgroundColor: Colors.brand.primary,
     borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.md,
     alignItems: 'center',
+    marginTop: Spacing.md,
   },
-  premiumButtonText: {
+  upgradeButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.brand.accent,
+    color: Colors.text.inverse,
+    fontFamily: 'NotoSansKR_700Bold',
+  },
+
+  // 프리미엄 상태 표시
+  premiumStatusContainer: {
+    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(40, 167, 69, 0.3)',
+  },
+  premiumInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  premiumStatusTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontFamily: 'NotoSansKR_500Medium',
+  },
+  premiumStatusValue: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    fontWeight: 'bold',
+    fontFamily: 'NotoSansKR_700Bold',
+  },
+  manageSubscriptionButton: {
+    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+    borderWidth: 1,
+    borderColor: Colors.state.success,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  manageSubscriptionButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.state.success,
     fontFamily: 'NotoSansKR_700Bold',
   },
 
@@ -974,6 +1166,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
+  toggleThumbDisabled: {
+    backgroundColor: 'rgba(155, 141, 184, 0.4)',
+    opacity: 0.6,
+  },
   toggleIcon: {
     fontSize: 12,
     textAlign: 'center',
@@ -1051,13 +1247,18 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.xs,
   },
   modalContainer: {
     backgroundColor: 'rgba(15, 12, 27, 0.95)',
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '80%',
+    borderRadius: BorderRadius.xl,
+    maxHeight: '100%',
+    width: '95%',
+    maxWidth: 500,
+    minHeight: 400,
     borderWidth: 1,
     borderColor: 'rgba(244, 208, 63, 0.3)',
   },
@@ -1093,6 +1294,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    minHeight: 300,
   },
 
 

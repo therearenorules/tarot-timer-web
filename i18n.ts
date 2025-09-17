@@ -32,26 +32,30 @@ const resources = {
       navigation: {
         timer: '타이머',
         spread: '스프레드',
-        journal: '저널',
+        journal: '다이어리',
         settings: '설정',
       },
 
       // 타이머
       timer: {
         title: '🔮 타로 타이머',
-        subtitle: '24시간 신비로운 여정',
+        subtitle: '24시간 타로 메시지',
         currentCard: '현재 카드',
         nextCard: '다음 카드',
         timeLeft: '남은 시간',
         hour: '시',
         minute: '분',
         second: '초',
+        midnight: '자정',
+        noon: '정오',
+        am: '오전 {{hour}}시',
+        pm: '오후 {{hour}}시',
       },
 
       // 스프레드
       spread: {
         title: '🌟 타로 스프레드',
-        subtitle: '신비로운 카드 레이아웃',
+        subtitle: '카드의 지혜를 탐험하세요',
         threeCard: '3카드 스프레드',
         fiveCard: '5카드 스프레드',
         past: '과거',
@@ -62,21 +66,58 @@ const resources = {
         outcome: '결과',
       },
 
-      // 저널
+      // 다이어리
       journal: {
-        title: '📖 타로 저널',
-        subtitle: '신비로운 여정의 기록',
+        title: '📖 타로 다이어리',
+        subtitle: '타로 여정을 기록하세요',
         addEntry: '새 엔트리',
         writeNote: '메모 작성',
         emotion: '감정',
         insights: '통찰',
-        noEntries: '아직 저널 엔트리가 없습니다',
+        noEntries: '아직 다이어리 엔트리가 없습니다',
+        tabs: {
+          daily: '일일 기록',
+          spreads: '스프레드 기록'
+        },
+        loading: {
+          dailyTarot: '일일 타로 로딩 중...'
+        },
+        empty: {
+          dailyTitle: '일일 타로 기록이 없습니다',
+          dailyMessage: '24시간 타로 타이머를 사용하여 첫 번째 기록을 만들어보세요',
+          spreadTitle: '스프레드 기록이 없습니다',
+          spreadMessage: '타로 스프레드를 진행하여 기록을 남겨보세요'
+        },
+        sections: {
+          dailyReadings: '일일 타로 기록',
+          spreadReadings: '타로 스프레드 기록'
+        },
+        labels: {
+          dailyTarotReading: '24시간 타로 읽기'
+        },
+        status: {
+          completed: '완료됨'
+        },
+        moreCards: '외 {{count}}장',
+        memoCount: '메모 {{count}}개',
+        recordCount: '{{count}}개 기록',
+        cardsCast: '{{count}}장 뽑음',
+        dailyTarotTitle: '일일 타로 여정',
+        entry: {
+          memo: '메모'
+        },
+        memoPlaceholder: '이 시간에 대한 메모를 작성하세요...',
+        saveMemo: '메모 저장',
+        memoSaved: '메모 저장됨',
+        memoSavedMessage: '{{hour}}시 메모가 저장되었습니다',
+        insightsTitle: '인사이트',
+        createdDate: '생성일'
       },
 
       // 설정
       settings: {
         title: '⚙️ 설정',
-        subtitle: '개인화된 타로 환경',
+        subtitle: '앱을 개인화하세요',
         general: '일반',
         notifications: {
           title: '알림',
@@ -144,26 +185,30 @@ const resources = {
       navigation: {
         timer: 'Timer',
         spread: 'Spread',
-        journal: 'Journal',
+        journal: 'Daily',
         settings: 'Settings',
       },
 
       // Timer
       timer: {
         title: '🔮 Tarot Timer',
-        subtitle: '24-Hour Mystical Journey',
+        subtitle: '24-hour tarot messages',
         currentCard: 'Current Card',
         nextCard: 'Next Card',
         timeLeft: 'Time Left',
         hour: 'Hour',
         minute: 'Minute',
         second: 'Second',
+        midnight: 'Midnight',
+        noon: 'Noon',
+        am: '{{hour}} AM',
+        pm: '{{hour}} PM',
       },
 
       // Spread
       spread: {
         title: '🌟 Tarot Spreads',
-        subtitle: 'Mystical Card Layouts',
+        subtitle: 'Explore the wisdom of the cards',
         threeCard: '3-Card Spread',
         fiveCard: '5-Card Spread',
         past: 'Past',
@@ -174,21 +219,58 @@ const resources = {
         outcome: 'Outcome',
       },
 
-      // Journal
+      // Daily
       journal: {
-        title: '📖 Tarot Journal',
-        subtitle: 'Record Your Mystical Journey',
+        title: '📖 Tarot Daily',
+        subtitle: 'Record your tarot journey',
         addEntry: 'Add Entry',
         writeNote: 'Write Note',
         emotion: 'Emotion',
         insights: 'Insights',
-        noEntries: 'No journal entries yet',
+        noEntries: 'No diary entries yet',
+        tabs: {
+          daily: 'Daily Records',
+          spreads: 'Spread Records'
+        },
+        loading: {
+          dailyTarot: 'Loading daily tarot...'
+        },
+        empty: {
+          dailyTitle: 'No daily tarot records',
+          dailyMessage: 'Use the 24-hour tarot timer to create your first record',
+          spreadTitle: 'No spread records',
+          spreadMessage: 'Perform tarot spreads to create records'
+        },
+        sections: {
+          dailyReadings: 'Daily Tarot Records',
+          spreadReadings: 'Tarot Spread Records'
+        },
+        labels: {
+          dailyTarotReading: '24-Hour Tarot Reading'
+        },
+        status: {
+          completed: 'Completed'
+        },
+        moreCards: 'and {{count}} more',
+        memoCount: '{{count}} memos',
+        recordCount: '{{count}} records',
+        cardsCast: '{{count}} cards cast',
+        dailyTarotTitle: 'Daily Tarot Journey',
+        entry: {
+          memo: 'Memo'
+        },
+        memoPlaceholder: 'Write a memo for this hour...',
+        saveMemo: 'Save Memo',
+        memoSaved: 'Memo Saved',
+        memoSavedMessage: 'Memo for hour {{hour}} has been saved',
+        insightsTitle: 'Insights',
+        createdDate: 'Created Date'
       },
 
       // Settings
       settings: {
         title: '⚙️ Settings',
-        subtitle: 'Personalized Tarot Environment',
+        subtitle: 'Personalize your app',
         general: 'General',
         notifications: {
           title: 'Notifications',

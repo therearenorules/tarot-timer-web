@@ -17,11 +17,13 @@ const jimpBlockList = [
   /node_modules\/file-type\/.*/,
   /node_modules\/image-size\/.*/,
   /node_modules\/probe-image-size\/.*/,
-  // Expo 이미지 유틸리티들
+  // Expo 이미지 유틸리티들 (알림 시스템에서 사용)
   /node_modules\/@expo\/image-utils\/.*/,
   /node_modules\/@expo\/image-loader\/.*/,
   /node_modules\/@expo\/spawn-async\/.*/,
   /.*\/expo\/.*image.*\/.*/,
+  // 알림 아이콘 생성 관련 차단
+  /.*expo-notifications.*image.*\/.*/,
 ];
 
 // blockList와 blacklistRE 모두 설정

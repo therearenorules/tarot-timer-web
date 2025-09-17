@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 13.2.5"
+    "version": ">= 13.2.5",
+    "requireCommit": false
   },
   "build": {
     "development": {
@@ -8,6 +9,9 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m1-medium"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "preview": {
@@ -21,26 +25,60 @@
       }
     },
     "production": {
+      "channel": "production",
+      "env": {
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "ios": {
         "resourceClass": "m1-medium",
-        "autoIncrement": true
+        "autoIncrement": true,
+        "bundleIdentifier": "com.tarottimer.app",
+        "buildConfiguration": "Release"
       },
       "android": {
         "autoIncrement": true,
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "applicationId": "com.tarottimer.app"
+      }
+    },
+    "production-ios": {
+      "extends": "production",
+      "platform": "ios",
+      "ios": {
+        "resourceClass": "m1-medium",
+        "autoIncrement": true,
+        "bundleIdentifier": "com.tarottimer.app",
+        "buildConfiguration": "Release",
+        "simulator": false
+      }
+    },
+    "production-android": {
+      "extends": "production",
+      "platform": "android",
+      "android": {
+        "autoIncrement": true,
+        "buildType": "app-bundle",
+        "applicationId": "com.tarottimer.app"
       }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "tarottimer@example.com",
-        "ascAppId": "PLACEHOLDER_APP_ID",
-        "appleTeamId": "PLACEHOLDER_TEAM_ID"
+        "appleId": "YOUR_APPLE_ID@email.com",
+        "ascAppId": "YOUR_ASC_APP_ID",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID",
+        "sku": "tarot-timer-ios",
+        "language": "ko-KR",
+        "companyName": "Tarot Timer Development Team",
+        "appName": "타로 타이머"
       },
       "android": {
-        "serviceAccountKeyPath": "path/to/api-key.json",
-        "track": "production"
+        "serviceAccountKeyPath": "path/to/google-play-service-account.json",
+        "track": "production",
+        "releaseStatus": "completed",
+        "changesNotSentForReview": false
       }
     }
   }

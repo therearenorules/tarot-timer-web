@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   Modal,
   Dimensions,
   TextInput,
@@ -14,13 +14,13 @@ import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
 import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
-import { 
-  Colors, 
-  GlassStyles, 
-  ShadowStyles, 
+import {
+  Colors,
+  GlassStyles,
+  ShadowStyles,
   TextStyles,
   Spacing,
-  BorderRadius 
+  BorderRadius
 } from './DesignSystem';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -71,24 +71,33 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
       <View style={styles.dailyViewerContainer}>
         {/* 제목 */}
         <View style={styles.dailyViewerHeader}>
-          <Text style={styles.dailyViewerTitle}>{t('journal.dailyTarotTitle')}</Text>
+          <Text style={styles.dailyViewerTitle}>Daily Tarot</Text>
           <Text style={styles.dailyViewerDate}>{reading.displayDate}</Text>
         </View>
 
-        {/* 24시간 카드 가로 스크롤 */}
+        {/* 24시간 카드 가로 스크롤 - 성능 최적화 */}
         <View style={styles.cardScrollSection}>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.cardScrollContainer}
+            removeClippedSubviews={true}
+            initialNumToRender={6}
+            maxToRenderPerBatch={4}
+            windowSize={8}
+            getItemLayout={(data, index) => ({
+              length: 80,
+              offset: 80 * index,
+              index,
+            })}
           >
             {Array.from({ length: 24 }, (_, hour) => {
               const card = reading.hourlyCards?.[hour];
               const hasMemo = cardMemos[hour] && cardMemos[hour].trim().length > 0;
               const isSelected = selectedHour === hour;
-              
+
               if (!card) return null;
-              
+
               return (
                 <TouchableOpacity
                   key={hour}
@@ -99,13 +108,13 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
                   onPress={() => handleCardPress(hour)}
                 >
                   <Text style={styles.hourLabel}>
-                    {hour === 0 ? t('timer.midnight') : 
-                     hour === 12 ? t('timer.noon') : 
+                    {hour === 0 ? t('timer.midnight') :
+                     hour === 12 ? t('timer.noon') :
                      hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 })}
                   </Text>
-                  
+
                   <View style={styles.cardImageContainer}>
-                    <TarotCardComponent 
+                    <TarotCardComponent
                       card={card}
                       size="small"
                       showText={false}
@@ -126,8 +135,8 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
         {selectedCard && (
           <View style={styles.selectedCardInfo}>
             <Text style={styles.selectedTimeText}>
-              {selectedHour === 0 ? t('timer.midnight') : 
-               selectedHour === 12 ? t('timer.noon') : 
+              {selectedHour === 0 ? t('timer.midnight') :
+               selectedHour === 12 ? t('timer.noon') :
                selectedHour < 12 ? t('timer.am', { hour: selectedHour }) : t('timer.pm', { hour: selectedHour - 12 })}
             </Text>
             <Text style={styles.selectedCardName}>{selectedCard.nameKr}</Text>
@@ -179,14 +188,14 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
           </TouchableOpacity>
           <Text style={styles.spreadViewerTitle}>{spread.title}</Text>
         </View>
-        
+
         <ScrollView style={styles.spreadViewerContent}>
           <Text style={styles.spreadName}>{spread.spreadName}</Text>
-          
+
           {/* 스프레드 배치도 */}
           <View style={styles.spreadLayout}>
             {spread.positions?.map((position, index) => (
-              <View 
+              <View
                 key={position.id || index}
                 style={[
                   styles.spreadCardPosition,
@@ -204,7 +213,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
               >
                 <View style={spread.spreadName?.includes('켈틱') && position.id === 2 ? styles.rotatedCard : null}>
                   {position.card && (
-                    <TarotCardComponent 
+                    <TarotCardComponent
                       card={position.card}
                       size="small"
                       showText={false}
@@ -239,7 +248,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
   );
 };
 
-const TarotJournal = () => {
+const TarotDaily = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('daily');
   const [dailyReadings, setDailyReadings] = useState([]);
@@ -257,14 +266,14 @@ const TarotJournal = () => {
     try {
       setIsLoading(true);
       const readings = [];
-      
+
       // 최근 30일간의 일일 타로 데이터 로드
       for (let i = 0; i < 30; i++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
         const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
-        
+
         try {
           const savedData = await simpleStorage.getItem(storageKey);
           if (savedData) {
@@ -279,8 +288,8 @@ const TarotJournal = () => {
           // 개별 날짜 로드 실패는 무시
         }
       }
-      
-      setDailyReadings(readings.sort((a, b) => 
+
+      setDailyReadings(readings.sort((a, b) =>
         new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
       ));
     } catch (error) {
@@ -313,7 +322,7 @@ const TarotJournal = () => {
 {t('journal.tabs.daily')}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.tab, activeTab === 'spreads' && styles.activeTab]}
           onPress={() => setActiveTab('spreads')}
@@ -479,7 +488,7 @@ const TarotJournal = () => {
   return (
     <View style={styles.container}>
       {renderHeader()}
-      
+
       <View style={styles.content}>
         {activeTab === 'daily' ? renderDailyReadings() : renderSpreadReadings()}
       </View>
@@ -584,7 +593,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: Spacing.xl,
   },
-  
+
   // 데일리 카드 스타일
   dailyCard: {
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
@@ -674,7 +683,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.brand.accent,
   },
-  
+
   // 스프레드 카드 스타일
   spreadCard: {
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
@@ -739,7 +748,7 @@ const styles = StyleSheet.create({
     color: Colors.brand.accent,
     fontWeight: '500',
   },
-  
+
   // 빈 상태
   loadingContainer: {
     flex: 1,
@@ -773,7 +782,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  
+
   // 데일리 타로 뷰어 모달
   dailyViewerContainer: {
     flex: 1,
@@ -799,7 +808,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     textAlign: 'center',
   },
-  
+
   // 24시간 카드 가로 스크롤
   cardScrollSection: {
     paddingVertical: Spacing.lg,
@@ -847,7 +856,7 @@ const styles = StyleSheet.create({
   memoIndicatorText: {
     fontSize: 8,
   },
-  
+
   // 선택된 카드 정보
   selectedCardInfo: {
     alignItems: 'center',
@@ -868,7 +877,7 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     marginTop: Spacing.xs,
   },
-  
+
   // 메모 섹션
   memoSection: {
     flex: 1,
@@ -909,7 +918,7 @@ const styles = StyleSheet.create({
     fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
   },
-  
+
   // 우측 하단 플로팅 닫기 버튼
   floatingCloseButton: {
     position: 'absolute',
@@ -931,7 +940,7 @@ const styles = StyleSheet.create({
     color: Colors.brand.accent,
     fontWeight: 'bold',
   },
-  
+
   // 메모 모달
   memoModalOverlay: {
     flex: 1,
@@ -991,7 +1000,7 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'center',
   },
-  
+
   // 스프레드 뷰어 모달
   spreadViewerContainer: {
     flex: 1,
@@ -1047,7 +1056,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 2,
   },
-  
+
   // 인사이트 섹션
   insightsSection: {
     marginTop: Spacing.xl,
@@ -1071,7 +1080,7 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     lineHeight: 20,
   },
-  
+
   // 메타데이터 섹션
   metadataSection: {
     marginTop: Spacing.lg,
@@ -1093,4 +1102,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TarotJournal;
+export default TarotDaily;

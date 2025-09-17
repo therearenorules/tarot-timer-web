@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, Suspense, lazy, memo, useCallback, useEffect } from 'react';
+import React, { useState, memo, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useFonts, NotoSansKR_400Regular, NotoSansKR_500Medium, NotoSansKR_700Bold } from '@expo-google-fonts/noto-sans-kr';
 import { useTranslation } from 'react-i18next';
@@ -7,13 +7,34 @@ import i18next from 'i18next';
 import { Icon } from './components/Icon';
 import { SacredGeometryBackground } from './components/SacredGeometryBackground';
 import { MysticalTexture } from './components/MysticalTexture';
-import BannerAd from './components/ads/BannerAd';
+import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
+import { TAROT_CARDS } from './utils/tarotData';
+// 조건부 import - 모바일 오류 방지
+let BannerAd: any = null;
+try {
+  BannerAd = require('./components/ads/BannerAd').default;
+} catch (error) {
+  console.warn('⚠️ BannerAd 컴포넌트 로드 실패 (광고 비활성화):', error);
+}
 import { TarotProvider } from './contexts/TarotContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { NotificationProvider } from './contexts/NotificationContext';
+// 조건부 import - 알림 모듈 안전 로딩
+let NotificationProvider: any = ({ children }: { children: React.ReactNode }) => children;
+try {
+  const notificationModule = require('./contexts/NotificationContext');
+  NotificationProvider = notificationModule.NotificationProvider;
+} catch (error) {
+  console.warn('⚠️ NotificationProvider 로드 실패 (알림 비활성화):', error);
+}
 import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
-import AdManager from './utils/adManager';
+// 조건부 import - 광고 매니저 안전 로딩
+let AdManager: any = { initialize: () => Promise.resolve(false), dispose: () => {} };
+try {
+  AdManager = require('./utils/adManager').default;
+} catch (error) {
+  console.warn('⚠️ AdManager 로드 실패 (광고 시스템 비활성화):', error);
+}
 import IAPManager from './utils/iapManager';
 import {
   Colors,
@@ -25,11 +46,11 @@ import {
 // Initialize i18n
 import './i18n/index';
 
-// Lazy Loading으로 탭 컴포넌트들 로드
-const TimerTab = lazy(() => import('./components/tabs/TimerTab'));
-const SpreadTab = lazy(() => import('./components/tabs/SpreadTab'));
-const JournalTab = lazy(() => import('./components/tabs/JournalTab'));
-const SettingsTab = lazy(() => import('./components/tabs/SettingsTab'));
+// 직접 import로 탭 컴포넌트들 로드 (임시 수정)
+import TimerTab from './components/tabs/TimerTab';
+import SpreadTab from './components/tabs/SpreadTab';
+import DailyTab from './components/tabs/DailyTab';
+import SettingsTab from './components/tabs/SettingsTab';
 
 // 로딩 컴포넌트 (최적화된)
 const LoadingSpinner = memo(() => {
@@ -132,26 +153,26 @@ const AppHeader = memo(({ activeTab }: { activeTab: string }) => {
   const { t } = useTranslation();
 
   const getTabTitle = useCallback((tab: string) => {
-    // 항상 영어 버전의 타이틀을 반환 (i18n 시스템 유지하면서 영어 강제)
+    // 현재 언어에 맞는 타이틀 반환
     switch (tab) {
-      case 'timer': return i18next.getFixedT('en')('timer.title');
-      case 'spread': return i18next.getFixedT('en')('spread.title');
-      case 'journal': return i18next.getFixedT('en')('journal.title');
-      case 'settings': return i18next.getFixedT('en')('settings.title');
-      default: return i18next.getFixedT('en')('timer.title');
+      case 'timer': return t('timer.title');
+      case 'spread': return t('spread.title');
+      case 'journal': return 'Tarot Daily';
+      case 'settings': return t('settings.title');
+      default: return t('timer.title');
     }
-  }, []);
+  }, [t]);
 
   const getTabSubtitle = useCallback((tab: string) => {
-    // 항상 영어 버전의 서브타이틀을 반환 (i18n 시스템 유지하면서 영어 강제)
+    // 현재 언어에 맞는 서브타이틀 반환
     switch (tab) {
-      case 'timer': return i18next.getFixedT('en')('timer.subtitle');
-      case 'spread': return i18next.getFixedT('en')('spread.subtitle');
-      case 'journal': return i18next.getFixedT('en')('journal.subtitle');
-      case 'settings': return i18next.getFixedT('en')('settings.subtitle');
-      default: return i18next.getFixedT('en')('timer.subtitle');
+      case 'timer': return t('timer.subtitle');
+      case 'spread': return t('spread.subtitle');
+      case 'journal': return t('journal.subtitle');
+      case 'settings': return t('settings.subtitle');
+      default: return t('timer.subtitle');
     }
-  }, []);
+  }, [t]);
 
   return (
     <View style={styles.header}>
@@ -161,14 +182,15 @@ const AppHeader = memo(({ activeTab }: { activeTab: string }) => {
   );
 });
 
-// PWA 상태 표시 컴포넌트
+// PWA 상태 표시 컴포넌트 (오프라인 표시 비활성화)
 const PWAStatus = memo(() => {
   const { isOnline, isInstallable, installApp, shareApp } = usePWA();
   const { t } = useTranslation();
 
   return (
     <View style={styles.pwaStatus}>
-      {!isOnline && (
+      {/* 오프라인 표시 숨김 처리 */}
+      {false && !isOnline && (
         <View style={styles.offlineIndicator}>
           <Text style={styles.offlineText}>{t('pwa.offline')}</Text>
         </View>
@@ -205,6 +227,20 @@ function AppContent() {
       try {
         console.log('📱 시스템 초기화 시작...');
 
+        // 이미지 캐시 및 프리로딩 시스템 초기화 (가장 먼저)
+        console.log('🖼️ 이미지 캐시 시스템 초기화 시작...');
+        try {
+          await preloadCriticalImages();
+          console.log('✅ 중요 이미지 프리로드 완료');
+
+          // 타로 카드 이미지 백그라운드 프리로딩
+          preloadTarotImages(TAROT_CARDS)
+            .then(() => console.log('✅ 타로 카드 이미지 프리로드 완료'))
+            .catch(error => console.warn('⚠️ 타로 카드 이미지 프리로드 일부 실패:', error));
+        } catch (error) {
+          console.warn('⚠️ 이미지 캐시 시스템 초기화 실패:', error);
+        }
+
         // IAP 시스템 초기화 (광고보다 먼저)
         console.log('💳 IAP 시스템 초기화 시작...');
         const iapSuccess = await IAPManager.initialize();
@@ -240,30 +276,22 @@ function AppContent() {
     const tabComponents = {
       timer: (
         <TabErrorBoundary tabName={i18next.t('navigation.timer')}>
-          <Suspense fallback={<LoadingSpinner />}>
-            <TimerTab />
-          </Suspense>
+          <TimerTab />
         </TabErrorBoundary>
       ),
       spread: (
         <TabErrorBoundary tabName={i18next.t('navigation.spread')}>
-          <Suspense fallback={<LoadingSpinner />}>
-            <SpreadTab />
-          </Suspense>
+          <SpreadTab />
         </TabErrorBoundary>
       ),
       journal: (
         <TabErrorBoundary tabName={i18next.t('navigation.journal')}>
-          <Suspense fallback={<LoadingSpinner />}>
-            <JournalTab />
-          </Suspense>
+          <DailyTab />
         </TabErrorBoundary>
       ),
       settings: (
         <TabErrorBoundary tabName={i18next.t('navigation.settings')}>
-          <Suspense fallback={<LoadingSpinner />}>
-            <SettingsTab />
-          </Suspense>
+          <SettingsTab />
         </TabErrorBoundary>
       ),
     };
@@ -297,14 +325,56 @@ function AppContent() {
       </ScrollView>
 
       {/* 배너 광고 */}
-      <BannerAd
-        placement="main_screen"
-        onAdLoaded={() => console.log('✅ 배너 광고 로드됨')}
-        onAdFailedToLoad={(error) => console.log('❌ 배너 광고 로드 실패:', error)}
-        onAdClicked={() => console.log('🔍 배너 광고 클릭됨')}
-      />
+      {BannerAd && (
+        <BannerAd
+          placement="main_screen"
+          onAdLoaded={() => console.log('✅ 배너 광고 로드됨')}
+          onAdFailedToLoad={(error) => console.log('❌ 배너 광고 로드 실패:', error)}
+          onAdClicked={() => console.log('🔍 배너 광고 클릭됨')}
+        />
+      )}
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <StatusBar style="light" backgroundColor="#1a1625" />
+    </SafeAreaView>
+  );
+}
+
+// 간단한 AppContent 테스트 버전
+function SimpleAppContent() {
+  const [activeTab, setActiveTab] = useState('timer');
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>타로 타이머</Text>
+        <Text style={styles.subtitle}>24시간 미스틱 가이던스</Text>
+      </View>
+
+      <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ color: '#f4d03f', fontSize: 18, marginBottom: 10 }}>현재 탭: {activeTab}</Text>
+          <Text style={{ color: '#d4b8ff', fontSize: 14, textAlign: 'center' }}>
+            앱이 정상적으로 로딩되었습니다. 탭 네비게이션을 테스트해보세요.
+          </Text>
+        </View>
+      </ScrollView>
+
+      <View style={styles.tabBar}>
+        {['timer', 'spread', 'journal', 'settings'].map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.activeTab]}
+            onPress={() => setActiveTab(tab)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <StatusBar style="light" backgroundColor="#1a1625" />
     </SafeAreaView>
   );
@@ -317,7 +387,7 @@ export default function App() {
       <TarotProvider>
         <NotificationProvider>
           <PremiumProvider>
-            <TabErrorBoundary tabName={i18next.t('app.name')}>
+            <TabErrorBoundary tabName="Tarot Timer">
               <AppContent />
             </TabErrorBoundary>
           </PremiumProvider>

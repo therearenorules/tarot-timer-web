@@ -23,11 +23,13 @@ export const Colors = {
   
   // 세밀한 보더 시스템
   border: {
-    subtle: 'rgba(255, 255, 255, 0.08)',       // 거의 보이지 않는
-    soft: 'rgba(255, 255, 255, 0.15)',         // 은은한
-    medium: 'rgba(212, 175, 55, 0.2)',         // 중간
-    focus: 'rgba(212, 175, 55, 0.6)',          // 포커스
-    active: 'rgba(245, 158, 11, 0.8)',         // 액티브
+    primary: 'rgba(212, 175, 55, 0.4)',       // 주요 보더 (호환성)
+    secondary: 'rgba(124, 58, 237, 0.3)',     // 보조 보더 (호환성)
+    subtle: 'rgba(255, 255, 255, 0.08)',      // 거의 보이지 않는
+    soft: 'rgba(255, 255, 255, 0.15)',        // 은은한
+    medium: 'rgba(212, 175, 55, 0.2)',        // 중간
+    focus: 'rgba(212, 175, 55, 0.6)',         // 포커스
+    active: 'rgba(245, 158, 11, 0.8)',        // 액티브
   },
   
   // 텍스트 위계 시스템
@@ -47,8 +49,16 @@ export const Colors = {
   background: {
     primary: '#1a1625',                         // 주요 배경
     secondary: '#2d1b47',                       // 보조 배경
+    tertiary: '#3d2a5a',                        // 삼차 배경
     surface: '#3d2a5a',                         // 서피스 배경
     overlay: 'rgba(0, 0, 0, 0.8)',            // 오버레이 배경
+  },
+
+  // 서피스 색상 시스템 (호환성)
+  surface: {
+    primary: '#2d1b47',                         // 주요 서피스
+    secondary: '#3d2a5a',                       // 보조 서피스
+    tertiary: '#1a1625',                        // 삼차 서피스
   },
 
   // 상태별 색상
@@ -57,6 +67,25 @@ export const Colors = {
     warning: 'rgba(245, 158, 11, 0.5)',
     error: 'rgba(239, 68, 68, 0.5)',
     info: 'rgba(59, 130, 246, 0.5)',
+  },
+
+  // 상태별 색상 (호환성)
+  status: {
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    info: '#3B82F6',
+  },
+
+  // 레거시 컬러 구조 (호환성)
+  primary: {
+    main: '#F59E0B',                            // 주요 색상 (호환성)
+  },
+  secondary: {
+    main: '#7C3AED',                            // 보조 색상 (호환성)
+  },
+  accent: {
+    main: '#D4AF37',                            // 악센트 색상 (호환성)
   },
 };
 
@@ -334,6 +363,68 @@ export const Typography = {
     xl: 18,
     xxl: 20,
     hero: 28,
+  },
+  // 버튼 타이포그래피 (호환성)
+  button: {
+    primary: {
+      fontSize: 16,
+      fontFamily: 'NotoSansKR_700Bold',
+      fontWeight: '600',
+      color: '#fff',
+      textAlign: 'center' as const,
+    }
+  },
+  // 헤더 타이포그래피 (호환성)
+  header: {
+    h2: {
+      fontSize: 22,
+      fontFamily: 'NotoSansKR_700Bold',
+      fontWeight: '600',
+      color: '#fff',
+      letterSpacing: -0.3,
+    },
+    h3: {
+      fontSize: 20,
+      fontFamily: 'NotoSansKR_700Bold',
+      fontWeight: '600',
+      color: '#fff',
+      marginBottom: 12,
+      letterSpacing: -0.2,
+    }
+  },
+  // 바디 타이포그래피 (호환성)
+  body: {
+    regular: {
+      fontSize: 14,
+      fontFamily: 'NotoSansKR_400Regular',
+      fontWeight: '400',
+      color: 'rgba(255, 255, 255, 0.7)',
+      lineHeight: 20,
+    },
+    medium: {
+      fontSize: 14,
+      fontFamily: 'NotoSansKR_500Medium',
+      fontWeight: '500',
+      color: 'rgba(255, 255, 255, 0.8)',
+      lineHeight: 20,
+    }
+  },
+  // 캡션 타이포그래피 (호환성)
+  caption: {
+    regular: {
+      fontSize: 12,
+      fontFamily: 'NotoSansKR_400Regular',
+      fontWeight: '400',
+      color: 'rgba(255, 255, 255, 0.6)',
+      lineHeight: 16,
+    },
+    medium: {
+      fontSize: 12,
+      fontFamily: 'NotoSansKR_500Medium',
+      fontWeight: '500',
+      color: 'rgba(255, 255, 255, 0.7)',
+      lineHeight: 16,
+    }
   }
 };
 

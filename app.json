@@ -1,29 +1,17 @@
 {
   "expo": {
-    "name": "타로 타이머 - 24시간 신비로운 여정",
-    "slug": "tarot-timer-mystic",
+    "name": "타로 타이머",
+    "slug": "tarot-timer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "primaryColor": "#7b2cbf",
-    "description": "24시간 타로 타이머로 신비로운 에너지의 흐름을 경험하세요. 매 시간마다 새로운 타로 카드가 당신의 하루를 안내합니다.",
-    "keywords": [
-      "타로",
-      "tarot",
-      "timer",
-      "타이머",
-      "명상",
-      "meditation",
-      "신비",
-      "mystic",
-      "점술",
-      "fortune"
-    ],
+    "description": "타로 카드 공부를 위한 24시간 타이머 앱입니다. 시간대별로 타로 카드를 기록하고, 일상 속에서 카드의 의미를 체험하며 타로 공부에 도움을 받으세요.",
     "extra": {
       "EXPO_PUBLIC_API_URL": "http://localhost:3000",
       "eas": {
-        "projectId": "com.tarottimer.mystic"
+        "projectId": "com.tarottimer.app"
       }
     },
     "splash": {
@@ -36,7 +24,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tarottimer.mystic",
+      "bundleIdentifier": "com.tarottimer.app",
       "buildNumber": "1",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
@@ -56,7 +44,7 @@
       }
     },
     "android": {
-      "package": "com.tarottimer.mystic",
+      "package": "com.tarottimer.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -71,13 +59,13 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "com.google.android.gms.permission.AD_ID"
       ],
-      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.mystic"
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "name": "타로 타이머",
-      "shortName": "타로타이머",
+      "name": "Tarot Timer",
+      "shortName": "TarotTimer",
       "lang": "ko",
       "scope": "/",
       "themeColor": "#7b2cbf",
@@ -87,7 +75,6 @@
       "startUrl": "/"
     },
     "scheme": "tarot-timer",
-    "privacy": "unlisted",
     "githubUrl": "https://github.com/tarot-timer/tarot-timer-app",
     "plugins": [
       [

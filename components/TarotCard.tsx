@@ -1,11 +1,12 @@
 // components/TarotCard.tsx - 타로 카드 이미지 컴포넌트
 import React, { useState } from 'react';
-import { View, Image, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCard as TarotCardType } from '../utils/tarotData';
 import { useTarotI18n } from '../hooks/useTarotI18n';
 import { Icon } from './Icon';
 import { TarotCardBack } from './TarotCardBack';
+import OptimizedImage from './OptimizedImage';
 
 interface TarotCardProps {
   card: TarotCardType | null;
@@ -107,17 +108,16 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
             <Text style={styles.errorText}>{t('cards.imageLoadError')}</Text>
           </View>
         ) : (
-          <Image
+          <OptimizedImage
             source={card.imageUrl}
             style={[styles.cardImage, imageSize]}
             resizeMode="cover"
             onError={handleImageError}
             onLoadStart={() => setImageError(false)}
-            // 고화질 렌더링을 위한 속성 추가
-            fadeDuration={0}
-            blurRadius={0}
-            progressiveRenderingEnabled={true}
-            loadingIndicatorSource={{ uri: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' }}
+            priority={size === 'large' || size === 'extra-large' ? 'high' : 'normal'}
+            fadeDuration={300}
+            showLoader={true}
+            cacheKey={`tarot_${card.id}_${size}`}
           />
         )}
       </View>

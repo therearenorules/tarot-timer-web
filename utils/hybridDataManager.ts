@@ -60,12 +60,7 @@ export class HybridDataManager {
     // 로컬에 저장
     const newSession = await LocalStorageManager.addTarotSession(session);
 
-    // 클라우드 백업이 활성화되어 있다면 동기화 마킹
-    const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-    if (isCloudEnabled) {
-      this.markForSync('tarot_session_' + newSession.id);
-      this.scheduleDeferredSync();
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return newSession;
   }
@@ -73,13 +68,7 @@ export class HybridDataManager {
   static async updateTarotSession(sessionId: string, updates: Partial<TarotSession>): Promise<TarotSession | null> {
     const updatedSession = await LocalStorageManager.updateTarotSession(sessionId, updates);
 
-    if (updatedSession) {
-      const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-      if (isCloudEnabled) {
-        this.markForSync('tarot_session_' + sessionId);
-        this.scheduleDeferredSync();
-      }
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return updatedSession;
   }
@@ -87,13 +76,7 @@ export class HybridDataManager {
   static async deleteTarotSession(sessionId: string): Promise<boolean> {
     const deleted = await LocalStorageManager.deleteTarotSession(sessionId);
 
-    if (deleted) {
-      const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-      if (isCloudEnabled) {
-        this.markForSync('delete_tarot_session_' + sessionId);
-        this.scheduleDeferredSync();
-      }
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return deleted;
   }
@@ -113,12 +96,7 @@ export class HybridDataManager {
     // 로컬에 저장
     const newEntry = await LocalStorageManager.addJournalEntry(entry);
 
-    // 클라우드 백업 마킹
-    const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-    if (isCloudEnabled) {
-      this.markForSync('journal_entry_' + newEntry.id);
-      this.scheduleDeferredSync();
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return newEntry;
   }
@@ -126,13 +104,7 @@ export class HybridDataManager {
   static async updateJournalEntry(entryId: string, updates: Partial<JournalEntry>): Promise<JournalEntry | null> {
     const updatedEntry = await LocalStorageManager.updateJournalEntry(entryId, updates);
 
-    if (updatedEntry) {
-      const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-      if (isCloudEnabled) {
-        this.markForSync('journal_entry_' + entryId);
-        this.scheduleDeferredSync();
-      }
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return updatedEntry;
   }
@@ -140,13 +112,7 @@ export class HybridDataManager {
   static async deleteJournalEntry(entryId: string): Promise<boolean> {
     const deleted = await LocalStorageManager.deleteJournalEntry(entryId);
 
-    if (deleted) {
-      const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-      if (isCloudEnabled) {
-        this.markForSync('delete_journal_entry_' + entryId);
-        this.scheduleDeferredSync();
-      }
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return deleted;
   }
@@ -159,11 +125,7 @@ export class HybridDataManager {
   static async updateUserSettings(updates: Partial<UserSettings>): Promise<UserSettings> {
     const updatedSettings = await LocalStorageManager.updateUserSettings(updates);
 
-    const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-    if (isCloudEnabled) {
-      this.markForSync('user_settings');
-      this.scheduleDeferredSync();
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
 
     return updatedSettings;
   }
@@ -176,87 +138,21 @@ export class HybridDataManager {
   static async updatePremiumStatus(status: PremiumStatus): Promise<void> {
     await LocalStorageManager.updatePremiumStatus(status);
 
-    const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-    if (isCloudEnabled) {
-      this.markForSync('premium_status');
-      this.scheduleDeferredSync();
-    }
+    // 로컬 저장소만 사용 (클라우드 백업 제거됨)
   }
 
-  // 클라우드 백업 토글
-  static async enableCloudBackup(): Promise<{ success: boolean; message: string }> {
-    try {
-      // Supabase 연결 확인
-      const { data: { user } } = await supabase.auth.getUser();
+  // 사용자 클라우드 백업 기능 제거됨 (관리자 전용으로 변경)
+  // 로컬 저장소만 사용하도록 변경
 
-      if (!user) {
-        return {
-          success: false,
-          message: '클라우드 백업을 위해서는 로그인이 필요합니다.'
-        };
-      }
-
-      await LocalStorageManager.setCloudBackupEnabled(true);
-
-      // 전체 데이터 백업 시작
-      await this.performFullCloudBackup();
-
-      return {
-        success: true,
-        message: '클라우드 백업이 활성화되었습니다.'
-      };
-    } catch (error) {
-      console.error('클라우드 백업 활성화 오류:', error);
-      return {
-        success: false,
-        message: '클라우드 백업 활성화 중 오류가 발생했습니다.'
-      };
-    }
-  }
-
-  static async disableCloudBackup(): Promise<void> {
-    await LocalStorageManager.setCloudBackupEnabled(false);
-    this.pendingChanges.clear();
-  }
-
-  // 동기화 상태 조회
+  // 로컬 저장소 상태 조회 (클라우드 백업 제거됨)
   static async getSyncStatus(): Promise<SyncStatus> {
-    const isEnabled = await LocalStorageManager.isCloudBackupEnabled();
-    const lastSyncTime = await LocalStorageManager.getItem<string>('last_sync_time');
-
     return {
-      isEnabled,
-      lastSyncTime: lastSyncTime || undefined,
-      pendingChanges: this.pendingChanges.size,
-      syncInProgress: this.syncInProgress,
-      lastError: await LocalStorageManager.getItem<string>('last_sync_error') || undefined
+      isEnabled: false, // 사용자 클라우드 백업 비활성화
+      lastSyncTime: undefined,
+      pendingChanges: 0,
+      syncInProgress: false,
+      lastError: undefined
     };
-  }
-
-  // 수동 동기화
-  static async manualSync(): Promise<{ success: boolean; message: string }> {
-    const isEnabled = await LocalStorageManager.isCloudBackupEnabled();
-
-    if (!isEnabled) {
-      return {
-        success: false,
-        message: '클라우드 백업이 비활성화되어 있습니다.'
-      };
-    }
-
-    try {
-      await this.performFullCloudBackup();
-      return {
-        success: true,
-        message: '동기화가 완료되었습니다.'
-      };
-    } catch (error) {
-      console.error('수동 동기화 오류:', error);
-      return {
-        success: false,
-        message: '동기화 중 오류가 발생했습니다.'
-      };
-    }
   }
 
   // 내부 메서드들
@@ -333,14 +229,7 @@ export class HybridDataManager {
   static async importData(jsonData: string): Promise<{ success: boolean; message: string }> {
     const result = await LocalStorageManager.importAllData(jsonData);
 
-    if (result.success) {
-      // 가져온 데이터를 클라우드에도 동기화
-      const isCloudEnabled = await LocalStorageManager.isCloudBackupEnabled();
-      if (isCloudEnabled) {
-        this.markForSync('full_import');
-        this.scheduleDeferredSync();
-      }
-    }
+    // 로컬 저장소에만 데이터 가져오기 (클라우드 백업 제거됨)
 
     return result;
   }

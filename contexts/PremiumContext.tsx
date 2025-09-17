@@ -261,26 +261,40 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   /**
    * 편의 함수들
    */
-  const isPremium = premiumStatus.is_premium;
+  const isPremium = premiumStatus?.is_premium || false;
 
   const isSubscriptionActive = (): boolean => {
-    if (!premiumStatus.is_premium) return false;
-    if (!premiumStatus.expiry_date) return false;
+    if (!premiumStatus?.is_premium) return false;
+    if (!premiumStatus?.expiry_date) return false;
 
-    const expiryDate = new Date(premiumStatus.expiry_date);
-    return new Date() < expiryDate;
+    try {
+      const expiryDate = new Date(premiumStatus.expiry_date);
+      return new Date() < expiryDate;
+    } catch (error) {
+      console.warn('Invalid expiry date:', premiumStatus.expiry_date);
+      return false;
+    }
   };
 
   const daysUntilExpiry = (): number | null => {
-    if (!premiumStatus.expiry_date) return null;
+    if (!premiumStatus?.expiry_date) return null;
 
-    const expiryDate = new Date(premiumStatus.expiry_date);
-    const now = new Date();
-    const diffTime = expiryDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    try {
+      const expiryDate = new Date(premiumStatus.expiry_date);
+      const now = new Date();
+      const diffTime = expiryDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return diffDays > 0 ? diffDays : 0;
+      return diffDays > 0 ? diffDays : 0;
+    } catch (error) {
+      console.warn('Invalid expiry date for days calculation:', premiumStatus.expiry_date);
+      return null;
+    }
   };
+
+  // Computed values for context
+  const isSubscriptionActiveValue = isSubscriptionActive();
+  const daysUntilExpiryValue = daysUntilExpiry();
 
   const canAccessFeature = (feature: PremiumFeature): boolean => {
     if (!isPremium) return false;
@@ -314,8 +328,8 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
     // 편의 함수
     isPremium,
-    isSubscriptionActive: isSubscriptionActive(),
-    daysUntilExpiry: daysUntilExpiry(),
+    isSubscriptionActive: isSubscriptionActiveValue,
+    daysUntilExpiry: daysUntilExpiryValue,
     canAccessFeature
   };
 

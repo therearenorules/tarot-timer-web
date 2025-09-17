@@ -34,7 +34,7 @@ interface NotificationSettings {
   hourlyEnabled: boolean;
   quietHoursStart: number;
   quietHoursEnd: number;
-  weekendEnabled: boolean;
+  dailyReminderEnabled: boolean;
   notificationTypes: string[];
 }
 
@@ -62,10 +62,10 @@ interface NotificationContextType {
 
 // 기본 알림 설정
 const DEFAULT_SETTINGS: NotificationSettings = {
-  hourlyEnabled: false,
+  hourlyEnabled: true, // 시간별 타로 알림 초기값 ON
   quietHoursStart: 22, // 22:00 (오후 10시)
   quietHoursEnd: 8,    // 08:00 (오전 8시)
-  weekendEnabled: true,
+  dailyReminderEnabled: true, // 데일리 타로 일기 저장 리마인더 초기값 ON
   notificationTypes: ['hourly', 'daily_save', 'midnight_reset']
 };
 
@@ -261,20 +261,52 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // 저장된 알림 설정 로드
   const loadNotificationSettings = async () => {
-    // TODO: AsyncStorage에서 설정 로드
-    // const savedSettings = await AsyncStorage.getItem('notificationSettings');
-    // if (savedSettings) {
-    //   setSettings(JSON.parse(savedSettings));
-    // }
+    try {
+      // 웹 환경에서는 localStorage 사용
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const savedSettings = localStorage.getItem('notificationSettings');
+        if (savedSettings) {
+          const parsedSettings = JSON.parse(savedSettings);
+          setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
+          console.log('✅ 저장된 알림 설정 로드 성공:', parsedSettings);
+        } else {
+          console.log('📱 기본 알림 설정 사용:', DEFAULT_SETTINGS);
+        }
+      }
+      // TODO: 모바일에서는 AsyncStorage 사용
+      // const savedSettings = await AsyncStorage.getItem('notificationSettings');
+      // if (savedSettings) {
+      //   setSettings(JSON.parse(savedSettings));
+      // }
+    } catch (error) {
+      console.error('❌ 알림 설정 로드 오류:', error);
+    }
   };
 
   // 알림 설정 업데이트
   const updateSettings = async (newSettings: Partial<NotificationSettings>) => {
+    console.log('NotificationContext updateSettings 호출:', {
+      이전설정: settings,
+      새설정: newSettings,
+      병합후설정: { ...settings, ...newSettings }
+    });
+
     const updatedSettings = { ...settings, ...newSettings };
     setSettings(updatedSettings);
 
-    // TODO: AsyncStorage에 설정 저장
-    // await AsyncStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
+    console.log('상태 업데이트 완료:', updatedSettings);
+
+    // 웹 환경에서는 localStorage에 설정 저장
+    try {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
+        console.log('✅ localStorage에 알림 설정 저장 완료');
+      }
+      // TODO: 모바일에서는 AsyncStorage에 설정 저장
+      // await AsyncStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
+    } catch (error) {
+      console.error('❌ 알림 설정 저장 오류:', error);
+    }
 
     // 백엔드에 설정 동기화 (인증된 사용자만)
     if (expoPushToken && isAuthenticated) {

@@ -55,7 +55,7 @@ const getSpreadLayouts = (t: any): SpreadLayout[] => [
     nameEn: 'One Card Tarot',
     description: t('spread.descriptions.singleCard'),
     positions: [
-      { id: 1, name: t('spread.positions.message'), nameEn: 'Message', description: t('spread.descriptions.message'), card: null, x: 50, y: 50 }
+      { id: 1, name: t('spread.positions.message'), nameEn: 'Message', description: t('spread.descriptions.message'), card: null, x: 35, y: 20 }
     ]
   },
   {
@@ -64,9 +64,9 @@ const getSpreadLayouts = (t: any): SpreadLayout[] => [
     nameEn: 'Three Card Spread',
     description: t('spread.descriptions.threeCard'),
     positions: [
-      { id: 1, name: t('spread.positions.past'), nameEn: 'Past', description: t('spread.descriptions.pastInfluence'), card: null, x: 25, y: 50 },
+      { id: 1, name: t('spread.positions.past'), nameEn: 'Past', description: t('spread.descriptions.pastInfluence'), card: null, x: 15, y: 50 },
       { id: 2, name: t('spread.positions.present'), nameEn: 'Present', description: t('spread.descriptions.presentSituation'), card: null, x: 50, y: 50 },
-      { id: 3, name: t('spread.positions.future'), nameEn: 'Future', description: t('spread.descriptions.futurePossibility'), card: null, x: 75, y: 50 }
+      { id: 3, name: t('spread.positions.future'), nameEn: 'Future', description: t('spread.descriptions.futurePossibility'), card: null, x: 85, y: 50 }
     ]
   },
   {
@@ -75,10 +75,10 @@ const getSpreadLayouts = (t: any): SpreadLayout[] => [
     nameEn: 'Four Card Spread',
     description: t('spread.descriptions.fourCard'),
     positions: [
-      { id: 1, name: t('spread.positions.currentSituation'), nameEn: 'Current Situation', description: t('spread.descriptions.presentSituation'), card: null, x: 20, y: 50 },
-      { id: 2, name: t('spread.positions.obstacles'), nameEn: 'Obstacles', description: t('spread.descriptions.challenge'), card: null, x: 40, y: 50 },
-      { id: 3, name: t('spread.positions.advice'), nameEn: 'Advice', description: t('spread.descriptions.advice'), card: null, x: 60, y: 50 },
-      { id: 4, name: t('spread.positions.outcome'), nameEn: 'Outcome', description: t('spread.descriptions.outcome'), card: null, x: 80, y: 50 }
+      { id: 1, name: t('spread.positions.currentSituation'), nameEn: 'Current Situation', description: t('spread.descriptions.presentSituation'), card: null, x: 10.5, y: 50 },
+      { id: 2, name: t('spread.positions.obstacles'), nameEn: 'Obstacles', description: t('spread.descriptions.challenge'), card: null, x: 36.5, y: 50 },
+      { id: 3, name: t('spread.positions.advice'), nameEn: 'Advice', description: t('spread.descriptions.advice'), card: null, x: 63.5, y: 50 },
+      { id: 4, name: t('spread.positions.outcome'), nameEn: 'Outcome', description: t('spread.descriptions.outcome'), card: null, x: 89.5, y: 50 }
     ]
   },
   {
@@ -118,17 +118,17 @@ const getSpreadLayouts = (t: any): SpreadLayout[] => [
     nameEn: 'Cup of Relationship Spread',
     description: t('spread.descriptions.relationship'),
     positions: [
-      { id: 1, name: t('spread.positions.internal'), nameEn: 'Your Feelings', description: t('spread.descriptions.presentSituation'), card: null, x: 20, y: 85 },
-      { id: 2, name: t('spread.positions.external'), nameEn: 'Their Feelings', description: t('spread.descriptions.pastInfluence'), card: null, x: 80, y: 85 },
-      { id: 3, name: t('spread.positions.situation'), nameEn: 'Foundation', description: t('spread.descriptions.presentSituation'), card: null, x: 50, y: 85 },
-      { id: 4, name: t('spread.positions.past'), nameEn: 'Past Influence', description: t('spread.descriptions.pastInfluence'), card: null, x: 50, y: 65 },
-      { id: 5, name: t('spread.positions.present'), nameEn: 'Present Situation', description: t('spread.descriptions.presentSituation'), card: null, x: 50, y: 40 },
-      { id: 6, name: t('spread.positions.future'), nameEn: 'Future Potential', description: t('spread.descriptions.futurePossibility'), card: null, x: 65, y: 57 },
-      { id: 7, name: t('spread.positions.obstacles'), nameEn: 'Obstacles', description: t('spread.descriptions.challenge'), card: null, x: 35, y: 25 },
-      { id: 8, name: t('spread.positions.advice'), nameEn: 'Advice', description: t('spread.descriptions.advice'), card: null, x: 65, y: 25 },
-      { id: 9, name: t('spread.positions.external'), nameEn: 'External Factors', description: t('spread.descriptions.pastInfluence'), card: null, x: 20, y: 10 },
-      { id: 10, name: t('spread.positions.internal'), nameEn: 'Hidden Elements', description: t('spread.descriptions.presentSituation'), card: null, x: 80, y: 10 },
-      { id: 11, name: t('spread.positions.outcome'), nameEn: 'Final Outcome', description: t('spread.descriptions.futurePossibility'), card: null, x: 50, y: 10 }
+      { id: 1, name: t('spread.positions.internal'), nameEn: 'Your Feelings', description: t('spread.descriptions.presentSituation'), card: null, x: 25, y: 90 },
+      { id: 2, name: t('spread.positions.external'), nameEn: 'Their Feelings', description: t('spread.descriptions.pastInfluence'), card: null, x: 85, y: 90 },
+      { id: 3, name: t('spread.positions.situation'), nameEn: 'Foundation', description: t('spread.descriptions.presentSituation'), card: null, x: 55, y: 90 },
+      { id: 4, name: t('spread.positions.past'), nameEn: 'Past Influence', description: t('spread.descriptions.pastInfluence'), card: null, x: 55, y: 70 },
+      { id: 5, name: t('spread.positions.present'), nameEn: 'Present Situation', description: t('spread.descriptions.presentSituation'), card: null, x: 55, y: 45 },
+      { id: 6, name: t('spread.positions.future'), nameEn: 'Future Potential', description: t('spread.descriptions.futurePossibility'), card: null, x: 70, y: 62 },
+      { id: 7, name: t('spread.positions.obstacles'), nameEn: 'Obstacles', description: t('spread.descriptions.challenge'), card: null, x: 40, y: 30 },
+      { id: 8, name: t('spread.positions.advice'), nameEn: 'Advice', description: t('spread.descriptions.advice'), card: null, x: 70, y: 30 },
+      { id: 9, name: t('spread.positions.external'), nameEn: 'External Factors', description: t('spread.descriptions.pastInfluence'), card: null, x: 25, y: 15 },
+      { id: 10, name: t('spread.positions.internal'), nameEn: 'Hidden Elements', description: t('spread.descriptions.presentSituation'), card: null, x: 85, y: 15 },
+      { id: 11, name: t('spread.positions.outcome'), nameEn: 'Final Outcome', description: t('spread.descriptions.futurePossibility'), card: null, x: 55, y: 15 }
     ]
   },
   {
@@ -421,14 +421,35 @@ export const TarotSpread: React.FC = () => {
   const getCardSizeBySpreadType = () => {
     // 켈틱크로스는 small보다 약간 큰 크기 사용
     if (currentSpreadType === 'celtic-cross') return 'small';
-    
+
     const cardCount = spreadCards.length;
     if (cardCount === 1) return 'extra-large';     // 원 카드
     if (cardCount === 3) return 'small-medium';    // 쓰리 카드 - small에서 small-medium으로 한 단계 증가
-    if (cardCount === 4) return 'small';           // 포 카드 - tiny-small에서 small로 한 단계 증가
+    if (cardCount === 4) return 'small-medium';    // 포 카드 - small에서 small-medium으로 한 단계 증가
     if (cardCount === 5) return 'small-medium';    // 파이브 카드 - 한 단계 축소
     if (cardCount <= 7) return 'small-medium';     // AB 선택
     return 'small';                                // 컵오브릴레이션십 (11장)
+  };
+
+  // 스프레드별 배경 스타일 결정
+  const getSpreadAreaStyle = () => {
+    switch (currentSpreadType) {
+      case 'one-card':
+        return styles.cardSpreadAreaOneCard;
+      case 'three-card':
+        return styles.cardSpreadAreaThreeCard;
+      case 'four-card':
+        return styles.cardSpreadAreaFourCard;
+      case 'five-card':
+        return styles.cardSpreadAreaFiveCard;
+      case 'choice':
+        return styles.cardSpreadAreaChoice;
+      case 'celtic-cross':
+      case 'cup-of-relationship':
+        return styles.cardSpreadAreaLarge;
+      default:
+        return styles.cardSpreadAreaLarge;
+    }
   };
 
   // 스프레드 선택 화면
@@ -575,10 +596,10 @@ export const TarotSpread: React.FC = () => {
           </View>
         </View>
 
-        {/* 카드 배치 영역 - 중앙 집중형 레이아웃 */}
+        {/* 카드 배치 영역 - 스프레드별 최적화 레이아웃 */}
         <View style={[
           styles.cardSpreadArea,
-          styles.cardSpreadAreaLarge
+          getSpreadAreaStyle()
         ]}>
           <View style={styles.cardGrid}>
             {spreadCards.map((position) => (
@@ -771,7 +792,7 @@ export const TarotSpread: React.FC = () => {
             size="medium"
             style={[styles.halfButton, styles.saveButton]}
           />
-          
+
           <GradientButton
             onPress={drawFullSpread}
             title={isDrawing ? t('spread.drawing') : t('spread.actions.drawCards')}
@@ -791,12 +812,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   container: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xxs, // 4px → 2px로 더 축소하여 골드 윤곽선 영역 추가 확장
     paddingVertical: Spacing.xl,
     alignItems: 'center',
   },
   spreadContainer: {
-    padding: Spacing.lg,
+    padding: Spacing.xxs, // 4px → 2px로 더 축소하여 골드 윤곽선 영역 추가 확장
     paddingBottom: 120, // 하단 버튼 공간 확보
   },
   mainContainer: {
@@ -961,19 +982,49 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxs,
   },
 
-  // 카드 배치 영역
+  // 카드 배치 영역 - 2024-2025 모든 스마트폰 최적화
   cardSpreadArea: {
     flex: 1,
-    minHeight: 500,
+    minHeight: 250,
     marginBottom: Spacing.xl,
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
     borderRadius: BorderRadius.large,
     borderWidth: 2,
     borderColor: 'rgba(244, 208, 63, 0.3)',
     padding: Spacing.lg,
+    // 모든 기기 대응 반응형 폭 설정 - 골드 윤곽선 전체 폭 사용
+    minWidth: 320, // 최소 폭 증가 (280px → 320px, 약 14% 증가)
+    maxWidth: '100%', // 전체 폭 사용
+    alignSelf: 'stretch', // 전체 폭 사용 (center → stretch)
   },
   cardSpreadAreaLarge: {
-    minHeight: 700, // 켈틱크로스와 컵오브릴레이션십에서 더 큰 높이
+    minHeight: 630, // 켈틱크로스와 컵오브릴레이션십에서 더 큰 높이 (700px → 630px, 10% 감소)
+  },
+  // 스프레드별 최적화된 배경 스타일 - 전체 폭 사용
+  cardSpreadAreaOneCard: {
+    minHeight: 400, // 원카드 골드 윤곽선 크기 확장 (200px → 400px, 100% 증가)
+    maxWidth: '100%', // 90% → 100% (전체 폭 사용)
+    alignSelf: 'stretch',
+  },
+  cardSpreadAreaThreeCard: {
+    minHeight: 220, // 3카드 최적화
+    maxWidth: '100%', // 전체 폭 사용
+    alignSelf: 'stretch',
+  },
+  cardSpreadAreaFourCard: {
+    minHeight: 240, // 4카드 최적화
+    maxWidth: '100%', // 전체 폭 사용
+    alignSelf: 'stretch',
+  },
+  cardSpreadAreaFiveCard: {
+    minHeight: 473, // 5카드는 V자 형태로 더 높이 필요 (364px → 473px, 추가 30% 증가)
+    maxWidth: '100%', // 전체 폭 사용
+    alignSelf: 'stretch',
+  },
+  cardSpreadAreaChoice: {
+    minHeight: 553, // A/B 선택 최적화 (527px → 553px, 추가 5% 증가)
+    maxWidth: '100%', // 전체 폭 사용
+    alignSelf: 'stretch',
   },
   cardGrid: {
     flex: 1,
@@ -1075,13 +1126,12 @@ const styles = StyleSheet.create({
   // 하단 액션 버튼들
   bottomActions: {
     position: 'absolute',
-    bottom: 0,
+    bottom: '5%', // 위로 5% 올림
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(15, 12, 27, 0.95)',
+    backgroundColor: 'transparent', // 투명 배경
     padding: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(244, 208, 63, 0.3)',
+    borderTopWidth: 0, // 경계선 제거
   },
   primaryButton: {
     marginBottom: Spacing.md,
@@ -1098,6 +1148,9 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     opacity: 0.7,
+  },
+  transparentButton: {
+    backgroundColor: 'transparent',
   },
   secondaryActions: {
     flexDirection: 'row',

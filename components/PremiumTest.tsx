@@ -20,9 +20,29 @@ import {
   Typography
 } from './DesignSystem';
 import { Icon } from './Icon';
-import IAPManager from '../utils/iapManager';
-import AdManager from '../utils/adManager';
-import ReceiptValidator from '../utils/receiptValidator';
+
+// 조건부 import - 모바일 환경에서 안전하게 로드
+let IAPManager: any = null;
+let AdManager: any = null;
+let ReceiptValidator: any = null;
+
+try {
+  IAPManager = require('../utils/iapManager').default;
+} catch (error) {
+  console.warn('⚠️ IAPManager 로드 실패 (IAP 비활성화):', error);
+}
+
+try {
+  AdManager = require('../utils/adManager').default;
+} catch (error) {
+  console.warn('⚠️ AdManager 로드 실패 (광고 비활성화):', error);
+}
+
+try {
+  ReceiptValidator = require('../utils/receiptValidator').default;
+} catch (error) {
+  console.warn('⚠️ ReceiptValidator 로드 실패 (영수증 검증 비활성화):', error);
+}
 
 export const PremiumTest: React.FC = () => {
   const [testResults, setTestResults] = useState<Array<{
@@ -66,8 +86,12 @@ export const PremiumTest: React.FC = () => {
       // 1. IAPManager 초기화 테스트
       addTestResult('IAPManager 초기화', 'pending', '테스트 중...');
       try {
-        await IAPManager.initialize();
-        addTestResult('IAPManager 초기화', 'success', '초기화 완료');
+        if (IAPManager) {
+          await IAPManager.initialize();
+          addTestResult('IAPManager 초기화', 'success', '초기화 완료');
+        } else {
+          addTestResult('IAPManager 초기화', 'error', 'IAPManager 모듈을 로드할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('IAPManager 초기화', 'error', error instanceof Error ? error.message : '초기화 실패');
       }
@@ -75,8 +99,12 @@ export const PremiumTest: React.FC = () => {
       // 2. AdManager 초기화 테스트
       addTestResult('AdManager 초기화', 'pending', '테스트 중...');
       try {
-        await AdManager.initialize();
-        addTestResult('AdManager 초기화', 'success', '초기화 완료');
+        if (AdManager) {
+          await AdManager.initialize();
+          addTestResult('AdManager 초기화', 'success', '초기화 완료');
+        } else {
+          addTestResult('AdManager 초기화', 'error', 'AdManager 모듈을 로드할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('AdManager 초기화', 'error', error instanceof Error ? error.message : '초기화 실패');
       }
@@ -84,8 +112,12 @@ export const PremiumTest: React.FC = () => {
       // 3. 구독 상품 로드 테스트
       addTestResult('구독 상품 로드', 'pending', '테스트 중...');
       try {
-        const products = await IAPManager.loadProducts();
-        addTestResult('구독 상품 로드', 'success', `${products.length}개 상품 로드됨`);
+        if (IAPManager) {
+          const products = await IAPManager.loadProducts();
+          addTestResult('구독 상품 로드', 'success', `${products.length}개 상품 로드됨`);
+        } else {
+          addTestResult('구독 상품 로드', 'error', 'IAPManager를 사용할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('구독 상품 로드', 'error', error instanceof Error ? error.message : '로드 실패');
       }
@@ -93,8 +125,12 @@ export const PremiumTest: React.FC = () => {
       // 4. 프리미엄 상태 조회 테스트
       addTestResult('프리미엄 상태 조회', 'pending', '테스트 중...');
       try {
-        const status = await IAPManager.getCurrentSubscriptionStatus();
-        addTestResult('프리미엄 상태 조회', 'success', `프리미엄: ${status.is_premium}, 광고 없음: ${status.ad_free}`);
+        if (IAPManager) {
+          const status = await IAPManager.getCurrentSubscriptionStatus();
+          addTestResult('프리미엄 상태 조회', 'success', `프리미엄: ${status.is_premium}, 광고 없음: ${status.ad_free}`);
+        } else {
+          addTestResult('프리미엄 상태 조회', 'error', 'IAPManager를 사용할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('프리미엄 상태 조회', 'error', error instanceof Error ? error.message : '조회 실패');
       }
@@ -102,9 +138,13 @@ export const PremiumTest: React.FC = () => {
       // 5. 광고 표시 조건 테스트
       addTestResult('광고 표시 조건', 'pending', '테스트 중...');
       try {
-        const shouldShowBanner = await AdManager.shouldShowBanner();
-        const bannerConfig = AdManager.getBannerConfig();
-        addTestResult('광고 표시 조건', 'success', `배너 표시: ${shouldShowBanner}, 설정: ${JSON.stringify(bannerConfig)}`);
+        if (AdManager) {
+          const shouldShowBanner = await AdManager.shouldShowBanner();
+          const bannerConfig = AdManager.getBannerConfig();
+          addTestResult('광고 표시 조건', 'success', `배너 표시: ${shouldShowBanner}, 설정: ${JSON.stringify(bannerConfig)}`);
+        } else {
+          addTestResult('광고 표시 조건', 'error', 'AdManager를 사용할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('광고 표시 조건', 'error', error instanceof Error ? error.message : '테스트 실패');
       }
@@ -112,13 +152,17 @@ export const PremiumTest: React.FC = () => {
       // 6. 영수증 검증 시뮬레이션 테스트
       addTestResult('영수증 검증', 'pending', '테스트 중...');
       try {
-        const mockReceipt = JSON.stringify({
-          transactionId: 'test-transaction-123',
-          productId: 'tarot_timer_monthly',
-          purchaseDate: Date.now()
-        });
-        const validation = await ReceiptValidator.validateReceipt(mockReceipt, 'test-transaction-123');
-        addTestResult('영수증 검증', 'success', `검증 결과: ${validation.isValid}, 활성: ${validation.isActive}`);
+        if (ReceiptValidator) {
+          const mockReceipt = JSON.stringify({
+            transactionId: 'test-transaction-123',
+            productId: 'tarot_timer_monthly',
+            purchaseDate: Date.now()
+          });
+          const validation = await ReceiptValidator.validateReceipt(mockReceipt, 'test-transaction-123');
+          addTestResult('영수증 검증', 'success', `검증 결과: ${validation.isValid}, 활성: ${validation.isActive}`);
+        } else {
+          addTestResult('영수증 검증', 'error', 'ReceiptValidator를 사용할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('영수증 검증', 'error', error instanceof Error ? error.message : '검증 실패');
       }
@@ -126,8 +170,12 @@ export const PremiumTest: React.FC = () => {
       // 7. 보안 감사 로그 테스트
       addTestResult('보안 감사 로그', 'pending', '테스트 중...');
       try {
-        const auditLog = ReceiptValidator.generateSecurityAuditLog();
-        addTestResult('보안 감사 로그', 'success', `활성 재시도: ${auditLog.activeRetries}, 타임스탬프: ${auditLog.timestamp}`);
+        if (ReceiptValidator) {
+          const auditLog = ReceiptValidator.generateSecurityAuditLog();
+          addTestResult('보안 감사 로그', 'success', `활성 재시도: ${auditLog.activeRetries}, 타임스탬프: ${auditLog.timestamp}`);
+        } else {
+          addTestResult('보안 감사 로그', 'error', 'ReceiptValidator를 사용할 수 없습니다');
+        }
       } catch (error) {
         addTestResult('보안 감사 로그', 'error', error instanceof Error ? error.message : '로그 생성 실패');
       }

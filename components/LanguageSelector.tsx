@@ -261,7 +261,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: 'rgba(212, 184, 255, 0.3)',
-    maxHeight: '70%',
+    maxHeight: '80%',
+    minHeight: 300,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -288,13 +289,16 @@ const styles = StyleSheet.create({
   // Language list styles
   languageList: {
     flex: 1,
+    minHeight: 200,
   },
   languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
     backgroundColor: 'transparent',
+    minHeight: 60,
   },
   selectedLanguageItem: {
     backgroundColor: 'rgba(123, 44, 191, 0.1)',

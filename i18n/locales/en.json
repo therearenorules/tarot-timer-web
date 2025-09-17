@@ -7,7 +7,7 @@
   "navigation": {
     "timer": "Timer",
     "spread": "Spread",
-    "journal": "Journal",
+    "journal": "Daily",
     "settings": "Settings"
   },
   "timer": {
@@ -164,7 +164,7 @@
     "drawing": "Drawing..."
   },
   "journal": {
-    "title": "Tarot Journal",
+    "title": "Tarot Daily",
     "subtitle": "Record your tarot journey",
     "newEntry": "New Entry",
     "todayEntry": "Today's Entry",
@@ -325,7 +325,7 @@
       "autoSave": "Auto Save"
     },
     "journal": {
-      "title": "Journal Settings",
+      "title": "Daily Settings",
       "autoBackup": "Auto Backup",
       "exportFormat": "Export Format",
       "privacy": "Privacy",
@@ -440,7 +440,7 @@
   "analytics": {
     "sessionStarted": "Session started",
     "cardDrawn": "Card drawn",
-    "journalEntry": "Journal entry created",
+    "journalEntry": "Daily entry created",
     "settingsChanged": "Settings changed",
     "timerCompleted": "Timer completed"
   },

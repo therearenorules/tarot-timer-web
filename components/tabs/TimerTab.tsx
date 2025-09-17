@@ -488,7 +488,7 @@ const TimerTab = memo(() => {
         {hasCardsForToday && (
           <View style={styles.saveSection}>
             <TouchableOpacity style={styles.dailySaveButton}>
-              <Text style={styles.dailySaveButtonText}>Save Daily Tarot</Text>
+              <Text style={styles.dailySaveButtonText}>{t('timer.saveDailyTarot')}</Text>
             </TouchableOpacity>
           </View>
         )}
