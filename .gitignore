@@ -58,4 +58,17 @@ temp/
 
 # Playwright
 .playwright-mcp/
+
+# Backup directories
 backups/
+backup-analysis-*/
+
+# Test files
+test-*.js
+*.test.backup
+*.old
+
+# Additional temporary files
+.cache/
+*.swp
+*.swo
