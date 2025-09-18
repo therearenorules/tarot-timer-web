@@ -10,15 +10,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Supabase URL과 Anonymous Key가 설정되지 않았습니다.\n' +
-    '.env 파일에 EXPO_PUBLIC_SUPABASE_URL과 EXPO_PUBLIC_SUPABASE_ANON_KEY를 설정해주세요.'
-  );
+// Supabase 설정이 없거나 플레이스홀더인 경우 오프라인 모드로 작동
+const isSupabaseConfigured = supabaseUrl &&
+  supabaseAnonKey &&
+  supabaseUrl !== 'YOUR_SUPABASE_URL' &&
+  supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY' &&
+  supabaseUrl.startsWith('https://');
+
+if (!isSupabaseConfigured) {
+  console.warn('Supabase 설정이 없거나 올바르지 않습니다. 오프라인 모드로 작동합니다.');
 }
 
-// Supabase 클라이언트 생성
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Supabase 클라이언트 생성 (설정이 있는 경우에만)
+export const supabase = isSupabaseConfigured ? createClient(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -30,10 +34,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 10,
     },
   },
-});
+}) : null;
 
 // 인증 상태 확인 헬퍼 함수
 export const getCurrentUser = async () => {
+  if (!supabase) {
+    console.warn('Supabase가 설정되지 않았습니다. 오프라인 모드입니다.');
+    return null;
+  }
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) throw error;
@@ -221,6 +229,10 @@ export const subscribeToTarotSessions = (userId: string, callback: (payload: any
 
 // 연결 상태 확인
 export const checkConnection = async () => {
+  if (!supabase) {
+    console.warn('Supabase가 설정되지 않았습니다. 오프라인 모드입니다.');
+    return false;
+  }
   try {
     const { data, error } = await supabase.from('profiles').select('count').limit(1);
     return !error;

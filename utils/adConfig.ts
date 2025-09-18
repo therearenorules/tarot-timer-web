@@ -145,6 +145,10 @@ export const AD_PLACEMENTS = {
     banner: false,
     interstitial: false,
     show_upgrade_cta: true
+  },
+  card_action: {
+    banner: false,
+    interstitial: true
   }
 };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { TarotCard, TarotUtils, DailyTarotSave, simpleStorage, STORAGE_KEYS } from '../utils/tarotData';
+import { preloadTarotImages } from '../utils/imageCache';
 import i18next from 'i18next';
 import { useTarotI18n } from './useTarotI18n';
 
@@ -29,22 +30,27 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   const hasCardsForToday = dailyCards.length > 0;
   const currentCard = selectedCardIndex !== null ? dailyCards[selectedCardIndex] : null;
 
-  // 오늘의 카드 로드
+  // 오늘의 카드 로드 (고성능 이미지 프리로딩 포함)
   const loadTodayCards = useCallback(async () => {
     try {
       const today = TarotUtils.getTodayDateString();
       const storageKey = STORAGE_KEYS.DAILY_TAROT + today;
       const savedData = await simpleStorage.getItem(storageKey);
-      
+
       if (savedData) {
         const dailySave: DailyTarotSave = JSON.parse(savedData);
         setDailyCards(dailySave.hourlyCards);
         setCardMemos(dailySave.memos || {});
+
+        // 고성능 이미지 프리로딩 (스마트 우선순위)
+        if (dailySave.hourlyCards.length > 0) {
+          preloadTarotImages(dailySave.hourlyCards, currentHour, 'smart');
+        }
       }
     } catch (error) {
       console.error('카드 로드 실패:', error);
     }
-  }, []);
+  }, [currentHour]);
 
   // 카드 저장
   const saveDailyCards = useCallback(async (cards: TarotCard[], memos?: Record<number, string>) => {
@@ -82,7 +88,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     }
   }, [hasCardsForToday]);
 
-  // 실제 카드 뽑기 실행
+  // 실제 카드 뽑기 실행 (즉시 이미지 프리로딩)
   const performDrawDailyCards = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -90,12 +96,15 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       setDailyCards(newCards);
       setSelectedCardIndex(currentHour);
       setCardMemos({}); // 메모 초기화
-      
+
       await saveDailyCards(newCards, {});
-      
+
+      // 새로 뽑은 카드들 즉시 프리로딩
+      preloadTarotImages(newCards, currentHour, 'immediate');
+
       Alert.alert(
         i18next.t('cards.completeTitle'),
-        i18next.t('cards.completeMessage', { 
+        i18next.t('cards.completeMessage', {
           hour: currentHour,
           cardName: getCardName(newCards[currentHour])
         }),
@@ -107,7 +116,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [currentHour, saveDailyCards]);
+  }, [currentHour, saveDailyCards, getCardName]);
 
   // 모든 카드 다시 뽑기 (확인 없이 바로 실행 - 다시 뽑기 버튼용)
   const redrawAllCards = useCallback(async () => {
@@ -117,9 +126,12 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       setDailyCards(newCards);
       setSelectedCardIndex(currentHour);
       setCardMemos({}); // 메모 초기화
-      
+
       await saveDailyCards(newCards, {});
-      
+
+      // 새로 뽑은 카드들 즉시 프리로딩
+      preloadTarotImages(newCards, currentHour, 'immediate');
+
       console.log('24시간 카드가 새로 뽑혔습니다!');
     } catch (error) {
       console.error('카드 다시 뽑기 실패:', error);
@@ -188,6 +200,13 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       setSelectedCardIndex(currentHour);
     }
   }, [dailyCards, selectedCardIndex, currentHour]);
+
+  // 선택된 카드가 변경되면 인접 카드 이미지 추가 프리로딩
+  useEffect(() => {
+    if (dailyCards.length > 0 && selectedCardIndex !== null) {
+      preloadTarotImages(dailyCards, selectedCardIndex, 'smart');
+    }
+  }, [selectedCardIndex, dailyCards]);
 
   return {
     dailyCards,

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "타로 타이머",
+    "name": "Tarot Timer",
     "slug": "tarot-timer",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
     "extra": {
       "EXPO_PUBLIC_API_URL": "http://localhost:3000",
       "eas": {
-        "projectId": "com.tarottimer.app"
+        "projectId": "268f44c1-406f-4387-8589-e62144024eaa"
       }
     },
     "splash": {
@@ -25,7 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "1",
+      "buildNumber": "10",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -34,6 +34,9 @@
         "NSMicrophoneUsageDescription": "음성 메모 기능을 위해 마이크 권한이 필요합니다.",
         "NSLocationWhenInUseUsageDescription": "지역별 타로 해석을 위해 위치 권한이 필요합니다.",
         "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          },
           {
             "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
           }
@@ -51,6 +54,13 @@
         "backgroundColor": "#1a1625"
       },
       "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "com.google.android.gms.permission.AD_ID",
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.CAMERA",
@@ -76,14 +86,12 @@
     },
     "scheme": "tarot-timer",
     "githubUrl": "https://github.com/tarot-timer/tarot-timer-app",
-    "plugins": [
-      [
-        "expo-ads-admob",
-        {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
-        }
-      ]
-    ]
+    "plugins": [],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/268f44c1-406f-4387-8589-e62144024eaa"
+    }
   }
 }

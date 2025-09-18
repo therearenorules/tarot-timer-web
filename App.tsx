@@ -9,13 +9,8 @@ import { SacredGeometryBackground } from './components/SacredGeometryBackground'
 import { MysticalTexture } from './components/MysticalTexture';
 import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
 import { TAROT_CARDS } from './utils/tarotData';
-// 조건부 import - 모바일 오류 방지
+// 광고 시스템 비활성화 (iOS 빌드 최적화)
 let BannerAd: any = null;
-try {
-  BannerAd = require('./components/ads/BannerAd').default;
-} catch (error) {
-  console.warn('⚠️ BannerAd 컴포넌트 로드 실패 (광고 비활성화):', error);
-}
 import { TarotProvider } from './contexts/TarotContext';
 import { AuthProvider } from './contexts/AuthContext';
 // 조건부 import - 알림 모듈 안전 로딩
@@ -28,13 +23,8 @@ try {
 }
 import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
-// 조건부 import - 광고 매니저 안전 로딩
+// 광고 매니저 비활성화 (iOS 빌드 최적화)
 let AdManager: any = { initialize: () => Promise.resolve(false), dispose: () => {} };
-try {
-  AdManager = require('./utils/adManager').default;
-} catch (error) {
-  console.warn('⚠️ AdManager 로드 실패 (광고 시스템 비활성화):', error);
-}
 import IAPManager from './utils/iapManager';
 import {
   Colors,

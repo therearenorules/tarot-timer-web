@@ -105,9 +105,9 @@ class ImageCacheManager {
   }
 
   /**
-   * 이미지 프리로드
+   * 이미지 프리로드 (고성능)
    */
-  async preloadImage(source: any): Promise<boolean> {
+  async preloadImage(source: any, priority: 'low' | 'normal' | 'high' = 'normal'): Promise<boolean> {
     const key = this.getImageKey(source);
 
     // 이미 프리로드 중인 경우 기존 Promise 반환
@@ -121,19 +121,29 @@ class ImageCacheManager {
       return Promise.resolve(true);
     }
 
+    const uri = this.getImageUri(source);
+    if (!uri) {
+      return Promise.resolve(false);
+    }
+
     const preloadPromise = new Promise<boolean>((resolve) => {
-      Image.prefetch(this.getImageUri(source))
-        .then(() => {
-          this.addToCacheRegistry(key);
-          resolve(true);
-        })
-        .catch((error) => {
-          console.warn(`Failed to preload image ${key}:`, error);
-          resolve(false);
-        })
-        .finally(() => {
-          this.preloadPromises.delete(key);
-        });
+      // 고우선순위는 즉시 프리로드, 일반/저우선순위는 지연 최소화
+      const delay = priority === 'high' ? 0 : priority === 'normal' ? 5 : 50;
+
+      setTimeout(() => {
+        Image.prefetch(uri)
+          .then(() => {
+            this.addToCacheRegistry(key);
+            resolve(true);
+          })
+          .catch((error) => {
+            console.warn(`Failed to preload image ${key}:`, error);
+            resolve(false);
+          })
+          .finally(() => {
+            this.preloadPromises.delete(key);
+          });
+      }, delay);
     });
 
     this.preloadPromises.set(key, preloadPromise);
@@ -141,10 +151,37 @@ class ImageCacheManager {
   }
 
   /**
-   * 여러 이미지 배치 프리로드
+   * 여러 이미지 배치 프리로드 (우선순위 기반)
    */
-  async preloadImages(sources: any[]): Promise<boolean[]> {
-    const promises = sources.map(source => this.preloadImage(source));
+  async preloadImages(sources: any[], priority: 'low' | 'normal' | 'high' = 'normal'): Promise<boolean[]> {
+    const promises = sources.map(source => this.preloadImage(source, priority));
+    return Promise.all(promises);
+  }
+
+  /**
+   * 우선순위별 배치 프리로드 (현재 + 인접 카드 우선)
+   */
+  async preloadImagesWithPriority(
+    sources: any[],
+    currentIndex: number = 0,
+    adjacentCount: number = 2
+  ): Promise<boolean[]> {
+    const highPriorityIndexes = new Set();
+
+    // 현재 카드
+    highPriorityIndexes.add(currentIndex);
+
+    // 인접 카드들 (앞뒤로 adjacentCount개씩)
+    for (let i = 1; i <= adjacentCount; i++) {
+      if (currentIndex - i >= 0) highPriorityIndexes.add(currentIndex - i);
+      if (currentIndex + i < sources.length) highPriorityIndexes.add(currentIndex + i);
+    }
+
+    const promises = sources.map((source, index) => {
+      const priority = highPriorityIndexes.has(index) ? 'high' : 'normal';
+      return this.preloadImage(source, priority);
+    });
+
     return Promise.all(promises);
   }
 
@@ -252,9 +289,13 @@ class ImageCacheManager {
 const imageCache = new ImageCacheManager();
 
 /**
- * 타로 카드 이미지 프리로드 헬퍼
+ * 타로 카드 이미지 프리로드 헬퍼 (고성능)
  */
-export const preloadTarotImages = async (cards: any[]): Promise<void> => {
+export const preloadTarotImages = async (
+  cards: any[],
+  currentHour: number = 0,
+  priority: 'immediate' | 'smart' = 'smart'
+): Promise<void> => {
   try {
     const imageSources = cards
       .filter(card => card && card.imageUrl)
@@ -262,14 +303,23 @@ export const preloadTarotImages = async (cards: any[]): Promise<void> => {
 
     if (imageSources.length === 0) return;
 
-    console.log(`🎴 Preloading ${imageSources.length} tarot card images...`);
+    console.log(`🎴 Fast preloading ${imageSources.length} tarot card images...`);
 
     const startTime = Date.now();
-    const results = await imageCache.preloadImages(imageSources);
+    let results: boolean[];
+
+    if (priority === 'immediate') {
+      // 즉시 모든 이미지 고우선순위로 프리로드
+      results = await imageCache.preloadImages(imageSources, 'high');
+    } else {
+      // 스마트 프리로드: 현재+인접 카드 우선
+      results = await imageCache.preloadImagesWithPriority(imageSources, currentHour, 3);
+    }
+
     const successCount = results.filter(Boolean).length;
     const loadTime = Date.now() - startTime;
 
-    console.log(`✅ Preloaded ${successCount}/${imageSources.length} images in ${loadTime}ms`);
+    console.log(`⚡ Fast preloaded ${successCount}/${imageSources.length} images in ${loadTime}ms`);
 
     if (successCount < imageSources.length) {
       console.warn(`⚠️ Failed to preload ${imageSources.length - successCount} images`);
@@ -308,10 +358,13 @@ export const getCacheStats = () => {
 };
 
 /**
- * 캐시 관리 함수들
+ * 캐시 관리 함수들 (고성능)
  */
 export const imageCacheUtils = {
-  preloadImage: (source: any) => imageCache.preloadImage(source),
+  preloadImage: (source: any, priority?: 'low' | 'normal' | 'high') => imageCache.preloadImage(source, priority),
+  preloadImages: (sources: any[], priority?: 'low' | 'normal' | 'high') => imageCache.preloadImages(sources, priority),
+  preloadImagesWithPriority: (sources: any[], currentIndex?: number, adjacentCount?: number) =>
+    imageCache.preloadImagesWithPriority(sources, currentIndex, adjacentCount),
   clearCache: () => imageCache.clearCache(),
   partialCleanup: () => imageCache.partialCleanup(),
   getCacheStats: () => imageCache.getCacheStats(),

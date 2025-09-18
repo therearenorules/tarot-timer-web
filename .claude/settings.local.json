@@ -93,7 +93,12 @@
       "Bash(npm run check:build:*)",
       "Bash(npm run:*)",
       "Bash(tree:*)",
-      "Bash(start http://localhost:8095)"
+      "Bash(start http://localhost:8095)",
+      "Bash(eas:*)",
+      "Bash(python:*)",
+      "Bash(set EXPO_APPLE_API_KEY_PATH=./AuthKey_SFC77KCKJB.p8)",
+      "Bash(set EXPO_APPLE_API_KEY_ID=SFC77KCKJB)",
+      "Bash(set EXPO_APPLE_API_ISSUER_ID=1dbd6627-3f6a-4530-a2c7-08d47bae378d)"
     ],
     "deny": [],
     "ask": []

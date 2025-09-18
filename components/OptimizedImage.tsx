@@ -44,7 +44,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   resizeMode = 'cover',
   placeholder,
   showLoader = true,
-  fadeDuration = 300,
+  fadeDuration = 150, // 페이드 시간 단축
   onLoad,
   onError,
   onLoadStart,
@@ -67,16 +67,18 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   useEffect(() => {
     if (isCached) {
       setLoading(false);
-      fadeAnim.setValue(1);
+      fadeAnim.setValue(1); // 캐시된 이미지는 즉시 표시
     }
   }, [isCached, fadeAnim]);
 
-  // 프리로딩 (우선순위가 높은 이미지)
+  // 즉시 프리로딩 시작 (더 적극적)
   useEffect(() => {
-    if (priority === 'high' && !isCached) {
+    if ((priority === 'high' || priority === 'normal') && !isCached) {
+      // 즉시 프리로딩 시작 (지연 없음)
       imageCacheUtils.preloadImage(source);
     }
   }, [source, priority, isCached]);
+
 
   // 레이지 로딩 (필요한 경우)
   useEffect(() => {

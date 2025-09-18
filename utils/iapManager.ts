@@ -93,6 +93,12 @@ export class IAPManager {
       // 구매 복원 처리 (앱 시작 시 자동 호출)
       await this.restorePurchases();
 
+      // 구독 갱신 자동 처리 시작
+      await this.processSubscriptionRenewal();
+
+      // 주기적 갱신 모니터링 시작
+      this.startPeriodicRenewalCheck();
+
       this.initialized = true;
       console.log('✅ IAP 매니저 초기화 완료');
       return true;
@@ -182,17 +188,19 @@ export class IAPManager {
         return result;
       }
 
-      // 실제 구매 처리
-      const purchase = await RNIap.requestSubscription({
-        sku: productId,
-        ...(Platform.OS === 'android' && {
-          subscriptionOffers: [
-            {
-              sku: productId,
-              offerToken: 'default_offer_token'
-            }
-          ]
-        })
+      // 실제 구매 처리 (네트워크 재시도 적용)
+      const purchase = await this.retryWithExponentialBackoff(async () => {
+        return await RNIap.requestSubscription({
+          sku: productId,
+          ...(Platform.OS === 'android' && {
+            subscriptionOffers: [
+              {
+                sku: productId,
+                offerToken: 'default_offer_token'
+              }
+            ]
+          })
+        });
       });
 
       if (purchase && purchase.transactionId) {
@@ -402,6 +410,291 @@ export class IAPManager {
   }
 
   /**
+   * 구독 갱신 자동 처리 로직 (NEW)
+   * 앱 시작 시 및 주기적으로 호출되어 구독 상태를 자동 갱신
+   */
+  static async processSubscriptionRenewal(): Promise<boolean> {
+    try {
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
+
+      if (!currentStatus.is_premium) {
+        console.log('⚠️ 프리미엄 구독이 없어 갱신 처리 건너뜀');
+        return false;
+      }
+
+      console.log('🔄 구독 갱신 자동 처리 시작...');
+
+      // 만료일 확인
+      if (currentStatus.expiry_date) {
+        const now = new Date();
+        const expiryDate = new Date(currentStatus.expiry_date);
+        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        console.log(`📅 구독 만료까지 ${daysUntilExpiry}일 남음`);
+
+        // 만료된 경우 상태 업데이트
+        if (daysUntilExpiry <= 0) {
+          console.log('⏰ 구독이 만료되었습니다. 상태를 확인합니다...');
+
+          // 앱스토어에서 최신 구매 정보 확인
+          const latestPurchases = await this.restorePurchases();
+
+          if (latestPurchases) {
+            console.log('✅ 구독 갱신이 확인되었습니다.');
+            return true;
+          } else {
+            console.log('❌ 구독 갱신이 확인되지 않았습니다. 프리미엄 상태를 해제합니다.');
+            await this.deactivatePremiumStatus();
+            return false;
+          }
+        }
+
+        // 만료 7일 전부터 알림 대상으로 표시
+        if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
+          console.log('⚠️ 구독 만료 임박: 갱신 확인을 권장합니다.');
+
+          // 갱신 상태 미리 확인
+          await this.checkRenewalStatus();
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ 구독 갱신 처리 오류:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 구독 갱신 상태 확인 (NEW)
+   */
+  private static async checkRenewalStatus(): Promise<void> {
+    try {
+      if (Platform.OS === 'web') {
+        console.log('🌐 웹 환경: 갱신 상태 확인 건너뜀');
+        return;
+      }
+
+      // 최신 구매 내역에서 갱신된 구독 찾기
+      const purchases = await RNIap.getAvailablePurchases();
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
+
+      for (const purchase of purchases) {
+        if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
+          // 기존 거래 ID와 다른 새로운 거래가 있는지 확인
+          if (purchase.transactionId !== currentStatus.store_transaction_id) {
+            console.log('🔄 새로운 구독 갱신이 감지되었습니다:', purchase.transactionId);
+
+            // 새로운 구독 정보로 업데이트
+            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId, purchase.transactionReceipt);
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ 갱신 상태 확인 오류:', error);
+    }
+  }
+
+  /**
+   * 프리미엄 상태 비활성화 (NEW)
+   */
+  private static async deactivatePremiumStatus(): Promise<void> {
+    try {
+      const deactivatedStatus: PremiumStatus = {
+        is_premium: false,
+        subscription_type: undefined,
+        purchase_date: undefined,
+        expiry_date: undefined,
+        store_transaction_id: undefined,
+        unlimited_storage: false,
+        ad_free: false,
+        premium_themes: false,
+        last_validated: new Date().toISOString(),
+        validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
+      };
+
+      await LocalStorageManager.updatePremiumStatus(deactivatedStatus);
+
+      // 프리미엄 상태 변경 이벤트 발생
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('premiumStatusChanged', {
+          detail: { isPremium: false }
+        }));
+      }
+
+      console.log('✅ 프리미엄 상태가 비활성화되었습니다.');
+    } catch (error) {
+      console.error('❌ 프리미엄 상태 비활성화 오류:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 구독 갱신 실패 처리 (NEW)
+   */
+  static async handleRenewalFailure(reason: string): Promise<void> {
+    try {
+      console.log('❌ 구독 갱신 실패:', reason);
+
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
+
+      // 유예 기간 설정 (7일)
+      const gracePeriodEnd = new Date();
+      gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
+
+      const gracePeriodStatus: PremiumStatus = {
+        ...currentStatus,
+        expiry_date: gracePeriodEnd.toISOString(),
+        validation_environment: 'GracePeriod',
+        last_validated: new Date().toISOString()
+      };
+
+      await LocalStorageManager.updatePremiumStatus(gracePeriodStatus);
+
+      console.log('⏳ 구독 갱신 유예 기간이 설정되었습니다 (7일)');
+    } catch (error) {
+      console.error('❌ 갱신 실패 처리 오류:', error);
+    }
+  }
+
+  /**
+   * 주기적 구독 상태 모니터링 시작 (NEW)
+   */
+  static startPeriodicRenewalCheck(): void {
+    // 기존 타이머가 있으면 제거
+    if (this.renewalCheckInterval) {
+      clearInterval(this.renewalCheckInterval);
+    }
+
+    // 24시간마다 갱신 상태 확인
+    this.renewalCheckInterval = setInterval(async () => {
+      console.log('🔄 주기적 구독 갱신 확인 시작...');
+      await this.processSubscriptionRenewal();
+    }, 24 * 60 * 60 * 1000); // 24시간
+
+    console.log('✅ 주기적 구독 갱신 모니터링이 시작되었습니다.');
+  }
+
+  /**
+   * 주기적 구독 상태 모니터링 중지 (NEW)
+   */
+  static stopPeriodicRenewalCheck(): void {
+    if (this.renewalCheckInterval) {
+      clearInterval(this.renewalCheckInterval);
+      this.renewalCheckInterval = null;
+      console.log('✅ 주기적 구독 갱신 모니터링이 중지되었습니다.');
+    }
+  }
+
+  // 클래스 정적 변수 추가
+  private static renewalCheckInterval: NodeJS.Timeout | null = null;
+
+  /**
+   * 네트워크 오류 시 복구 로직 (NEW)
+   */
+  static async retryWithExponentialBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+  ): Promise<T> {
+    let lastError: Error;
+
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+        console.warn(`⚠️ 작업 실패 (시도 ${i + 1}/${maxRetries}):`, error);
+
+        if (i === maxRetries - 1) {
+          break; // 마지막 재시도
+        }
+
+        // 지수 백오프 대기
+        const delay = baseDelay * Math.pow(2, i);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    throw lastError!;
+  }
+
+  /**
+   * 중복 결제 방지 메커니즘 (NEW)
+   */
+  private static activePurchases = new Set<string>();
+
+  static async purchaseWithDuplicateProtection(productId: string): Promise<PurchaseResult> {
+    if (this.activePurchases.has(productId)) {
+      return {
+        success: false,
+        error: '이미 해당 상품의 결제가 진행 중입니다. 잠시 후 다시 시도해주세요.'
+      };
+    }
+
+    try {
+      this.activePurchases.add(productId);
+      return await this.purchaseSubscription(productId);
+    } finally {
+      this.activePurchases.delete(productId);
+    }
+  }
+
+  /**
+   * 결제 중단 시 상태 롤백 (NEW)
+   */
+  static async rollbackFailedPurchase(productId: string, transactionId?: string): Promise<void> {
+    try {
+      console.log('🔄 실패한 결제 상태 롤백 시작:', productId);
+
+      // 부분적으로 저장된 프리미엄 상태가 있다면 제거
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
+
+      if (currentStatus.store_transaction_id === transactionId && transactionId) {
+        console.log('⚠️ 실패한 거래의 프리미엄 상태를 제거합니다.');
+        await this.deactivatePremiumStatus();
+      }
+
+      // 활성 결제 목록에서 제거
+      this.activePurchases.delete(productId);
+
+      console.log('✅ 결제 상태 롤백 완료');
+    } catch (error) {
+      console.error('❌ 결제 롤백 오류:', error);
+    }
+  }
+
+  /**
+   * 환불 처리 자동화 (NEW)
+   */
+  static async handleRefund(transactionId: string): Promise<void> {
+    try {
+      console.log('💰 환불 처리 시작:', transactionId);
+
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
+
+      // 해당 거래 ID와 일치하는 경우 프리미엄 상태 해제
+      if (currentStatus.store_transaction_id === transactionId) {
+        await this.deactivatePremiumStatus();
+
+        // 환불 알림 이벤트 발생
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('subscriptionRefunded', {
+            detail: { transactionId }
+          }));
+        }
+
+        console.log('✅ 환불로 인한 프리미엄 상태 해제 완료');
+      } else {
+        console.log('⚠️ 현재 활성 구독과 다른 거래 ID입니다.');
+      }
+    } catch (error) {
+      console.error('❌ 환불 처리 오류:', error);
+    }
+  }
+
+  /**
    * 구독 취소 (앱스토어에서 수동으로 처리)
    */
   static async cancelSubscription(): Promise<void> {
@@ -456,6 +749,9 @@ export class IAPManager {
    */
   static async dispose(): Promise<void> {
     try {
+      // 주기적 갱신 모니터링 중지
+      this.stopPeriodicRenewalCheck();
+
       if (Platform.OS !== 'web' && this.initialized) {
         await RNIap.endConnection();
         this.initialized = false;

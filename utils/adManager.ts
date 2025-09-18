@@ -79,6 +79,10 @@ export class AdManager {
     banner_impressions: 0
   };
 
+  // 액션 카운터 (전면광고 표시 조건)
+  private static actionCounter = 0;
+  private static readonly ACTION_THRESHOLD = 3; // 3번의 액션마다 전면광고
+
   /**
    * AdManager 초기화
    */
@@ -559,6 +563,43 @@ export class AdManager {
     };
   }
 
+
+  /**
+   * 액션 카운터 증가 및 전면광고 표시 조건 확인
+   */
+  static async incrementActionCounter(): Promise<void> {
+    try {
+      this.actionCounter++;
+      console.log(`📊 액션 카운터: ${this.actionCounter}/${this.ACTION_THRESHOLD}`);
+
+      // 임계값에 도달했을 때 전면광고 표시 시도
+      if (this.actionCounter >= this.ACTION_THRESHOLD) {
+        this.actionCounter = 0; // 카운터 초기화
+
+        // 전면광고 표시 시도
+        const result = await this.showInterstitial('card_action');
+        if (result.success) {
+          console.log('✅ 전면광고 표시 성공');
+        } else {
+          console.log('⚠️ 전면광고 표시 실패:', result.error);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 액션 카운터 처리 오류:', error);
+      // 오류가 발생해도 액션 자체는 실패시키지 않음
+    }
+  }
+
+  /**
+   * 액션 카운터 상태 조회
+   */
+  static getActionCounter(): { current: number; threshold: number; remaining: number } {
+    return {
+      current: this.actionCounter,
+      threshold: this.ACTION_THRESHOLD,
+      remaining: this.ACTION_THRESHOLD - this.actionCounter
+    };
+  }
 
   /**
    * AdManager 정리
