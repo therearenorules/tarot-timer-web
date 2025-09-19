@@ -10,7 +10,8 @@ import {
   Platform,
   Modal,
   Dimensions,
-  Keyboard
+  Keyboard,
+  Alert
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTarotI18n } from '../../hooks/useTarotI18n';
@@ -45,7 +46,7 @@ const CardDetailModal = memo(({
   onSave: () => void;
 }) => {
   const { t } = useTranslation();
-  const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
+  const { getCardName, getCardMeaning, isEnglish, currentLanguage } = useTarotI18n();
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const scrollViewRef = useRef<ScrollView>(null);
   const memoInputRef = useRef<TextInput>(null);
@@ -384,6 +385,22 @@ const TimerTab = memo(() => {
   const [modalHour, setModalHour] = useState(0);
   const [modalMemo, setModalMemo] = useState('');
 
+  // 다시 뽑기 경고 다이얼로그
+  const handleRedrawWarning = () => {
+    Alert.alert(
+      t('cards.redrawWarningTitle'),
+      t('cards.redrawWarningMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('cards.confirmRedraw'),
+          style: 'destructive',
+          onPress: redrawAllCards
+        }
+      ]
+    );
+  };
+
   const handleCardPress = (hour: number) => {
     const card = dailyCards[hour];
     if (card) {
@@ -517,7 +534,7 @@ const TimerTab = memo(() => {
             currentHour={currentHour}
             onCardPress={handleCardPress}
             cardMemos={cardMemos}
-            onRedraw={redrawAllCards}
+            onRedraw={handleRedrawWarning}
           />
         )}
 
@@ -911,7 +928,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    paddingHorizontal: Platform.OS === 'web' ? Spacing.lg : Spacing.md,
+    paddingHorizontal: '3%', // 좌우 3% 여백
     paddingTop: 0,
   },
   modalScrollContent: {
@@ -972,6 +989,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text.primary,
     marginBottom: Spacing.md,
+    marginLeft: '6%', // 메모칸보다 3% 더 우측으로 이동 (3% + 3%)
+    marginRight: '3%', // 우측은 기본 여백 유지
   },
   modalMemoInput: {
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
@@ -985,12 +1004,14 @@ const styles = StyleSheet.create({
     maxHeight: Platform.OS === 'web' ? 200 : 180, // 최대 높이 제한으로 스크롤 보장
     textAlignVertical: 'top',
     lineHeight: 22, // 줄 간격 개선
+    marginHorizontal: '3%', // 좌우 3% 축소
   },
   saveButton: {
     backgroundColor: Colors.brand.accent,
     borderRadius: BorderRadius.xl,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
+    marginHorizontal: '3%', // 좌우 3% 축소
   },
   saveButtonText: {
     fontSize: 16,

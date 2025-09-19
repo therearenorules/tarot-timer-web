@@ -37,7 +37,7 @@ export interface SpreadPosition {
   offsetY?: number;          // Y축 오프셋
 }
 
-export type SpreadType = 'one-card' | 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'cup-of-relationship' | 'choice';
+export type SpreadType = 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'cup-of-relationship' | 'choice';
 
 export interface SpreadLayout {
   id: SpreadType;
@@ -49,15 +49,16 @@ export interface SpreadLayout {
 
 // 스프레드 레이아웃을 동적으로 생성하는 함수
 const getSpreadLayouts = (t: any): SpreadLayout[] => [
-  {
-    id: 'one-card',
-    name: `🎯 ${t('spread.types.singleCard')}`,
-    nameEn: 'One Card Tarot',
-    description: t('spread.descriptions.singleCard'),
-    positions: [
-      { id: 1, name: t('spread.positions.message'), nameEn: 'Message', description: t('spread.descriptions.message'), card: null, x: 35, y: 20 }
-    ]
-  },
+  // 원카드 스프레드 숨김 처리
+  // {
+  //   id: 'one-card',
+  //   name: `🎯 ${t('spread.types.singleCard')}`,
+  //   nameEn: 'One Card Tarot',
+  //   description: t('spread.descriptions.singleCard'),
+  //   positions: [
+  //     { id: 1, name: t('spread.positions.message'), nameEn: 'Message', description: t('spread.descriptions.message'), card: null, x: 35, y: 20 }
+  //   ]
+  // },
   {
     id: 'three-card',
     name: `⚖️ ${t('spread.types.threeCard')}`,
@@ -353,7 +354,7 @@ export const TarotSpread: React.FC = () => {
   const drawFullSpread = async () => {
     setIsDrawing(true);
     try {
-      const newCards = TarotUtils.getRandomCards(spreadCards.length);
+      const newCards = TarotUtils.getRandomCardsNoDuplicates(spreadCards.length);
       const updatedSpread = spreadCards.map((position, index) => ({
         ...position,
         card: newCards[index]
@@ -380,7 +381,16 @@ export const TarotSpread: React.FC = () => {
 
   // 개별 카드 뽑기
   const drawSingleCard = async (positionId: number) => {
-    const randomCard = TarotUtils.getRandomCards(1)[0];
+    // 현재 스프레드에서 이미 뽑힌 카드들을 제외하고 뽑기
+    const usedCards = spreadCards.filter(pos => pos.card !== null).map(pos => pos.card!);
+    const availableCards = TarotUtils.getAllCards().filter(card =>
+      !usedCards.some(usedCard => usedCard.id === card.id)
+    );
+
+    const randomCard = availableCards.length > 0
+      ? availableCards[Math.floor(Math.random() * availableCards.length)]
+      : TarotUtils.getRandomCard(); // fallback to any card if all used
+
     const updatedSpread = spreadCards.map(position =>
       position.id === positionId
         ? { ...position, card: randomCard }

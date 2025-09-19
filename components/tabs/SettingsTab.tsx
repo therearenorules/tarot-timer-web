@@ -113,28 +113,19 @@ const SettingsTab: React.FC = () => {
   const handleSubscriptionSuccess = () => {
     setShowSubscriptionModal(false);
     Alert.alert(
-      '🎉 구독 완료!',
-      '프리미엄 구독이 활성화되었습니다. 모든 프리미엄 기능을 자유롭게 이용하세요!',
-      [{ text: '확인' }]
+      t('settings.premium.subscriptionCompleteTitle'),
+      t('settings.premium.subscriptionCompleteMessage'),
+      [{ text: t('common.ok') }]
     );
   };
 
   const handleUpgradePress = () => {
-    // 구독 컴포넌트가 로드되지 않은 경우 대체 동작
-    if (!SubscriptionPlans || !SubscriptionManagement) {
-      Alert.alert(
-        '구독 서비스',
-        '현재 환경에서는 구독 기능을 사용할 수 없습니다. 웹 브라우저에서 이용해주세요.',
-        [{ text: '확인' }]
-      );
-      return;
-    }
-
-    if (!isPremium) {
-      setShowSubscriptionModal(true);
-    } else {
-      setShowManagementModal(true);
-    }
+    // 구독 기능 준비 중 알림
+    Alert.alert(
+      t('settings.premium.comingSoonTitle'),
+      t('settings.premium.comingSoonDesc'),
+      [{ text: t('common.ok') }]
+    );
   };
 
   const handleRequestPermissions = async () => {
@@ -265,17 +256,17 @@ const SettingsTab: React.FC = () => {
           <View style={styles.sectionIcon}>
             <Text style={styles.sectionIconText}>👑</Text>
           </View>
-          <Text style={styles.sectionTitle}>프리미엄 구독</Text>
+          <Text style={styles.sectionTitle}>{t('settings.premium.title')}</Text>
           {isPremium ? (
             <View style={[styles.activeBadge, { backgroundColor: Colors.state.success }]}>
-              <Text style={styles.activeBadgeText}>활성</Text>
+              <Text style={styles.activeBadgeText}>{t('settings.premium.active')}</Text>
             </View>
           ) : (
             <TouchableOpacity
               style={[styles.activeBadge, { backgroundColor: Colors.brand.accent }]}
               onPress={handleUpgradePress}
             >
-              <Text style={[styles.activeBadgeText, { color: '#000' }]}>구독하기</Text>
+              <Text style={[styles.activeBadgeText, { color: '#000' }]}>{t('settings.premium.upgrade')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -284,29 +275,29 @@ const SettingsTab: React.FC = () => {
           // 프리미엄 사용자 - 구독 상태 표시
           <View style={styles.premiumStatusContainer}>
             <View style={styles.premiumInfo}>
-              <Text style={styles.premiumStatusTitle}>구독 상태</Text>
+              <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionStatus')}</Text>
               <Text style={styles.premiumStatusValue}>
-                {isSubscriptionActive ? '활성' : '만료됨'}
+                {isSubscriptionActive ? t('settings.premium.active') : t('settings.premium.expired')}
               </Text>
             </View>
 
             {premiumStatus.subscription_type && (
               <View style={styles.premiumInfo}>
-                <Text style={styles.premiumStatusTitle}>구독 타입</Text>
+                <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionType')}</Text>
                 <Text style={styles.premiumStatusValue}>
-                  {premiumStatus.subscription_type === 'monthly' ? '월간' : '연간'} 구독
+                  {premiumStatus.subscription_type === 'monthly' ? t('settings.premium.monthly') : t('settings.premium.yearly')} {t('settings.premium.subscription')}
                 </Text>
               </View>
             )}
 
             {daysUntilExpiry !== null && (
               <View style={styles.premiumInfo}>
-                <Text style={styles.premiumStatusTitle}>남은 기간</Text>
+                <Text style={styles.premiumStatusTitle}>{t('settings.premium.remainingPeriod')}</Text>
                 <Text style={[
                   styles.premiumStatusValue,
                   daysUntilExpiry <= 7 && { color: Colors.state.warning }
                 ]}>
-                  {daysUntilExpiry > 0 ? `${daysUntilExpiry}일` : '만료됨'}
+                  {daysUntilExpiry > 0 ? `${daysUntilExpiry}${t('settings.premium.days')}` : t('settings.premium.expired')}
                 </Text>
               </View>
             )}
@@ -315,7 +306,7 @@ const SettingsTab: React.FC = () => {
               style={styles.manageSubscriptionButton}
               onPress={() => setShowManagementModal(true)}
             >
-              <Text style={styles.manageSubscriptionButtonText}>구독 관리</Text>
+              <Text style={styles.manageSubscriptionButtonText}>{t('settings.premium.manage')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -323,26 +314,26 @@ const SettingsTab: React.FC = () => {
           <View style={styles.premiumFeatures}>
             <View style={styles.featureRow}>
               <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>무제한 타로 저장</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
             </View>
             <View style={styles.featureRow}>
               <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>광고 완전 제거</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
             </View>
             <View style={styles.featureRow}>
               <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>프리미엄 스프레드</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
             </View>
             <View style={styles.featureRow}>
               <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>프리미엄 테마</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.premiumThemes')}</Text>
             </View>
 
             <TouchableOpacity
               style={styles.upgradeButton}
               onPress={handleUpgradePress}
             >
-              <Text style={styles.upgradeButtonText}>프리미엄 구독하기</Text>
+              <Text style={styles.upgradeButtonText}>{t('settings.premium.comingSoon')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -526,10 +517,30 @@ const SettingsTab: React.FC = () => {
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => {
+            // 인스타그램 링크 열기
+            const instagramUrl = 'https://www.instagram.com/selfish_saju/';
+            if (typeof window !== 'undefined' && window.open) {
+              // 웹 환경
+              window.open(instagramUrl, '_blank');
+            } else {
+              // 모바일 환경
+              try {
+                const { Linking } = require('react-native');
+                Linking.openURL(instagramUrl).catch(() => {
+                  Alert.alert('오류', '링크를 열 수 없습니다.');
+                });
+              } catch (error) {
+                console.warn('Linking 모듈 사용 불가:', error);
+              }
+            }
+          }}
+        >
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>{t('settings.about.developer')}</Text>
-            <Text style={styles.settingSubtitle}>Tarot Timer Team</Text>
+            <Text style={styles.settingSubtitle}>데아노</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
@@ -717,7 +728,7 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.sectionTitle}>클라우드 백업 & 동기화</Text>
             {cloudBackupEnabled && (
               <View style={[styles.activeBadge, { backgroundColor: '#4caf50' }]}>
-                <Text style={styles.activeBadgeText}>활성</Text>
+                <Text style={styles.activeBadgeText}>{t('settings.premium.active')}</Text>
               </View>
             )}
           </View>
@@ -823,8 +834,8 @@ const SettingsTab: React.FC = () => {
       {/* Supabase 연결 테스트 (개발용) - 임시 비활성화 */}
       {/* {false && <SupabaseTest />} */}
 
-      {/* 보상형 광고 섹션 */}
-      {RewardedAd && (
+      {/* 보상형 광고 섹션 - 구독 시스템 업데이트 시까지 숨김 */}
+      {false && RewardedAd && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>추가 기능</Text>
           <RewardedAd
@@ -892,12 +903,33 @@ const SettingsTab: React.FC = () => {
           </View>
         </View>
 
-        <View style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => {
+            // 인스타그램 링크 열기
+            const instagramUrl = 'https://www.instagram.com/selfish_saju/';
+            if (typeof window !== 'undefined' && window.open) {
+              // 웹 환경
+              window.open(instagramUrl, '_blank');
+            } else {
+              // 모바일 환경
+              try {
+                const { Linking } = require('react-native');
+                Linking.openURL(instagramUrl).catch(() => {
+                  Alert.alert('오류', '링크를 열 수 없습니다.');
+                });
+              } catch (error) {
+                console.warn('Linking 모듈 사용 불가:', error);
+              }
+            }
+          }}
+        >
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>개발자</Text>
-            <Text style={styles.settingSubtitle}>Tarot Timer Team</Text>
+            <Text style={styles.settingSubtitle}>데아노</Text>
           </View>
-        </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
       </View>
 
       {/* 관리자 대시보드 모달 */}

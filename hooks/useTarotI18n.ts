@@ -61,6 +61,7 @@ export const useTarotI18n = () => {
     
     // 언어 상태
     isEnglish: currentLanguage === 'en',
-    isKorean: currentLanguage === 'ko'
+    isKorean: currentLanguage === 'ko',
+    isJapanese: currentLanguage === 'ja'
   };
 };

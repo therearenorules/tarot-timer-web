@@ -27,7 +27,7 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
   const { t } = useTranslation();
-  const { getCardName, isEnglish } = useTarotI18n();
+  const { getCardName, isEnglish, isJapanese } = useTarotI18n();
 
   const getImageSize = () => {
     // 실제 타로 카드 비율 0.596 (1144x1919)에 맞게 조정

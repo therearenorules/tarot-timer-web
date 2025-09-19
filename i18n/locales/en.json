@@ -255,8 +255,26 @@
       "features": {
         "unlockSpreads": "Unlock premium spreads",
         "adFree": "Ad-free experience",
-        "unlimitedStorage": "Unlimited storage"
-      }
+        "unlimitedStorage": "Unlimited storage",
+        "unlimitedTarotStorage": "Unlimited tarot storage",
+        "removeAds": "Complete ad removal",
+        "premiumSpreads": "Premium spreads",
+        "premiumThemes": "Premium themes"
+      },
+      "comingSoon": "Coming Soon",
+      "comingSoonTitle": "Coming Soon",
+      "comingSoonDesc": "Premium subscription features are being prepared. Please wait a little longer!",
+      "subscriptionStatus": "Subscription Status",
+      "expired": "Expired",
+      "subscriptionType": "Subscription Type",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "subscription": "Subscription",
+      "remainingPeriod": "Remaining Period",
+      "days": "days",
+      "expired": "Expired",
+      "subscriptionCompleteTitle": "🎉 Subscription Complete!",
+      "subscriptionCompleteMessage": "Premium subscription has been activated. Feel free to use all premium features!"
     },
     "display": {
       "title": "Display & Theme",

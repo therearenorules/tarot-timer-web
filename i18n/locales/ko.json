@@ -255,8 +255,26 @@
       "features": {
         "unlockSpreads": "프리미엄 스프레드 잠금 해제",
         "adFree": "광고 없는 경험",
-        "unlimitedStorage": "무제한 저장소"
-      }
+        "unlimitedStorage": "무제한 저장소",
+        "unlimitedTarotStorage": "무제한 타로 저장",
+        "removeAds": "광고 완전 제거",
+        "premiumSpreads": "프리미엄 스프레드",
+        "premiumThemes": "프리미엄 테마"
+      },
+      "comingSoon": "곧 출시",
+      "comingSoonTitle": "곧 출시 예정",
+      "comingSoonDesc": "프리미엄 구독 기능을 준비하고 있습니다. 조금만 기다려 주세요!",
+      "subscriptionStatus": "구독 상태",
+      "expired": "만료됨",
+      "subscriptionType": "구독 타입",
+      "monthly": "월간",
+      "yearly": "연간",
+      "subscription": "구독",
+      "remainingPeriod": "남은 기간",
+      "days": "일",
+      "expired": "만료됨",
+      "subscriptionCompleteTitle": "🎉 구독 완료!",
+      "subscriptionCompleteMessage": "프리미엄 구독이 활성화되었습니다. 모든 프리미엄 기능을 자유롭게 이용하세요!"
     },
     "display": {
       "title": "화면 및 테마",
@@ -357,7 +375,7 @@
     "language": {
       "korean": "한국어",
       "english": "English",
-      "japanese": "日本語",
+      "japanese": "일어",
       "chinese": "中文",
       "spanish": "Español"
     }

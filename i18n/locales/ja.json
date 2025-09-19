@@ -255,8 +255,26 @@
       "features": {
         "unlockSpreads": "プレミアムスプレッドのロック解除",
         "adFree": "広告なしの体験",
-        "unlimitedStorage": "無制限ストレージ"
-      }
+        "unlimitedStorage": "無制限ストレージ",
+        "unlimitedTarotStorage": "無制限タロット保存",
+        "removeAds": "広告完全削除",
+        "premiumSpreads": "プレミアムスプレッド",
+        "premiumThemes": "プレミアムテーマ"
+      },
+      "comingSoon": "近日公開",
+      "comingSoonTitle": "近日公開予定",
+      "comingSoonDesc": "プレミアム機能を準備中です。もう少しお待ちください！",
+      "subscriptionStatus": "サブスクリプション状態",
+      "expired": "期限切れ",
+      "subscriptionType": "サブスクリプションタイプ",
+      "monthly": "月間",
+      "yearly": "年間",
+      "subscription": "サブスクリプション",
+      "remainingPeriod": "残り期間",
+      "days": "日",
+      "expired": "期限切れ",
+      "subscriptionCompleteTitle": "🎉 サブスクリプション完了！",
+      "subscriptionCompleteMessage": "プレミアムサブスクリプションが有効になりました。すべてのプレミアム機能を自由にご利用ください！"
     },
     "display": {
       "title": "画面とテーマ",

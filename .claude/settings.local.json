@@ -98,7 +98,11 @@
       "Bash(python:*)",
       "Bash(set EXPO_APPLE_API_KEY_PATH=./AuthKey_SFC77KCKJB.p8)",
       "Bash(set EXPO_APPLE_API_KEY_ID=SFC77KCKJB)",
-      "Bash(set EXPO_APPLE_API_ISSUER_ID=1dbd6627-3f6a-4530-a2c7-08d47bae378d)"
+      "Bash(set EXPO_APPLE_API_ISSUER_ID=1dbd6627-3f6a-4530-a2c7-08d47bae378d)",
+      "Bash(git checkout:*)",
+      "Bash(del i18ntemp_fix.txt)",
+      "Bash(move i18nindex_fixed.ts i18nindex.ts)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

@@ -92,7 +92,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   const performDrawDailyCards = useCallback(async () => {
     setIsLoading(true);
     try {
-      const newCards = TarotUtils.getRandomCards(24);
+      const newCards = TarotUtils.getRandomCardsNoDuplicates(24);
       setDailyCards(newCards);
       setSelectedCardIndex(currentHour);
       setCardMemos({}); // 메모 초기화
@@ -122,7 +122,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   const redrawAllCards = useCallback(async () => {
     setIsLoading(true);
     try {
-      const newCards = TarotUtils.getRandomCards(24);
+      const newCards = TarotUtils.getRandomCardsNoDuplicates(24);
       setDailyCards(newCards);
       setSelectedCardIndex(currentHour);
       setCardMemos({}); // 메모 초기화
@@ -157,7 +157,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
           text: i18next.t('cards.redrawCard'),
           onPress: async () => {
             try {
-              const newCard = TarotUtils.getRandomCards(1)[0];
+              const newCard = TarotUtils.getRandomCardExcluding(currentCard);
               const updatedCards = [...dailyCards];
               updatedCards[hourIndex] = newCard;
               setDailyCards(updatedCards);

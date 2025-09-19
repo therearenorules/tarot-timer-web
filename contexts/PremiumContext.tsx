@@ -95,7 +95,18 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       setIsLoading(true);
       setLastError(null);
 
-      // IAP 시스템 초기화
+      // 출시 전까지 프리미엄 상태를 기본값으로 강제 설정
+      const forcedPremiumStatus: PremiumStatus = {
+        is_premium: false,
+        unlimited_storage: false,
+        ad_free: false,
+        premium_themes: false
+      };
+      setPremiumStatus(forcedPremiumStatus);
+      setIsLoading(false);
+      return;
+
+      // IAP 시스템 초기화 (임시 비활성화)
       await IAPManager.initialize();
 
       // 현재 구독 상태 로드

@@ -4,28 +4,32 @@ import { TarotCard, TAROT_CARDS, SpreadType, SPREAD_TYPES } from './tarotData';
 
 // 현재 언어에 따라 카드 이름 반환
 export const getCardName = (card: TarotCard, language: string = 'ko'): string => {
-  return language === 'en' ? card.name : card.nameKr;
+  if (language === 'en') return card.name;
+  if (language === 'ja') return card.nameJa || card.name;
+  return card.nameKr;
 };
 
 // 현재 언어에 따라 카드 의미 반환
 export const getCardMeaning = (card: TarotCard, language: string = 'ko'): string => {
-  return language === 'en' ? card.meaning : card.meaningKr;
+  if (language === 'en') return card.meaning;
+  if (language === 'ja') return card.meaningJa || card.meaning;
+  return card.meaningKr;
 };
 
 // 현재 언어에 따라 카드 키워드 반환
 export const getCardKeywords = (card: TarotCard, language: string = 'ko'): string[] => {
-  return language === 'en' ? card.keywords : card.keywordsKr;
+  if (language === 'en') return card.keywords;
+  if (language === 'ja') return card.keywordsJa || card.keywords;
+  return card.keywordsKr;
 };
 
 // 현재 언어로 현지화된 카드 객체 반환
 export const getLocalizedCard = (card: TarotCard, language: string = 'ko'): TarotCard => {
-  const isEnglish = language === 'en';
-  
   return {
     ...card,
-    name: isEnglish ? card.name : card.nameKr,
-    meaning: isEnglish ? card.meaning : card.meaningKr,
-    keywords: isEnglish ? card.keywords : card.keywordsKr
+    name: getCardName(card, language),
+    meaning: getCardMeaning(card, language),
+    keywords: getCardKeywords(card, language)
   };
 };
 
@@ -42,46 +46,52 @@ export const getLocalizedCardById = (id: number, language: string = 'ko'): Tarot
 
 // 슈트별 현지화된 이름 반환
 export const getLocalizedSuitName = (suit: string, language: string = 'ko'): string => {
-  const suitTranslations: { [key: string]: { ko: string; en: string } } = {
-    'Major': { ko: '메이저 아르카나', en: 'Major Arcana' },
-    'Wands': { ko: '완드', en: 'Wands' },
-    'Cups': { ko: '컵', en: 'Cups' },
-    'Swords': { ko: '소드', en: 'Swords' },
-    'Pentacles': { ko: '펜타클', en: 'Pentacles' }
+  const suitTranslations: { [key: string]: { ko: string; en: string; ja: string } } = {
+    'Major': { ko: '메이저 아르카나', en: 'Major Arcana', ja: '大アルカナ' },
+    'Wands': { ko: '완드', en: 'Wands', ja: 'ワンド' },
+    'Cups': { ko: '컵', en: 'Cups', ja: 'カップ' },
+    'Swords': { ko: '소드', en: 'Swords', ja: 'ソード' },
+    'Pentacles': { ko: '펜타클', en: 'Pentacles', ja: 'ペンタクル' }
   };
 
   const translation = suitTranslations[suit];
   if (!translation) return suit;
-  
-  return language === 'en' ? translation.en : translation.ko;
+
+  if (language === 'en') return translation.en;
+  if (language === 'ja') return translation.ja;
+  return translation.ko;
 };
 
 // 원소별 현지화된 이름 반환
 export const getLocalizedElementName = (element: string, language: string = 'ko'): string => {
-  const elementTranslations: { [key: string]: { ko: string; en: string } } = {
-    'Fire': { ko: '불', en: 'Fire' },
-    'Water': { ko: '물', en: 'Water' },
-    'Air': { ko: '공기', en: 'Air' },
-    'Earth': { ko: '흙', en: 'Earth' }
+  const elementTranslations: { [key: string]: { ko: string; en: string; ja: string } } = {
+    'Fire': { ko: '불', en: 'Fire', ja: '火' },
+    'Water': { ko: '물', en: 'Water', ja: '水' },
+    'Air': { ko: '공기', en: 'Air', ja: '風' },
+    'Earth': { ko: '흙', en: 'Earth', ja: '地' }
   };
 
   const translation = elementTranslations[element];
   if (!translation) return element;
-  
-  return language === 'en' ? translation.en : translation.ko;
+
+  if (language === 'en') return translation.en;
+  if (language === 'ja') return translation.ja;
+  return translation.ko;
 };
 
-// 카드 타입별 현지화된 이름 반환  
+// 카드 타입별 현지화된 이름 반환
 export const getLocalizedCardType = (type: string, language: string = 'ko'): string => {
-  const typeTranslations: { [key: string]: { ko: string; en: string } } = {
-    'Major Arcana': { ko: '메이저 아르카나', en: 'Major Arcana' },
-    'Minor Arcana': { ko: '마이너 아르카나', en: 'Minor Arcana' }
+  const typeTranslations: { [key: string]: { ko: string; en: string; ja: string } } = {
+    'Major Arcana': { ko: '메이저 아르카나', en: 'Major Arcana', ja: '大アルカナ' },
+    'Minor Arcana': { ko: '마이너 아르카나', en: 'Minor Arcana', ja: '小アルカナ' }
   };
 
   const translation = typeTranslations[type];
   if (!translation) return type;
-  
-  return language === 'en' ? translation.en : translation.ko;
+
+  if (language === 'en') return translation.en;
+  if (language === 'ja') return translation.ja;
+  return translation.ko;
 };
 
 // === 스프레드 타입 국제화 함수들 ===
