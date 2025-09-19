@@ -279,7 +279,9 @@
     "display": {
       "title": "화면 및 테마",
       "darkMode": "다크 모드",
-      "alwaysOn": "미스틱한 경험을 위해 항상 켜짐"
+      "alwaysOn": "미스틱한 경험을 위해 항상 켜짐",
+      "tarotDeckTheme": "타로 덱 테마",
+      "tarotDeckThemeDescription": "카드 디자인 테마를 선택하세요"
     },
     "notifications": {
       "title": "알림 설정",
@@ -401,6 +403,7 @@
     "next": "다음",
     "previous": "이전",
     "loading": "로딩 중...",
+    "comingSoon": "준비중",
     "error": "오류",
     "success": "성공",
     "warning": "경고",

@@ -27,7 +27,7 @@ export const LANGUAGES = {
   },
   ja: {
     name: 'Japanese',
-    nativeName: '日본語',
+    nativeName: '日語',
     flag: '🇯🇵',
     code: 'ja'
   }
@@ -41,7 +41,7 @@ i18n
     lng: 'ko',
     fallbackLng: 'ko',
     debug: false,
-    
+
     resources: {
       ko: { translation: ko },
       en: { translation: en },
@@ -65,13 +65,13 @@ i18n
 // Language utilities
 export const LanguageUtils = {
   getAvailableLanguages: () => LANGUAGES,
-  
+
   getCurrentLanguageInfo: () => {
     const currentLang = i18n.language || 'ko';
     const langCode = currentLang.split('-')[0];
     return LANGUAGES[langCode as keyof typeof LANGUAGES] || LANGUAGES.ko;
   },
-  
+
   changeLanguage: async (languageCode: string) => {
     try {
       await i18n.changeLanguage(languageCode);
@@ -89,14 +89,14 @@ export const LanguageUtils = {
   getCurrentLocale: () => {
     const currentLang = i18n.language || 'ko';
     const langCode = currentLang.split('-')[0];
-    
+
     // Map language codes to locale strings
     const localeMap: Record<string, string> = {
       ko: 'ko-KR',
-      en: 'en-US', 
+      en: 'en-US',
       ja: 'ja-JP'
     };
-    
+
     return localeMap[langCode] || 'ko-KR';
   },
 
@@ -109,7 +109,7 @@ export const LanguageUtils = {
       day: 'numeric',
       weekday: 'long'
     };
-    
+
     return date.toLocaleDateString(locale, { ...defaultOptions, ...options });
   },
 
@@ -123,7 +123,7 @@ export const LanguageUtils = {
       hour: '2-digit',
       minute: '2-digit'
     };
-    
+
     return date.toLocaleDateString(locale, { ...defaultOptions, ...options });
   }
 };

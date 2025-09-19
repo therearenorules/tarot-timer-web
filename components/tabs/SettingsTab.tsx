@@ -8,7 +8,8 @@ import {
   Alert,
   Modal,
   Dimensions,
-  Switch
+  Switch,
+  Platform
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -65,7 +66,6 @@ const SettingsTab: React.FC = () => {
     isLoading: premiumLoading
   } = usePremium();
 
-  const [darkModeEnabled, setDarkModeEnabled] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     isEnabled: false,
     pendingChanges: 0,
@@ -348,17 +348,15 @@ const SettingsTab: React.FC = () => {
           <Text style={styles.sectionTitle}>{t('settings.display.title')}</Text>
         </View>
 
+        {/* 타로 덱 테마 선택 */}
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.display.darkMode')}</Text>
-            <Text style={styles.settingSubtitle}>{t('settings.display.alwaysOn')}</Text>
+            <Text style={styles.settingTitle}>{t('settings.display.tarotDeckTheme')}</Text>
+            <Text style={styles.settingSubtitle}>{t('settings.display.tarotDeckThemeDescription')}</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.toggleButton, darkModeEnabled && styles.toggleButtonActive]}
-            onPress={() => setDarkModeEnabled(!darkModeEnabled)}
-          >
-            <View style={[styles.toggleThumb, darkModeEnabled && styles.toggleThumbActive]} />
-          </TouchableOpacity>
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonText}>{t('common.comingSoon')}</Text>
+          </View>
         </View>
 
         <View style={styles.settingItem}>
@@ -429,7 +427,7 @@ const SettingsTab: React.FC = () => {
             <Text style={styles.settingSubtitle}>
               {notificationsEnabled
                 ? t('settings.notifications.dailyDescription')
-                : '알림 권한 없음 - 설정만 저장됩니다'
+                : '20시 자동 알림'
               }
             </Text>
           </View>
@@ -490,14 +488,16 @@ const SettingsTab: React.FC = () => {
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
 
-        {/* 테스트 알림 */}
-        <TouchableOpacity
-          style={styles.testButton}
-          onPress={handleSendTestNotification}
-          disabled={!notificationsEnabled}
-        >
-          <Text style={styles.testButtonText}>{t('settings.notifications.sendTest')}</Text>
-        </TouchableOpacity>
+        {/* 테스트 알림 - 모바일 환경에서만 표시 */}
+        {Platform.OS !== 'web' && (
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={handleSendTestNotification}
+            disabled={!notificationsEnabled}
+          >
+            <Text style={styles.testButtonText}>{t('settings.notifications.sendTest')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* 앱 정보 */}
@@ -1548,6 +1548,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'NotoSansKR_700Bold',
     color: '#d4b8ff',
+  },
+
+  // 준비중 배지 스타일
+  comingSoonBadge: {
+    backgroundColor: 'rgba(123, 44, 191, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#7b2cbf',
+  },
+  comingSoonText: {
+    color: '#7b2cbf',
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: 'NotoSansKR_600SemiBold',
   },
 });
 

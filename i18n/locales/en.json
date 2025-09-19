@@ -279,7 +279,9 @@
     "display": {
       "title": "Display & Theme",
       "darkMode": "Dark Mode",
-      "alwaysOn": "Always on for mystical experience"
+      "alwaysOn": "Always on for mystical experience",
+      "tarotDeckTheme": "Tarot Deck Theme",
+      "tarotDeckThemeDescription": "Select card design theme"
     },
     "notifications": {
       "title": "Notification Settings",
@@ -401,6 +403,7 @@
     "next": "Next",
     "previous": "Previous",
     "loading": "Loading...",
+    "comingSoon": "Coming Soon",
     "error": "Error",
     "success": "Success",
     "warning": "Warning",

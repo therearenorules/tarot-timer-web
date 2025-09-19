@@ -256,6 +256,10 @@ const TarotDaily = () => {
   const [selectedReading, setSelectedReading] = useState(null);
   const [selectedSpread, setSelectedSpread] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [isSpreadDeleteMode, setIsSpreadDeleteMode] = useState(false);
+  const [selectedSpreadItems, setSelectedSpreadItems] = useState(new Set());
 
   useEffect(() => {
     loadDailyReadings();
@@ -267,8 +271,8 @@ const TarotDaily = () => {
       setIsLoading(true);
       const readings = [];
 
-      // 최근 30일간의 일일 타로 데이터 로드
-      for (let i = 0; i < 30; i++) {
+      // 모든 일일 타로 데이터 로드 (무제한)
+      for (let i = 0; i < 365; i++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = date.toISOString().split('T')[0];
@@ -306,6 +310,88 @@ const TarotDaily = () => {
     } catch (error) {
       console.error('Spread reading load failed:', error);
     }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedItems.size === 0) return;
+
+    Alert.alert(
+      '기록 삭제',
+      `선택한 ${selectedItems.size}개의 기록을 삭제하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // 선택된 아이템들을 삭제
+              const updatedDailyReadings = dailyReadings.filter((reading, index) => {
+                const itemId = reading.id || `daily-${index}`;
+                if (selectedItems.has(itemId)) {
+                  // 로컬 스토리지에서도 삭제
+                  const dateString = new Date(reading.savedAt).toISOString().split('T')[0];
+                  const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
+                  simpleStorage.removeItem(storageKey).catch(console.error);
+                  return false;
+                }
+                return true;
+              });
+
+              setDailyReadings(updatedDailyReadings);
+              setSelectedItems(new Set());
+              setIsDeleteMode(false);
+
+              Alert.alert('삭제 완료', `${selectedItems.size}개의 기록이 삭제되었습니다.`);
+            } catch (error) {
+              console.error('Delete failed:', error);
+              Alert.alert('삭제 실패', '기록 삭제 중 오류가 발생했습니다.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteSelectedSpreads = async () => {
+    if (selectedSpreadItems.size === 0) return;
+
+    Alert.alert(
+      '스프레드 기록 삭제',
+      `선택한 ${selectedSpreadItems.size}개의 스프레드 기록을 삭제하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // 선택된 스프레드들을 삭제
+              const updatedSpreadReadings = spreadReadings.filter((spread, index) => {
+                const itemId = spread.id || `spread-${index}`;
+                if (selectedSpreadItems.has(itemId)) {
+                  // 로컬 스토리지에서도 삭제
+                  if (spread.id) {
+                    TarotUtils.deleteSavedSpread(spread.id).catch(console.error);
+                  }
+                  return false;
+                }
+                return true;
+              });
+
+              setSpreadReadings(updatedSpreadReadings);
+              setSelectedSpreadItems(new Set());
+              setIsSpreadDeleteMode(false);
+
+              Alert.alert('삭제 완료', `${selectedSpreadItems.size}개의 스프레드 기록이 삭제되었습니다.`);
+            } catch (error) {
+              console.error('Spread delete failed:', error);
+              Alert.alert('삭제 실패', '스프레드 기록 삭제 중 오류가 발생했습니다.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderHeader = () => (
@@ -363,18 +449,58 @@ const TarotDaily = () => {
       <ScrollView style={styles.readingsContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t('journal.sections.dailyReadings')}</Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{t('journal.recordCount', { count: dailyReadings.length })}</Text>
+          <View style={styles.headerRight}>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{t('journal.recordCount', { count: dailyReadings.length })}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.deleteButton, isDeleteMode && styles.deleteButtonActive]}
+              onPress={() => {
+                if (isDeleteMode && selectedItems.size > 0) {
+                  handleDeleteSelected();
+                } else {
+                  setIsDeleteMode(!isDeleteMode);
+                  setSelectedItems(new Set());
+                }
+              }}
+            >
+              <Text style={[styles.deleteButtonText, isDeleteMode && styles.deleteButtonTextActive]}>
+                {isDeleteMode ? (selectedItems.size > 0 ? `선택 삭제하기 (${selectedItems.size})` : '삭제 취소') : '삭제하기'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {dailyReadings.map((reading, index) => (
+        {dailyReadings.map((reading, index) => {
+          const itemId = reading.id || `daily-${index}`;
+          const isSelected = selectedItems.has(itemId);
+
+          return (
           <TouchableOpacity
-            key={reading.id || index}
-            style={styles.dailyCard}
-            onPress={() => setSelectedReading(reading)}
+            key={itemId}
+            style={[styles.dailyCard, isSelected && styles.selectedCard]}
+            onPress={() => {
+              if (isDeleteMode) {
+                const newSelected = new Set(selectedItems);
+                if (isSelected) {
+                  newSelected.delete(itemId);
+                } else {
+                  newSelected.add(itemId);
+                }
+                setSelectedItems(newSelected);
+              } else {
+                setSelectedReading(reading);
+              }
+            }}
           >
             <View style={styles.dailyCardHeader}>
+              {isDeleteMode && (
+                <View style={styles.checkboxContainer}>
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                </View>
+              )}
               <View style={styles.dateInfo}>
                 <Text style={styles.dateText}>{reading.displayDate}</Text>
                 <Text style={styles.typeLabel}>{t('journal.labels.dailyTarotReading')}</Text>
@@ -416,7 +542,8 @@ const TarotDaily = () => {
               </View>
             )}
           </TouchableOpacity>
-        ))}
+          );
+        })}
       </ScrollView>
     );
   };
@@ -441,18 +568,58 @@ const TarotDaily = () => {
             <Text style={{ fontSize: 16, color: '#f4d03f' }}>🃏</Text>
             <Text style={styles.sectionTitle}>{t('journal.sections.spreadReadings')}</Text>
           </View>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{t('journal.recordCount', { count: spreadReadings.length })}</Text>
+          <View style={styles.headerRight}>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{t('journal.recordCount', { count: spreadReadings.length })}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.deleteButton, isSpreadDeleteMode && styles.deleteButtonActive]}
+              onPress={() => {
+                if (isSpreadDeleteMode && selectedSpreadItems.size > 0) {
+                  handleDeleteSelectedSpreads();
+                } else {
+                  setIsSpreadDeleteMode(!isSpreadDeleteMode);
+                  setSelectedSpreadItems(new Set());
+                }
+              }}
+            >
+              <Text style={[styles.deleteButtonText, isSpreadDeleteMode && styles.deleteButtonTextActive]}>
+                {isSpreadDeleteMode ? (selectedSpreadItems.size > 0 ? `선택 삭제하기 (${selectedSpreadItems.size})` : '삭제 취소') : '삭제하기'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {spreadReadings.map((spread, index) => (
+        {spreadReadings.map((spread, index) => {
+          const itemId = spread.id || `spread-${index}`;
+          const isSelected = selectedSpreadItems.has(itemId);
+
+          return (
           <TouchableOpacity
-            key={spread.id || index}
-            style={styles.spreadCard}
-            onPress={() => setSelectedSpread(spread)}
+            key={itemId}
+            style={[styles.spreadCard, isSelected && styles.selectedCard]}
+            onPress={() => {
+              if (isSpreadDeleteMode) {
+                const newSelected = new Set(selectedSpreadItems);
+                if (isSelected) {
+                  newSelected.delete(itemId);
+                } else {
+                  newSelected.add(itemId);
+                }
+                setSelectedSpreadItems(newSelected);
+              } else {
+                setSelectedSpread(spread);
+              }
+            }}
           >
             <View style={styles.spreadCardHeader}>
+              {isSpreadDeleteMode && (
+                <View style={styles.checkboxContainer}>
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                </View>
+              )}
               <View style={styles.spreadInfo}>
                 <Text style={styles.spreadTitle}>{spread.title}</Text>
                 <Text style={styles.spreadDate}>
@@ -480,7 +647,8 @@ const TarotDaily = () => {
               <Text style={styles.spreadType}>{spread.spreadName}</Text>
             </View>
           </TouchableOpacity>
-        ))}
+          );
+        })}
       </ScrollView>
     );
   };
@@ -1099,6 +1267,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.primary,
     fontWeight: '500',
+  },
+
+  // 삭제 기능 스타일
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  deleteButton: {
+    backgroundColor: 'rgba(255, 69, 58, 0.2)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 69, 58, 0.3)',
+  },
+  deleteButtonActive: {
+    backgroundColor: Colors.brand.accent,
+    borderColor: Colors.brand.accent,
+  },
+  deleteButtonText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#ff453a',
+  },
+  deleteButtonTextActive: {
+    color: '#000',
+  },
+  selectedCard: {
+    borderWidth: 2,
+    borderColor: Colors.brand.accent,
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+  },
+  checkboxContainer: {
+    marginRight: Spacing.sm,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(155, 141, 184, 0.5)',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: Colors.brand.accent,
+    borderColor: Colors.brand.accent,
+  },
+  checkmark: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 

@@ -279,7 +279,9 @@
     "display": {
       "title": "画面とテーマ",
       "darkMode": "ダークモード",
-      "alwaysOn": "ミスティカルな体験のため常にオン"
+      "alwaysOn": "ミスティカルな体験のため常にオン",
+      "tarotDeckTheme": "タロットデッキテーマ",
+      "tarotDeckThemeDescription": "カードデザインテーマを選択してください"
     },
     "notifications": {
       "title": "通知設定",
@@ -401,6 +403,7 @@
     "next": "次へ",
     "previous": "前へ",
     "loading": "読み込み中...",
+    "comingSoon": "準備中",
     "error": "エラー",
     "success": "成功",
     "warning": "警告",
