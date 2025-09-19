@@ -25,7 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -86,7 +86,17 @@
     },
     "scheme": "tarot-timer",
     "githubUrl": "https://github.com/tarot-timer/tarot-timer-app",
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7b2cbf",
+          "sounds": [],
+          "mode": "production"
+        }
+      ]
+    ],
     "runtimeVersion": {
       "policy": "appVersion"
     },
