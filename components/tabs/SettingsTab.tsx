@@ -29,7 +29,7 @@ try {
   console.warn('⚠️ RewardedAd 컴포넌트 로드 실패 (보상형 광고 비활성화):', error);
 }
 // import SupabaseTest from '../SupabaseTest';
-import HybridDataManager, { SyncStatus } from '../../utils/hybridDataManager';
+import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager';
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 // import { PremiumUpgrade } from '../PremiumUpgrade';
 import PremiumTest from '../PremiumTest';
@@ -66,10 +66,10 @@ const SettingsTab: React.FC = () => {
     isLoading: premiumLoading
   } = usePremium();
 
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    isEnabled: false,
-    pendingChanges: 0,
-    syncInProgress: false
+  const [localDataStatus, setLocalDataStatus] = useState<LocalDataStatus>({
+    totalSessions: 0,
+    totalJournalEntries: 0,
+    storageUsed: 0
   });
   const [cloudBackupEnabled, setCloudBackupEnabled] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -95,18 +95,18 @@ const SettingsTab: React.FC = () => {
     end: quietHoursEnd,
   });
 
-  // 동기화 상태 로드
+  // 로컬 데이터 상태 로드
   useEffect(() => {
-    loadSyncStatus();
+    loadLocalDataStatus();
   }, []);
 
-  const loadSyncStatus = async () => {
+  const loadLocalDataStatus = async () => {
     try {
-      const status = await HybridDataManager.getSyncStatus();
-      setSyncStatus(status);
-      setCloudBackupEnabled(status.isEnabled);
+      const status = await LocalDataManager.getLocalDataStatus();
+      setLocalDataStatus(status);
+      setCloudBackupEnabled(false); // 로컬 전용으로 변경
     } catch (error) {
-      console.error('동기화 상태 로드 오류:', error);
+      console.error('로컬 데이터 상태 로드 오류:', error);
     }
   };
 
@@ -168,57 +168,26 @@ const SettingsTab: React.FC = () => {
   };
 
   const handleToggleCloudBackup = async (enabled: boolean) => {
-    try {
-      if (enabled) {
-        const result = await HybridDataManager.enableCloudBackup();
-        if (result.success) {
-          setCloudBackupEnabled(true);
-          Alert.alert('클라우드 백업 활성화', result.message);
-          loadSyncStatus();
-        } else {
-          Alert.alert('클라우드 백업 오류', result.message);
-        }
-      } else {
-        Alert.alert(
-          '클라우드 백업 비활성화',
-          '클라우드 백업을 비활성화하시겠습니까? 로컬 데이터는 유지되며 클라우드 동기화만 중단됩니다.',
-          [
-            { text: '취소', style: 'cancel' },
-            {
-              text: '비활성화',
-              style: 'destructive',
-              onPress: async () => {
-                await HybridDataManager.disableCloudBackup();
-                setCloudBackupEnabled(false);
-                loadSyncStatus();
-              }
-            }
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('클라우드 백업 토글 오류:', error);
-      Alert.alert('오류', '클라우드 백업 설정 중 오류가 발생했습니다.');
-    }
+    // 로컬 전용 모드에서는 클라우드 백업 비활성화
+    Alert.alert(
+      '로컬 저장 전용',
+      '현재 앱은 로컬 저장 전용으로 설정되어 있습니다. 모든 데이터는 기기에만 저장됩니다.',
+      [{ text: '확인' }]
+    );
   };
 
   const handleManualSync = async () => {
-    try {
-      const result = await HybridDataManager.manualSync();
-      Alert.alert(
-        result.success ? '동기화 완료' : '동기화 오류',
-        result.message
-      );
-      loadSyncStatus();
-    } catch (error) {
-      console.error('수동 동기화 오류:', error);
-      Alert.alert('오류', '동기화 중 오류가 발생했습니다.');
-    }
+    // 로컬 전용 모드에서는 동기화 불가
+    Alert.alert(
+      '로컬 저장 전용',
+      '현재 앱은 로컬 저장만 사용합니다. 데이터 백업은 내보내기 기능을 이용해주세요.',
+      [{ text: '확인' }]
+    );
   };
 
   const handleExportData = async () => {
     try {
-      const exportData = await HybridDataManager.exportData();
+      const exportData = await LocalDataManager.exportData();
       // 실제 구현에서는 파일 공유 API 사용
       Alert.alert(
         '데이터 내보내기',

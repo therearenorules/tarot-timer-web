@@ -26,6 +26,7 @@ import { usePWA } from './hooks/usePWA';
 // 광고 매니저 비활성화 (iOS 빌드 최적화)
 let AdManager: any = { initialize: () => Promise.resolve(false), dispose: () => {} };
 import IAPManager from './utils/iapManager';
+import AnalyticsManager from './utils/analyticsManager';
 import {
   Colors,
   Spacing,
@@ -240,6 +241,15 @@ function AppContent() {
           console.log('⚠️ IAP 시스템 초기화 실패');
         }
 
+        // 분석 시스템 초기화
+        console.log('📊 분석 시스템 초기화 시작...');
+        try {
+          await AnalyticsManager.startSession();
+          console.log('✅ 분석 시스템 초기화 완료');
+        } catch (error) {
+          console.warn('⚠️ 분석 시스템 초기화 실패:', error);
+        }
+
         // 광고 시스템 초기화
         console.log('📱 광고 시스템 초기화 시작...');
         const adSuccess = await AdManager.initialize();
@@ -257,6 +267,7 @@ function AppContent() {
 
     // 컴포넌트 언마운트 시 정리
     return () => {
+      AnalyticsManager.endSession();
       AdManager.dispose();
       IAPManager.dispose();
     };

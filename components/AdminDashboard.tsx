@@ -16,22 +16,23 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, BorderRadius, Typography } from './DesignSystem';
-import {
-  adminSupabase,
-  isAdmin,
-  getAdminDashboardData,
-  collectAppUsageStats,
-  AppUsageStats,
-  ErrorLog,
-  UserFeedback
-} from '../utils/adminSupabase';
+import AnalyticsManager, { AppUsageStats, AnalyticsEvent } from '../utils/analyticsManager';
+import LocalDataManager from '../utils/localDataManager';
 
 const { width } = Dimensions.get('window');
 
+interface LocalDataStats {
+  totalSessions: number;
+  totalJournalEntries: number;
+  storageUsed: number;
+  lastBackupTime?: string;
+}
+
 interface DashboardData {
-  usage_stats: AppUsageStats[];
-  error_logs: ErrorLog[];
-  user_feedback: UserFeedback[];
+  usage_stats: AppUsageStats;
+  local_data_stats: LocalDataStats;
+  recent_events: AnalyticsEvent[];
+  analytics_enabled: boolean;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -39,33 +40,31 @@ const AdminDashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [adminAccess, setAdminAccess] = useState(false);
+  const [adminAccess, setAdminAccess] = useState(true); // 로컬 대시보드는 항상 접근 가능
 
   useEffect(() => {
-    checkAdminAccess();
+    loadDashboardData();
   }, []);
-
-  const checkAdminAccess = async () => {
-    try {
-      const hasAccess = await isAdmin();
-      setAdminAccess(hasAccess);
-
-      if (hasAccess) {
-        await loadDashboardData();
-      } else {
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error('관리자 권한 확인 오류:', error);
-      setAdminAccess(false);
-      setLoading(false);
-    }
-  };
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const data = await getAdminDashboardData();
+
+      // 로컬 분석 데이터 수집
+      const [usageStats, localDataStats, recentEvents, analyticsEnabled] = await Promise.all([
+        AnalyticsManager.generateUsageStats(),
+        LocalDataManager.getLocalDataStatus(),
+        AnalyticsManager.getStoredEvents(),
+        AnalyticsManager.isAnalyticsEnabled()
+      ]);
+
+      const data: DashboardData = {
+        usage_stats: usageStats,
+        local_data_stats: localDataStats,
+        recent_events: recentEvents.slice(-50), // 최근 50개 이벤트
+        analytics_enabled: analyticsEnabled
+      };
+
       setDashboardData(data);
     } catch (error) {
       console.error('대시보드 데이터 로드 오류:', error);
@@ -83,12 +82,46 @@ const AdminDashboard: React.FC = () => {
 
   const collectStats = async () => {
     try {
-      await collectAppUsageStats();
-      Alert.alert('완료', '사용 통계가 수집되었습니다.');
+      // 오래된 이벤트 정리
+      await AnalyticsManager.cleanupOldEvents();
+      Alert.alert('완료', '분석 데이터가 정리되고 통계가 업데이트되었습니다.');
       loadDashboardData();
     } catch (error) {
       console.error('통계 수집 오류:', error);
       Alert.alert('오류', '통계 수집에 실패했습니다.');
+    }
+  };
+
+  const toggleAnalytics = async () => {
+    try {
+      const currentStatus = await AnalyticsManager.isAnalyticsEnabled();
+      await AnalyticsManager.setAnalyticsEnabled(!currentStatus);
+
+      Alert.alert(
+        '설정 변경',
+        `분석 데이터 수집이 ${!currentStatus ? '활성화' : '비활성화'}되었습니다.`
+      );
+
+      loadDashboardData();
+    } catch (error) {
+      console.error('분석 설정 변경 오류:', error);
+      Alert.alert('오류', '설정 변경에 실패했습니다.');
+    }
+  };
+
+  const exportAnalyticsData = async () => {
+    try {
+      const data = await AnalyticsManager.prepareDataForAdmin();
+      if (data) {
+        // 실제로는 파일로 내보내기 또는 관리자 서버로 전송
+        Alert.alert(
+          '데이터 내보내기',
+          `익명화된 분석 데이터가 준비되었습니다.\n이벤트 수: ${data.anonymized_events.length}\n수집 시간: ${new Date(data.collected_at).toLocaleString('ko-KR')}`
+        );
+      }
+    } catch (error) {
+      console.error('데이터 내보내기 오류:', error);
+      Alert.alert('오류', '데이터 내보내기에 실패했습니다.');
     }
   };
 
@@ -127,91 +160,134 @@ const AdminDashboard: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>📊 관리자 대시보드</Text>
-        <Text style={styles.headerSubtitle}>타로 타이머 웹앱 관리</Text>
+        <Text style={styles.headerSubtitle}>타로 타이머 웹앱 로컬 분석</Text>
       </View>
 
-      {/* 통계 수집 버튼 */}
-      <TouchableOpacity style={styles.collectButton} onPress={collectStats}>
-        <Text style={styles.collectButtonText}>📈 통계 수집</Text>
-      </TouchableOpacity>
+      {/* 분석 상태 및 제어 버튼 */}
+      <View style={styles.controlSection}>
+        <View style={styles.statusRow}>
+          <Text style={styles.statusLabel}>
+            분석 수집: {dashboardData?.analytics_enabled ? '🟢 활성화' : '🔴 비활성화'}
+          </Text>
+          <TouchableOpacity style={styles.toggleButton} onPress={toggleAnalytics}>
+            <Text style={styles.toggleButtonText}>
+              {dashboardData?.analytics_enabled ? '비활성화' : '활성화'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* 사용 통계 섹션 */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.actionButton} onPress={collectStats}>
+            <Text style={styles.actionButtonText}>🧹 데이터 정리</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={exportAnalyticsData}>
+            <Text style={styles.actionButtonText}>📤 데이터 내보내기</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 로컬 데이터 통계 섹션 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📱 앱 사용 통계</Text>
-        {dashboardData?.usage_stats.length ? (
+        <Text style={styles.sectionTitle}>💾 로컬 데이터 현황</Text>
+        {dashboardData?.local_data_stats ? (
           <View style={styles.statsContainer}>
-            {dashboardData.usage_stats.slice(0, 5).map((stat, index) => (
-              <View key={index} style={styles.statItem}>
-                <Text style={styles.statTime}>
-                  {new Date(stat.timestamp).toLocaleString('ko-KR')}
-                </Text>
-                <Text style={styles.statText}>
-                  버전: {stat.app_version} | 플랫폼: {stat.platform}
-                </Text>
-                <Text style={styles.statNumbers}>
-                  예상 사용자: {stat.user_count_estimate} | 세션: {stat.session_count_estimate}
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>총 타로 세션</Text>
+              <Text style={styles.statValue}>{dashboardData.local_data_stats.totalSessions}개</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>총 저널 엔트리</Text>
+              <Text style={styles.statValue}>{dashboardData.local_data_stats.totalJournalEntries}개</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>저장소 사용량</Text>
+              <Text style={styles.statValue}>{dashboardData.local_data_stats.storageUsed} KB</Text>
+            </View>
+            {dashboardData.local_data_stats.lastBackupTime && (
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>마지막 백업</Text>
+                <Text style={styles.statValue}>
+                  {new Date(dashboardData.local_data_stats.lastBackupTime).toLocaleString('ko-KR')}
                 </Text>
               </View>
-            ))}
+            )}
           </View>
         ) : (
-          <Text style={styles.emptyText}>수집된 통계가 없습니다.</Text>
+          <Text style={styles.emptyText}>로컬 데이터 정보가 없습니다.</Text>
         )}
       </View>
 
-      {/* 오류 로그 섹션 */}
+      {/* 앱 사용 통계 섹션 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🚨 오류 로그</Text>
-        {dashboardData?.error_logs.length ? (
-          <View style={styles.logsContainer}>
-            {dashboardData.error_logs.slice(0, 5).map((log, index) => (
-              <View key={index} style={styles.logItem}>
-                <Text style={styles.logTime}>
-                  {new Date(log.timestamp).toLocaleString('ko-KR')}
-                </Text>
-                <Text style={styles.logMessage} numberOfLines={2}>
-                  {log.error_message}
-                </Text>
-                <Text style={styles.logDetails}>
-                  {log.app_version} | {log.platform}
+        <Text style={styles.sectionTitle}>📊 사용 패턴 분석</Text>
+        {dashboardData?.usage_stats ? (
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>총 세션 수</Text>
+              <Text style={styles.statValue}>{dashboardData.usage_stats.total_sessions}회</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>타로 세션 완료</Text>
+              <Text style={styles.statValue}>{dashboardData.usage_stats.total_tarot_sessions}회</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>저널 엔트리</Text>
+              <Text style={styles.statValue}>{dashboardData.usage_stats.total_journal_entries}개</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>평균 세션 시간</Text>
+              <Text style={styles.statValue}>{dashboardData.usage_stats.avg_session_duration}분</Text>
+            </View>
+            {dashboardData.usage_stats.popular_cards.length > 0 && (
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>인기 카드</Text>
+                <Text style={styles.statValue}>
+                  {dashboardData.usage_stats.popular_cards.slice(0, 3).join(', ')}
                 </Text>
               </View>
-            ))}
+            )}
+            {dashboardData.usage_stats.popular_spreads.length > 0 && (
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>인기 스프레드</Text>
+                <Text style={styles.statValue}>
+                  {dashboardData.usage_stats.popular_spreads.slice(0, 3).join(', ')}
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
-          <Text style={styles.emptyText}>오류 로그가 없습니다.</Text>
+          <Text style={styles.emptyText}>사용 통계가 없습니다.</Text>
         )}
       </View>
 
-      {/* 사용자 피드백 섹션 */}
+      {/* 최근 이벤트 섹션 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💭 사용자 피드백</Text>
-        {dashboardData?.user_feedback.length ? (
-          <View style={styles.feedbackContainer}>
-            {dashboardData.user_feedback.slice(0, 5).map((feedback, index) => (
-              <View key={index} style={styles.feedbackItem}>
-                <View style={styles.feedbackHeader}>
-                  <Text style={styles.feedbackType}>
-                    {feedback.feedback_type === 'bug' ? '🐛 버그' :
-                     feedback.feedback_type === 'feature' ? '✨ 기능 요청' : '💬 일반'}
+        <Text style={styles.sectionTitle}>🕐 최근 이벤트 로그</Text>
+        {dashboardData?.recent_events.length ? (
+          <View style={styles.eventsContainer}>
+            {dashboardData.recent_events.slice(-10).reverse().map((event, index) => (
+              <View key={index} style={styles.eventItem}>
+                <View style={styles.eventHeader}>
+                  <Text style={styles.eventType}>
+                    {getEventTypeIcon(event.event_type)} {getEventTypeName(event.event_type)}
                   </Text>
-                  {feedback.rating && (
-                    <Text style={styles.feedbackRating}>
-                      {'⭐'.repeat(feedback.rating)}
-                    </Text>
-                  )}
+                  <Text style={styles.eventTime}>
+                    {new Date(event.timestamp).toLocaleString('ko-KR')}
+                  </Text>
                 </View>
-                <Text style={styles.feedbackMessage} numberOfLines={3}>
-                  {feedback.message}
-                </Text>
-                <Text style={styles.feedbackTime}>
-                  {new Date(feedback.timestamp).toLocaleString('ko-KR')}
+                {Object.keys(event.event_data).length > 0 && (
+                  <Text style={styles.eventData} numberOfLines={2}>
+                    {formatEventData(event.event_data)}
+                  </Text>
+                )}
+                <Text style={styles.eventDetails}>
+                  {event.device_info.platform} | {event.device_info.app_version}
                 </Text>
               </View>
             ))}
           </View>
         ) : (
-          <Text style={styles.emptyText}>피드백이 없습니다.</Text>
+          <Text style={styles.emptyText}>최근 이벤트가 없습니다.</Text>
         )}
       </View>
 
@@ -381,6 +457,171 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: Spacing.xl,
   },
+  controlSection: {
+    margin: Spacing.md,
+    padding: Spacing.md,
+    backgroundColor: Colors.background.secondary,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border.primary,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  statusLabel: {
+    ...Typography.body.medium,
+    color: Colors.text.primary,
+    flex: 1,
+  },
+  toggleButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.accent.main,
+    borderRadius: BorderRadius.sm,
+  },
+  toggleButtonText: {
+    ...Typography.button.secondary,
+    color: Colors.text.inverse,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
+    padding: Spacing.md,
+    backgroundColor: Colors.brand.secondary,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    ...Typography.button.secondary,
+    color: Colors.text.primary,
+  },
+  eventsContainer: {
+    gap: Spacing.sm,
+  },
+  eventItem: {
+    padding: Spacing.sm,
+    backgroundColor: Colors.background.tertiary,
+    borderRadius: BorderRadius.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.brand.primary,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.xs,
+  },
+  eventType: {
+    ...Typography.caption.medium,
+    color: Colors.text.accent,
+    flex: 1,
+  },
+  eventTime: {
+    ...Typography.caption.regular,
+    color: Colors.text.secondary,
+  },
+  eventData: {
+    ...Typography.caption.regular,
+    color: Colors.text.tertiary,
+    marginBottom: Spacing.xs,
+  },
+  eventDetails: {
+    ...Typography.caption.regular,
+    color: Colors.text.tertiary,
+  },
+  statLabel: {
+    ...Typography.caption.medium,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.xs,
+  },
+  statValue: {
+    ...Typography.body.medium,
+    color: Colors.text.accent,
+  },
 });
+
+// Helper functions for event display
+const getEventTypeIcon = (eventType: string): string => {
+  const iconMap: Record<string, string> = {
+    'app_launch': '🚀',
+    'app_close': '🔚',
+    'tarot_session_start': '🔮',
+    'tarot_session_complete': '✨',
+    'journal_entry_add': '📝',
+    'premium_feature_use': '💎',
+    'setting_change': '⚙️',
+    'card_draw': '🃏',
+    'spread_select': '🎴',
+    'export_data': '📤',
+    'import_data': '📥',
+  };
+  return iconMap[eventType] || '📊';
+};
+
+const getEventTypeName = (eventType: string): string => {
+  const nameMap: Record<string, string> = {
+    'app_launch': '앱 시작',
+    'app_close': '앱 종료',
+    'tarot_session_start': '타로 세션 시작',
+    'tarot_session_complete': '타로 세션 완료',
+    'journal_entry_add': '저널 작성',
+    'premium_feature_use': '프리미엄 기능 사용',
+    'setting_change': '설정 변경',
+    'card_draw': '카드 뽑기',
+    'spread_select': '스프레드 선택',
+    'export_data': '데이터 내보내기',
+    'import_data': '데이터 가져오기',
+  };
+  return nameMap[eventType] || eventType;
+};
+
+const formatEventData = (eventData: Record<string, any>): string => {
+  if (!eventData || Object.keys(eventData).length === 0) {
+    return '';
+  }
+
+  const formatValue = (key: string, value: any): string => {
+    if (key === 'session_duration_minutes') {
+      return `세션 시간: ${value}분`;
+    }
+    if (key === 'spread_type') {
+      return `스프레드: ${value}`;
+    }
+    if (key === 'card_count') {
+      return `카드 수: ${value}개`;
+    }
+    if (key === 'card_name') {
+      return `카드: ${value}`;
+    }
+    if (key === 'is_reversed') {
+      return value ? '역방향' : '정방향';
+    }
+    if (key === 'feature_name') {
+      return `기능: ${value}`;
+    }
+    if (key === 'setting_name') {
+      return `설정: ${value}`;
+    }
+    if (key === 'entry_length') {
+      return `글자 수: ${value}`;
+    }
+    if (key === 'has_images') {
+      return value ? '이미지 포함' : '텍스트만';
+    }
+
+    return `${key}: ${value}`;
+  };
+
+  return Object.entries(eventData)
+    .slice(0, 3) // 최대 3개 항목만 표시
+    .map(([key, value]) => formatValue(key, value))
+    .join(' | ');
+};
 
 export default AdminDashboard;
