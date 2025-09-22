@@ -62,6 +62,7 @@ temp/
 # Backup directories
 backups/
 backup-analysis-*/
+backup-*/
 
 # Test files
 test-*.js

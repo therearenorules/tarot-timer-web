@@ -78,5 +78,22 @@
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "typescript": "~5.9.2"
-  }
+  },
+  "description": "React Native + Expo 기반의 24시간 타로 타이머 애플리케이션",
+  "main": "credentials-setup.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therearenorules/tarot-timer-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/therearenorules/tarot-timer-web/issues"
+  },
+  "homepage": "https://github.com/therearenorules/tarot-timer-web#readme"
 }

@@ -33,7 +33,6 @@ import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager'
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 // import { PremiumUpgrade } from '../PremiumUpgrade';
 import PremiumTest from '../PremiumTest';
-import AdminDashboard from '../AdminDashboard';
 // 조건부 import - 모바일 환경에서 안전하게 로드
 let SubscriptionPlans: any = null;
 let SubscriptionManagement: any = null;
@@ -74,7 +73,6 @@ const SettingsTab: React.FC = () => {
   const [cloudBackupEnabled, setCloudBackupEnabled] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showManagementModal, setShowManagementModal] = useState(false);
-  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [adminClickCount, setAdminClickCount] = useState(0);
 
   // Context에서 가져온 값들을 로컬 상태 대신 사용
@@ -854,8 +852,9 @@ const SettingsTab: React.FC = () => {
               setAdminClickCount(prev => {
                 const newCount = prev + 1;
                 if (newCount >= 7) {
-                  setShowAdminDashboard(true);
-                  setAdminClickCount(0);
+                  Alert.alert('개발자 모드', '관리자 기능이 별도 앱으로 분리되었습니다.', [
+                    { text: '확인', onPress: () => setAdminClickCount(0) }
+                  ]);
                 }
                 return newCount;
               });
@@ -901,25 +900,6 @@ const SettingsTab: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* 관리자 대시보드 모달 */}
-      <Modal
-        visible={showAdminDashboard}
-        animationType="slide"
-        presentationStyle="fullScreen"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>관리자 대시보드</Text>
-            <TouchableOpacity
-              style={styles.modalClose}
-              onPress={() => setShowAdminDashboard(false)}
-            >
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <AdminDashboard />
-        </View>
-      </Modal>
 
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />

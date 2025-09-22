@@ -102,7 +102,21 @@
       "Bash(git checkout:*)",
       "Bash(del i18ntemp_fix.txt)",
       "Bash(move i18nindex_fixed.ts i18nindex.ts)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Read(//c/Users/cntus/Desktop/**)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm init:*)",
+      "Bash(printf '\\n')",
+      "Read(//c/c/Users/cntus/Desktop/**)",
+      "Bash(cat:*)",
+      "Bash(next dev:*)",
+      "Bash(npx next dev:*)",
+      "Bash(start http://localhost:3002)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(start http://localhost:3003/dashboard)",
+      "Bash(del \"C:\\Users\\cntus\\Desktop\\tarot-timer-web\\components\\AdminDashboard.tsx\")",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
