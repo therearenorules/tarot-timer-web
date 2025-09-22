@@ -11,7 +11,14 @@ const router = express.Router();
 router.post('/register-token', authenticateToken, async (req, res) => {
   try {
     const { expoPushToken, deviceInfo } = req.body;
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     if (!expoPushToken) {
       return res.status(400).json({
@@ -30,7 +37,7 @@ router.post('/register-token', authenticateToken, async (req, res) => {
     console.error('Error registering push token:', error);
     res.status(500).json({
       error: 'Registration failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -41,7 +48,14 @@ router.post('/register-token', authenticateToken, async (req, res) => {
  */
 router.delete('/unregister-token', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     await NotificationService.removeDeviceToken(userId);
 
@@ -52,7 +66,7 @@ router.delete('/unregister-token', authenticateToken, async (req, res) => {
     console.error('Error unregistering push token:', error);
     res.status(500).json({
       error: 'Unregistration failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -63,8 +77,15 @@ router.delete('/unregister-token', authenticateToken, async (req, res) => {
  */
 router.put('/preferences', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
     const preferences = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // TODO: 데이터베이스에 알림 설정 저장
     console.log(`Updating notification preferences for user ${userId}:`, preferences);
@@ -77,7 +98,7 @@ router.put('/preferences', authenticateToken, async (req, res) => {
     console.error('Error updating notification preferences:', error);
     res.status(500).json({
       error: 'Update failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -88,7 +109,14 @@ router.put('/preferences', authenticateToken, async (req, res) => {
  */
 router.get('/preferences', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // TODO: 데이터베이스에서 알림 설정 조회
     const preferences = {
@@ -106,7 +134,7 @@ router.get('/preferences', authenticateToken, async (req, res) => {
     console.error('Error getting notification preferences:', error);
     res.status(500).json({
       error: 'Get preferences failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -117,7 +145,14 @@ router.get('/preferences', authenticateToken, async (req, res) => {
  */
 router.post('/schedule-hourly', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // TODO: Bull Queue에 시간별 알림 작업 추가
     console.log(`Scheduling hourly notifications for user ${userId}`);
@@ -129,7 +164,7 @@ router.post('/schedule-hourly', authenticateToken, async (req, res) => {
     console.error('Error scheduling hourly notifications:', error);
     res.status(500).json({
       error: 'Scheduling failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -140,7 +175,14 @@ router.post('/schedule-hourly', authenticateToken, async (req, res) => {
  */
 router.delete('/cancel-hourly', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // TODO: Bull Queue에서 시간별 알림 작업 제거
     console.log(`Cancelling hourly notifications for user ${userId}`);
@@ -152,7 +194,7 @@ router.delete('/cancel-hourly', authenticateToken, async (req, res) => {
     console.error('Error cancelling hourly notifications:', error);
     res.status(500).json({
       error: 'Cancellation failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -163,8 +205,15 @@ router.delete('/cancel-hourly', authenticateToken, async (req, res) => {
  */
 router.post('/test-send', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
     const { type = 'test' } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // 샘플 타로 카드 데이터
     const sampleCard = {
@@ -215,7 +264,7 @@ router.post('/test-send', authenticateToken, async (req, res) => {
     console.error('Error sending test notification:', error);
     res.status(500).json({
       error: 'Test notification failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -226,8 +275,15 @@ router.post('/test-send', authenticateToken, async (req, res) => {
  */
 router.put('/timezone', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
     const { timezone } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     if (!timezone) {
       return res.status(400).json({
@@ -247,7 +303,7 @@ router.put('/timezone', authenticateToken, async (req, res) => {
     console.error('Error updating timezone:', error);
     res.status(500).json({
       error: 'Timezone update failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -258,7 +314,14 @@ router.put('/timezone', authenticateToken, async (req, res) => {
  */
 router.get('/timezone', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // TODO: 데이터베이스에서 시간대 조회
     const timezone = 'Asia/Seoul'; // 기본값
@@ -270,7 +333,7 @@ router.get('/timezone', authenticateToken, async (req, res) => {
     console.error('Error getting timezone:', error);
     res.status(500).json({
       error: 'Get timezone failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -281,7 +344,14 @@ router.get('/timezone', authenticateToken, async (req, res) => {
  */
 router.get('/status', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User ID is required'
+      });
+    }
 
     // TODO: 사용자의 알림 상태 조회
     const status = {
@@ -299,7 +369,7 @@ router.get('/status', authenticateToken, async (req, res) => {
     console.error('Error getting notification status:', error);
     res.status(500).json({
       error: 'Get status failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });

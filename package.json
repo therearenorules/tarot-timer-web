@@ -80,7 +80,7 @@
     "typescript": "~5.9.2"
   },
   "description": "React Native + Expo 기반의 24시간 타로 타이머 애플리케이션",
-  "main": "credentials-setup.js",
+  "main": "node_modules/expo/AppEntry.js",
   "directories": {
     "doc": "docs",
     "test": "tests"

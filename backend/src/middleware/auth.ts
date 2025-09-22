@@ -22,12 +22,9 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_URL !== 'https://placeholde
   console.log('ℹ️ Auth middleware: Running in development mode with JWT-only authentication');
 }
 
-export interface AuthenticatedRequest extends Request {
-  userId?: string;
-  user?: any;
-}
+// AuthenticatedRequest는 express.d.ts에서 전역으로 정의됨
 
-export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -50,23 +47,40 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
       });
     }
 
-    // Get user from database to ensure they still exist and are active
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, email, subscription_status, trial_end_date')
-      .eq('id', (decoded as any).userId)
-      .single();
+    // Development mode: Skip database check if Supabase is not available
+    if (!supabase) {
+      console.log('🔧 Development mode: Skipping user database verification');
 
-    if (userError || !user) {
-      return res.status(401).json({
-        error: 'User not found',
-        code: 'USER_NOT_FOUND'
-      });
+      // Create mock user based on JWT data
+      const mockUser = {
+        id: (decoded as any).userId,
+        email: (decoded as any).email,
+        subscription_status: 'trial',
+        trial_end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      // Attach user info to request (using type assertion)
+      (req as any).userId = mockUser.id;
+      (req as any).user = mockUser;
+    } else {
+      // Production mode: Get user from database to ensure they still exist and are active
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id, email, subscription_status, trial_end_date')
+        .eq('id', (decoded as any).userId)
+        .single();
+
+      if (userError || !user) {
+        return res.status(401).json({
+          error: 'User not found',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+
+      // Attach user info to request (using type assertion)
+      (req as any).userId = user.id;
+      (req as any).user = user;
     }
-
-    // Attach user info to request
-    req.userId = user.id;
-    req.user = user;
 
     next();
   } catch (error) {
@@ -93,7 +107,7 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
   }
 };
 
-export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
@@ -108,16 +122,32 @@ export const optionalAuth = async (req: AuthenticatedRequest, res: Response, nex
     const decoded = jwt.verify(token, secret);
 
     if ((decoded as any).type === 'access') {
-      // Get user from database
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id, email, subscription_status, trial_end_date')
-        .eq('id', (decoded as any).userId)
-        .single();
+      // Development mode: Skip database check if Supabase is not available
+      if (!supabase) {
+        console.log('🔧 Optional auth: Development mode, creating mock user from JWT');
 
-      if (!userError && user) {
-        req.userId = user.id;
-        req.user = user;
+        // Create mock user based on JWT data
+        const mockUser = {
+          id: (decoded as any).userId,
+          email: (decoded as any).email,
+          subscription_status: 'trial',
+          trial_end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        };
+
+        (req as any).userId = mockUser.id;
+        (req as any).user = mockUser;
+      } else {
+        // Production mode: Get user from database
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('id, email, subscription_status, trial_end_date')
+          .eq('id', (decoded as any).userId)
+          .single();
+
+        if (!userError && user) {
+          (req as any).userId = user.id;
+          (req as any).user = user;
+        }
       }
     }
 

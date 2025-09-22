@@ -237,7 +237,11 @@ async function handleStaticAsset(request) {
       // Return cached version immediately
       const networkResponse = fetch(request).then(response => {
         if (response && response.status === 200) {
-          cache.put(request, response.clone());
+          // chrome-extension 스키마는 캐시에 저장할 수 없으므로 제외
+          const url = request.url || '';
+          if (!url.startsWith('chrome-extension://') && !url.startsWith('moz-extension://') && !url.startsWith('safari-extension://')) {
+            cache.put(request, response.clone());
+          }
         }
         return response;
       }).catch(() => {
@@ -250,7 +254,11 @@ async function handleStaticAsset(request) {
     // Not in cache, fetch from network
     const networkResponse = await fetch(request);
     if (networkResponse && networkResponse.status === 200) {
-      cache.put(request, networkResponse.clone());
+      // chrome-extension 스키마는 캐시에 저장할 수 없으므로 제외
+      const url = request.url || '';
+      if (!url.startsWith('chrome-extension://') && !url.startsWith('moz-extension://') && !url.startsWith('safari-extension://')) {
+        cache.put(request, networkResponse.clone());
+      }
     }
 
     return networkResponse;
@@ -272,7 +280,11 @@ async function handleAPIRequest(request) {
       if (networkResponse && networkResponse.status === 200) {
         // Cache successful responses for GET requests
         if (request.method === 'GET') {
-          cache.put(request, networkResponse.clone());
+          // chrome-extension 스키마는 캐시에 저장할 수 없으므로 제외
+          const url = request.url || '';
+          if (!url.startsWith('chrome-extension://') && !url.startsWith('moz-extension://') && !url.startsWith('safari-extension://')) {
+            cache.put(request, networkResponse.clone());
+          }
         }
       }
 
@@ -368,7 +380,11 @@ async function handleDynamicRequest(request) {
 
     const fetchPromise = fetch(request).then(response => {
       if (response && response.status === 200) {
-        cache.put(request, response.clone());
+        // chrome-extension 스키마는 캐시에 저장할 수 없으므로 제외
+        const url = request.url || '';
+        if (!url.startsWith('chrome-extension://') && !url.startsWith('moz-extension://') && !url.startsWith('safari-extension://')) {
+          cache.put(request, response.clone());
+        }
       }
       return response;
     }).catch(() => {

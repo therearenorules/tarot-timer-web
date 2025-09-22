@@ -4,14 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
 
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    subscriptionStatus: string;
-    trialEndDate: Date;
-  };
-}
+// AuthenticatedRequest는 이제 express.d.ts에서 전역으로 정의됨
 
 // JWT token generation
 export function generateToken(userId: string, email: string): string {
@@ -47,7 +40,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 // Authentication middleware
-export function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export function authenticateToken(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -60,12 +53,13 @@ export function authenticateToken(req: AuthenticatedRequest, res: Response, next
 
   try {
     const decoded = verifyToken(token);
-    req.user = {
+    (req as any).user = {
       id: decoded.userId,
       email: decoded.email,
       subscriptionStatus: 'trial', // Will be populated from database
       trialEndDate: new Date() // Will be populated from database
     };
+    (req as any).userId = decoded.userId; // Express Request 확장을 통해 userId 설정
     next();
   } catch (error) {
     return res.status(403).json({
@@ -76,25 +70,26 @@ export function authenticateToken(req: AuthenticatedRequest, res: Response, next
 }
 
 // Optional authentication (for endpoints that work with or without auth)
-export function optionalAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
 
   if (token) {
     try {
       const decoded = verifyToken(token);
-      req.user = {
+      (req as any).user = {
         id: decoded.userId,
         email: decoded.email,
         subscriptionStatus: 'trial',
         trialEndDate: new Date()
       };
+      (req as any).userId = decoded.userId; // Express Request 확장을 통해 userId 설정
     } catch (error) {
       // Token is invalid, but continue without user
       console.log('Invalid token in optional auth, continuing without user');
     }
   }
-  
+
   next();
 }
 

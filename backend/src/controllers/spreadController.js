@@ -1,9 +1,19 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Supabase 클라이언트 조건부 생성
+let supabase = null;
+if (process.env.SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY &&
+    !process.env.SUPABASE_URL.includes('example') &&
+    !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('placeholder')) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  console.log('✅ Supabase client initialized (spreadController)');
+} else {
+  console.log('ℹ️ Supabase not configured, running in mock mode (spreadController)');
+}
 
 // Get all spread readings for user
 const getSpreads = async (req, res) => {

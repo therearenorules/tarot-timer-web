@@ -1,14 +1,44 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Supabase 클라이언트 조건부 생성
+let supabase = null;
+if (process.env.SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY &&
+    !process.env.SUPABASE_URL.includes('example') &&
+    !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('placeholder')) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  console.log('✅ Supabase client initialized (syncController)');
+} else {
+  console.log('ℹ️ Supabase not configured, running in mock mode (syncController)');
+}
 
 // Get sync status and metadata
 const getSyncStatus = async (req, res) => {
   try {
     const userId = req.userId;
+
+    // Supabase가 없으면 mock 응답 반환
+    if (!supabase) {
+      return res.status(200).json({
+        sync_status: 'local_only',
+        local_data: {
+          daily_sessions: 0,
+          tarot_spreads: 0,
+          journal_entries: 0
+        },
+        cloud_data: {
+          daily_sessions: 0,
+          tarot_spreads: 0,
+          journal_entries: 0
+        },
+        last_sync: null,
+        sync_enabled: false,
+        message: 'Running in development mode - data stored locally'
+      });
+    }
 
     // Get counts from different tables
     const [dailySessionsResult, spreadsResult, userResult] = await Promise.all([

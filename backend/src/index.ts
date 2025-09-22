@@ -13,6 +13,7 @@ import performanceRoutes, { setPerformanceMonitor } from './routes/performanceRo
 import tarotRoutes from './routes/tarotRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import subscriptionRoutes from './routes/subscriptionRoutes';
+import adminRoutes from './routes/adminRoutes';
 import WebSocketService from './services/WebSocketService';
 import CacheService from './services/CacheService';
 import { PerformanceMonitorService } from './services/PerformanceMonitorService';
@@ -24,7 +25,7 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:8082';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:8083,http://localhost:8084,http://localhost:8085,http://localhost:8086,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3006';
 
 // Security middleware
 app.use(helmet({
@@ -32,9 +33,14 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration
+// CORS configuration for multiple origins
+const corsOrigins = CORS_ORIGIN.split(',').map(origin => origin.trim());
+
+// Development mode: Allow file:// protocol and localhost
+const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: isDevelopment ? true : corsOrigins, // Allow all origins in development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -117,6 +123,7 @@ app.use('/api/performance', performanceRoutes);
 app.use('/api/tarot', tarotRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/admin', adminRoutes);
 
 // WebSocket status endpoint
 app.get('/api/websocket/status', (req, res) => {
@@ -146,7 +153,8 @@ app.get('/api', (req, res) => {
       performance: '/api/performance/*',
       tarot: '/api/tarot/*',
       notifications: '/api/notifications/*',
-      subscription: '/api/subscription/*'
+      subscription: '/api/subscription/*',
+      admin: '/api/admin/*'
     },
     realtime: {
       enabled: true,

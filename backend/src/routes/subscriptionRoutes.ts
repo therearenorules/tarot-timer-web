@@ -10,7 +10,14 @@ const router = express.Router();
  */
 router.get('/status', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const status = await PremiumService.getSubscriptionStatus(userId);
 
     res.json(status);
@@ -18,7 +25,7 @@ router.get('/status', authenticateToken, async (req, res) => {
     console.error('Error getting subscription status:', error);
     res.status(500).json({
       error: 'Failed to get subscription status',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -29,7 +36,14 @@ router.get('/status', authenticateToken, async (req, res) => {
  */
 router.get('/can-save', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const result = await PremiumService.canUserSave(userId);
 
     res.json(result);
@@ -37,7 +51,7 @@ router.get('/can-save', authenticateToken, async (req, res) => {
     console.error('Error checking save permission:', error);
     res.status(500).json({
       error: 'Failed to check save permission',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
       canSave: false
     });
   }
@@ -49,7 +63,14 @@ router.get('/can-save', authenticateToken, async (req, res) => {
  */
 router.post('/can-access-spread', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const { spreadType } = req.body;
 
     if (!spreadType) {
@@ -74,7 +95,7 @@ router.post('/can-access-spread', authenticateToken, async (req, res) => {
     console.error('Error checking spread access:', error);
     res.status(500).json({
       error: 'Failed to check spread access',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
       canAccess: false
     });
   }
@@ -86,7 +107,14 @@ router.post('/can-access-spread', authenticateToken, async (req, res) => {
  */
 router.post('/increment-usage', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const { type } = req.body;
 
     if (!type || !['daily', 'spread'].includes(type)) {
@@ -106,7 +134,7 @@ router.post('/increment-usage', authenticateToken, async (req, res) => {
     console.error('Error incrementing usage:', error);
     res.status(500).json({
       error: 'Failed to increment usage',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -117,7 +145,14 @@ router.post('/increment-usage', authenticateToken, async (req, res) => {
  */
 router.post('/start-trial', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const subscription = await PremiumService.startTrial(userId);
 
     res.json({
@@ -133,7 +168,7 @@ router.post('/start-trial', authenticateToken, async (req, res) => {
     console.error('Error starting trial:', error);
     res.status(500).json({
       error: 'Failed to start trial',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -144,7 +179,14 @@ router.post('/start-trial', authenticateToken, async (req, res) => {
  */
 router.post('/upgrade-premium', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const { durationMonths = 1 } = req.body;
 
     // 유효한 기간인지 확인
@@ -171,7 +213,7 @@ router.post('/upgrade-premium', authenticateToken, async (req, res) => {
     console.error('Error upgrading to premium:', error);
     res.status(500).json({
       error: 'Failed to upgrade to premium',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -182,7 +224,14 @@ router.post('/upgrade-premium', authenticateToken, async (req, res) => {
  */
 router.get('/upgrade-prompt/:feature', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!(req as any).user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required'
+      });
+    }
+
+    const userId = (req as any).user.id;
     const { feature } = req.params;
 
     // 현재 구독 상태 조회
@@ -196,7 +245,7 @@ router.get('/upgrade-prompt/:feature', authenticateToken, async (req, res) => {
     console.error('Error getting upgrade prompt:', error);
     res.status(500).json({
       error: 'Failed to get upgrade prompt',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

@@ -109,7 +109,7 @@ class NotificationService {
           timestamp: Date.now()
         },
         sound: 'default',
-        priority: 'high',
+        priority: 'default' as 'default' | 'normal' | 'high',
         channelId: 'tarot-hourly', // Android 전용
         categoryId: 'tarot_hourly', // iOS 전용
         badge: 1,
@@ -130,7 +130,7 @@ class NotificationService {
       console.error(`Error sending tarot card notification to user ${userId}:`, error);
       await this.logNotificationEvent(userId, 'hourly_failed', {
         hour,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       return false;
     }
@@ -195,7 +195,7 @@ class NotificationService {
           timestamp: Date.now()
         },
         sound: 'default',
-        priority: 'low',
+        priority: 'normal',
         channelId: 'tarot-save',
         categoryId: 'tarot_save',
       };
@@ -346,7 +346,7 @@ class NotificationService {
     // 임시로 기본값 반환
     return {
       id: userId,
-      expo_push_token: null, // 실제로는 DB에서 조회
+      expo_push_token: process.env.NODE_ENV === 'development' ? 'ExponentPushToken[test]' : undefined, // 실제로는 DB에서 조회
       timezone: 'Asia/Seoul',
       notification_preferences: {
         hourlyEnabled: true,

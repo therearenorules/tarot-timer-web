@@ -1,5 +1,4 @@
-import { Response } from 'express';
-import { AuthenticatedRequest } from '../utils/auth';
+import { Request, Response } from 'express';
 import Joi from 'joi';
 
 // Mock storage for development (without database)
@@ -36,7 +35,7 @@ const memosUpdateSchema = Joi.object({
 });
 
 // Get all daily sessions for user
-export async function getDailySessions(req: AuthenticatedRequest, res: Response) {
+export async function getDailySessions(req: Request, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -78,7 +77,7 @@ export async function getDailySessions(req: AuthenticatedRequest, res: Response)
 }
 
 // Get specific daily session by date
-export async function getDailySession(req: AuthenticatedRequest, res: Response) {
+export async function getDailySession(req: Request, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -125,7 +124,7 @@ export async function getDailySession(req: AuthenticatedRequest, res: Response) 
 }
 
 // Create or update daily session
-export async function createOrUpdateDailySession(req: AuthenticatedRequest, res: Response) {
+export async function createOrUpdateDailySession(req: Request, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -186,7 +185,7 @@ export async function createOrUpdateDailySession(req: AuthenticatedRequest, res:
 }
 
 // Update only memos for a specific date
-export async function updateDailySessionMemos(req: AuthenticatedRequest, res: Response) {
+export async function updateDailySessionMemos(req: Request, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -259,7 +258,7 @@ export async function updateDailySessionMemos(req: AuthenticatedRequest, res: Re
 }
 
 // Delete daily session
-export async function deleteDailySession(req: AuthenticatedRequest, res: Response) {
+export async function deleteDailySession(req: Request, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -309,7 +308,7 @@ export async function deleteDailySession(req: AuthenticatedRequest, res: Respons
 }
 
 // Get storage stats (for debugging)
-export async function getStorageStats(req: AuthenticatedRequest, res: Response) {
+export async function getStorageStats(req: Request, res: Response) {
   try {
     if (!req.user) {
       return res.status(401).json({

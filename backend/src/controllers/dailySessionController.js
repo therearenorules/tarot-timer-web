@@ -1,9 +1,19 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Supabase 클라이언트 조건부 생성
+let supabase = null;
+if (process.env.SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY &&
+    !process.env.SUPABASE_URL.includes('example') &&
+    !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('placeholder')) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  console.log('✅ Supabase client initialized');
+} else {
+  console.log('ℹ️ Supabase not configured, running in mock mode');
+}
 
 // Get daily session for a specific date
 const getDailySession = async (req, res) => {
@@ -15,6 +25,14 @@ const getDailySession = async (req, res) => {
       return res.status(400).json({
         error: 'Valid date in YYYY-MM-DD format is required',
         code: 'INVALID_DATE_FORMAT'
+      });
+    }
+
+    // Supabase가 없으면 mock 응답 반환
+    if (!supabase) {
+      return res.status(200).json({
+        session: null,
+        message: 'Running in development mode - data stored locally'
       });
     }
 
@@ -94,6 +112,26 @@ const saveDailySession = async (req, res) => {
       });
     }
 
+    // Development mode: Return mock success if Supabase is not configured
+    if (!supabase) {
+      console.log('🔧 Development mode: Mock saving daily session data');
+      const mockSession = {
+        id: 'mock_session_' + Date.now(),
+        user_id: userId,
+        date: date,
+        cards: cards,
+        memos: memos || {},
+        insights: insights || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      return res.json({
+        message: 'Daily session saved successfully (Development Mode)',
+        session: mockSession
+      });
+    }
+
     const sessionData = {
       user_id: userId,
       date,
@@ -148,6 +186,28 @@ const getDailySessions = async (req, res) => {
   try {
     const userId = req.userId;
     const { startDate, endDate, limit = 30 } = req.query;
+
+    // Development mode: Return mock data if Supabase is not configured
+    if (!supabase) {
+      console.log('🔧 Development mode: Returning mock daily sessions data');
+      return res.json({
+        data: [
+          {
+            id: 'mock_session_' + Date.now(),
+            user_id: userId,
+            date: new Date().toISOString().split('T')[0],
+            card_drawn: 'The Sun',
+            interpretation: 'A day full of positive energy and success.',
+            reflection: null,
+            mood_before: 'curious',
+            mood_after: 'inspired',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ],
+        count: 1
+      });
+    }
 
     let query = supabase
       .from('daily_tarot_sessions')
@@ -211,6 +271,15 @@ const deleteDailySession = async (req, res) => {
       return res.status(400).json({
         error: 'Valid date in YYYY-MM-DD format is required',
         code: 'INVALID_DATE_FORMAT'
+      });
+    }
+
+    // Development mode: Return mock success if Supabase is not configured
+    if (!supabase) {
+      console.log('🔧 Development mode: Mock deleting daily session data');
+      return res.json({
+        message: 'Daily session deleted successfully (Development Mode)',
+        date
       });
     }
 

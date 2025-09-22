@@ -1,9 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../index';
-import { AuthenticatedRequest } from '../middleware/auth';
 
 // Get all spreads for the authenticated user
-export async function getSpreads(req: AuthenticatedRequest, res: Response) {
+export async function getSpreads(req: Request, res: Response) {
   try {
     const userId = req.userId!;
     const { limit = '50', offset = '0', spreadType } = req.query;
@@ -68,7 +67,7 @@ export async function getSpreads(req: AuthenticatedRequest, res: Response) {
 }
 
 // Get a specific spread by ID
-export async function getSpreadById(req: AuthenticatedRequest, res: Response) {
+export async function getSpreadById(req: Request, res: Response) {
   try {
     const userId = req.userId!;
     const { id } = req.params;
@@ -128,7 +127,7 @@ export async function getSpreadById(req: AuthenticatedRequest, res: Response) {
 }
 
 // Create a new spread
-export async function createSpread(req: AuthenticatedRequest, res: Response) {
+export async function createSpread(req: Request, res: Response) {
   try {
     const userId = req.userId!;
     const {
@@ -227,7 +226,7 @@ export async function createSpread(req: AuthenticatedRequest, res: Response) {
 }
 
 // Update an existing spread
-export async function updateSpread(req: AuthenticatedRequest, res: Response) {
+export async function updateSpread(req: Request, res: Response) {
   try {
     const userId = req.userId!;
     const { id } = req.params;
@@ -310,7 +309,7 @@ export async function updateSpread(req: AuthenticatedRequest, res: Response) {
 }
 
 // Delete a spread
-export async function deleteSpread(req: AuthenticatedRequest, res: Response) {
+export async function deleteSpread(req: Request, res: Response) {
   try {
     const userId = req.userId!;
     const { id } = req.params;

@@ -5,11 +5,19 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Supabase client with fallback for development
+let supabase: any = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_URL !== 'https://placeholder.supabase.co' && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  try {
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    console.log('✅ WebSocket: Supabase client initialized');
+  } catch (error) {
+    console.warn('⚠️ WebSocket: Supabase initialization failed, using mock mode');
+    supabase = null;
+  }
+} else {
+  console.log('ℹ️ WebSocket: Running in development mode without Supabase');
+}
 
 // Real-time event types
 interface TarotRealtimeEvents {
@@ -303,6 +311,12 @@ export class WebSocketService {
   }
 
   private setupSupabaseRealtime(): void {
+    // Skip if Supabase is not available
+    if (!supabase) {
+      console.log('[WebSocket] Skipping Supabase realtime setup - running in mock mode');
+      return;
+    }
+
     // Listen to changes in daily_tarot_sessions table
     supabase
       .channel('daily_tarot_sessions_changes')

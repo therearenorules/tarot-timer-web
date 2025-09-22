@@ -1,5 +1,8 @@
 // ApiClient.ts - Centralized API communication for Tarot Timer Backend
 // Handles authentication, request/response formatting, and error handling
+// Supports both REST API backend and direct Supabase integration
+
+import { supabase, supabaseHelpers, isSupabaseAvailable, type User, type DailyTarotSession, type SpreadReading } from '../lib/supabase';
 
 export interface ApiResponse<T = any> {
   data?: T;
@@ -126,8 +129,15 @@ export class ApiClient {
     return false;
   }
 
-  // Daily Session Methods
-  async getDailySession(date: string): Promise<any> {
+  // Daily Session Methods (with Supabase fallback)
+  async getDailySession(date: string, userId?: string): Promise<any> {
+    // Supabase 직접 연동이 가능하고 userId가 있다면 Supabase 사용
+    if (isSupabaseAvailable() && userId) {
+      console.log('🔗 Using Supabase for getDailySession');
+      return await supabaseHelpers.getDailySession(userId, date);
+    }
+
+    // 백엔드 API 사용
     return this.request('GET', `/api/daily-sessions/${date}`);
   }
 
@@ -135,7 +145,14 @@ export class ApiClient {
     return this.request('POST', '/api/daily-sessions', sessionData);
   }
 
-  async updateDailySession(sessionData: any): Promise<any> {
+  async updateDailySession(sessionData: any, userId?: string): Promise<any> {
+    // Supabase 직접 연동이 가능하고 userId가 있다면 Supabase 사용
+    if (isSupabaseAvailable() && userId && sessionData.date && sessionData.completedHours) {
+      console.log('🔗 Using Supabase for updateDailySession');
+      return await supabaseHelpers.updateDailySession(userId, sessionData.date, sessionData.completedHours);
+    }
+
+    // 백엔드 API 사용
     return this.request('PUT', '/api/daily-sessions', sessionData);
   }
 
@@ -149,7 +166,7 @@ export class ApiClient {
     return this.request('GET', endpoint);
   }
 
-  // Spread Reading Methods
+  // Spread Reading Methods (with Supabase fallback)
   async getSpreads(params?: { limit?: number; offset?: number; spreadType?: string }): Promise<any> {
     const queryString = params ? new URLSearchParams(params as any).toString() : '';
     const endpoint = queryString ? `/api/spreads?${queryString}` : '/api/spreads';
@@ -160,7 +177,21 @@ export class ApiClient {
     return this.request('GET', `/api/spreads/${id}`);
   }
 
-  async saveSpread(spreadData: any): Promise<any> {
+  async saveSpread(spreadData: any, userId?: string): Promise<any> {
+    // Supabase 직접 연동이 가능하고 userId가 있다면 Supabase 사용
+    if (isSupabaseAvailable() && userId && spreadData.spreadType && spreadData.cards) {
+      console.log('🔗 Using Supabase for saveSpread');
+      const spreadReading = {
+        user_id: userId,
+        spread_type: spreadData.spreadType,
+        cards: spreadData.cards,
+        question: spreadData.question,
+        interpretation: spreadData.interpretation
+      };
+      return await supabaseHelpers.saveSpreadReading(spreadReading);
+    }
+
+    // 백엔드 API 사용
     return this.request('POST', '/api/spreads', spreadData);
   }
 
@@ -306,11 +337,47 @@ export class ApiClient {
   async healthCheck(): Promise<any> {
     return this.request('GET', '/health');
   }
+
+  // Supabase Integration Methods
+  getSupabaseClient() {
+    return supabase;
+  }
+
+  isSupabaseAvailable(): boolean {
+    return isSupabaseAvailable();
+  }
+
+  // 사용자 데이터 Supabase에서 직접 가져오기
+  async getUserFromSupabase(userId: string): Promise<User | null> {
+    if (!isSupabaseAvailable()) {
+      console.warn('Supabase not available, fallback to API');
+      return null;
+    }
+
+    console.log('🔗 Using Supabase for getUserFromSupabase');
+    return await supabaseHelpers.getUser(userId);
+  }
+
+  // 실시간 구독 설정
+  subscribeToUserChanges(userId: string, callback: (payload: any) => void) {
+    if (!isSupabaseAvailable()) {
+      console.warn('Supabase not available, real-time subscription not possible');
+      return null;
+    }
+
+    console.log('🔗 Setting up Supabase real-time subscription for user:', userId);
+    return supabaseHelpers.subscribeToUserChanges(userId, callback);
+  }
+
+  // 연결 모드 확인 (Supabase 직접 vs API)
+  getConnectionMode(): 'supabase' | 'api' {
+    return isSupabaseAvailable() ? 'supabase' : 'api';
+  }
 }
 
 // Singleton instance for the app
 export const apiClient = new ApiClient(
-  process.env.REACT_APP_API_URL || 'http://localhost:3000'
+  process.env.REACT_APP_API_URL || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3006'
 );
 
 // Hook for React components to access API client

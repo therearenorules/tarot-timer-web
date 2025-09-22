@@ -6,30 +6,30 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // User management table - Enhanced for production requirements
 model User {
-  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                 String   @unique @db.VarChar(255)
+  id                    String   @id @default(cuid())
+  email                 String   @unique
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   // Subscription management - Following BACKEND_DEVELOPMENT_PLAN.md spec
-  subscriptionStatus   String   @default("trial") @map("subscription_status") @db.VarChar(50)
+  subscriptionStatus   String   @default("trial") @map("subscription_status")
   trialStartDate       DateTime @default(now()) @map("trial_start_date")
-  trialEndDate         DateTime @default(dbgenerated("NOW() + INTERVAL '7 days'")) @map("trial_end_date")
+  trialEndDate         DateTime @map("trial_end_date")
 
   // Localization and preferences
-  language             String   @default("ko") @db.VarChar(10)
-  timezone             String   @default("Asia/Seoul") @db.VarChar(50)
-  activeCardThemeId    String?  @map("active_card_theme_id") @db.Uuid
+  language             String   @default("ko")
+  timezone             String   @default("Asia/Seoul")
+  activeCardThemeId    String?  @map("active_card_theme_id")
 
   // Stripe integration fields
-  stripeCustomerId     String?  @unique @map("stripe_customer_id") @db.VarChar(255)
-  stripeSubscriptionId String?  @unique @map("stripe_subscription_id") @db.VarChar(255)
+  stripeCustomerId     String?  @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id")
 
   // Usage tracking
   totalSessions        Int      @default(0) @map("total_sessions")
@@ -48,14 +48,14 @@ model User {
 
 // Daily 24-hour tarot sessions - Core feature matching existing interface
 model DailyTarotSession {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  date      DateTime @db.Date
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  date      DateTime
 
-  // JSON structure matching existing frontend DailyTarotSave interface
-  cards     Json     // Array of 24 TarotCard objects for each hour
-  memos     Json     @default("{}") // Object with hour indices as keys, memo strings as values
-  insights  String?  @db.Text // Overall daily insights
+  // JSON structure as TEXT for SQLite compatibility
+  cards     String   // JSON Array of 24 TarotCard objects for each hour
+  memos     String   @default("{}") // JSON Object with hour indices as keys
+  insights  String?  // Overall daily insights
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -70,20 +70,20 @@ model DailyTarotSession {
 
 // Tarot spread readings storage - Matching existing SavedSpread interface
 model SpreadReading {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
 
-  title       String   @db.VarChar(255)
-  spreadType  String   @map("spread_type") @db.VarChar(50)
-  spreadName  String   @map("spread_name") @db.VarChar(255)
-  spreadNameEn String  @map("spread_name_en") @db.VarChar(255)
+  title       String
+  spreadType  String   @map("spread_type")
+  spreadName  String   @map("spread_name")
+  spreadNameEn String  @map("spread_name_en")
 
-  // JSON structure matching existing SavedSpread interface
-  positions   Json     // Array of SpreadPosition objects with cards
-  insights    String?  @db.Text
+  // JSON structure as TEXT for SQLite compatibility
+  positions   String   // JSON Array of SpreadPosition objects with cards
+  insights    String?
 
   // Metadata
-  tags        String[] @default([])
+  tags        String   @default("[]") // JSON array as string
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -97,27 +97,27 @@ model SpreadReading {
 
 // Card theme system for monetization
 model CardTheme {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String   @id @default(cuid())
 
-  name            String   @db.VarChar(255)
-  nameKr          String   @map("name_kr") @db.VarChar(255)
-  nameEn          String   @map("name_en") @db.VarChar(255)
-  nameJa          String?  @map("name_ja") @db.VarChar(255) // Future Japanese support
+  name            String
+  nameKr          String   @map("name_kr")
+  nameEn          String   @map("name_en")
+  nameJa          String?  @map("name_ja") // Future Japanese support
 
-  description     String   @db.Text
-  descriptionKr   String   @map("description_kr") @db.Text
-  descriptionEn   String   @map("description_en") @db.Text
-  descriptionJa   String?  @map("description_ja") @db.Text
+  description     String
+  descriptionKr   String   @map("description_kr")
+  descriptionEn   String   @map("description_en")
+  descriptionJa   String?  @map("description_ja")
 
   // Pricing and availability
-  price           Decimal  @db.Decimal(10,2)
+  price           Float
   isActive        Boolean  @default(true) @map("is_active")
   isDefault       Boolean  @default(false) @map("is_default")
 
   // Theme metadata
-  style           String   @db.VarChar(50) // 'mystical', 'modern', 'vintage', etc.
-  cardAssets      Json     // JSON object mapping card IDs to asset URLs
-  thumbnailUrl    String   @map("thumbnail_url") @db.VarChar(500)
+  style           String   // 'mystical', 'modern', 'vintage', etc.
+  cardAssets      String   // JSON object mapping card IDs to asset URLs
+  thumbnailUrl    String   @map("thumbnail_url")
 
   // Timestamps
   createdAt       DateTime @default(now()) @map("created_at")
@@ -132,16 +132,16 @@ model CardTheme {
 
 // User theme ownership tracking
 model UserThemeOwnership {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-  cardThemeId   String    @map("card_theme_id") @db.Uuid
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  cardThemeId   String    @map("card_theme_id")
 
   // Purchase information
   purchasedAt   DateTime  @default(now()) @map("purchased_at")
-  purchasePrice Decimal   @map("purchase_price") @db.Decimal(10,2)
+  purchasePrice Float     @map("purchase_price")
 
   // Stripe tracking
-  stripePaymentIntentId String? @map("stripe_payment_intent_id") @db.VarChar(255)
+  stripePaymentIntentId String? @map("stripe_payment_intent_id")
 
   // Relations
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -154,23 +154,23 @@ model UserThemeOwnership {
 
 // Subscription management
 model Subscription {
-  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String   @unique @map("user_id") @db.Uuid
+  id                    String   @id @default(cuid())
+  userId                String   @unique @map("user_id")
 
   // Stripe subscription details
-  stripeSubscriptionId  String   @unique @map("stripe_subscription_id") @db.VarChar(255)
-  stripePriceId         String   @map("stripe_price_id") @db.VarChar(255)
-  stripeCustomerId      String   @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId  String   @unique @map("stripe_subscription_id")
+  stripePriceId         String   @map("stripe_price_id")
+  stripeCustomerId      String   @map("stripe_customer_id")
 
   // Subscription status and timing
-  status                String   @db.VarChar(50) // 'active', 'canceled', 'past_due', etc.
+  status                String   // 'active', 'canceled', 'past_due', etc.
   currentPeriodStart    DateTime @map("current_period_start")
   currentPeriodEnd      DateTime @map("current_period_end")
 
   // Billing
-  plan                  String   @db.VarChar(50) // 'monthly', 'yearly'
-  amount                Decimal  @db.Decimal(10,2)
-  currency              String   @default("usd") @db.VarChar(3)
+  plan                  String   // 'monthly', 'yearly'
+  amount                Float
+  currency              String   @default("usd")
 
   // Timestamps
   createdAt             DateTime @default(now()) @map("created_at")
@@ -182,23 +182,23 @@ model Subscription {
 
 // Analytics tracking (privacy-first, anonymized)
 model UserAnalytic {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                String   @id @default(cuid())
 
   // Anonymous user tracking - SHA-256 hash for privacy
-  userHash          String   @map("user_hash") @db.VarChar(64)
-  userId            String?  @map("user_id") @db.Uuid // Optional for user-specific analytics
+  userHash          String   @map("user_hash")
+  userId            String?  @map("user_id") // Optional for user-specific analytics
 
   // Event tracking
-  eventType         String   @map("event_type") @db.VarChar(100)
-  eventData         Json     @default("{}")
+  eventType         String   @map("event_type")
+  eventData         String   @default("{}") // JSON as TEXT
 
   // Session information
-  sessionId         String?  @map("session_id") @db.VarChar(255)
-  userAgent         String?  @map("user_agent") @db.VarChar(500)
+  sessionId         String?  @map("session_id")
+  userAgent         String?  @map("user_agent")
 
   // Localization
-  language          String   @default("ko") @db.VarChar(10)
-  timezone          String   @default("Asia/Seoul") @db.VarChar(50)
+  language          String   @default("ko")
+  timezone          String   @default("Asia/Seoul")
 
   // Timestamp
   createdAt         DateTime @default(now()) @map("created_at")
@@ -214,11 +214,11 @@ model UserAnalytic {
 
 // Ad impression tracking for monetization
 model AdImpression {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  adPlacement String   @map("ad_placement") @db.VarChar(50) // 'banner', 'interstitial', 'rewarded'
-  adNetwork   String?  @map("ad_network") @db.VarChar(50)  // 'admob', 'meta', etc.
-  revenue     Decimal  @default(0.0000) @db.Decimal(6, 4)
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  adPlacement String   @map("ad_placement") // 'banner', 'interstitial', 'rewarded'
+  adNetwork   String?  @map("ad_network")  // 'admob', 'meta', etc.
+  revenue     Float    @default(0.0)
   displayedAt DateTime @default(now()) @map("displayed_at")
 
   // Relations
@@ -230,11 +230,11 @@ model AdImpression {
 
 // System configuration and feature flags
 model SystemConfig {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id            String   @id @default(cuid())
 
-  key           String   @unique @db.VarChar(255)
-  value         Json
-  description   String?  @db.Text
+  key           String   @unique
+  value         String   // JSON as TEXT
+  description   String?
 
   // Metadata
   isActive      Boolean  @default(true) @map("is_active")

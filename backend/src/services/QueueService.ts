@@ -1,5 +1,10 @@
 import Bull from 'bull';
-import Redis from 'redis';
+let Redis: any = null;
+try {
+  Redis = require('redis');
+} catch (e) {
+  console.log('ℹ️ Redis module not found, running in mock mode');
+}
 import NotificationService from './NotificationService';
 import TarotCardService from './TarotCardService';
 import moment from 'moment-timezone';
@@ -25,8 +30,32 @@ interface DailySaveReminderJob {
 // Queue Service 클래스
 class QueueService {
   private redis: any;
-  private notificationQueue: Bull.Queue<any>;
-  private schedulingQueue: Bull.Queue<any>;
+  private notificationQueue: Bull.Queue<any> | any;
+  private schedulingQueue: Bull.Queue<any> | any;
+
+  private createMockQueues(): void {
+    // Mock queue implementation
+    this.notificationQueue = {
+      process: () => console.log('📝 Mock queue: process called'),
+      add: () => Promise.resolve({ id: 'mock-job' }),
+      getWaiting: () => Promise.resolve([]),
+      getActive: () => Promise.resolve([]),
+      getCompleted: () => Promise.resolve([]),
+      getFailed: () => Promise.resolve([]),
+      getDelayed: () => Promise.resolve([]),
+      getRepeatableJobs: () => Promise.resolve([]),
+      removeRepeatableByKey: () => Promise.resolve(1),
+      close: () => Promise.resolve(),
+      on: () => {},
+    } as any;
+
+    this.schedulingQueue = {
+      close: () => Promise.resolve(),
+      on: () => {},
+    } as any;
+
+    console.log('✅ Mock queues initialized');
+  }
 
   constructor() {
     // Redis 연결 설정
@@ -40,10 +69,16 @@ class QueueService {
     };
 
     try {
-      this.redis = Redis.createClient(redisConfig);
-      console.log('✅ Redis client connected successfully');
+      if (Redis && typeof Redis.createClient === 'function') {
+        this.redis = Redis.createClient(redisConfig);
+        console.log('✅ Redis client connected successfully');
+      } else {
+        console.log('ℹ️ Redis module not available, using mock mode');
+        this.createMockQueues();
+        return;
+      }
     } catch (error) {
-      console.error('❌ Redis connection failed:', error);
+      console.log('ℹ️ Redis connection failed, using mock mode:', error instanceof Error ? error.message : 'Unknown error');
       // 개발 환경에서는 Redis 없이도 작동하도록 Mock 처리
       this.redis = {
         on: () => {},
@@ -51,28 +86,38 @@ class QueueService {
       };
     }
 
-    // Bull Queue 초기화
-    this.notificationQueue = new Bull('notification processing', {
-      redis: redisConfig,
-      defaultJobOptions: {
-        removeOnComplete: 50,  // 완료된 작업 50개까지 보관
-        removeOnFail: 100,     // 실패한 작업 100개까지 보관
-        attempts: 3,           // 최대 3회 재시도
-        backoff: {
-          type: 'exponential',
-          delay: 5000,         // 5초부터 시작해서 지수적 증가
-        },
-      },
-    });
+    // Bull Queue 초기화 (Redis가 사용 가능한 경우에만)
+    if (Redis && typeof Redis.createClient === 'function') {
+      try {
+        this.notificationQueue = new Bull('notification processing', {
+          redis: redisConfig,
+          defaultJobOptions: {
+            removeOnComplete: 50,  // 완료된 작업 50개까지 보관
+            removeOnFail: 100,     // 실패한 작업 100개까지 보관
+            attempts: 3,           // 최대 3회 재시도
+            backoff: {
+              type: 'exponential',
+              delay: 5000,         // 5초부터 시작해서 지수적 증가
+            },
+          },
+        });
 
-    this.schedulingQueue = new Bull('scheduling management', {
-      redis: redisConfig,
-      defaultJobOptions: {
-        removeOnComplete: 10,
-        removeOnFail: 50,
-        attempts: 2,
-      },
-    });
+        this.schedulingQueue = new Bull('scheduling management', {
+          redis: redisConfig,
+          defaultJobOptions: {
+            removeOnComplete: 10,
+            removeOnFail: 50,
+            attempts: 2,
+          },
+        });
+      } catch (error) {
+        console.log('ℹ️ Bull Queue initialization failed, using mock queues');
+        this.createMockQueues();
+      }
+    } else {
+      console.log('ℹ️ Redis not available, using mock queues');
+      this.createMockQueues();
+    }
 
     this.setupQueueProcessors();
     this.setupQueueEvents();
