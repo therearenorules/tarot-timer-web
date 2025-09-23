@@ -308,6 +308,29 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.error('❌ 알림 설정 저장 오류:', error);
     }
 
+    // 🔄 설정 변경 시 알림 자동 재스케줄링
+    if (hasPermission && isMobileEnvironment && Notifications) {
+      try {
+        // 시간별 알림 활성화/비활성화 또는 조용한 시간 변경 시 재스케줄링
+        if ('hourlyEnabled' in newSettings || 'quietHoursStart' in newSettings || 'quietHoursEnd' in newSettings) {
+          console.log('알림 설정 변경됨 - 자동 재스케줄링 시작');
+
+          // 기존 알림 취소 후 새 설정으로 재스케줄
+          await Notifications.cancelAllScheduledNotificationsAsync();
+
+          // 시간별 알림이 활성화된 경우에만 재스케줄
+          if (updatedSettings.hourlyEnabled) {
+            // 새 설정을 사용하여 알림 스케줄링
+            await scheduleHourlyNotificationsWithSettings(updatedSettings);
+          }
+
+          console.log('✅ 알림 재스케줄링 완료');
+        }
+      } catch (error) {
+        console.error('❌ 알림 재스케줄링 오류:', error);
+      }
+    }
+
     // 백엔드에 설정 동기화 (인증된 사용자만)
     if (expoPushToken && isAuthenticated) {
       try {
@@ -361,12 +384,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return;
     }
 
+    // 권한이 없으면 먼저 권한 요청
     if (!hasPermission) {
-      console.log('No notification permission');
-      return;
+      console.log('No notification permission, requesting permission...');
+      const permissionGranted = await requestPermission();
+      if (!permissionGranted) {
+        console.log('Permission denied, cannot send test notification');
+        return;
+      }
     }
 
     try {
+      console.log('Sending test notification...');
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '🔮 타로 타이머 테스트',
@@ -378,57 +407,154 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           sound: true,
           priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
         },
-        trigger: { seconds: 1 },
+        trigger: null, // 즉시 알림
       });
+      console.log('Test notification scheduled successfully');
     } catch (error) {
       console.error('Failed to send test notification:', error);
     }
   };
 
-  // 시간별 알림 스케줄링
-  const scheduleHourlyNotifications = async () => {
-    if (!hasPermission || !expoPushToken) {
-      console.log('Cannot schedule notifications: no permission or token');
-      return;
-    }
-
-    // 로컬 스케줄링은 제한적이므로 백엔드에 요청 (인증된 사용자만)
-    if (!isAuthenticated) {
-      console.log('User not authenticated, skipping backend notification scheduling');
+  // 설정을 받아 알림을 스케줄링하는 헬퍼 함수
+  const scheduleHourlyNotificationsWithSettings = async (settingsToUse: NotificationSettings) => {
+    if (!Notifications) {
+      console.log('Notifications module not available');
       return;
     }
 
     try {
-      await fetch(`${getApiUrl()}/api/notifications/schedule-hourly`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
+      // 1. 24시간 동안의 시간별 알림 스케줄 (최대 64개까지만)
+      const now = new Date();
+      const cardMessages = [
+        "🔮 새로운 타로 카드를 뽑을 시간입니다!",
+        "✨ 이번 시간의 카드 의미를 학습해보세요",
+        "🎴 타로 타이머가 새로운 카드를 준비했습니다",
+        "🌟 지금 당신에게 필요한 카드가 기다립니다",
+        "💫 새로운 상징적 의미를 발견해보세요"
+      ];
+
+      // 향후 24시간 동안 매시간 알림 스케줄
+      for (let i = 1; i <= 24; i++) {
+        const triggerDate = new Date(now.getTime() + (i * 60 * 60 * 1000)); // i시간 후
+        const hour = triggerDate.getHours();
+
+        // 조용한 시간 체크 (전달받은 설정 사용)
+        const isQuietTime = settingsToUse.quietHoursStart > settingsToUse.quietHoursEnd
+          ? (hour >= settingsToUse.quietHoursStart || hour < settingsToUse.quietHoursEnd)
+          : (hour >= settingsToUse.quietHoursStart && hour < settingsToUse.quietHoursEnd);
+
+        if (settingsToUse.hourlyEnabled && !isQuietTime) {
+          const randomMessage = cardMessages[Math.floor(Math.random() * cardMessages.length)];
+
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '🔮 타로 타이머',
+              body: randomMessage,
+              data: {
+                type: 'hourly',
+                hour: hour,
+                timestamp: triggerDate.getTime()
+              },
+              sound: true,
+              priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+            },
+            trigger: triggerDate,
+          });
+        }
+      }
+
+      // 2. 자정 리셋 알림 (내일 자정)
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🌙 자정 카드 리셋',
+          body: '새로운 24시간 타로 카드 세트가 준비되었습니다!',
+          data: {
+            type: 'midnight_reset',
+            timestamp: tomorrow.getTime()
+          },
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority?.DEFAULT || 'default',
         },
+        trigger: tomorrow,
       });
-      console.log('Hourly notifications scheduled via backend');
+
+      console.log('Local hourly notifications scheduled successfully with custom settings');
+
+    } catch (error) {
+      console.error('Failed to schedule hourly notifications with settings:', error);
+    }
+  };
+
+  // 시간별 알림 스케줄링 (로컬 + 백엔드)
+  const scheduleHourlyNotifications = async () => {
+    if (!hasPermission) {
+      console.log('Cannot schedule notifications: no permission');
+      return;
+    }
+
+    if (!Notifications) {
+      console.log('Notifications module not available');
+      return;
+    }
+
+    try {
+      // 1. 기존 알림 모두 취소
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      console.log('Cancelled all existing notifications');
+
+      // 2. 현재 설정으로 알림 스케줄
+      await scheduleHourlyNotificationsWithSettings(settings);
+
+      // 3. 백엔드 연동 (있다면)
+      if (isAuthenticated && expoPushToken) {
+        try {
+          await fetch(`${getApiUrl()}/api/notifications/schedule-hourly`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders(),
+            },
+          });
+          console.log('Backend notification scheduling also requested');
+        } catch (error) {
+          console.log('Backend not available, using local notifications only');
+        }
+      }
+
     } catch (error) {
       console.error('Failed to schedule hourly notifications:', error);
     }
   };
 
-  // 시간별 알림 취소
+  // 시간별 알림 취소 (로컬 + 백엔드)
   const cancelHourlyNotifications = async () => {
-    if (!isAuthenticated) {
-      console.log('User not authenticated, skipping backend notification cancellation');
-      return;
-    }
-
     try {
-      await fetch(`${getApiUrl()}/api/notifications/cancel-hourly`, {
-        method: 'DELETE',
-        headers: {
-          ...getAuthHeaders(),
-        },
-      });
-      console.log('Hourly notifications cancelled via backend');
+      // 1. 로컬 알림 모두 취소
+      if (Notifications) {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        console.log('All local notifications cancelled');
+      }
+
+      // 2. 백엔드 알림 취소 (있다면)
+      if (isAuthenticated) {
+        try {
+          await fetch(`${getApiUrl()}/api/notifications/cancel-hourly`, {
+            method: 'DELETE',
+            headers: {
+              ...getAuthHeaders(),
+            },
+          });
+          console.log('Backend notifications also cancelled');
+        } catch (error) {
+          console.log('Backend not available, local notifications cancelled');
+        }
+      }
     } catch (error) {
-      console.error('Failed to cancel hourly notifications:', error);
+      console.error('Failed to cancel notifications:', error);
     }
   };
 

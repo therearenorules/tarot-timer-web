@@ -41,7 +41,7 @@ const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
           {
             id: 2,
             title: "⏰ 시간대별 카드 뽑기",
-            description: "각 시간대마다 새로운 타로 카드를 뽑아 그 순간의 에너지를 느껴보세요.",
+            description: "각 시간대마다 새로운 타로 카드를 뽑아 그 카드의 상징적 의미를 학습해보세요.",
             icon: "timer",
             targetElement: "draw-card-button"
           },

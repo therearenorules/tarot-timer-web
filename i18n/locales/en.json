@@ -2,7 +2,7 @@
   "app": {
     "name": "Tarot Timer",
     "subtitle": "Tarot Timer",
-    "description": "24-hour tarot card timer and journal app"
+    "description": "24-hour tarot card learning and self-development app"
   },
   "navigation": {
     "timer": "Timer",
@@ -12,7 +12,7 @@
   },
   "timer": {
     "title": "Tarot Timer",
-    "subtitle": "24-hour tarot messages",
+    "subtitle": "24-hour card meaning study",
     "start": "Start",
     "pause": "Pause",
     "resume": "Resume",
@@ -28,7 +28,7 @@
     "noon": "Noon",
     "am": "{{hour}} AM",
     "pm": "{{hour}} PM",
-    "energyFlow": "24-Hour Energy Flow",
+    "energyFlow": "24-Hour Learning Schedule",
     "redraw": "Redraw",
     "editMemo": "📝 Edit Memo",
     "addMemo": "📄 Add Memo",
@@ -37,12 +37,12 @@
       "Today's story unfolds"
     ],
     "welcomeSubtitles": [
-      "24 hours a day, special messages await you",
-      "Take time each hour to see the world from a new perspective"
+      "Learn tarot card symbols and meanings systematically 24 hours a day",
+      "Learn and understand symbolic language through new cards every hour"
     ],
     "preparing": "Preparing cards...",
     "drawCards": "Draw 24-Hour Tarot",
-    "guideText": "Cosmic energy flows in every moment. Open your heart and embrace wisdom.",
+    "guideText": "Tarot cards are a centuries-old symbolic system. Learn and interpret the meaning of each card.",
     "saveDailyTarot": "Save Daily Tarot",
     "memoPlaceholder": "Write down your thoughts or feelings about this hour...",
     "settings": {
@@ -62,7 +62,7 @@
   },
   "spread": {
     "title": "Tarot Spread",
-    "subtitle": "Explore the wisdom of the cards",
+    "subtitle": "Learn card meanings and symbolism",
     "cardCount": "Cards {{drawn}} / {{total}}",
     "selectSpread": "Select Spread",
     "drawCard": "Draw Card",
@@ -81,7 +81,7 @@
       "celticCross": "Celtic Cross",
       "relationship": "Cup of Relationship Spread",
       "career": "Career Spread",
-      "yearlyForecast": "Yearly Forecast",
+      "yearlyForecast": "Annual Reflection Spread",
       "choice": "AB Choice Spread"
     },
     "descriptions": {
@@ -92,10 +92,10 @@
       "celticCross": "Comprehensive and in-depth analysis",
       "relationship": "Relationships and love issues",
       "choice": "Decision between two choices",
-      "message": "Wisdom from the universe",
-      "pastInfluence": "Past influences and background",
-      "presentSituation": "Current situation and energy",
-      "futurePossibility": "Future possibilities and direction"
+      "message": "Symbolic meaning from the cards",
+      "pastInfluence": "Understanding past experiences and background",
+      "presentSituation": "Current situation analysis",
+      "futurePossibility": "Goal setting and direction"
     },
     "positions": {
       "past": "Past",
@@ -164,8 +164,8 @@
     "drawing": "Drawing..."
   },
   "journal": {
-    "title": "Tarot Daily",
-    "subtitle": "Record your tarot journey",
+    "title": "Learning Journal",
+    "subtitle": "Record your tarot card learning process",
     "newEntry": "New Entry",
     "todayEntry": "Today's Entry",
     "searchEntries": "Search Entries",

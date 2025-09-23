@@ -95,14 +95,19 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       setIsLoading(true);
       setLastError(null);
 
-      // 출시 전까지 프리미엄 상태를 기본값으로 강제 설정
-      const forcedPremiumStatus: PremiumStatus = {
-        is_premium: false,
-        unlimited_storage: false,
-        ad_free: false,
-        premium_themes: false
+      // 다음 업데이트 전까지 프리미엄 기능 무료 제공
+      const freePremiumStatus: PremiumStatus = {
+        is_premium: true,
+        unlimited_storage: true,
+        ad_free: true,
+        premium_themes: true,
+        subscription_type: 'free_trial',
+        purchase_date: new Date().toISOString(),
+        expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1년 무료
+        last_validated: new Date().toISOString(),
+        validation_environment: 'Production'
       };
-      setPremiumStatus(forcedPremiumStatus);
+      setPremiumStatus(freePremiumStatus);
       setIsLoading(false);
       return;
 

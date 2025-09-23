@@ -2,7 +2,7 @@
   "app": {
     "name": "タロットタイマー",
     "subtitle": "Tarot Timer",
-    "description": "24時間タロットカードタイマー＆日記アプリ"
+    "description": "24時間タロットカード学習＆自己啓発アプリ"
   },
   "navigation": {
     "timer": "タイマー",
@@ -12,7 +12,7 @@
   },
   "timer": {
     "title": "Tarot Timer",
-    "subtitle": "24時間タロットメッセージ",
+    "subtitle": "24時間カード意味学習",
     "start": "開始",
     "pause": "一時停止",
     "resume": "再開",
@@ -28,7 +28,7 @@
     "noon": "正午",
     "am": "午前{{hour}}時",
     "pm": "午後{{hour}}時",
-    "energyFlow": "24時間エネルギーフロー",
+    "energyFlow": "24時間学習スケジュール",
     "redraw": "再度引く",
     "editMemo": "📝 メモを編集",
     "addMemo": "📄 メモを追加",
@@ -37,12 +37,12 @@
       "今日の物語が始まります"
     ],
     "welcomeSubtitles": [
-      "一日24時間、あなたのための特別なメッセージが待っています",
-      "毎時間新しい視点で世界を見る時間を持ちましょう"
+      "一日24時間、タロットカードの象徴と意味を体系的に学習しましょう",
+      "毎時間新しいカードを通じて象徴的言語を理解し学習しましょう"
     ],
     "preparing": "カード準備中...",
     "drawCards": "24時間タロットを引く",
-    "guideText": "瞬間瞬間に宇宙のエネルギーが流れます。心を開いて知恵を受け入れてください。",
+    "guideText": "タロットカードは何百年もの象徴体系です。各カードの意味を学び解釈してください。",
     "saveDailyTarot": "デイリータロットを保存",
     "memoPlaceholder": "この時間についての思いや感覚を書いてみてください...",
     "settings": {
@@ -62,7 +62,7 @@
   },
   "spread": {
     "title": "Tarot Spread",
-    "subtitle": "カードの知恵を探求しましょう",
+    "subtitle": "カードの意味と象徴を学習しましょう",
     "cardCount": "カード {{drawn}} / {{total}}",
     "selectSpread": "スプレッドを選択",
     "drawCard": "カードを引く",
@@ -81,7 +81,7 @@
       "celticCross": "ケルティッククロス",
       "relationship": "カップオブリレーションシップスプレッド",
       "career": "仕事スプレッド",
-      "yearlyForecast": "年間運勢",
+      "yearlyForecast": "年間省察スプレッド",
       "choice": "AB選択スプレッド"
     },
     "descriptions": {
@@ -92,10 +92,10 @@
       "celticCross": "総合的で深い分析",
       "relationship": "人間関係、恋愛問題",
       "choice": "2つの選択肢からの決定",
-      "message": "宇宙が伝える知恵",
-      "pastInfluence": "過去の影響と背景",
-      "presentSituation": "現在の状況とエネルギー",
-      "futurePossibility": "未来の可能性と方向性"
+      "message": "カードが伝える象徴的意味",
+      "pastInfluence": "過去の経験と背景理解",
+      "presentSituation": "現在の状況分析",
+      "futurePossibility": "目標設定と方向性"
     },
     "positions": {
       "past": "過去",
@@ -164,8 +164,8 @@
     "drawing": "引いています..."
   },
   "journal": {
-    "title": "Tarot Diary",
-    "subtitle": "あなたのタロットの旅を記録しましょう",
+    "title": "学習日記",
+    "subtitle": "タロットカード学習過程を記録しましょう",
     "newEntry": "新しい記録",
     "todayEntry": "今日の記録",
     "searchEntries": "記録を検索",

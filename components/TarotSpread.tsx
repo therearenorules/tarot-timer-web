@@ -6,6 +6,7 @@ import { TarotCard, TarotUtils, SavedSpread } from '../utils/tarotData';
 import { LanguageUtils } from '../i18n/index';
 import { useTarotI18n } from '../hooks/useTarotI18n';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
+import { usePremium } from '../contexts/PremiumContext';
 import AdManager from '../utils/adManager';
 import { Icon } from './Icon';
 import { GradientButton } from './GradientButton';
@@ -152,6 +153,7 @@ const getSpreadLayouts = (t: any): SpreadLayout[] => [
 export const TarotSpread: React.FC = () => {
   const { t } = useTranslation();
   const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
+  const { isPremium, canAccessFeature } = usePremium();
   
   // 동적으로 생성된 스프레드 레이아웃
   const SPREAD_LAYOUTS = getSpreadLayouts(t);
@@ -171,7 +173,7 @@ export const TarotSpread: React.FC = () => {
   const [saveInsights, setSaveInsights] = useState('');
   const [savedSpreads, setSavedSpreads] = useState<SavedSpread[]>([]);
   const [isLoadModalVisible, setIsLoadModalVisible] = useState(false);
-  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null);
+  // premiumStatus 상태 제거 - PremiumContext 사용
 
   // 애니메이션 훅들
   const { animatedStyle: headerFadeIn } = useFadeIn({ delay: 100 });
@@ -184,7 +186,6 @@ export const TarotSpread: React.FC = () => {
   // 컴포넌트 마운트 시 데이터 불러오기
   useEffect(() => {
     loadSavedSpreadsData();
-    loadPremiumStatus();
     initializeAdManager();
   }, []);
 
@@ -198,15 +199,7 @@ export const TarotSpread: React.FC = () => {
     }
   };
 
-  // 프리미엄 상태 불러오기
-  const loadPremiumStatus = async () => {
-    try {
-      const status = await LocalStorageManager.getPremiumStatus();
-      setPremiumStatus(status);
-    } catch (error) {
-      console.error('프리미엄 상태 확인 실패:', error);
-    }
-  };
+  // loadPremiumStatus 함수 제거 - PremiumContext 사용
 
   // 프리미엄이 필요한 스프레드인지 확인
   const isPremiumSpread = (spreadId: SpreadType): boolean => {
@@ -214,9 +207,10 @@ export const TarotSpread: React.FC = () => {
     return premiumSpreads.includes(spreadId);
   };
 
-  // 사용자가 프리미엄 권한을 가지고 있는지 확인
+  // 사용자가 프리미엄 권한을 가지고 있는지 확인 - 개발 중 무료 접근 허용
   const hasPremiumAccess = (): boolean => {
-    return premiumStatus?.is_premium === true;
+    // 개발 중에는 모든 프리미엄 기능 무료로 제공
+    return true;
   };
 
   // 저장된 스프레드 목록 불러오기

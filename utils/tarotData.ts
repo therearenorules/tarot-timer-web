@@ -226,12 +226,12 @@ export const TAROT_CARDS: TarotCard[] = [
     name: "Wheel of Fortune",
     nameKr: "운명의 바퀴",
     nameJa: "運命の車輪",
-    meaning: "Good luck, karma, life cycles, destiny",
-    meaningKr: "행운, 업보, 생애 주기, 운명",
-    meaningJa: "幸運、業、人生の周期、運命",
-    keywords: ["fate", "destiny", "cycles", "turning point"],
-    keywordsKr: ["운명", "숙명", "순환", "전환점"],
-    keywordsJa: ["運命", "宿命", "周期", "転換点"],
+    meaning: "Life cycles, personal growth, natural patterns, turning points",
+    meaningKr: "생애 주기, 개인 성장, 자연스러운 패턴, 전환점",
+    meaningJa: "人生の周期、個人的成長、自然なパターン、転換点",
+    keywords: ["life cycles", "personal growth", "patterns", "turning point"],
+    keywordsKr: ["생애 주기", "개인 성장", "순환", "전환점"],
+    keywordsJa: ["人生の周期", "個人的成長", "周期", "転換点"],
     imageUrl: require('../assets/tarot-cards/classic-tarot/major_10_wheel_of_fortune.jpg'),
     element: "Fire",
     suit: "Major",
@@ -1319,8 +1319,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'one-card',
     name: 'One Card Tarot',
     nameKr: '원 카드 타로',
-    description: 'Simple questions or today\'s message',
-    descriptionKr: '간단한 질문이나 오늘의 메시지',
+    description: 'Basic card meaning study or daily learning focus',
+    descriptionKr: '기본 카드 의미 학습 또는 일일 학습 주제',
     cardCount: 1,
     isPremium: false
   },
@@ -1328,8 +1328,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'three-card',
     name: 'Three Card Spread',
     nameKr: '쓰리 카드 스프레드',
-    description: 'Past - Present - Future flow',
-    descriptionKr: '과거-현재-미래의 흐름 파악',
+    description: 'Timeline analysis: past experiences, current situation, future goals',
+    descriptionKr: '시간선 분석: 과거 경험, 현재 상황, 미래 목표',
     cardCount: 3,
     isPremium: false
   },
@@ -1337,8 +1337,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'four-card',
     name: 'Four Card Spread',
     nameKr: '포 카드 스프레드',
-    description: 'Four aspects analysis',
-    descriptionKr: '네 가지 측면 분석',
+    description: 'Multi-perspective analysis of personal development areas',
+    descriptionKr: '개인 발달 영역에 대한 다각도 분석',
     cardCount: 4,
     isPremium: false
   },
@@ -1346,8 +1346,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'five-card',
     name: 'Five Card V Spread',
     nameKr: '파이브 카드 V 스프레드',
-    description: 'V-shaped comprehensive analysis',
-    descriptionKr: 'V자 형태의 종합 분석',
+    description: 'V-shaped comprehensive personal growth analysis',
+    descriptionKr: 'V자 형태의 종합적 개인 성장 분석',
     cardCount: 5,
     isPremium: false
   },
@@ -1355,8 +1355,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'celtic-cross',
     name: 'Celtic Cross',
     nameKr: '켈틱 크로스',
-    description: 'Comprehensive and deep analysis',
-    descriptionKr: '종합적이고 깊이 있는 분석',
+    description: 'In-depth personal development and life path analysis',
+    descriptionKr: '심도 있는 개인 발달 및 인생 경로 분석',
     cardCount: 10,
     isPremium: true
   },
@@ -1364,8 +1364,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'relationship',
     name: 'Cup of Relationship Spread',
     nameKr: '컵오브릴레이션십 스프레드',
-    description: 'Human relationships and love analysis',
-    descriptionKr: '인간관계, 연애 문제 분석',
+    description: 'Relationship dynamics and interpersonal communication study',
+    descriptionKr: '관계 역학 및 대인 커뮤니케이션 학습',
     cardCount: 11,
     isPremium: true
   },
@@ -1373,8 +1373,8 @@ export const SPREAD_TYPES: SpreadType[] = [
     id: 'choice',
     name: 'AB Choice Spread',
     nameKr: 'AB 선택 스프레드',
-    description: 'Decision between two choices',
-    descriptionKr: '두 가지 선택지 중 결정',
+    description: 'Decision-making framework for comparing two options',
+    descriptionKr: '두 옵션 비교를 위한 의사결정 프레임워크',
     cardCount: 7,
     isPremium: true
   }
@@ -1537,20 +1537,33 @@ export const TarotUtils = {
   }
 };
 
-// 간단한 메모리 저장소 (추후 AsyncStorage로 교체 예정)
-class SimpleStorage {
-  private storage: { [key: string]: string } = {};
+// AsyncStorage 기반 지속적 저장소
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+class SimpleStorage {
   async setItem(key: string, value: string): Promise<void> {
-    this.storage[key] = value;
+    try {
+      await AsyncStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Storage setItem error:', error);
+    }
   }
 
   async getItem(key: string): Promise<string | null> {
-    return this.storage[key] || null;
+    try {
+      return await AsyncStorage.getItem(key);
+    } catch (error) {
+      console.error('Storage getItem error:', error);
+      return null;
+    }
   }
 
   async removeItem(key: string): Promise<void> {
-    delete this.storage[key];
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error) {
+      console.error('Storage removeItem error:', error);
+    }
   }
 }
 

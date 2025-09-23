@@ -140,14 +140,25 @@ const SettingsTab: React.FC = () => {
   };
 
   const handleSendTestNotification = async () => {
-    if (!notificationsEnabled) {
-      Alert.alert(t('settings.notifications.permissionRequired'), t('settings.notifications.permissionFirst'));
-      return;
-    }
     try {
+      console.log('테스트 알림 버튼 클릭됨', { hasPermission, notificationsEnabled });
+
+      // 권한이 없으면 먼저 권한 요청
+      if (!notificationsEnabled) {
+        console.log('권한이 없어서 권한 요청 중...');
+        const granted = await requestPermission();
+        if (!granted) {
+          Alert.alert(t('settings.notifications.permissionRequired'), t('settings.notifications.permissionFirst'));
+          return;
+        }
+        console.log('권한 획득 성공');
+      }
+
       await sendTestNotification();
       Alert.alert(t('settings.notifications.testTitle'), t('settings.notifications.testMessage'));
+      console.log('테스트 알림 발송 성공');
     } catch (error) {
+      console.error('테스트 알림 실패:', error);
       Alert.alert(t('settings.notifications.testError'));
     }
   };
@@ -217,93 +228,44 @@ const SettingsTab: React.FC = () => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-      {/* 프리미엄 구독 관리 섹션 */}
-      <View style={[styles.settingsSection, isPremium && styles.premiumSettingsSection]}>
+      {/* 프리미엄 구독 관리 섹션 - 준비중 표시 */}
+      <View style={styles.settingsSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
             <Text style={styles.sectionIconText}>👑</Text>
           </View>
           <Text style={styles.sectionTitle}>{t('settings.premium.title')}</Text>
-          {isPremium ? (
-            <View style={[styles.activeBadge, { backgroundColor: Colors.state.success }]}>
-              <Text style={styles.activeBadgeText}>{t('settings.premium.active')}</Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={[styles.activeBadge, { backgroundColor: Colors.brand.accent }]}
-              onPress={handleUpgradePress}
-            >
-              <Text style={[styles.activeBadgeText, { color: '#000' }]}>{t('settings.premium.upgrade')}</Text>
-            </TouchableOpacity>
-          )}
+          <View style={[styles.comingSoonBadge]}>
+            <Text style={styles.comingSoonText}>{t('common.comingSoon')}</Text>
+          </View>
         </View>
 
-        {isPremium ? (
-          // 프리미엄 사용자 - 구독 상태 표시
-          <View style={styles.premiumStatusContainer}>
-            <View style={styles.premiumInfo}>
-              <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionStatus')}</Text>
-              <Text style={styles.premiumStatusValue}>
-                {isSubscriptionActive ? t('settings.premium.active') : t('settings.premium.expired')}
-              </Text>
-            </View>
-
-            {premiumStatus.subscription_type && (
-              <View style={styles.premiumInfo}>
-                <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionType')}</Text>
-                <Text style={styles.premiumStatusValue}>
-                  {premiumStatus.subscription_type === 'monthly' ? t('settings.premium.monthly') : t('settings.premium.yearly')} {t('settings.premium.subscription')}
-                </Text>
-              </View>
-            )}
-
-            {daysUntilExpiry !== null && (
-              <View style={styles.premiumInfo}>
-                <Text style={styles.premiumStatusTitle}>{t('settings.premium.remainingPeriod')}</Text>
-                <Text style={[
-                  styles.premiumStatusValue,
-                  daysUntilExpiry <= 7 && { color: Colors.state.warning }
-                ]}>
-                  {daysUntilExpiry > 0 ? `${daysUntilExpiry}${t('settings.premium.days')}` : t('settings.premium.expired')}
-                </Text>
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={styles.manageSubscriptionButton}
-              onPress={() => setShowManagementModal(true)}
-            >
-              <Text style={styles.manageSubscriptionButtonText}>{t('settings.premium.manage')}</Text>
-            </TouchableOpacity>
+        {/* 항상 준비중 메시지 표시 */}
+        <View style={styles.premiumFeatures}>
+          <View style={styles.featureRow}>
+            <Text style={styles.featureBullet}>•</Text>
+            <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
           </View>
-        ) : (
-          // 일반 사용자 - 프리미엄 기능 소개
-          <View style={styles.premiumFeatures}>
-            <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>•</Text>
-              <Text style={styles.featureText}>{t('settings.premium.features.premiumThemes')}</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.upgradeButton}
-              onPress={handleUpgradePress}
-            >
-              <Text style={styles.upgradeButtonText}>{t('settings.premium.comingSoon')}</Text>
-            </TouchableOpacity>
+          <View style={styles.featureRow}>
+            <Text style={styles.featureBullet}>•</Text>
+            <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
           </View>
-        )}
+          <View style={styles.featureRow}>
+            <Text style={styles.featureBullet}>•</Text>
+            <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
+          </View>
+          <View style={styles.featureRow}>
+            <Text style={styles.featureBullet}>•</Text>
+            <Text style={styles.featureText}>{t('settings.premium.features.premiumThemes')}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={handleUpgradePress}
+          >
+            <Text style={styles.upgradeButtonText}>{t('settings.premium.comingSoon')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 화면 및 테마 설정 */}
@@ -460,58 +422,12 @@ const SettingsTab: React.FC = () => {
           <TouchableOpacity
             style={styles.testButton}
             onPress={handleSendTestNotification}
-            disabled={!notificationsEnabled}
           >
             <Text style={styles.testButtonText}>{t('settings.notifications.sendTest')}</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* 앱 정보 */}
-      <View style={styles.settingsSection}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionIcon}>
-            <Text style={styles.sectionIconText}>ℹ️</Text>
-          </View>
-          <Text style={styles.sectionTitle}>{t('settings.about.title')}</Text>
-        </View>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.about.version')}</Text>
-            <Text style={styles.settingSubtitle}>v2.1.0 - Mystic Edition</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.settingItem}
-          onPress={() => {
-            // 인스타그램 링크 열기
-            const instagramUrl = 'https://www.instagram.com/selfish_saju/';
-            if (typeof window !== 'undefined' && window.open) {
-              // 웹 환경
-              window.open(instagramUrl, '_blank');
-            } else {
-              // 모바일 환경
-              try {
-                const { Linking } = require('react-native');
-                Linking.openURL(instagramUrl).catch(() => {
-                  Alert.alert('오류', '링크를 열 수 없습니다.');
-                });
-              } catch (error) {
-                console.warn('Linking 모듈 사용 불가:', error);
-              }
-            }
-          }}
-        >
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>{t('settings.about.developer')}</Text>
-            <Text style={styles.settingSubtitle}>데아노</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />
@@ -841,7 +757,7 @@ const SettingsTab: React.FC = () => {
         </View>
       )}
 
-      {/* 숨겨진 관리자 진입점 - 앱 정보 섹션 */}
+      {/* 앱 정보 섹션 */}
       <View style={styles.settingsSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
@@ -860,16 +776,17 @@ const SettingsTab: React.FC = () => {
               });
             }}
           >
-            <Text style={styles.sectionTitle}>앱 정보</Text>
+            <Text style={styles.sectionTitle}>{t('settings.about.title')}</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem}>
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>버전</Text>
-            <Text style={styles.settingSubtitle}>1.0.0</Text>
+            <Text style={styles.settingTitle}>{t('settings.about.version')}</Text>
+            <Text style={styles.settingSubtitle}>v2.1.0 - Mystic Edition</Text>
           </View>
-        </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.settingItem}
@@ -893,7 +810,7 @@ const SettingsTab: React.FC = () => {
           }}
         >
           <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>개발자</Text>
+            <Text style={styles.settingTitle}>{t('settings.about.developer')}</Text>
             <Text style={styles.settingSubtitle}>데아노</Text>
           </View>
           <Text style={styles.chevron}>›</Text>

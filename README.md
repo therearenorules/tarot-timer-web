@@ -1,6 +1,6 @@
-# 🔮 타로 타이머 웹앱
+# 🔮 Tarot Timer - Learn Card Meanings
 
-React Native + Expo 기반의 24시간 타로 타이머 애플리케이션
+React Native + Expo 기반의 24시간 타로 카드 학습 애플리케이션
 
 [![Status](https://img.shields.io/badge/Status-85%25%20Complete-green.svg)](https://github.com)
 [![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20iOS%20%7C%20Android-blue.svg)](https://expo.dev)

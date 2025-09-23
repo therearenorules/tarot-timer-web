@@ -295,8 +295,7 @@ node scripts/generate-pwa-icons.js
 i18n/locales/ko.json  # 한국어 (기본)
 i18n/locales/en.json  # 영어
 i18n/locales/ja.json  # 일본어 (추가 작업 필요)
-i18n/locales/zh.json  # 중국어 (추가 작업 필요)
-i18n/locales/es.json  # 스페인어 (추가 작업 필요)
+
 ```
 
 ### 8.2 언어 전환 테스트

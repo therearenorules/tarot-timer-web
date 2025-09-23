@@ -2,7 +2,7 @@
   "app": {
     "name": "타로 타이머",
     "subtitle": "Tarot Timer",
-    "description": "24시간 타로 카드 타이머 및 일지 앱"
+    "description": "24시간 타로 카드 학습 및 자기계발 앱"
   },
   "navigation": {
     "timer": "타이머",
@@ -12,7 +12,7 @@
   },
   "timer": {
     "title": "Tarot Timer",
-    "subtitle": "24시간 타로 메시지",
+    "subtitle": "24시간 카드 의미 학습",
     "start": "시작",
     "pause": "일시정지",
     "resume": "재개",
@@ -28,7 +28,7 @@
     "noon": "정오",
     "am": "오전 {{hour}}시",
     "pm": "오후 {{hour}}시",
-    "energyFlow": "24시간 에너지 흐름",
+    "energyFlow": "24시간 학습 일정",
     "redraw": "다시 뽑기",
     "editMemo": "📝 메모 수정하기",
     "addMemo": "📄 메모 남기기",
@@ -37,12 +37,12 @@
       "오늘의 이야기가 펼쳐집니다"
     ],
     "welcomeSubtitles": [
-      "하루 24시간, 당신을 위한 특별한 메시지들이 기다리고 있어요",
-      "매 시간 새로운 관점으로 세상을 바라보는 시간을 가져보세요"
+      "하루 24시간, 타로 카드의 상징과 의미를 체계적으로 학습하세요",
+      "매 시간 새로운 카드를 통해 상징적 언어를 이해하고 학습하세요"
     ],
     "preparing": "카드 준비 중...",
     "drawCards": "24시간 타로 뽑기",
-    "guideText": "매 순간마다 우주의 에너지가 흐릅니다.\n마음을 열고 지혜를 받아들이세요.",
+    "guideText": "타로 카드는 수백 년의 상징 체계입니다.\n각 카드의 의미를 배우고 해석해보세요.",
     "saveDailyTarot": "데일리 타로 저장하기",
     "memoPlaceholder": "이 시간에 대한 생각이나 느낌을 적어보세요...",
     "settings": {
@@ -62,7 +62,7 @@
   },
   "spread": {
     "title": "Tarot Spread",
-    "subtitle": "카드의 지혜를 탐구하세요",
+    "subtitle": "카드의 의미와 상징을 학습하세요",
     "cardCount": "카드 {{drawn}} / {{total}}",
     "selectSpread": "스프레드 선택",
     "drawCard": "카드 뽑기",
@@ -81,7 +81,7 @@
       "celticCross": "켈틱 크로스",
       "relationship": "컵오브릴레이션쉽 스프레드",
       "career": "직업 스프레드",
-      "yearlyForecast": "연간 운세",
+      "yearlyForecast": "연간 성찰 스프레드",
       "choice": "AB 선택 스프레드"
     },
     "descriptions": {
@@ -92,10 +92,10 @@
       "celticCross": "종합적이고 깊이 있는 분석",
       "relationship": "인간관계, 연애 문제",
       "choice": "두 가지 선택지 중 결정",
-      "message": "우주가 전하는 지혜",
-      "pastInfluence": "과거의 영향과 배경",
-      "presentSituation": "현재 상황과 에너지",
-      "futurePossibility": "미래의 가능성과 방향"
+      "message": "카드가 전하는 상징적 의미",
+      "pastInfluence": "과거 경험과 배경 이해",
+      "presentSituation": "현재 상황 분석",
+      "futurePossibility": "목표 설정과 방향성"
     },
     "positions": {
       "past": "과거",
@@ -164,8 +164,8 @@
     "drawing": "뽑는 중..."
   },
   "journal": {
-    "title": "타로 다이어리",
-    "subtitle": "당신의 타로 여정을 기록하세요",
+    "title": "학습 일지",
+    "subtitle": "타로 카드 학습 과정을 기록하세요",
     "newEntry": "새 일지",
     "todayEntry": "오늘의 일지",
     "searchEntries": "일지 검색",

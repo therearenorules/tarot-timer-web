@@ -136,7 +136,15 @@
       "Bash(start http://localhost:3001/api-test)",
       "Bash(PORT=3002 npm run dev)",
       "Bash(del test-api-connection.html)",
-      "Bash(start http://localhost:3005)"
+      "Bash(start http://localhost:3005)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(forfiles:*)",
+      "Bash(PORT=3004 npm run dev)",
+      "Bash(start http://localhost:3006)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/46ee0d8c-8d60-4bc6-acf7-ae1a640e495e)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/submissions/782caea6-1929-456c-81f1-afc4348ef99e)"
     ],
     "deny": [],
     "ask": []

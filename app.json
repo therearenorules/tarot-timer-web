@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Tarot Timer",
+    "name": "Tarot Timer - Learn Card Meanings",
     "slug": "tarot-timer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "primaryColor": "#7b2cbf",
-    "description": "타로 카드 공부를 위한 24시간 타이머 앱입니다. 시간대별로 타로 카드를 기록하고, 일상 속에서 카드의 의미를 체험하며 타로 공부에 도움을 받으세요.",
+    "description": "24시간 실시간 학습 시스템으로 타로 카드의 의미를 체계적으로 학습하는 교육 플랫폼입니다. 매 시간마다 새로운 카드를 통해 셀프 스터디하며, 78장 카드의 상징과 의미를 자연스럽게 기억할 수 있습니다.",
     "extra": {
-      "EXPO_PUBLIC_API_URL": "http://localhost:3000",
+      "EXPO_PUBLIC_API_URL": "https://api.tarottimer.app",
       "eas": {
         "projectId": "268f44c1-406f-4387-8589-e62144024eaa"
       }
@@ -25,22 +25,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "11",
+      "buildNumber": "19",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
-        "NSUserTrackingUsageDescription": "개인화된 광고를 제공하기 위해 추적 권한이 필요합니다.",
-        "NSCameraUsageDescription": "타로 카드 촬영을 위해 카메라 권한이 필요합니다.",
-        "NSMicrophoneUsageDescription": "음성 메모 기능을 위해 마이크 권한이 필요합니다.",
-        "NSLocationWhenInUseUsageDescription": "지역별 타로 해석을 위해 위치 권한이 필요합니다.",
-        "SKAdNetworkItems": [
-          {
-            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
-          },
-          {
-            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
-          }
-        ]
+        "NSUserNotificationUsageDescription": "24시간 타로 카드 학습 알림과 시간별 카드 뽑기 알림을 위해 알림 권한이 필요합니다."
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -55,26 +44,14 @@
       },
       "permissions": [
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "com.google.android.gms.permission.AD_ID",
-        "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "com.google.android.gms.permission.AD_ID"
+        "android.permission.ACCESS_NETWORK_STATE"
       ],
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "name": "Tarot Timer",
+      "name": "Tarot Timer - Learn Card Meanings",
       "shortName": "TarotTimer",
       "lang": "ko",
       "scope": "/",

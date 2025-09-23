@@ -341,45 +341,6 @@ function AppContent() {
   );
 }
 
-// 간단한 AppContent 테스트 버전
-function SimpleAppContent() {
-  const [activeTab, setActiveTab] = useState('timer');
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>타로 타이머</Text>
-        <Text style={styles.subtitle}>24시간 미스틱 가이던스</Text>
-      </View>
-
-      <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
-        <View style={{ padding: 20, alignItems: 'center' }}>
-          <Text style={{ color: '#f4d03f', fontSize: 18, marginBottom: 10 }}>현재 탭: {activeTab}</Text>
-          <Text style={{ color: '#d4b8ff', fontSize: 14, textAlign: 'center' }}>
-            앱이 정상적으로 로딩되었습니다. 탭 네비게이션을 테스트해보세요.
-          </Text>
-        </View>
-      </ScrollView>
-
-      <View style={styles.tabBar}>
-        {['timer', 'spread', 'journal', 'settings'].map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <StatusBar style="light" backgroundColor="#1a1625" />
-    </SafeAreaView>
-  );
-}
 
 // 전역 에러 경계가 있는 최상위 컴포넌트
 export default function App() {
