@@ -240,7 +240,20 @@
     "saveMemo": "메모 저장",
     "memoPlaceholder": "이 시간에 대한 생각이나 느낌을 적어보세요...",
     "insightsTitle": "인사이트",
-    "createdDate": "생성 날짜"
+    "createdDate": "생성 날짜",
+    "deleteRecords": "기록 삭제",
+    "deleteRecordsConfirm": "선택한 {{count}}개의 기록을 삭제하시겠습니까?",
+    "deleteComplete": "삭제 완료",
+    "deleteRecordsSuccess": "{{count}}개의 기록이 삭제되었습니다.",
+    "deleteFailed": "삭제 실패",
+    "deleteRecordsError": "기록 삭제 중 오류가 발생했습니다.",
+    "deleteSpreads": "스프레드 기록 삭제",
+    "deleteSpreadsConfirm": "선택한 {{count}}개의 스프레드 기록을 삭제하시겠습니까?",
+    "deleteSpreadsSuccess": "{{count}}개의 스프레드 기록이 삭제되었습니다.",
+    "deleteSpreadsError": "스프레드 기록 삭제 중 오류가 발생했습니다.",
+    "deleteButton": "삭제하기",
+    "deleteCancel": "삭제 취소",
+    "deleteSelected": "선택 삭제하기 ({{count}})"
   },
   "settings": {
     "title": "Settings",
@@ -314,7 +327,18 @@
       "quietHoursTime": "조용한 시간: {{start}}:00 - {{end}}:00",
       "timeline24h": "24시간 타임라인",
       "start": "시작",
-      "end": "종료"
+      "end": "종료",
+      "disabled": "비활성화됨",
+      "timeSettings": "시간 설정",
+      "timeSettingsDescription": "조용한 시간 범위 조정",
+      "disableQuietHours": "🔕 조용한 시간 끄기",
+      "settingsComplete": "설정 완료",
+      "quietHoursDisabled": "조용한 시간이 비활성화되었습니다.",
+      "permissionDenied": "알림 권한이 거부되었습니다",
+      "permissionError": "알림 권한 요청 중 오류가 발생했습니다",
+      "testError": "테스트 알림 전송 중 오류가 발생했습니다",
+      "saveError": "설정 저장 중 오류가 발생했습니다",
+      "updateError": "설정 업데이트 중 오류가 발생했습니다"
     },
     "about": {
       "title": "앱 정보",

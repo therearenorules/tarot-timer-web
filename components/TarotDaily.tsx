@@ -316,12 +316,12 @@ const TarotDaily = () => {
     if (selectedItems.size === 0) return;
 
     Alert.alert(
-      '기록 삭제',
-      `선택한 ${selectedItems.size}개의 기록을 삭제하시겠습니까?`,
+      t('journal.deleteRecords'),
+      t('journal.deleteRecordsConfirm', { count: selectedItems.size }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -342,10 +342,10 @@ const TarotDaily = () => {
               setSelectedItems(new Set());
               setIsDeleteMode(false);
 
-              Alert.alert('삭제 완료', `${selectedItems.size}개의 기록이 삭제되었습니다.`);
+              Alert.alert(t('journal.deleteComplete'), t('journal.deleteRecordsSuccess', { count: selectedItems.size }));
             } catch (error) {
               console.error('Delete failed:', error);
-              Alert.alert('삭제 실패', '기록 삭제 중 오류가 발생했습니다.');
+              Alert.alert(t('journal.deleteFailed'), t('journal.deleteRecordsError'));
             }
           }
         }
@@ -357,12 +357,12 @@ const TarotDaily = () => {
     if (selectedSpreadItems.size === 0) return;
 
     Alert.alert(
-      '스프레드 기록 삭제',
-      `선택한 ${selectedSpreadItems.size}개의 스프레드 기록을 삭제하시겠습니까?`,
+      t('journal.deleteSpreads'),
+      t('journal.deleteSpreadsConfirm', { count: selectedSpreadItems.size }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -383,10 +383,10 @@ const TarotDaily = () => {
               setSelectedSpreadItems(new Set());
               setIsSpreadDeleteMode(false);
 
-              Alert.alert('삭제 완료', `${selectedSpreadItems.size}개의 스프레드 기록이 삭제되었습니다.`);
+              Alert.alert(t('journal.deleteComplete'), t('journal.deleteSpreadsSuccess', { count: selectedSpreadItems.size }));
             } catch (error) {
               console.error('Spread delete failed:', error);
-              Alert.alert('삭제 실패', '스프레드 기록 삭제 중 오류가 발생했습니다.');
+              Alert.alert(t('journal.deleteFailed'), t('journal.deleteSpreadsError'));
             }
           }
         }
@@ -465,7 +465,7 @@ const TarotDaily = () => {
               }}
             >
               <Text style={[styles.deleteButtonText, isDeleteMode && styles.deleteButtonTextActive]}>
-                {isDeleteMode ? (selectedItems.size > 0 ? `선택 삭제하기 (${selectedItems.size})` : '삭제 취소') : '삭제하기'}
+                {isDeleteMode ? (selectedItems.size > 0 ? t('journal.deleteSelected', { count: selectedItems.size }) : t('journal.deleteCancel')) : t('journal.deleteButton')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -584,7 +584,7 @@ const TarotDaily = () => {
               }}
             >
               <Text style={[styles.deleteButtonText, isSpreadDeleteMode && styles.deleteButtonTextActive]}>
-                {isSpreadDeleteMode ? (selectedSpreadItems.size > 0 ? `선택 삭제하기 (${selectedSpreadItems.size})` : '삭제 취소') : '삭제하기'}
+                {isSpreadDeleteMode ? (selectedSpreadItems.size > 0 ? t('journal.deleteSelected', { count: selectedSpreadItems.size }) : t('journal.deleteCancel')) : t('journal.deleteButton')}
               </Text>
             </TouchableOpacity>
           </View>

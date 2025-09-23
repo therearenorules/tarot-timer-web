@@ -32,9 +32,11 @@ const getApiUrl = (): string => {
 // 알림 설정 인터페이스
 interface NotificationSettings {
   hourlyEnabled: boolean;
+  quietHoursEnabled: boolean;
   quietHoursStart: number;
   quietHoursEnd: number;
   dailyReminderEnabled: boolean;
+  midnightResetEnabled: boolean;
   notificationTypes: string[];
 }
 
@@ -58,14 +60,23 @@ interface NotificationContextType {
   // 백엔드 연동
   registerTokenWithBackend: () => Promise<void>;
   unregisterTokenFromBackend: () => Promise<void>;
+
+  // 고급 진단 및 상태 관리
+  checkRealTimePermission: () => Promise<boolean>;
+  verifyScheduledNotifications: () => Promise<number>;
+  lastScheduleTime: number | null;
+  scheduleAttempts: number;
+  isScheduling: boolean;
 }
 
 // 기본 알림 설정
 const DEFAULT_SETTINGS: NotificationSettings = {
   hourlyEnabled: true, // 시간별 타로 알림 초기값 ON
+  quietHoursEnabled: true, // 조용한 시간 기능 초기값 ON
   quietHoursStart: 22, // 22:00 (오후 10시)
   quietHoursEnd: 8,    // 08:00 (오전 8시)
   dailyReminderEnabled: true, // 데일리 타로 일기 저장 리마인더 초기값 ON
+  midnightResetEnabled: true, // 자정 리셋 알림 초기값 ON
   notificationTypes: ['hourly', 'daily_save', 'midnight_reset']
 };
 
@@ -192,6 +203,42 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [hasPermission, setHasPermission] = useState(Platform.OS === 'web' ? false : false); // 웹에서는 기본값 false
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
 
+  // 알림 상태 추적을 위한 추가 상태
+  const [lastScheduleTime, setLastScheduleTime] = useState<number | null>(null);
+  const [scheduleAttempts, setScheduleAttempts] = useState<number>(0);
+  const [isScheduling, setIsScheduling] = useState<boolean>(false);
+
+  // 앱 상태 변화 감지 및 권한 재확인
+  useEffect(() => {
+    if (!isMobileEnvironment || !Notifications) return;
+
+    let appStateSubscription: any = null;
+
+    try {
+      const { AppState } = require('react-native');
+
+      const handleAppStateChange = async (nextAppState: string) => {
+        if (nextAppState === 'active') {
+          console.log('📱 앱 포어그라운드 복귀 - 권한 상태 재확인');
+          // 앱이 활성화되면 권한 상태 재확인
+          setTimeout(async () => {
+            await checkRealTimePermission();
+          }, 1000);
+        }
+      };
+
+      appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    } catch (error) {
+      console.warn('AppState 리스너 설정 실패:', error);
+    }
+
+    return () => {
+      if (appStateSubscription?.remove) {
+        appStateSubscription.remove();
+      }
+    };
+  }, [checkRealTimePermission]);
+
   // 컴포넌트 마운트 시 초기 설정
   useEffect(() => {
     // 웹 환경에서는 푸시 토큰 등록을 스킵
@@ -209,12 +256,49 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return;
     }
 
-    // 푸시 토큰 등록
-    registerForPushNotificationsAsync()
-      .then(token => {
-        setExpoPushToken(token);
-        setHasPermission(!!token);
-      })
+    // 초기화: 권한 체크와 토큰 등록을 분리
+    const initializeNotifications = async () => {
+      try {
+        // 1. 먼저 권한 체크
+        const { status } = await Notifications.getPermissionsAsync();
+        const hasNotificationPermission = status === 'granted';
+
+        console.log('🔔 알림 권한 상태:', status, hasNotificationPermission ? '✅ 권한 있음' : '❌ 권한 없음');
+        setHasPermission(hasNotificationPermission);
+
+        // 2. 권한이 있으면 토큰 등록 시도
+        if (hasNotificationPermission) {
+          const token = await registerForPushNotificationsAsync();
+          setExpoPushToken(token);
+
+          if (token) {
+            console.log('🔔 토큰 등록 완료 - 자동 알림 스케줄링 시작');
+            // 설정 로드 후 알림 스케줄링 (약간의 지연)
+            setTimeout(async () => {
+              try {
+                const savedSettings = await loadNotificationSettingsSync();
+                if (savedSettings.hourlyEnabled) {
+                  await scheduleHourlyNotificationsWithSettings(savedSettings);
+                  console.log('✅ 자동 알림 스케줄링 완료');
+                }
+              } catch (error) {
+                console.error('❌ 자동 알림 스케줄링 실패:', error);
+              }
+            }, 1000);
+          } else {
+            console.warn('⚠️ 권한은 있지만 토큰 생성 실패');
+          }
+        }
+
+        // 3. 설정 로드는 권한과 무관하게 실행
+        await loadNotificationSettings();
+      } catch (error) {
+        console.error('❌ 알림 초기화 실패:', error);
+        await loadNotificationSettings();
+      }
+    };
+
+    initializeNotifications()
       .catch(error => {
         console.error('Error registering for push notifications:', error);
       });
@@ -280,6 +364,78 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       // }
     } catch (error) {
       console.error('❌ 알림 설정 로드 오류:', error);
+    }
+  };
+
+  // 동기적으로 설정을 로드하는 함수 (자동 스케줄링용)
+  const loadNotificationSettingsSync = async (): Promise<NotificationSettings> => {
+    try {
+      // 웹 환경에서는 localStorage 사용
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const savedSettings = localStorage.getItem('notificationSettings');
+        if (savedSettings) {
+          const parsedSettings = JSON.parse(savedSettings);
+          return { ...DEFAULT_SETTINGS, ...parsedSettings };
+        }
+      }
+      // TODO: 모바일에서는 AsyncStorage 사용
+      // const savedSettings = await AsyncStorage.getItem('notificationSettings');
+      // if (savedSettings) {
+      //   return JSON.parse(savedSettings);
+      // }
+      return DEFAULT_SETTINGS;
+    } catch (error) {
+      console.error('❌ 알림 설정 동기 로드 오류:', error);
+      return DEFAULT_SETTINGS;
+    }
+  };
+
+  // 실시간 권한 상태 체크 함수
+  const checkRealTimePermission = async (): Promise<boolean> => {
+    if (!isMobileEnvironment || !Notifications) {
+      return false;
+    }
+
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      const actualPermission = status === 'granted';
+
+      // Context 상태와 실제 권한이 다르면 동기화
+      if (hasPermission !== actualPermission) {
+        console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermission}, 실제=${actualPermission}`);
+        setHasPermission(actualPermission);
+
+        // 권한이 꺼진 경우 스케줄된 알림 정리
+        if (!actualPermission) {
+          console.log('📵 권한 상실 감지 - 스케줄된 알림 정리');
+          await Notifications.cancelAllScheduledNotificationsAsync();
+        }
+      }
+
+      return actualPermission;
+    } catch (error) {
+      console.error('❌ 실시간 권한 체크 실패:', error);
+      return false;
+    }
+  };
+
+  // 스케줄된 알림 상태 확인 함수
+  const verifyScheduledNotifications = async (): Promise<number> => {
+    if (!isMobileEnvironment || !Notifications) {
+      return 0;
+    }
+
+    try {
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      const hourlyNotifications = scheduledNotifications.filter(n =>
+        n.content.data?.type === 'hourly'
+      );
+
+      console.log(`📊 현재 스케줄된 시간별 알림: ${hourlyNotifications.length}개`);
+      return hourlyNotifications.length;
+    } catch (error) {
+      console.error('❌ 스케줄된 알림 확인 실패:', error);
+      return 0;
     }
   };
 
@@ -365,6 +521,23 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       setExpoPushToken(token);
       const granted = !!token;
       setHasPermission(granted);
+
+      // 권한 획득 시 자동으로 알림 스케줄링
+      if (granted) {
+        console.log('🔔 수동 권한 요청 성공 - 자동 알림 스케줄링 시작');
+        setTimeout(async () => {
+          try {
+            const savedSettings = await loadNotificationSettingsSync();
+            if (savedSettings.hourlyEnabled) {
+              await scheduleHourlyNotificationsWithSettings(savedSettings);
+              console.log('✅ 수동 권한 후 자동 알림 스케줄링 완료');
+            }
+          } catch (error) {
+            console.error('❌ 수동 권한 후 자동 알림 스케줄링 실패:', error);
+          }
+        }, 500);
+      }
+
       return granted;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
@@ -406,8 +579,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           },
           sound: true,
           priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+          categoryIdentifier: 'tarot-hourly',
         },
         trigger: null, // 즉시 알림
+        identifier: `test-${Date.now()}`,
       });
       console.log('Test notification scheduled successfully');
     } catch (error) {
@@ -415,15 +590,38 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  // 설정을 받아 알림을 스케줄링하는 헬퍼 함수
-  const scheduleHourlyNotificationsWithSettings = async (settingsToUse: NotificationSettings) => {
+  // 설정을 받아 알림을 스케줄링하는 헬퍼 함수 (강화된 버전)
+  const scheduleHourlyNotificationsWithSettings = async (settingsToUse: NotificationSettings): Promise<boolean> => {
     if (!Notifications) {
       console.log('Notifications module not available');
-      return;
+      return false;
     }
 
+    // 중복 스케줄링 방지
+    if (isScheduling) {
+      console.log('⏳ 이미 스케줄링 진행 중 - 스킵');
+      return false;
+    }
+
+    setIsScheduling(true);
+    setScheduleAttempts(prev => prev + 1);
+
     try {
-      // 1. 24시간 동안의 시간별 알림 스케줄 (최대 64개까지만)
+      // 1. 실시간 권한 확인
+      const hasRealPermission = await checkRealTimePermission();
+      if (!hasRealPermission) {
+        console.log('❌ 실시간 권한 없음 - 스케줄링 중단');
+        setIsScheduling(false);
+        return false;
+      }
+
+      console.log('🔔 강화된 알림 스케줄링 시작...');
+
+      // 2. 기존 알림 모두 취소 (안전한 정리)
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      console.log('🗑️ 기존 알림 모두 취소 완료');
+
+      // 3. 24시간 동안의 시간별 알림 스케줄 (최대 64개까지만)
       const now = new Date();
       const cardMessages = [
         "🔮 새로운 타로 카드를 뽑을 시간입니다!",
@@ -433,8 +631,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         "💫 새로운 상징적 의미를 발견해보세요"
       ];
 
+      let scheduledCount = 0;
+      const maxNotifications = 23; // iOS 제한 고려
+
       // 향후 24시간 동안 매시간 알림 스케줄
-      for (let i = 1; i <= 24; i++) {
+      for (let i = 1; i <= 24 && scheduledCount < maxNotifications; i++) {
         const triggerDate = new Date(now.getTime() + (i * 60 * 60 * 1000)); // i시간 후
         const hour = triggerDate.getHours();
 
@@ -446,46 +647,78 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (settingsToUse.hourlyEnabled && !isQuietTime) {
           const randomMessage = cardMessages[Math.floor(Math.random() * cardMessages.length)];
 
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: '🔮 타로 타이머',
-              body: randomMessage,
-              data: {
-                type: 'hourly',
-                hour: hour,
-                timestamp: triggerDate.getTime()
+          try {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: '🔮 타로 타이머',
+                body: randomMessage,
+                data: {
+                  type: 'hourly',
+                  hour: hour,
+                  timestamp: triggerDate.getTime()
+                },
+                sound: true,
+                priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+                categoryIdentifier: 'tarot-hourly',
               },
-              sound: true,
-              priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
-            },
-            trigger: triggerDate,
-          });
+              trigger: triggerDate,
+              identifier: `hourly-${triggerDate.getTime()}`, // 고유 식별자 추가
+            });
+            scheduledCount++;
+            console.log(`✅ 알림 스케줄 성공: ${hour}시 (${i}시간 후)`);
+          } catch (scheduleError) {
+            console.error(`❌ 알림 스케줄 실패: ${hour}시`, scheduleError);
+            // 개별 스케줄 실패는 전체를 중단하지 않음
+          }
+        } else {
+          console.log(`⏭️ 스케줄 스킵: ${hour}시 (조용한 시간 또는 비활성화)`);
         }
       }
 
-      // 2. 자정 리셋 알림 (내일 자정)
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
+      // 4. 자정 리셋 알림 (내일 자정)
+      if (scheduledCount < maxNotifications) {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '🌙 자정 카드 리셋',
-          body: '새로운 24시간 타로 카드 세트가 준비되었습니다!',
-          data: {
-            type: 'midnight_reset',
-            timestamp: tomorrow.getTime()
-          },
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority?.DEFAULT || 'default',
-        },
-        trigger: tomorrow,
-      });
+        try {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '🌙 자정 카드 리셋',
+              body: '새로운 24시간 타로 카드 세트가 준비되었습니다!',
+              data: {
+                type: 'midnight_reset',
+                timestamp: tomorrow.getTime()
+              },
+              sound: true,
+              priority: Notifications.AndroidNotificationPriority?.DEFAULT || 'default',
+              categoryIdentifier: 'tarot-midnight',
+            },
+            trigger: tomorrow,
+            identifier: `midnight-${tomorrow.getTime()}`,
+          });
+          scheduledCount++;
+          console.log('✅ 자정 리셋 알림 스케줄 성공');
+        } catch (midnightError) {
+          console.error('❌ 자정 알림 스케줄 실패:', midnightError);
+        }
+      }
 
-      console.log('Local hourly notifications scheduled successfully with custom settings');
+      // 5. 최종 검증 및 상태 업데이트
+      setLastScheduleTime(Date.now());
+
+      // 실제 스케줄된 알림 개수 확인
+      const actualScheduled = await verifyScheduledNotifications();
+
+      console.log(`🎯 스케줄링 완료: 예상 ${scheduledCount}개, 실제 ${actualScheduled}개`);
+
+      setIsScheduling(false);
+      return scheduledCount > 0;
 
     } catch (error) {
-      console.error('Failed to schedule hourly notifications with settings:', error);
+      console.error('❌ 강화된 알림 스케줄링 실패:', error);
+      setIsScheduling(false);
+      return false;
     }
   };
 
@@ -624,6 +857,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     cancelHourlyNotifications,
     registerTokenWithBackend,
     unregisterTokenFromBackend,
+    // 고급 진단 기능
+    checkRealTimePermission,
+    verifyScheduledNotifications,
+    lastScheduleTime,
+    scheduleAttempts,
+    isScheduling,
   };
 
   return (

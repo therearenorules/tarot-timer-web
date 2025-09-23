@@ -240,7 +240,20 @@
     "saveMemo": "Save Memo",
     "memoPlaceholder": "Write down your thoughts or feelings about this hour...",
     "insightsTitle": "Insights",
-    "createdDate": "Created Date"
+    "createdDate": "Created Date",
+    "deleteRecords": "Delete Records",
+    "deleteRecordsConfirm": "Are you sure you want to delete {{count}} selected records?",
+    "deleteComplete": "Delete Complete",
+    "deleteRecordsSuccess": "{{count}} records have been deleted.",
+    "deleteFailed": "Delete Failed",
+    "deleteRecordsError": "An error occurred while deleting records.",
+    "deleteSpreads": "Delete Spread Records",
+    "deleteSpreadsConfirm": "Are you sure you want to delete {{count}} selected spread records?",
+    "deleteSpreadsSuccess": "{{count}} spread records have been deleted.",
+    "deleteSpreadsError": "An error occurred while deleting spread records.",
+    "deleteButton": "Delete",
+    "deleteCancel": "Cancel Delete",
+    "deleteSelected": "Delete Selected ({{count}})"
   },
   "settings": {
     "title": "Settings",
@@ -314,7 +327,18 @@
       "quietHoursTime": "Quiet hours: {{start}}:00 - {{end}}:00",
       "timeline24h": "24-Hour Timeline",
       "start": "Start",
-      "end": "End"
+      "end": "End",
+      "disabled": "Disabled",
+      "timeSettings": "Time Settings",
+      "timeSettingsDescription": "Adjust quiet hours range",
+      "disableQuietHours": "🔕 Turn Off Quiet Hours",
+      "settingsComplete": "Settings Complete",
+      "quietHoursDisabled": "Quiet hours have been disabled.",
+      "permissionDenied": "Notification permission denied",
+      "permissionError": "Error occurred while requesting notification permission",
+      "testError": "Error occurred while sending test notification",
+      "saveError": "Error occurred while saving settings",
+      "updateError": "Error occurred while updating settings"
     },
     "about": {
       "title": "App Info",

@@ -46,6 +46,69 @@ try {
   console.warn('⚠️ 구독 컴포넌트 로드 실패 (시뮬레이션 모드):', error);
 }
 
+// 알림 진단 컴포넌트 (개발 모드 전용)
+const NotificationDiagnostics: React.FC = () => {
+  const {
+    hasPermission,
+    lastScheduleTime,
+    scheduleAttempts,
+    isScheduling,
+    checkRealTimePermission,
+    verifyScheduledNotifications,
+    expoPushToken
+  } = useNotifications();
+
+  const [diagnostics, setDiagnostics] = useState({
+    realTimePermission: null as boolean | null,
+    scheduledCount: null as number | null,
+    checking: false
+  });
+
+  const runDiagnostics = async () => {
+    setDiagnostics(prev => ({ ...prev, checking: true }));
+
+    try {
+      const realPermission = await checkRealTimePermission();
+      const scheduledCount = await verifyScheduledNotifications();
+
+      setDiagnostics({
+        realTimePermission: realPermission,
+        scheduledCount: scheduledCount,
+        checking: false
+      });
+    } catch (error) {
+      console.error('진단 실패:', error);
+      setDiagnostics(prev => ({ ...prev, checking: false }));
+    }
+  };
+
+  return (
+    <View style={[styles.settingItem, { borderTopWidth: 2, borderTopColor: '#ff6b6b' }]}>
+      <View style={styles.settingContent}>
+        <Text style={[styles.settingTitle, { color: '#ff6b6b' }]}>🔧 알림 진단 (개발용)</Text>
+        <Text style={styles.settingSubtitle}>
+          권한: {hasPermission ? '✅' : '❌'} |
+          실제: {diagnostics.realTimePermission === null ? '?' : (diagnostics.realTimePermission ? '✅' : '❌')} |
+          스케줄됨: {diagnostics.scheduledCount ?? '?'}개{'\n'}
+          토큰: {expoPushToken ? '✅' : '❌'} |
+          시도: {scheduleAttempts}회 |
+          진행중: {isScheduling ? '⏳' : '⭕'}{'\n'}
+          마지막: {lastScheduleTime ? new Date(lastScheduleTime).toLocaleTimeString() : '없음'}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={[styles.testButton, { marginTop: 0 }]}
+        onPress={runDiagnostics}
+        disabled={diagnostics.checking}
+      >
+        <Text style={styles.testButtonText}>
+          {diagnostics.checking ? '검사중...' : '진단 실행'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const SettingsTab: React.FC = () => {
   const { t } = useTranslation();
 
@@ -79,11 +142,12 @@ const SettingsTab: React.FC = () => {
   const notificationsEnabled = hasPermission;
   const hourlyNotifications = notificationSettings?.hourlyEnabled ?? true;
   const dailyTaroReminder = notificationSettings?.dailyReminderEnabled ?? true;
+  const midnightReset = notificationSettings?.midnightResetEnabled ?? true;
+  const quietHoursEnabled = notificationSettings?.quietHoursEnabled ?? true;
   const quietHoursStart = notificationSettings?.quietHoursStart ?? 22;
   const quietHoursEnd = notificationSettings?.quietHoursEnd ?? 8;
 
   // 로컬 상태는 Context에 없는 항목들만 유지
-  const [midnightReset, setMidnightReset] = useState(true);
   const [saveReminders, setSaveReminders] = useState(true);
 
   // Modal state
@@ -340,7 +404,24 @@ const SettingsTab: React.FC = () => {
           </View>
           <TouchableOpacity
             style={[styles.toggleButton, midnightReset && styles.toggleButtonActive]}
-            onPress={() => setMidnightReset(!midnightReset)}
+            onPress={async () => {
+              console.log('🔄 자정 리셋 알림 토글 클릭', {
+                현재값: midnightReset,
+                새값: !midnightReset,
+                알림권한: notificationsEnabled
+              });
+
+              await updateNotificationSettings({
+                midnightResetEnabled: !midnightReset
+              });
+
+              console.log('✅ 자정 리셋 알림 설정 업데이트 완료');
+
+              // 권한이 없는 경우 안내 메시지
+              if (!notificationsEnabled) {
+                console.log('⚠️ 알림 권한이 없어 실제 알림은 전송되지 않습니다.');
+              }
+            }}
           >
             <View style={[
               styles.toggleThumb,
@@ -400,22 +481,53 @@ const SettingsTab: React.FC = () => {
 
 
 
-        {/* 조용한 시간 */}
-        <TouchableOpacity
-          style={styles.settingItem}
-          onPress={() => {
-            setTempQuietHours({ start: quietHoursStart, end: quietHoursEnd });
-            setShowQuietHoursModal(true);
-          }}
-        >
+        {/* 조용한 시간 활성화/비활성화 */}
+        <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>{t('settings.notifications.quietHours')}</Text>
             <Text style={styles.settingSubtitle}>
-              {String(quietHoursStart).padStart(2, '0')}:00 - {String(quietHoursEnd).padStart(2, '0')}:00
+              {quietHoursEnabled
+                ? `${String(quietHoursStart).padStart(2, '0')}:00 - ${String(quietHoursEnd).padStart(2, '0')}:00`
+                : t('settings.notifications.disabled')}
             </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleButton, quietHoursEnabled && styles.toggleButtonActive]}
+            onPress={async () => {
+              try {
+                await updateNotificationSettings({
+                  quietHoursEnabled: !quietHoursEnabled
+                });
+              } catch (error) {
+                Alert.alert(t('settings.notifications.updateError'));
+              }
+            }}
+          >
+            <View style={[
+              styles.toggleThumb,
+              quietHoursEnabled && styles.toggleThumbActive
+            ]} />
+          </TouchableOpacity>
+        </View>
+
+        {/* 조용한 시간 설정 (활성화된 경우에만 표시) */}
+        {quietHoursEnabled && (
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => {
+              setTempQuietHours({ start: quietHoursStart, end: quietHoursEnd });
+              setShowQuietHoursModal(true);
+            }}
+          >
+            <View style={styles.settingContent}>
+              <Text style={styles.settingTitle}>{t('settings.notifications.timeSettings')}</Text>
+              <Text style={styles.settingSubtitle}>
+                {t('settings.notifications.timeSettingsDescription')}
+              </Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+        )}
 
         {/* 테스트 알림 - 모바일 환경에서만 표시 */}
         {Platform.OS !== 'web' && (
@@ -425,6 +537,11 @@ const SettingsTab: React.FC = () => {
           >
             <Text style={styles.testButtonText}>{t('settings.notifications.sendTest')}</Text>
           </TouchableOpacity>
+        )}
+
+        {/* 알림 진단 도구 - 개발 모드에서만 표시 */}
+        {__DEV__ && Platform.OS !== 'web' && (
+          <NotificationDiagnostics />
         )}
       </View>
 
@@ -486,7 +603,10 @@ const SettingsTab: React.FC = () => {
 
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.quietHoursDescription}>
-                {t('settings.notifications.quietHoursDescription')}
+                {quietHoursEnabled
+                  ? t('settings.notifications.quietHoursDescription')
+                  : '조용한 시간이 비활성화되어 있습니다. 설정에서 활성화 후 시간을 조정하세요.'
+                }
               </Text>
 
               {/* 시간 정보 표시 */}
@@ -579,6 +699,26 @@ const SettingsTab: React.FC = () => {
                   </TouchableOpacity>
                 </View>
               </View>
+
+              {/* 조용한 시간 끄기 버튼 */}
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDisable]}
+                onPress={async () => {
+                  try {
+                    await updateNotificationSettings({
+                      quietHoursEnabled: false
+                    });
+                    setShowQuietHoursModal(false);
+                    Alert.alert(t('settings.notifications.settingsComplete'), t('settings.notifications.quietHoursDisabled'));
+                  } catch (error) {
+                    Alert.alert(t('settings.notifications.updateError'));
+                  }
+                }}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonTextDisable]}>
+                  {t('settings.notifications.disableQuietHours')}
+                </Text>
+              </TouchableOpacity>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity
@@ -1331,6 +1471,15 @@ const styles = StyleSheet.create({
   modalButtonTextPrimary: {
     color: '#000',
     fontFamily: 'NotoSansKR_700Bold',
+  },
+  modalButtonDisable: {
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    borderColor: 'rgba(255, 107, 107, 0.5)',
+    marginBottom: Spacing.lg,
+  },
+  modalButtonTextDisable: {
+    color: '#ff6b6b',
+    fontFamily: 'NotoSansKR_600SemiBold',
   },
 
   bottomSpace: {

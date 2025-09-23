@@ -240,7 +240,20 @@
     "saveMemo": "メモを保存",
     "memoPlaceholder": "この時間についての思いや感覚を書いてみてください...",
     "insightsTitle": "洞察",
-    "createdDate": "作成日"
+    "createdDate": "作成日",
+    "deleteRecords": "記録削除",
+    "deleteRecordsConfirm": "選択した{{count}}個の記録を削除しますか？",
+    "deleteComplete": "削除完了",
+    "deleteRecordsSuccess": "{{count}}個の記録が削除されました。",
+    "deleteFailed": "削除失敗",
+    "deleteRecordsError": "記録削除中にエラーが発生しました。",
+    "deleteSpreads": "スプレッド記録削除",
+    "deleteSpreadsConfirm": "選択した{{count}}個のスプレッド記録を削除しますか？",
+    "deleteSpreadsSuccess": "{{count}}個のスプレッド記録が削除されました。",
+    "deleteSpreadsError": "スプレッド記録削除中にエラーが発生しました。",
+    "deleteButton": "削除",
+    "deleteCancel": "削除キャンセル",
+    "deleteSelected": "選択削除 ({{count}})"
   },
   "settings": {
     "title": "Settings",
@@ -314,7 +327,18 @@
       "quietHoursTime": "静寂時間: {{start}}:00 - {{end}}:00",
       "timeline24h": "24時間タイムライン",
       "start": "開始",
-      "end": "終了"
+      "end": "終了",
+      "disabled": "無効",
+      "timeSettings": "時間設定",
+      "timeSettingsDescription": "静寂時間の範囲調整",
+      "disableQuietHours": "🔕 静寂時間をオフ",
+      "settingsComplete": "設定完了",
+      "quietHoursDisabled": "静寂時間が無効になりました。",
+      "permissionDenied": "通知権限が拒否されました",
+      "permissionError": "通知権限の要求中にエラーが発生しました",
+      "testError": "テスト通知の送信中にエラーが発生しました",
+      "saveError": "設定の保存中にエラーが発生しました",
+      "updateError": "設定の更新中にエラーが発生しました"
     },
     "about": {
       "title": "アプリ情報",

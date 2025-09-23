@@ -44,7 +44,9 @@
       },
       "permissions": [
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE"
       ],
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.app"
     },
