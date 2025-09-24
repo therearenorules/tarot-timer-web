@@ -146,7 +146,9 @@
       "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/46ee0d8c-8d60-4bc6-acf7-ae1a640e495e)",
       "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/submissions/782caea6-1929-456c-81f1-afc4348ef99e)",
       "WebFetch(domain:github.com)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
