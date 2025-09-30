@@ -41,6 +41,10 @@ const NotificationSettings: React.FC = memo(() => {
     sendTestNotification,
     scheduleHourlyNotifications,
     cancelHourlyNotifications,
+    verifyScheduledNotifications,
+    checkRealTimePermission,
+    lastScheduleTime,
+    scheduleAttempts,
   } = useNotifications();
 
   const { subscriptionStatus } = usePremium();
@@ -90,6 +94,79 @@ const NotificationSettings: React.FC = memo(() => {
       );
     }
   }, [sendTestNotification]);
+
+  // 알림 진단 기능
+  const handleDiagnoseNotifications = useCallback(async () => {
+    try {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🔍 알림 시스템 진단 시작...');
+
+      // 1. 실시간 권한 확인
+      const hasRealPermission = await checkRealTimePermission();
+      console.log(`   1️⃣ 알림 권한: ${hasRealPermission ? '✅ 허용됨' : '❌ 거부됨'}`);
+
+      // 2. 현재 설정 확인
+      console.log(`   2️⃣ 시간별 알림 활성화: ${settings.hourlyEnabled ? '✅' : '❌'}`);
+      console.log(`   3️⃣ 조용한 시간 활성화: ${settings.quietHoursEnabled ? '✅' : '❌'}`);
+      if (settings.quietHoursEnabled) {
+        console.log(`      → 조용한 시간: ${settings.quietHoursStart}:00 ~ ${settings.quietHoursEnd}:00`);
+      }
+
+      // 3. 스케줄된 알림 개수 확인
+      const scheduledCount = await verifyScheduledNotifications();
+      console.log(`   4️⃣ 현재 스케줄된 알림: ${scheduledCount}개`);
+
+      // 4. 마지막 스케줄링 시간
+      if (lastScheduleTime) {
+        const lastTime = new Date(lastScheduleTime);
+        console.log(`   5️⃣ 마지막 스케줄링: ${lastTime.toLocaleString('ko-KR')}`);
+      } else {
+        console.log(`   5️⃣ 마지막 스케줄링: 없음`);
+      }
+
+      console.log(`   6️⃣ 스케줄링 시도 횟수: ${scheduleAttempts}회`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // 진단 결과 알림
+      let diagnosisMessage = `권한: ${hasRealPermission ? '✅' : '❌'}\n`;
+      diagnosisMessage += `시간별 알림: ${settings.hourlyEnabled ? '활성화' : '비활성화'}\n`;
+      diagnosisMessage += `스케줄된 알림: ${scheduledCount}개\n`;
+
+      if (scheduledCount === 0 && settings.hourlyEnabled && hasRealPermission) {
+        diagnosisMessage += '\n⚠️ 알림이 스케줄되지 않았습니다.\n아래 "알림 재설정" 버튼을 눌러주세요.';
+      }
+
+      Alert.alert('📊 알림 시스템 진단', diagnosisMessage, [{ text: '확인' }]);
+    } catch (error) {
+      console.error('❌ 알림 진단 실패:', error);
+      Alert.alert('❌ 진단 실패', '알림 시스템 진단 중 오류가 발생했습니다.', [{ text: '확인' }]);
+    }
+  }, [checkRealTimePermission, verifyScheduledNotifications, settings, lastScheduleTime, scheduleAttempts]);
+
+  // 알림 재설정 (강제 재스케줄링)
+  const handleResetNotifications = useCallback(async () => {
+    try {
+      console.log('🔄 알림 재설정 시작...');
+
+      await cancelHourlyNotifications();
+      console.log('   1️⃣ 기존 알림 모두 취소 완료');
+
+      await scheduleHourlyNotifications();
+      console.log('   2️⃣ 새로운 알림 스케줄링 완료');
+
+      const newCount = await verifyScheduledNotifications();
+      console.log(`   3️⃣ 스케줄된 알림 확인: ${newCount}개`);
+
+      Alert.alert(
+        '✅ 알림 재설정 완료',
+        `${newCount}개의 시간별 알림이 새로 설정되었습니다.`,
+        [{ text: '확인' }]
+      );
+    } catch (error) {
+      console.error('❌ 알림 재설정 실패:', error);
+      Alert.alert('❌ 재설정 실패', '알림 재설정 중 오류가 발생했습니다.', [{ text: '확인' }]);
+    }
+  }, [cancelHourlyNotifications, scheduleHourlyNotifications, verifyScheduledNotifications]);
 
   // 시간별 알림 토글
   const handleHourlyToggle = useCallback(async (enabled: boolean) => {
@@ -266,7 +343,7 @@ const NotificationSettings: React.FC = memo(() => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Icon name="settings" size={20} color={Colors.brand.primary} />
-          <Text style={styles.sectionTitle}>테스트</Text>
+          <Text style={styles.sectionTitle}>테스트 & 진단</Text>
         </View>
 
         <TouchableOpacity
@@ -276,6 +353,28 @@ const NotificationSettings: React.FC = memo(() => {
         >
           <Icon name="send" size={20} color={Colors.brand.primary} />
           <Text style={styles.testButtonText}>테스트 알림 전송</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.testButton, { marginTop: Spacing.sm }]}
+          onPress={handleDiagnoseNotifications}
+          activeOpacity={0.8}
+        >
+          <Icon name="activity" size={20} color={Colors.brand.accent} />
+          <Text style={[styles.testButtonText, { color: Colors.brand.accent }]}>
+            알림 시스템 진단
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.testButton, { marginTop: Spacing.sm }]}
+          onPress={handleResetNotifications}
+          activeOpacity={0.8}
+        >
+          <Icon name="refresh-cw" size={20} color={Colors.feedback.warning} />
+          <Text style={[styles.testButtonText, { color: Colors.feedback.warning }]}>
+            알림 재설정
+          </Text>
         </TouchableOpacity>
       </View>
 

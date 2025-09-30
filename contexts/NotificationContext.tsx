@@ -40,6 +40,7 @@ interface NotificationSettings {
   dailyReminderEnabled: boolean;
   midnightResetEnabled: boolean;
   notificationTypes: string[];
+  weekendEnabled?: boolean; // 주말 알림 설정 추가
 }
 
 // 알림 컨텍스트 인터페이스
@@ -720,18 +721,27 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       const messages = defaultMessages[currentLang] || defaultMessages['ko'];
 
       let scheduledCount = 0;
-      const maxNotifications = 23; // iOS 제한 고려
+      const maxNotifications = 64; // iOS/Android 제한 완화 (최대 64개)
       const now = new Date();
 
-      // 5. 향후 24시간 동안 매시간 알림 스케줄
+      console.log(`🕐 현재 시각: ${now.getHours()}:${now.getMinutes()}, 조용한 시간: ${settingsToUse.quietHoursStart}:00 - ${settingsToUse.quietHoursEnd}:00`);
+
+      // 5. 향후 24시간 동안 매시간 알림 스케줄 (다음 정각부터)
       for (let i = 1; i <= 24 && scheduledCount < maxNotifications; i++) {
         const triggerDate = new Date(now.getTime() + (i * 60 * 60 * 1000)); // i시간 후
         const hour = triggerDate.getHours();
 
-        // 조용한 시간 체크 (전달받은 설정 사용)
-        const isQuietTime = settingsToUse.quietHoursStart > settingsToUse.quietHoursEnd
-          ? (hour >= settingsToUse.quietHoursStart || hour < settingsToUse.quietHoursEnd)
-          : (hour >= settingsToUse.quietHoursStart && hour < settingsToUse.quietHoursEnd);
+        // 조용한 시간 체크 (조용한 시간 기능이 활성화된 경우에만)
+        let isQuietTime = false;
+        if (settingsToUse.quietHoursEnabled) {
+          if (settingsToUse.quietHoursStart > settingsToUse.quietHoursEnd) {
+            // 예: 22시 ~ 08시 (자정 걸침)
+            isQuietTime = (hour >= settingsToUse.quietHoursStart || hour < settingsToUse.quietHoursEnd);
+          } else {
+            // 예: 13시 ~ 14시 (자정 안 걸침)
+            isQuietTime = (hour >= settingsToUse.quietHoursStart && hour < settingsToUse.quietHoursEnd);
+          }
+        }
 
         if (settingsToUse.hourlyEnabled && !isQuietTime) {
           // 알림 메시지 생성 (카드 데이터가 있으면 카드 정보 포함)
@@ -774,13 +784,17 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
               identifier: `hourly-${triggerDate.getTime()}`, // 고유 식별자 추가
             });
             scheduledCount++;
-            console.log(`✅ 알림 스케줄 성공: ${hour}시 (${i}시간 후)`);
+
+            // 상세 로그 추가
+            const triggerTime = `${triggerDate.getFullYear()}-${(triggerDate.getMonth()+1).toString().padStart(2,'0')}-${triggerDate.getDate().toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:00`;
+            console.log(`✅ [${scheduledCount}] ${hour}시 알림 스케줄 성공 (발송 예정: ${triggerTime})`);
           } catch (scheduleError) {
             console.error(`❌ 알림 스케줄 실패: ${hour}시`, scheduleError);
             // 개별 스케줄 실패는 전체를 중단하지 않음
           }
         } else {
-          console.log(`⏭️ 스케줄 스킵: ${hour}시 (조용한 시간 또는 비활성화)`);
+          const reason = !settingsToUse.hourlyEnabled ? '시간별 알림 비활성화' : '조용한 시간';
+          console.log(`⏭️ 스케줄 스킵: ${hour}시 (${reason})`);
         }
       }
 
@@ -819,7 +833,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       // 실제 스케줄된 알림 개수 확인
       const actualScheduled = await verifyScheduledNotifications();
 
-      console.log(`🎯 스케줄링 완료: 예상 ${scheduledCount}개, 실제 ${actualScheduled}개`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`🎯 스케줄링 완료 요약`);
+      console.log(`   • 예상 스케줄: ${scheduledCount}개`);
+      console.log(`   • 실제 확인: ${actualScheduled}개`);
+      console.log(`   • 시간별 알림 활성화: ${settingsToUse.hourlyEnabled ? '✅' : '❌'}`);
+      console.log(`   • 조용한 시간 활성화: ${settingsToUse.quietHoursEnabled ? '✅' : '❌'}`);
+      if (settingsToUse.quietHoursEnabled) {
+        console.log(`   • 조용한 시간: ${settingsToUse.quietHoursStart}:00 ~ ${settingsToUse.quietHoursEnd}:00`);
+      }
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
       setIsScheduling(false);
       return scheduledCount > 0;
