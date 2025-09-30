@@ -13,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
+import { useTarotI18n } from '../hooks/useTarotI18n';
 import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
 import {
   Colors,
@@ -26,8 +27,9 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 
 // 데일리 타로 뷰어 모달
-const DailyTarotViewer = ({ visible, reading, onClose }) => {
+const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
   const { t } = useTranslation();
+  const { getCardName } = useTarotI18n();
   const [selectedHour, setSelectedHour] = useState(0);
   const [memoText, setMemoText] = useState('');
   const [cardMemos, setCardMemos] = useState({});
@@ -50,11 +52,37 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
     setSelectedHour(hour);
   };
 
-  const saveMemo = () => {
-    const updatedMemos = { ...cardMemos, [selectedHour]: memoText };
-    setCardMemos(updatedMemos);
-    // 실제 저장 로직은 여기에 구현
-    Alert.alert(t('journal.memoSaved'), t('journal.memoSavedMessage', { hour: selectedHour }));
+  const saveMemo = async () => {
+    try {
+      const updatedMemos = { ...cardMemos, [selectedHour]: memoText };
+      setCardMemos(updatedMemos);
+
+      // AsyncStorage에 메모 저장 - dateKey 사용
+      const dateString = reading.dateKey || (reading.savedAt ? new Date(reading.savedAt).toISOString().split('T')[0] : null);
+
+      if (!dateString) {
+        throw new Error('날짜 정보가 없습니다.');
+      }
+
+      const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
+
+      const updatedReading = {
+        ...reading,
+        memos: updatedMemos
+      };
+
+      await simpleStorage.setItem(storageKey, JSON.stringify(updatedReading));
+
+      // 부모 컴포넌트에 저장 완료 알림
+      if (onMemoSaved) {
+        onMemoSaved(updatedReading);
+      }
+
+      Alert.alert(t('journal.memoSaved'), t('journal.memoSavedMessage', { hour: selectedHour }));
+    } catch (error) {
+      console.error('Memo save failed:', error);
+      Alert.alert(t('common.error'), t('journal.memoSaveFailed'));
+    }
   };
 
   if (!reading) return null;
@@ -65,14 +93,20 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
       <View style={styles.dailyViewerContainer}>
-        {/* 제목 */}
+        {/* 헤더 - 스프레드와 동일한 스타일 */}
         <View style={styles.dailyViewerHeader}>
-          <Text style={styles.dailyViewerTitle}>Daily Tarot</Text>
-          <Text style={styles.dailyViewerDate}>{reading.displayDate}</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={{ fontSize: 20, color: '#9b8db8' }}>×</Text>
+          </TouchableOpacity>
+          <View style={styles.dailyHeaderCenter}>
+            <Text style={styles.dailyViewerTitle}>Daily Tarot</Text>
+            <Text style={styles.dailyViewerDate}>{reading.displayDate}</Text>
+          </View>
+          <View style={{ width: 30 }} />
         </View>
 
         {/* 24시간 카드 가로 스크롤 - 성능 최적화 */}
@@ -139,7 +173,7 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
                selectedHour === 12 ? t('timer.noon') :
                selectedHour < 12 ? t('timer.am', { hour: selectedHour }) : t('timer.pm', { hour: selectedHour - 12 })}
             </Text>
-            <Text style={styles.selectedCardName}>{selectedCard.nameKr}</Text>
+            <Text style={styles.selectedCardName}>{getCardName(selectedCard)}</Text>
           </View>
         )}
 
@@ -160,10 +194,6 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
           </TouchableOpacity>
         </View>
 
-        {/* 우측 하단 닫기 버튼 */}
-        <TouchableOpacity style={styles.floatingCloseButton} onPress={onClose}>
-          <Text style={styles.floatingCloseButtonText}>×</Text>
-        </TouchableOpacity>
       </View>
     </Modal>
   );
@@ -172,6 +202,7 @@ const DailyTarotViewer = ({ visible, reading, onClose }) => {
 // 스프레드 뷰어 모달
 const SpreadViewer = ({ visible, spread, onClose }) => {
   const { t } = useTranslation();
+  const { getSpreadName } = useTarotI18n();
   if (!spread) return null;
 
   return (
@@ -190,7 +221,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
         </View>
 
         <ScrollView style={styles.spreadViewerContent}>
-          <Text style={styles.spreadName}>{spread.spreadName}</Text>
+          <Text style={styles.spreadName}>{getSpreadName(spread.spreadName, spread.spreadNameEn)}</Text>
 
           {/* 스프레드 배치도 */}
           <View style={styles.spreadLayout}>
@@ -250,6 +281,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
 
 const TarotDaily = () => {
   const { t } = useTranslation();
+  const { getSpreadName } = useTarotI18n();
   const [activeTab, setActiveTab] = useState('daily');
   const [dailyReadings, setDailyReadings] = useState([]);
   const [spreadReadings, setSpreadReadings] = useState([]);
@@ -285,6 +317,7 @@ const TarotDaily = () => {
             readings.push({
               ...dailySave,
               type: 'daily',
+              dateKey: dateString, // 저장 키 추가
               displayDate: LanguageUtils.formatDate(date)
             });
           }
@@ -514,7 +547,13 @@ const TarotDaily = () => {
             <View style={styles.cardPreview}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {reading.hourlyCards?.slice(0, 8).map((card, cardIndex) => (
-                  <View key={cardIndex} style={styles.previewCard} />
+                  <View key={cardIndex} style={styles.previewCard}>
+                    <TarotCardComponent
+                      card={card}
+                      size="tiny"
+                      showText={false}
+                    />
+                  </View>
                 ))}
                 {reading.hourlyCards?.length > 8 && (
                   <Text style={styles.moreText}>{t('journal.moreCards', { count: reading.hourlyCards.length - 8 })}</Text>
@@ -635,7 +674,13 @@ const TarotDaily = () => {
             <View style={styles.spreadPreview}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {spread.positions?.slice(0, 4).map((position, cardIndex) => (
-                  <View key={cardIndex} style={styles.spreadPreviewCard} />
+                  <View key={cardIndex} style={styles.spreadPreviewCard}>
+                    <TarotCardComponent
+                      card={position.card}
+                      size="tiny"
+                      showText={false}
+                    />
+                  </View>
                 ))}
                 {spread.positions?.length > 4 && (
                   <Text style={styles.moreText}>{t('journal.moreCards', { count: spread.positions.length - 4 })}</Text>
@@ -644,13 +689,27 @@ const TarotDaily = () => {
             </View>
 
             <View style={styles.spreadFooter}>
-              <Text style={styles.spreadType}>{spread.spreadName}</Text>
+              <Text style={styles.spreadType}>{getSpreadName(spread.spreadName, spread.spreadNameEn)}</Text>
             </View>
           </TouchableOpacity>
           );
         })}
       </ScrollView>
     );
+  };
+
+  const handleMemoSaved = (updatedReading) => {
+    // dailyReadings 배열에서 해당 reading 업데이트
+    setDailyReadings(prevReadings =>
+      prevReadings.map(reading =>
+        reading.dateKey === updatedReading.dateKey
+          ? updatedReading
+          : reading
+      )
+    );
+
+    // selectedReading도 업데이트
+    setSelectedReading(updatedReading);
   };
 
   return (
@@ -666,6 +725,7 @@ const TarotDaily = () => {
         visible={!!selectedReading}
         reading={selectedReading}
         onClose={() => setSelectedReading(null)}
+        onMemoSaved={handleMemoSaved}
       />
 
       {/* 스프레드 뷰어 모달 */}
@@ -954,27 +1014,34 @@ const styles = StyleSheet.create({
   // 데일리 타로 뷰어 모달
   dailyViewerContainer: {
     flex: 1,
-    backgroundColor: '#1a1625', // 메인 앱과 동일한 배경색
+    backgroundColor: 'rgba(15, 12, 27, 0.95)',
   },
   dailyViewerHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(244, 208, 63, 0.3)',
+  },
+  dailyHeaderCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
   dailyViewerTitle: {
-    fontSize: 22,
-    fontFamily: 'NotoSansKR_700Bold',
+    fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.brand.accent,
-    textAlign: 'center',
+    color: Colors.text.primary,
   },
   dailyViewerDate: {
-    fontSize: 14,
-    fontFamily: 'NotoSansKR_400Regular',
+    fontSize: 12,
     color: Colors.text.secondary,
     marginTop: Spacing.xs,
-    textAlign: 'center',
+  },
+  closeButton: {
+    padding: Spacing.sm,
   },
 
   // 24시간 카드 가로 스크롤
@@ -1085,28 +1152,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
-  },
-
-  // 우측 하단 플로팅 닫기 버튼
-  floatingCloseButton: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(45, 27, 71, 0.9)',
-    borderWidth: 2,
-    borderColor: Colors.brand.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...ShadowStyles.medium,
-  },
-  floatingCloseButtonText: {
-    fontSize: 24,
-    fontFamily: 'NotoSansKR_700Bold',
-    color: Colors.brand.accent,
-    fontWeight: 'bold',
   },
 
   // 메모 모달

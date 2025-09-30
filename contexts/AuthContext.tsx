@@ -44,6 +44,9 @@ interface AuthContextType extends AuthState {
 
   // 유틸리티
   isEmailVerified: boolean;
+
+  // 백엔드 API 헤더 (NotificationContext와 호환)
+  getAuthHeaders: () => Record<string, string>;
 }
 
 // 기본값
@@ -293,6 +296,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // 백엔드 API 요청용 인증 헤더 생성
+  const getAuthHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // 세션이 있으면 Authorization 헤더 추가
+    if (authState.session?.access_token) {
+      headers['Authorization'] = `Bearer ${authState.session.access_token}`;
+    }
+
+    return headers;
+  };
+
   const contextValue: AuthContextType = {
     ...authState,
     login,
@@ -304,6 +321,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateUserProfile,
     refreshUserData,
     isEmailVerified: authState.user?.email_confirmed_at !== null,
+    getAuthHeaders,
   };
 
   return (

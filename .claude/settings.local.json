@@ -148,7 +148,8 @@
       "WebFetch(domain:github.com)",
       "Bash(git rev-parse:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git config:*)"
     ],
     "deny": [],
     "ask": []

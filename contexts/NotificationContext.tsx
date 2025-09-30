@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { useAuth } from './AuthContext';
+import { simpleStorage, STORAGE_KEYS, TarotCard, DailyTarotSave, TarotUtils } from '../utils/tarotData';
+import i18next from 'i18next';
 
 // expo-notifications를 조건부로 import
 let Notifications: any = null;
@@ -208,6 +210,35 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [scheduleAttempts, setScheduleAttempts] = useState<number>(0);
   const [isScheduling, setIsScheduling] = useState<boolean>(false);
 
+  // 실시간 권한 상태 체크 함수 (useCallback으로 메모이제이션)
+  const checkRealTimePermission = useCallback(async (): Promise<boolean> => {
+    if (!isMobileEnvironment || !Notifications) {
+      return false;
+    }
+
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      const actualPermission = status === 'granted';
+
+      // Context 상태와 실제 권한이 다르면 동기화
+      if (hasPermission !== actualPermission) {
+        console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermission}, 실제=${actualPermission}`);
+        setHasPermission(actualPermission);
+
+        // 권한이 꺼진 경우 스케줄된 알림 정리
+        if (!actualPermission) {
+          console.log('📵 권한 상실 감지 - 스케줄된 알림 정리');
+          await Notifications.cancelAllScheduledNotificationsAsync();
+        }
+      }
+
+      return actualPermission;
+    } catch (error) {
+      console.error('❌ 실시간 권한 체크 실패:', error);
+      return false;
+    }
+  }, [hasPermission]);
+
   // 앱 상태 변화 감지 및 권한 재확인
   useEffect(() => {
     if (!isMobileEnvironment || !Notifications) return;
@@ -390,35 +421,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  // 실시간 권한 상태 체크 함수
-  const checkRealTimePermission = async (): Promise<boolean> => {
-    if (!isMobileEnvironment || !Notifications) {
-      return false;
-    }
-
-    try {
-      const { status } = await Notifications.getPermissionsAsync();
-      const actualPermission = status === 'granted';
-
-      // Context 상태와 실제 권한이 다르면 동기화
-      if (hasPermission !== actualPermission) {
-        console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermission}, 실제=${actualPermission}`);
-        setHasPermission(actualPermission);
-
-        // 권한이 꺼진 경우 스케줄된 알림 정리
-        if (!actualPermission) {
-          console.log('📵 권한 상실 감지 - 스케줄된 알림 정리');
-          await Notifications.cancelAllScheduledNotificationsAsync();
-        }
-      }
-
-      return actualPermission;
-    } catch (error) {
-      console.error('❌ 실시간 권한 체크 실패:', error);
-      return false;
-    }
-  };
-
   // 스케줄된 알림 상태 확인 함수
   const verifyScheduledNotifications = async (): Promise<number> => {
     if (!isMobileEnvironment || !Notifications) {
@@ -590,6 +592,69 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
+  // 오늘의 24시간 타로 카드 가져오기 헬퍼 함수
+  const getTodayTarotCards = async (): Promise<TarotCard[] | null> => {
+    try {
+      const today = TarotUtils.getTodayDateString();
+      const storageKey = STORAGE_KEYS.DAILY_TAROT + today;
+      const savedData = await simpleStorage.getItem(storageKey);
+
+      if (savedData) {
+        const dailySave: DailyTarotSave = JSON.parse(savedData);
+        return dailySave.hourlyCards;
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ 타로 카드 데이터 로드 실패:', error);
+      return null;
+    }
+  };
+
+  // 카드 이름 가져오기 (현재 언어 반영)
+  const getCardNameForNotification = (card: TarotCard): string => {
+    const currentLang = i18next.language || 'ko';
+
+    if (currentLang === 'ja') {
+      return card.nameJa || card.nameKr || card.name;
+    } else if (currentLang === 'en') {
+      return card.name;
+    } else {
+      // 기본 한국어
+      return card.nameKr || card.name;
+    }
+  };
+
+  // 카드 의미 가져오기 (현재 언어 반영)
+  const getCardMeaningForNotification = (card: TarotCard): string => {
+    const currentLang = i18next.language || 'ko';
+
+    if (currentLang === 'ja') {
+      return card.meaningJa || card.meaningKr || card.meaning;
+    } else if (currentLang === 'en') {
+      return card.meaning;
+    } else {
+      // 기본 한국어
+      return card.meaningKr || card.meaning;
+    }
+  };
+
+  // 시간 표시 형식 (언어별)
+  const formatHourForNotification = (hour: number): string => {
+    const currentLang = i18next.language || 'ko';
+
+    if (currentLang === 'ja') {
+      return `${hour}時`;
+    } else if (currentLang === 'en') {
+      // 12시간 형식
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}${period}`;
+    } else {
+      // 한국어 기본
+      return `${hour}시`;
+    }
+  };
+
   // 설정을 받아 알림을 스케줄링하는 헬퍼 함수 (강화된 버전)
   const scheduleHourlyNotificationsWithSettings = async (settingsToUse: NotificationSettings): Promise<boolean> => {
     if (!Notifications) {
@@ -617,24 +682,48 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       console.log('🔔 강화된 알림 스케줄링 시작...');
 
-      // 2. 기존 알림 모두 취소 (안전한 정리)
+      // 2. 오늘의 24시간 타로 카드 데이터 로드
+      const todayCards = await getTodayTarotCards();
+      console.log(`🎴 타로 카드 데이터: ${todayCards ? '로드 성공' : '없음 (기본 메시지 사용)'}`);
+
+      // 3. 기존 알림 모두 취소 (안전한 정리)
       await Notifications.cancelAllScheduledNotificationsAsync();
       console.log('🗑️ 기존 알림 모두 취소 완료');
 
-      // 3. 24시간 동안의 시간별 알림 스케줄 (최대 64개까지만)
-      const now = new Date();
-      const cardMessages = [
-        "🔮 새로운 타로 카드를 뽑을 시간입니다!",
-        "✨ 이번 시간의 카드 의미를 학습해보세요",
-        "🎴 타로 타이머가 새로운 카드를 준비했습니다",
-        "🌟 지금 당신에게 필요한 카드가 기다립니다",
-        "💫 새로운 상징적 의미를 발견해보세요"
-      ];
+      // 4. 기본 메시지 (카드 데이터가 없을 때) - 다국어 지원
+      const currentLang = i18next.language || 'ko';
+
+      const defaultMessages: Record<string, string[]> = {
+        ko: [
+          "🔮 새로운 타로 카드를 뽑을 시간입니다!",
+          "✨ 이번 시간의 카드 의미를 학습해보세요",
+          "🎴 타로 타이머가 새로운 카드를 준비했습니다",
+          "🌟 지금 당신에게 필요한 카드가 기다립니다",
+          "💫 새로운 상징적 의미를 발견해보세요"
+        ],
+        en: [
+          "🔮 Time to draw your new tarot card!",
+          "✨ Learn the meaning of this hour's card",
+          "🎴 Tarot Timer has prepared a new card for you",
+          "🌟 The card you need right now is waiting",
+          "💫 Discover new symbolic meanings"
+        ],
+        ja: [
+          "🔮 新しいタロットカードを引く時間です！",
+          "✨ この時間のカードの意味を学びましょう",
+          "🎴 タロットタイマーが新しいカードを用意しました",
+          "🌟 今あなたに必要なカードが待っています",
+          "💫 新しい象徴的な意味を発見してください"
+        ]
+      };
+
+      const messages = defaultMessages[currentLang] || defaultMessages['ko'];
 
       let scheduledCount = 0;
       const maxNotifications = 23; // iOS 제한 고려
+      const now = new Date();
 
-      // 향후 24시간 동안 매시간 알림 스케줄
+      // 5. 향후 24시간 동안 매시간 알림 스케줄
       for (let i = 1; i <= 24 && scheduledCount < maxNotifications; i++) {
         const triggerDate = new Date(now.getTime() + (i * 60 * 60 * 1000)); // i시간 후
         const hour = triggerDate.getHours();
@@ -645,17 +734,37 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           : (hour >= settingsToUse.quietHoursStart && hour < settingsToUse.quietHoursEnd);
 
         if (settingsToUse.hourlyEnabled && !isQuietTime) {
-          const randomMessage = cardMessages[Math.floor(Math.random() * cardMessages.length)];
+          // 알림 메시지 생성 (카드 데이터가 있으면 카드 정보 포함)
+          let notificationBody: string;
+
+          if (todayCards && todayCards[hour]) {
+            const card = todayCards[hour];
+            const cardName = getCardNameForNotification(card);
+            const cardMeaning = getCardMeaningForNotification(card);
+            const hourDisplay = formatHourForNotification(hour);
+
+            // 카드 정보가 있을 때 (🎴 아이콘 제거):
+            // 한국어: "[14시] 여교황 - 직관과 내면의 지혜"
+            // 영어: "[2PM] The High Priestess - Intuition and inner wisdom"
+            // 일본어: "[14時] 女教皇 - 直感と内なる知恵"
+            notificationBody = `[${hourDisplay}] ${cardName} - ${cardMeaning}`;
+            console.log(`📋 ${hour}시 알림 메시지: ${cardName}`);
+          } else {
+            // 카드 데이터가 없을 때: 기본 메시지 사용
+            notificationBody = messages[Math.floor(Math.random() * messages.length)];
+            console.log(`📋 ${hour}시 알림 메시지: 기본 메시지 (카드 미뽑음)`);
+          }
 
           try {
             await Notifications.scheduleNotificationAsync({
               content: {
                 title: '🔮 타로 타이머',
-                body: randomMessage,
+                body: notificationBody,
                 data: {
                   type: 'hourly',
                   hour: hour,
-                  timestamp: triggerDate.getTime()
+                  timestamp: triggerDate.getTime(),
+                  cardId: todayCards?.[hour]?.id || null
                 },
                 sound: true,
                 priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
