@@ -127,8 +127,8 @@ class ImageCacheManager {
     }
 
     const preloadPromise = new Promise<boolean>((resolve) => {
-      // 고우선순위는 즉시 프리로드, 일반/저우선순위는 지연 최소화
-      const delay = priority === 'high' ? 0 : priority === 'normal' ? 5 : 50;
+      // 모든 우선순위에서 즉시 프리로드 (지연 제거)
+      const delay = 0;
 
       setTimeout(() => {
         Image.prefetch(uri)

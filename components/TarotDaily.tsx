@@ -220,7 +220,11 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
           <Text style={styles.spreadViewerTitle}>{spread.title}</Text>
         </View>
 
-        <ScrollView style={styles.spreadViewerContent}>
+        <ScrollView
+          style={styles.spreadViewerContent}
+          automaticallyAdjustContentInsets={false}
+          contentInsetAdjustmentBehavior="never"
+        >
           <Text style={styles.spreadName}>{getSpreadName(spread.spreadName, spread.spreadNameEn)}</Text>
 
           {/* 스프레드 배치도 */}

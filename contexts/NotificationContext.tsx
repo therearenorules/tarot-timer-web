@@ -726,9 +726,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       console.log(`🕐 현재 시각: ${now.getHours()}:${now.getMinutes()}, 조용한 시간: ${settingsToUse.quietHoursStart}:00 - ${settingsToUse.quietHoursEnd}:00`);
 
-      // 5. 향후 24시간 동안 매시간 알림 스케줄 (다음 정각부터)
-      for (let i = 1; i <= 24 && scheduledCount < maxNotifications; i++) {
-        const triggerDate = new Date(now.getTime() + (i * 60 * 60 * 1000)); // i시간 후
+      // 5. 다음 정각 계산 (예: 14:30 → 15:00)
+      const nextHour = new Date(now);
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0); // 다음 정각 (분, 초, 밀리초를 0으로)
+      console.log(`⏰ 다음 정각: ${nextHour.getHours()}:${nextHour.getMinutes().toString().padStart(2, '0')}`);
+
+      // 6. 다음 정각부터 24시간 동안 매시간 알림 스케줄
+      for (let i = 0; i < 24 && scheduledCount < maxNotifications; i++) {
+        const triggerDate = new Date(nextHour.getTime() + (i * 60 * 60 * 1000)); // 다음 정각 + i시간
         const hour = triggerDate.getHours();
 
         // 조용한 시간 체크 (조용한 시간 기능이 활성화된 경우에만)

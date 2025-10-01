@@ -459,10 +459,12 @@ export const TarotSpread: React.FC = () => {
   // 스프레드 선택 화면
   if (!selectedSpread) {
     return (
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.container} 
+        contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustContentInsets={false}
+        contentInsetAdjustmentBehavior="never"
       >
 
         {/* 스프레드 리스트 (세로 배치) */}
@@ -574,10 +576,12 @@ export const TarotSpread: React.FC = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.spreadContainer} 
+        contentContainerStyle={styles.spreadContainer}
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustContentInsets={false}
+        contentInsetAdjustmentBehavior="never"
       >
         {/* 헤더 */}
         <View style={styles.spreadHeader}>
@@ -823,6 +827,8 @@ const styles = StyleSheet.create({
   spreadContainer: {
     padding: Spacing.xxs, // 4px → 2px로 더 축소하여 골드 윤곽선 영역 추가 확장
     paddingBottom: 120, // 하단 버튼 공간 확보
+    flexGrow: 1,
+    justifyContent: 'flex-start', // 상단부터 시작
   },
   mainContainer: {
     flex: 1,

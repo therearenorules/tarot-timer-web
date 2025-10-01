@@ -115,7 +115,7 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
             onError={handleImageError}
             onLoadStart={() => setImageError(false)}
             priority={size === 'large' || size === 'extra-large' ? 'high' : 'normal'}
-            fadeDuration={300}
+            fadeDuration={80}
             showLoader={true}
             cacheKey={`tarot_${card.id}_${size}`}
           />
