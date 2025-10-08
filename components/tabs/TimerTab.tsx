@@ -191,7 +191,12 @@ const CardDetailModal = memo(({
                   }
                 }}
               >
-                <Text style={styles.modalMemoTitle}>{t('journal.entry.memo')}</Text>
+                <View style={styles.memoHeader}>
+                  <Text style={styles.modalMemoTitle}>{t('journal.entry.memo')}</Text>
+                  <Text style={styles.charCounter}>
+                    {memo.length}/500
+                  </Text>
+                </View>
                 <TextInput
                   ref={memoInputRef}
                   style={styles.modalMemoInput}
@@ -202,6 +207,7 @@ const CardDetailModal = memo(({
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
+                  maxLength={500}
                   onFocus={() => {
                     // 간단하고 안정적인 스크롤 방식
                     setTimeout(() => {
@@ -1007,13 +1013,23 @@ const styles = StyleSheet.create({
   modalMemoSection: {
     marginBottom: Spacing.xl,
   },
+  memoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    marginLeft: '6%', // 메모칸과 정렬
+    marginRight: '3%',
+  },
   modalMemoTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text.primary,
-    marginBottom: Spacing.md,
-    marginLeft: '6%', // 메모칸보다 3% 더 우측으로 이동 (3% + 3%)
-    marginRight: '3%', // 우측은 기본 여백 유지
+  },
+  charCounter: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontWeight: '500',
   },
   modalMemoInput: {
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
