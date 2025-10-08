@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { TarotCard, TarotUtils, DailyTarotSave, simpleStorage, STORAGE_KEYS } from '../utils/tarotData';
 import { preloadTarotImages } from '../utils/imageCache';
 import i18next from 'i18next';
 import { useTarotI18n } from './useTarotI18n';
+import { useNotifications } from '../contexts/NotificationContext';
 
 export interface UseTarotCardsReturn {
   dailyCards: TarotCard[];
@@ -18,6 +19,7 @@ export interface UseTarotCardsReturn {
   redrawSingleCard: (hourIndex: number) => void;
   updateMemo: (hourIndex: number, memo: string) => void;
   loadTodayCards: () => Promise<void>;
+  handleMidnightReset: () => void;
 }
 
 export function useTarotCards(currentHour: number): UseTarotCardsReturn {
@@ -29,6 +31,20 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   const { getCardName } = useTarotI18n();
   const hasCardsForToday = dailyCards.length > 0;
   const currentCard = selectedCardIndex !== null ? dailyCards[selectedCardIndex] : null;
+
+  // 알림 컨텍스트 (모바일 환경에서만)
+  const isMobileEnvironment = Platform.OS === 'ios' || Platform.OS === 'android';
+  let notificationContext: any = null;
+
+  try {
+    if (isMobileEnvironment) {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      notificationContext = useNotifications();
+    }
+  } catch (error) {
+    // 알림 컨텍스트가 없어도 카드 기능은 정상 작동
+    console.log('알림 컨텍스트 없음 (웹 환경 또는 비활성화)');
+  }
 
   // 오늘의 카드 로드 (고성능 이미지 프리로딩 포함)
   const loadTodayCards = useCallback(async () => {
@@ -46,11 +62,43 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
         if (dailySave.hourlyCards.length > 0) {
           preloadTarotImages(dailySave.hourlyCards, currentHour, 'smart');
         }
+      } else {
+        // 오늘의 카드가 없으면 상태 초기화
+        console.log('🌙 새로운 날 - 카드 데이터 없음 (카드 뽑기 대기)');
+        setDailyCards([]);
+        setCardMemos({});
+        setSelectedCardIndex(null);
       }
     } catch (error) {
       console.error('카드 로드 실패:', error);
     }
   }, [currentHour]);
+
+  // 자정 초기화 핸들러
+  const handleMidnightReset = useCallback(() => {
+    console.log('🌙 자정 초기화 - 24시간 카드 리셋 시작');
+
+    // 상태 초기화
+    setDailyCards([]);
+    setCardMemos({});
+    setSelectedCardIndex(null);
+
+    // 오늘의 카드 다시 로드 (새로운 날짜로)
+    loadTodayCards();
+
+    // ✅ 자정 리셋 시 알림도 취소 (다음 카드 뽑기 시 재생성)
+    if (notificationContext?.hasPermission && notificationContext?.cancelHourlyNotifications) {
+      try {
+        console.log('🔕 자정 초기화 - 기존 알림 취소');
+        notificationContext.cancelHourlyNotifications();
+        console.log('✅ 알림 취소 완료 (새 카드 뽑으면 자동 재생성)');
+      } catch (notifError) {
+        console.warn('⚠️ 알림 취소 실패 (무시 가능):', notifError);
+      }
+    }
+
+    console.log('✅ 자정 초기화 완료 - 새로운 24시간 카드를 뽑아주세요!');
+  }, [loadTodayCards, notificationContext]);
 
   // 카드 저장
   const saveDailyCards = useCallback(async (cards: TarotCard[], memos?: Record<number, string>) => {
@@ -102,6 +150,18 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       // 새로 뽑은 카드들 즉시 프리로딩
       preloadTarotImages(newCards, currentHour, 'immediate');
 
+      // ✅ 새로운 카드로 알림 자동 재스케줄링 (모바일만)
+      if (notificationContext?.hasPermission && notificationContext?.scheduleHourlyNotifications) {
+        try {
+          console.log('🔔 새 카드 뽑기 완료 - 알림 재스케줄링 시작');
+          await notificationContext.scheduleHourlyNotifications();
+          console.log('✅ 새 카드 정보로 알림 업데이트 완료');
+        } catch (notifError) {
+          console.warn('⚠️ 알림 재스케줄링 실패 (무시 가능):', notifError);
+          // 알림 실패해도 카드 뽑기는 성공으로 처리
+        }
+      }
+
       Alert.alert(
         i18next.t('cards.completeTitle'),
         i18next.t('cards.completeMessage', {
@@ -116,7 +176,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [currentHour, saveDailyCards, getCardName]);
+  }, [currentHour, saveDailyCards, getCardName, notificationContext]);
 
   // 모든 카드 다시 뽑기 (확인 없이 바로 실행 - 다시 뽑기 버튼용)
   const redrawAllCards = useCallback(async () => {
@@ -132,13 +192,24 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       // 새로 뽑은 카드들 즉시 프리로딩
       preloadTarotImages(newCards, currentHour, 'immediate');
 
+      // ✅ 새로운 카드로 알림 자동 재스케줄링 (모바일만)
+      if (notificationContext?.hasPermission && notificationContext?.scheduleHourlyNotifications) {
+        try {
+          console.log('🔔 카드 다시 뽑기 완료 - 알림 재스케줄링 시작');
+          await notificationContext.scheduleHourlyNotifications();
+          console.log('✅ 새 카드 정보로 알림 업데이트 완료');
+        } catch (notifError) {
+          console.warn('⚠️ 알림 재스케줄링 실패 (무시 가능):', notifError);
+        }
+      }
+
       console.log('24시간 카드가 새로 뽑혔습니다!');
     } catch (error) {
       console.error('카드 다시 뽑기 실패:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [currentHour, saveDailyCards]);
+  }, [currentHour, saveDailyCards, notificationContext]);
 
   // 개별 카드 다시 뽑기
   const redrawSingleCard = useCallback(async (hourIndex: number) => {
@@ -221,5 +292,6 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     redrawSingleCard,
     updateMemo,
     loadTodayCards,
+    handleMidnightReset,
   };
 }

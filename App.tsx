@@ -15,6 +15,16 @@ let BannerAd: any = null;
 import { TarotProvider } from './contexts/TarotContext';
 import { AuthProvider } from './contexts/AuthContext';
 
+// 자정 초기화 테스트 유틸리티 로드 (개발 모드)
+if (__DEV__) {
+  import('./utils/midnightResetTest').then(module => {
+    console.log('🧪 자정 초기화 테스트 유틸리티 로드 완료');
+    console.log('📌 testMidnightReset() 또는 showMidnightStatus() 사용 가능');
+  }).catch(() => {
+    // 테스트 파일이 없어도 앱은 정상 동작
+  });
+}
+
 // 웹에서는 웹 전용 NotificationProvider 사용
 let NotificationProvider: any = ({ children }: { children: React.ReactNode }) => children;
 try {

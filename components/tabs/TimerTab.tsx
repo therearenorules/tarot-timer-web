@@ -335,7 +335,15 @@ const EnergyFlowSection = memo(({
 const TimerTab = memo(() => {
   const { t } = useTranslation();
   const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
-  const { currentTime, currentHour, formattedTime, onSessionComplete, removeSessionCompleteCallback } = useTimer();
+  const {
+    currentTime,
+    currentHour,
+    formattedTime,
+    onSessionComplete,
+    removeSessionCompleteCallback,
+    onMidnightReset,
+    removeMidnightResetCallback
+  } = useTimer();
 
   // 세션 완료 시 전면 광고 콜백 등록
   useEffect(() => {
@@ -378,7 +386,22 @@ const TimerTab = memo(() => {
     redrawAllCards,
     redrawSingleCard,
     updateMemo,
+    handleMidnightReset,
   } = useTarotCards(currentHour);
+
+  // 자정 초기화 콜백 등록
+  useEffect(() => {
+    const midnightResetHandler = () => {
+      console.log('🌙 TimerTab - 자정 초기화 실행');
+      handleMidnightReset();
+    };
+
+    onMidnightReset(midnightResetHandler);
+
+    return () => {
+      removeMidnightResetCallback(midnightResetHandler);
+    };
+  }, [onMidnightReset, removeMidnightResetCallback, handleMidnightReset]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalCard, setModalCard] = useState(null);

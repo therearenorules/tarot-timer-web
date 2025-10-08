@@ -152,7 +152,8 @@
       "Bash(git config:*)",
       "Bash(npm outdated)",
       "Bash(npx eas-cli:*)",
-      "Bash(del NUL)"
+      "Bash(del NUL)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []
