@@ -685,40 +685,104 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       // 2. 오늘의 24시간 타로 카드 데이터 로드
       const todayCards = await getTodayTarotCards();
-      console.log(`🎴 타로 카드 데이터: ${todayCards ? '로드 성공' : '없음 (기본 메시지 사용)'}`);
+      console.log(`🎴 타로 카드 데이터: ${todayCards ? '로드 성공' : '없음'}`);
+
+      // ✅ 카드 데이터가 없으면 오전 8시 리마인더만 생성
+      if (!todayCards || todayCards.length === 0) {
+        console.log('⏸️ 카드를 아직 뽑지 않음 - 오전 8시 리마인더 생성');
+
+        // 기존 알림 모두 취소 (깨끗한 상태에서 시작)
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        console.log('🗑️ 기존 알림 모두 취소 완료');
+
+        // 오전 8시 리마인더 알림 생성 (다국어)
+        const currentLang = i18next.language || 'ko';
+        const reminderMessages = {
+          ko: {
+            title: '🌅 좋은 아침입니다!',
+            body: '오늘 하루의 24시간 타로 카드를 뽑아보세요 🔮'
+          },
+          en: {
+            title: '🌅 Good morning!',
+            body: 'Draw your 24-hour tarot cards for today 🔮'
+          },
+          ja: {
+            title: '🌅 おはようございます！',
+            body: '今日の24時間タロットカードを引いてみましょう 🔮'
+          }
+        };
+
+        const message = reminderMessages[currentLang] || reminderMessages['ko'];
+
+        // 오전 8시 리마인더 시간 계산 (오늘 또는 내일)
+        const reminder8AM = new Date();
+        let targetHour = 8; // 기본 8AM
+
+        // ✅ 조용한 시간과 충돌 시 조정 (조용한 시간 종료 직후로 변경)
+        const settings = await loadNotificationSettings();
+        if (settings.quietHoursEnabled) {
+          const quietEnd = settings.quietHoursEnd;
+
+          // 조용한 시간이 8AM을 포함하는지 확인
+          // 예: quietHoursStart=22, quietHoursEnd=9 → 8AM이 조용한 시간에 포함됨
+          if (settings.quietHoursStart > settings.quietHoursEnd) {
+            // 자정 걸침 (예: 22시 ~ 9시)
+            if (targetHour < quietEnd) {
+              targetHour = quietEnd; // 8 → 9시로 조정
+              console.log(`⏰ 8AM 리마인더가 조용한 시간과 충돌 → ${targetHour}시로 조정`);
+            }
+          } else {
+            // 자정 안 걸침 (예: 23시 ~ 1시)
+            if (targetHour >= settings.quietHoursStart && targetHour < quietEnd) {
+              targetHour = quietEnd;
+              console.log(`⏰ 8AM 리마인더가 조용한 시간과 충돌 → ${targetHour}시로 조정`);
+            }
+          }
+        }
+
+        reminder8AM.setHours(targetHour, 0, 0, 0);
+
+        // 현재 시간이 목표 시간 이후라면 내일로 설정
+        const now = new Date();
+        if (now.getHours() >= targetHour) {
+          reminder8AM.setDate(reminder8AM.getDate() + 1);
+        }
+
+        console.log(`📅 리마인더 예정 시간: ${reminder8AM.toLocaleString('ko-KR')}`);
+
+        try {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: message.title,
+              body: message.body,
+              data: {
+                type: 'daily_reminder',
+                timestamp: reminder8AM.getTime()
+              },
+              sound: true,
+              priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+              categoryIdentifier: 'tarot-save',
+            },
+            trigger: reminder8AM,
+            identifier: `daily-reminder-${reminder8AM.getTime()}`,
+          });
+
+          console.log('✅ 오전 8시 카드 뽑기 리마인더 생성 완료');
+          console.log('💡 24시간 카드를 뽑으면 자동으로 시간대별 알림이 생성됩니다.');
+        } catch (reminderError) {
+          console.error('❌ 8AM 리마인더 생성 실패:', reminderError);
+        }
+
+        setIsScheduling(false);
+        return true; // 리마인더는 생성함
+      }
 
       // 3. 기존 알림 모두 취소 (안전한 정리)
       await Notifications.cancelAllScheduledNotificationsAsync();
       console.log('🗑️ 기존 알림 모두 취소 완료');
 
-      // 4. 기본 메시지 (카드 데이터가 없을 때) - 다국어 지원
+      // 4. 다국어 지원 준비
       const currentLang = i18next.language || 'ko';
-
-      const defaultMessages: Record<string, string[]> = {
-        ko: [
-          "🔮 새로운 타로 카드를 뽑을 시간입니다!",
-          "✨ 이번 시간의 카드 의미를 학습해보세요",
-          "🎴 타로 타이머가 새로운 카드를 준비했습니다",
-          "🌟 지금 당신에게 필요한 카드가 기다립니다",
-          "💫 새로운 상징적 의미를 발견해보세요"
-        ],
-        en: [
-          "🔮 Time to draw your new tarot card!",
-          "✨ Learn the meaning of this hour's card",
-          "🎴 Tarot Timer has prepared a new card for you",
-          "🌟 The card you need right now is waiting",
-          "💫 Discover new symbolic meanings"
-        ],
-        ja: [
-          "🔮 新しいタロットカードを引く時間です！",
-          "✨ この時間のカードの意味を学びましょう",
-          "🎴 タロットタイマーが新しいカードを用意しました",
-          "🌟 今あなたに必要なカードが待っています",
-          "💫 新しい象徴的な意味を発見してください"
-        ]
-      };
-
-      const messages = defaultMessages[currentLang] || defaultMessages['ko'];
 
       let scheduledCount = 0;
       const maxNotifications = 64; // iOS/Android 제한 완화 (최대 64개)
@@ -726,15 +790,19 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       console.log(`🕐 현재 시각: ${now.getHours()}:${now.getMinutes()}, 조용한 시간: ${settingsToUse.quietHoursStart}:00 - ${settingsToUse.quietHoursEnd}:00`);
 
-      // 5. 다음 정각 계산 (예: 14:30 → 15:00)
+      // 5. 현재 시간부터 24시간 범위 계산
+      // 현재 시간이 14:30이면 → 15시부터 다음날 14시까지 (정확히 24시간 커버)
+      const currentHourIndex = now.getHours();
       const nextHour = new Date(now);
       nextHour.setHours(now.getHours() + 1, 0, 0, 0); // 다음 정각 (분, 초, 밀리초를 0으로)
-      console.log(`⏰ 다음 정각: ${nextHour.getHours()}:${nextHour.getMinutes().toString().padStart(2, '0')}`);
+      console.log(`⏰ 현재 시간: ${currentHourIndex}시, 다음 정각: ${nextHour.getHours()}시`);
 
-      // 6. 다음 정각부터 24시간 동안 매시간 알림 스케줄
+      // 6. 다음 정각부터 정확히 24시간 범위만 스케줄 (현재 시간 제외)
+      // 예: 현재 14시 → 15시부터 다음날 14시까지 (15, 16, ..., 23, 0, 1, ..., 14)
       for (let i = 0; i < 24 && scheduledCount < maxNotifications; i++) {
-        const triggerDate = new Date(nextHour.getTime() + (i * 60 * 60 * 1000)); // 다음 정각 + i시간
-        const hour = triggerDate.getHours();
+        const targetHour = (currentHourIndex + 1 + i) % 24; // 다음 시간부터 24시간
+        const triggerDate = new Date(nextHour.getTime() + (i * 60 * 60 * 1000));
+        const hour = targetHour;
 
         // 조용한 시간 체크 (조용한 시간 기능이 활성화된 경우에만)
         let isQuietTime = false;
@@ -749,26 +817,24 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
 
         if (settingsToUse.hourlyEnabled && !isQuietTime) {
-          // 알림 메시지 생성 (카드 데이터가 있으면 카드 정보 포함)
-          let notificationBody: string;
-
-          if (todayCards && todayCards[hour]) {
-            const card = todayCards[hour];
-            const cardName = getCardNameForNotification(card);
-            const cardMeaning = getCardMeaningForNotification(card);
-            const hourDisplay = formatHourForNotification(hour);
-
-            // 카드 정보가 있을 때 (🎴 아이콘 제거):
-            // 한국어: "[14시] 여교황 - 직관과 내면의 지혜"
-            // 영어: "[2PM] The High Priestess - Intuition and inner wisdom"
-            // 일본어: "[14時] 女教皇 - 直感と内なる知恵"
-            notificationBody = `[${hourDisplay}] ${cardName} - ${cardMeaning}`;
-            console.log(`📋 ${hour}시 알림 메시지: ${cardName}`);
-          } else {
-            // 카드 데이터가 없을 때: 기본 메시지 사용
-            notificationBody = messages[Math.floor(Math.random() * messages.length)];
-            console.log(`📋 ${hour}시 알림 메시지: 기본 메시지 (카드 미뽑음)`);
+          // ✅ 카드 데이터 확인 (카드 데이터가 있을 때만 알림 생성)
+          if (!todayCards[hour]) {
+            console.log(`⏭️ ${hour}시 카드 없음 - 알림 스케줄 스킵`);
+            continue; // 카드가 없으면 해당 시간대 알림 건너뛰기
           }
+
+          // 알림 메시지 생성 (카드 정보 포함)
+          const card = todayCards[hour];
+          const cardName = getCardNameForNotification(card);
+          const cardMeaning = getCardMeaningForNotification(card);
+          const hourDisplay = formatHourForNotification(hour);
+
+          // 카드 정보로 알림 메시지 생성:
+          // 한국어: "[14시] 여교황 - 직관과 내면의 지혜"
+          // 영어: "[2PM] The High Priestess - Intuition and inner wisdom"
+          // 일본어: "[14時] 女教皇 - 直感と内なる知恵"
+          const notificationBody = `[${hourDisplay}] ${cardName} - ${cardMeaning}`;
+          console.log(`📋 ${hour}시 알림 메시지: ${cardName}`);
 
           try {
             await Notifications.scheduleNotificationAsync({
@@ -803,17 +869,35 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
       }
 
-      // 4. 자정 리셋 알림 (내일 자정)
+      // 4. 자정 리셋 알림 (내일 자정) - 다국어 지원
       if (scheduledCount < maxNotifications) {
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
 
+        // 다국어 메시지
+        const midnightMessages = {
+          ko: {
+            title: '🌙 새로운 하루',
+            body: '어제의 카드가 초기화되었습니다. 오늘의 24시간 카드를 새로 뽑아보세요!'
+          },
+          en: {
+            title: '🌙 New Day',
+            body: 'Yesterday\'s cards have been reset. Draw your new 24-hour cards for today!'
+          },
+          ja: {
+            title: '🌙 新しい一日',
+            body: '昨日のカードがリセットされました。今日の24時間カードを新しく引いてみましょう！'
+          }
+        };
+
+        const message = midnightMessages[currentLang as keyof typeof midnightMessages] || midnightMessages.ko;
+
         try {
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: '🌙 자정 카드 리셋',
-              body: '새로운 24시간 타로 카드 세트가 준비되었습니다!',
+              title: message.title,
+              body: message.body,
               data: {
                 type: 'midnight_reset',
                 timestamp: tomorrow.getTime()
