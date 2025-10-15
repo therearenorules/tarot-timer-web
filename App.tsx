@@ -2,6 +2,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, memo, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, NotoSansKR_400Regular, NotoSansKR_500Medium, NotoSansKR_700Bold } from '@expo-google-fonts/noto-sans-kr';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
@@ -375,17 +376,19 @@ function AppContent() {
 // 전역 에러 경계가 있는 최상위 컴포넌트
 export default function App() {
   return (
-    <AuthProvider>
-      <TarotProvider>
-        <NotificationProvider>
-          <PremiumProvider>
-            <TabErrorBoundary tabName="Tarot Timer">
-              <AppContent />
-            </TabErrorBoundary>
-          </PremiumProvider>
-        </NotificationProvider>
-      </TarotProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <TarotProvider>
+          <NotificationProvider>
+            <PremiumProvider>
+              <TabErrorBoundary tabName="Tarot Timer">
+                <AppContent />
+              </TabErrorBoundary>
+            </PremiumProvider>
+          </NotificationProvider>
+        </TarotProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

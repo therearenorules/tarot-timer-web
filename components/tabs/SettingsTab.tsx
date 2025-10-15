@@ -11,6 +11,7 @@ import {
   Switch,
   Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   Colors,
@@ -111,6 +112,7 @@ const NotificationDiagnostics: React.FC = () => {
 
 const SettingsTab: React.FC = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   // Context hooks
   const {
@@ -290,7 +292,14 @@ const SettingsTab: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom
+      }}
+      showsVerticalScrollIndicator={false}
+    >
 
       {/* 프리미엄 구독 관리 섹션 - 준비중 표시 */}
       <View style={styles.settingsSection}>

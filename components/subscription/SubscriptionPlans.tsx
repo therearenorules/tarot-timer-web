@@ -347,10 +347,41 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
               • 구독은 자동 갱신되며 언제든지 취소할 수 있습니다.
             </Text>
             <Text style={styles.disclaimerText}>
-              • 결제는 iTunes 계정을 통해 처리됩니다.
+              • 결제는 iTunes 계정 또는 Google Play를 통해 처리됩니다.
             </Text>
             <Text style={styles.disclaimerText}>
               • 무료 체험 기간 중에도 취소 가능합니다.
+            </Text>
+
+            {/* 법률 문서 링크 */}
+            <View style={styles.legalLinksContainer}>
+              <TouchableOpacity
+                style={styles.legalLink}
+                onPress={() => {
+                  // TODO: 개인정보 처리방침 URL로 이동
+                  console.log('개인정보 처리방침 열기');
+                  // Linking.openURL('https://tarottimer.com/privacy');
+                }}
+              >
+                <Text style={styles.legalLinkText}>개인정보 처리방침</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.legalDivider}>|</Text>
+
+              <TouchableOpacity
+                style={styles.legalLink}
+                onPress={() => {
+                  // TODO: 이용약관 URL로 이동
+                  console.log('이용약관 열기');
+                  // Linking.openURL('https://tarottimer.com/terms');
+                }}
+              >
+                <Text style={styles.legalLinkText}>이용약관</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.disclaimerText, styles.legalNotice]}>
+              구독을 진행하면 위 약관에 동의하는 것으로 간주됩니다.
             </Text>
           </View>
         </>
@@ -615,6 +646,38 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     lineHeight: 16,
     marginBottom: Spacing.xs,
+  },
+
+  // 법률 문서 링크
+  legalLinksContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+
+  legalLink: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+  },
+
+  legalLinkText: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.brand.primary,
+    textDecorationLine: 'underline',
+  },
+
+  legalDivider: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.text.secondary,
+    marginHorizontal: Spacing.sm,
+  },
+
+  legalNotice: {
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: Spacing.sm,
   },
 });
 

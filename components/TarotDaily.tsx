@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
@@ -286,6 +287,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
 const TarotDaily = () => {
   const { t } = useTranslation();
   const { getSpreadName } = useTarotI18n();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('daily');
   const [dailyReadings, setDailyReadings] = useState([]);
   const [spreadReadings, setSpreadReadings] = useState([]);
@@ -717,7 +719,7 @@ const TarotDaily = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {renderHeader()}
 
       <View style={styles.content}>

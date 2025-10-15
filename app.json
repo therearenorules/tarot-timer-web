@@ -37,16 +37,29 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 1,
+      "versionCode": 29,
+      "softwareKeyboardLayoutMode": "pan",
+      "userInterfaceStyle": "dark",
+      "navigationBar": {
+        "visible": "leanback",
+        "barStyle": "dark-content",
+        "backgroundColor": "#1a1625"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1625"
+      },
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
         "backgroundColor": "#1a1625"
       },
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.WAKE_LOCK",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "com.android.vending.BILLING"
       ],
       "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.app"
     },

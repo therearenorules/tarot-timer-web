@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 // 🎨 디자인 시스템 v2.0
 // 미니멀 럭셔리 스타일 + 글래스모피즘
@@ -526,7 +526,11 @@ export const AnimationDuration = {
 
 // 📱 반응형 크기
 export const Layout = {
-  touchTarget: 44,      // 최소 터치 영역
+  touchTarget: Platform.select({
+    ios: 44,      // iOS: 44pt (Human Interface Guidelines)
+    android: 48,  // Android: 48dp (Material Design)
+    default: 48   // 기본값: Android 표준
+  }),
   cardWidth: 280,       // 기본 카드 너비
   cardHeight: 160,      // 기본 카드 높이
   maxWidth: 400,        // 최대 컨테이너 너비

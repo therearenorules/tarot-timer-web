@@ -121,17 +121,17 @@ export class IAPManager {
             productId: SUBSCRIPTION_SKUS.monthly,
             title: '타로 타이머 월간 프리미엄',
             description: '무제한 세션 저장, 광고 제거, 프리미엄 테마',
-            price: '3900',
-            localizedPrice: '₩3,900',
+            price: '6600',
+            localizedPrice: '₩6,600',
             currency: 'KRW',
             type: 'monthly'
           },
           {
             productId: SUBSCRIPTION_SKUS.yearly,
             title: '타로 타이머 연간 프리미엄',
-            description: '무제한 세션 저장, 광고 제거, 프리미엄 테마 (58% 할인)',
-            price: '19900',
-            localizedPrice: '₩19,900',
+            description: '무제한 세션 저장, 광고 제거, 프리미엄 테마 (42% 할인)',
+            price: '46000',
+            localizedPrice: '₩46,000',
             currency: 'KRW',
             type: 'yearly'
           }

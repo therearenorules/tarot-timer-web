@@ -78,9 +78,16 @@ const CardDetailModal = memo(({
     };
   }, [visible]);
 
-  // 모달 스타일 (완전 고정 크기)
+  // 모달 스타일 (화면 비율 기반 동적 계산)
   const getModalStyle = () => {
-    const { width } = screenData;
+    const { width, height } = screenData;
+
+    // 화면 비율 계산
+    const aspectRatio = height / width;
+
+    // 긴 화면 감지 (20:9 = 2.22, 21:9 = 2.33)
+    const isTallScreen = aspectRatio > 2.0;
+    const isVeryTallScreen = aspectRatio > 2.2;
 
     if (Platform.OS === 'web') {
       return {
@@ -91,29 +98,39 @@ const CardDetailModal = memo(({
       };
     }
 
-    // 완전 고정 크기 - 어떤 상황에서도 변하지 않음
+    // 매우 작은 화면 (< 350dp) - Galaxy A, 저가형
     if (width < 350) {
-      // 매우 작은 화면 (iPhone SE 등)
       return {
         width: '98%',
-        height: 600, // 픽셀 단위로 고정
+        height: isVeryTallScreen ? height * 0.72 : isTallScreen ? height * 0.75 : 600,
         maxWidth: 350,
       };
-    } else if (width > 500) {
-      // 태블릿이나 큰 화면
-      return {
-        width: '85%',
-        height: 650, // 픽셀 단위로 고정
-        maxWidth: 500,
-      };
-    } else {
-      // 일반 모바일 화면
+    }
+
+    // 작은 화면 (350~400dp) - iPhone SE, 소형 Android
+    if (width < 400) {
       return {
         width: '95%',
-        height: 620, // 픽셀 단위로 고정
+        height: isVeryTallScreen ? height * 0.75 : isTallScreen ? height * 0.78 : 650,
         maxWidth: 400,
       };
     }
+
+    // 중간 화면 (400~500dp) - 대부분의 스마트폰
+    if (width < 500) {
+      return {
+        width: '92%',
+        height: isVeryTallScreen ? height * 0.77 : isTallScreen ? height * 0.80 : 700,
+        maxWidth: 450,
+      };
+    }
+
+    // 큰 화면 / 태블릿 (500dp+)
+    return {
+      width: '85%',
+      height: height * 0.82,
+      maxWidth: 600,
+    };
   };
 
   if (!card) return null;
