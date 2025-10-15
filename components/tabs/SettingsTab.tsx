@@ -932,7 +932,7 @@ const SettingsTab: React.FC = () => {
           style={styles.settingItem}
           onPress={() => {
             // 인스타그램 링크 열기
-            const instagramUrl = 'https://www.instagram.com/selfish_saju/';
+            const instagramUrl = 'https://www.instagram.com/deanosajutaro/';
             if (typeof window !== 'undefined' && window.open) {
               // 웹 환경
               window.open(instagramUrl, '_blank');
@@ -951,7 +951,7 @@ const SettingsTab: React.FC = () => {
         >
           <View style={styles.settingContent}>
             <Text style={styles.settingTitle}>{t('settings.about.developer')}</Text>
-            <Text style={styles.settingSubtitle}>데아노</Text>
+            <Text style={styles.settingSubtitle}>@deanosajutaro</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
