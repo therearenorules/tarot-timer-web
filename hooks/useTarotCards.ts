@@ -75,7 +75,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   }, [currentHour]);
 
   // 자정 초기화 핸들러
-  const handleMidnightReset = useCallback(() => {
+  const handleMidnightReset = useCallback(async () => {
     console.log('🌙 자정 초기화 - 24시간 카드 리셋 시작');
 
     // 상태 초기화
@@ -86,14 +86,21 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     // 오늘의 카드 다시 로드 (새로운 날짜로)
     loadTodayCards();
 
-    // ✅ 자정 리셋 시 알림도 취소 (다음 카드 뽑기 시 재생성)
+    // ✅ 자정 리셋 시 알림도 취소하고 8AM 리마인더 재생성
     if (notificationContext?.hasPermission && notificationContext?.cancelHourlyNotifications) {
       try {
         console.log('🔕 자정 초기화 - 기존 알림 취소');
         notificationContext.cancelHourlyNotifications();
-        console.log('✅ 알림 취소 완료 (새 카드 뽑으면 자동 재생성)');
+        console.log('✅ 알림 취소 완료');
+
+        // ✅ 8AM 리마인더 자동 생성 (카드를 뽑지 않았으므로)
+        if (notificationContext?.scheduleHourlyNotifications) {
+          console.log('🔔 자정 리셋 후 8AM 리마인더 자동 생성 시작');
+          await notificationContext.scheduleHourlyNotifications();
+          console.log('✅ 8AM 리마인더 생성 완료 (카드 뽑으면 시간별 알림으로 자동 전환)');
+        }
       } catch (notifError) {
-        console.warn('⚠️ 알림 취소 실패 (무시 가능):', notifError);
+        console.warn('⚠️ 알림 처리 실패 (무시 가능):', notifError);
       }
     }
 
@@ -134,7 +141,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     } else {
       performDrawDailyCards();
     }
-  }, [hasCardsForToday]);
+  }, [hasCardsForToday, performDrawDailyCards]);
 
   // 실제 카드 뽑기 실행 (즉시 이미지 프리로딩)
   const performDrawDailyCards = useCallback(async () => {
