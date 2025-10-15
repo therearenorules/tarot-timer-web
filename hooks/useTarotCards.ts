@@ -141,7 +141,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     } else {
       performDrawDailyCards();
     }
-  }, [hasCardsForToday]);
+  }, [hasCardsForToday, performDrawDailyCards]);
 
   // 실제 카드 뽑기 실행 (즉시 이미지 프리로딩)
   const performDrawDailyCards = useCallback(async () => {

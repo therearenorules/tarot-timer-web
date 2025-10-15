@@ -360,11 +360,12 @@ export const TarotSpread: React.FC = () => {
       // 액션 카운터 증가 (전면광고 표시 로직)
       await AdManager.incrementActionCounter();
 
-      Alert.alert(
-        `🔮 ${selectedSpread?.name} ${t('spread.messages.complete')}!`,
-        `${selectedSpread?.description}`,
-        [{ text: t('common.ok') }]
-      );
+      // 완료 팝업 제거 (사용자 요청)
+      // Alert.alert(
+      //   `🔮 ${selectedSpread?.name} ${t('spread.messages.complete')}!`,
+      //   `${selectedSpread?.description}`,
+      //   [{ text: t('common.ok') }]
+      // );
     } catch (error) {
       console.error('스프레드 뽑기 실패:', error);
       Alert.alert(t('common.error'), t('spread.errors.drawFailed'));
