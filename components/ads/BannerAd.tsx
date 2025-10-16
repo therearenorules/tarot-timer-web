@@ -1,24 +1,15 @@
 /**
  * 배너 광고 컴포넌트
  * 화면 하단에 표시되는 AdMob 배너 광고
+ * react-native-google-mobile-ads 기반
  */
 
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
+import { BannerAd as RNBannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { usePremium } from '../../contexts/PremiumContext';
 import AdManager from '../../utils/adManager';
 import { AD_CONFIG } from '../../utils/adConfig';
-
-// 웹 환경에서는 expo-ads-admob을 조건부로 import
-let AdMobBanner: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    const AdMob = require('expo-ads-admob');
-    AdMobBanner = AdMob.AdMobBanner;
-  } catch (error) {
-    console.warn('expo-ads-admob not available:', error);
-  }
-}
 
 interface BannerAdProps {
   placement?: 'main_screen' | 'session_complete' | 'journal_entry';
@@ -51,8 +42,8 @@ const BannerAd: React.FC<BannerAdProps> = ({
       }
 
       // 배치별 광고 표시 설정 확인
-      const placementConfig = AD_CONFIG.banner;
-      if (!placementConfig) {
+      const shouldShowBanner = AdManager.shouldShowBanner(placement);
+      if (!shouldShowBanner) {
         console.log(`⚠️ 배치 "${placement}"에서 배너 광고 비활성화`);
         return;
       }
@@ -69,16 +60,9 @@ const BannerAd: React.FC<BannerAdProps> = ({
           return;
         }
 
-        // 배너 광고 로드 시도
-        if (AdMobBanner) {
-          setIsVisible(true);
-          console.log('📱 배너 광고 로드 중...');
-        } else {
-          console.warn('⚠️ AdMobBanner not available, showing placeholder');
-          setIsVisible(true);
-          setIsLoaded(true);
-          onAdLoaded?.();
-        }
+        // 배너 광고 표시 설정
+        setIsVisible(true);
+        console.log('📱 배너 광고 초기화 완료');
 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '배너 광고 로드 실패';
@@ -99,95 +83,84 @@ const BannerAd: React.FC<BannerAdProps> = ({
   // 웹 환경용 시뮬레이션 배너
   if (Platform.OS === 'web') {
     return (
-      <View style={[styles.container, styles.webSimulation]}>
-        <View style={styles.webBanner}>
-          <Text style={styles.webBannerText}>🌐 웹 환경 광고 시뮬레이션</Text>
-          <Text style={styles.webBannerSubtext}>배너 광고 자리 (320x50)</Text>
+      <View style={styles.container}>
+        <View style={styles.webAdSimulation}>
+          <Text style={styles.webAdText}>[ Web 광고 시뮬레이션 ]</Text>
+          <Text style={styles.webAdSubtext}>실제 앱에서는 AdMob 배너 광고가 표시됩니다</Text>
         </View>
       </View>
     );
   }
 
-  // 오류 발생 시 숨김
+  // 오류 발생 시 표시하지 않음
   if (error) {
     return null;
   }
 
-  // React Native 환경용 실제 배너 광고
-  if (AdMobBanner) {
-    return (
-      <View style={styles.container}>
-        <AdMobBanner
-          bannerSize="banner"
-          adUnitID={AdManager.getBannerAdUnitId()}
-          servePersonalizedAds={false}
-          onDidReceiveAd={() => {
-            console.log('✅ 배너 광고 로드 성공');
-            setIsLoaded(true);
-            onAdLoaded?.();
-            AdManager.trackAdEvent('BANNER_LOADED', placement);
-          }}
-          onDidFailToReceiveAdWithError={(error: string) => {
-            console.error('❌ 배너 광고 로드 실패:', error);
-            setError(error);
-            onAdFailedToLoad?.(error);
-            AdManager.trackAdEvent('BANNER_FAILED', placement, { error });
-          }}
-          onDidPresentScreen={() => {
-            console.log('🔍 배너 광고 클릭됨');
-            onAdClicked?.();
-            AdManager.trackAdEvent('BANNER_CLICKED', placement);
-            AdManager.trackRevenue('banner', placement);
-          }}
-          style={styles.banner}
-        />
-      </View>
-    );
-  }
+  // 실제 AdMob 배너 광고
+  const adUnitId = testMode || __DEV__
+    ? TestIds.BANNER
+    : AdManager.getBannerAdUnitId();
 
-  return null;
+  return (
+    <View style={styles.container}>
+      <RNBannerAd
+        unitId={adUnitId}
+        size={BannerAdSize.BANNER}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: false,
+        }}
+        onAdLoaded={() => {
+          console.log('✅ 배너 광고 로드 완료');
+          setIsLoaded(true);
+          AdManager.trackAdEvent('banner_loaded', placement);
+          onAdLoaded?.();
+        }}
+        onAdFailedToLoad={(loadError) => {
+          const errorMsg = loadError?.message || '알 수 없는 오류';
+          console.error('❌ 배너 광고 로드 실패:', errorMsg);
+          setError(errorMsg);
+          AdManager.trackAdEvent('banner_failed', placement, { error: errorMsg });
+          onAdFailedToLoad?.(errorMsg);
+        }}
+        onAdOpened={() => {
+          console.log('📱 배너 광고 클릭됨');
+          AdManager.trackAdEvent('banner_clicked', placement);
+          AdManager.trackRevenue('banner', placement, 0.01);
+          onAdClicked?.();
+        }}
+      />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: AD_CONFIG.banner.background_color,
     paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(212, 184, 255, 0.2)',
+    backgroundColor: '#1a1625',
   },
-  banner: {
-    width: 320,
-    height: 50,
-  },
-  webSimulation: {
-    backgroundColor: '#2d1b47',
-    borderWidth: 1,
-    borderColor: '#7b2cbf',
-    borderStyle: 'dashed',
-  },
-  webBanner: {
-    width: 320,
-    height: 50,
+  webAdSimulation: {
+    padding: 12,
     backgroundColor: 'rgba(123, 44, 191, 0.1)',
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#7b2cbf',
+    borderColor: 'rgba(123, 44, 191, 0.3)',
+    alignItems: 'center',
+    width: 320,
+    height: 50,
+    justifyContent: 'center',
   },
-  webBannerText: {
-    color: '#d4b8ff',
+  webAdText: {
+    color: '#7b2cbf',
     fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: '600',
   },
-  webBannerSubtext: {
-    color: '#f4d03f',
+  webAdSubtext: {
+    color: '#d4b8ff',
     fontSize: 10,
-    textAlign: 'center',
-    marginTop: 2,
+    marginTop: 4,
   },
 });
 

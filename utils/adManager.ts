@@ -1,9 +1,17 @@
 /**
  * 통합 광고 관리 시스템
+ * react-native-google-mobile-ads 기반
  * AdMob 광고 로딩, 표시, 수익 추적 및 프리미엄 상태 연동
  */
 
 import { Platform } from 'react-native';
+import mobileAds, {
+  BannerAd,
+  InterstitialAd,
+  RewardedAd,
+  AdEventType,
+  TestIds,
+} from 'react-native-google-mobile-ads';
 import {
   AD_UNITS,
   AD_CONFIG,
@@ -12,24 +20,6 @@ import {
   AD_PLACEMENTS
 } from './adConfig';
 import LocalStorageManager from './localStorage';
-
-// expo-ads-admob 조건부 import (웹 환경 대응)
-let AdMobBanner: any = null;
-let AdMobInterstitial: any = null;
-let AdMobRewarded: any = null;
-let setTestDeviceIDAsync: any = null;
-
-if (Platform.OS !== 'web') {
-  try {
-    const AdMob = require('expo-ads-admob');
-    AdMobBanner = AdMob.AdMobBanner;
-    AdMobInterstitial = AdMob.AdMobInterstitial;
-    AdMobRewarded = AdMob.AdMobRewarded;
-    setTestDeviceIDAsync = AdMob.setTestDeviceIDAsync;
-  } catch (error) {
-    console.warn('expo-ads-admob not available:', error);
-  }
-}
 
 // 광고 상태 인터페이스
 interface AdState {
@@ -59,6 +49,10 @@ interface DailyAdLimits {
 export class AdManager {
   private static initialized = false;
   private static isPremiumUser = false;
+
+  // 광고 인스턴스
+  private static interstitialAd: InterstitialAd | null = null;
+  private static rewardedAd: RewardedAd | null = null;
 
   // 광고 상태 관리
   private static adStates: {
@@ -96,6 +90,10 @@ export class AdManager {
 
       console.log('📱 AdManager 초기화 시작...');
 
+      // Google Mobile Ads SDK 초기화
+      await mobileAds().initialize();
+      console.log('✅ Google Mobile Ads SDK 초기화 완료');
+
       // 프리미엄 상태 확인
       await this.checkPremiumStatus();
 
@@ -106,41 +104,32 @@ export class AdManager {
         return true;
       }
 
-      // 테스트 디바이스 설정 (개발 환경)
-      if (__DEV__ && setTestDeviceIDAsync) {
-        await setTestDeviceIDAsync('EMULATOR');
-        console.log('🧪 테스트 모드 활성화');
-      }
-
       // 일일 제한 데이터 로드
       await this.loadDailyLimits();
 
       // 전면 광고 초기화
-      if (AdMobInterstitial) {
-        try {
-          AdMobInterstitial.setAdUnitID(AD_UNITS.interstitial);
-          this.setupInterstitialListeners();
-        } catch (error) {
-          console.warn('Failed to initialize interstitial ads:', error);
+      this.interstitialAd = InterstitialAd.createForAdRequest(
+        __DEV__ ? TestIds.INTERSTITIAL : AD_UNITS.interstitial,
+        {
+          requestNonPersonalizedAdsOnly: false,
         }
-      }
+      );
 
       // 보상형 광고 초기화
-      if (AdMobRewarded) {
-        try {
-          AdMobRewarded.setAdUnitID(AD_UNITS.rewarded);
-          this.setupRewardedListeners();
-        } catch (error) {
-          console.warn('Failed to initialize rewarded ads:', error);
+      this.rewardedAd = RewardedAd.createForAdRequest(
+        __DEV__ ? TestIds.REWARDED : AD_UNITS.rewarded,
+        {
+          requestNonPersonalizedAdsOnly: false,
         }
-      }
+      );
+
+      // 리스너 설정
+      this.setupInterstitialListeners();
+      this.setupRewardedListeners();
 
       // 광고 사전 로딩
       this.preloadInterstitial();
       this.preloadRewarded();
-
-      // 일일 제한 저장
-      await this.saveDailyLimits();
 
       this.initialized = true;
       console.log('✅ AdManager 초기화 완료');
@@ -156,83 +145,78 @@ export class AdManager {
    * 전면 광고 리스너 설정
    */
   private static setupInterstitialListeners(): void {
-    if (!AdMobInterstitial) {
-      console.warn('AdMobInterstitial not available for listeners');
-      return;
-    }
+    if (!this.interstitialAd) return;
 
-    try {
-      AdMobInterstitial.addEventListener('interstitialDidLoad', () => {
-        this.adStates.interstitial.isLoaded = true;
-        this.adStates.interstitial.isLoading = false;
-        this.emitAdEvent(AD_EVENTS.INTERSTITIAL_LOADED);
-      });
+    this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+      this.adStates.interstitial.isLoaded = true;
+      this.adStates.interstitial.isLoading = false;
+      this.emitAdEvent(AD_EVENTS.INTERSTITIAL_LOADED);
+      console.log('✅ 전면 광고 로드 완료');
+    });
 
-      AdMobInterstitial.addEventListener('interstitialDidFailToLoad', () => {
-        this.adStates.interstitial.isLoaded = false;
-        this.adStates.interstitial.isLoading = false;
-        this.adStates.interstitial.errorCount++;
-        this.emitAdEvent(AD_EVENTS.INTERSTITIAL_FAILED);
-      });
+    this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      this.adStates.interstitial.isLoaded = false;
+      this.adStates.interstitial.isLoading = false;
+      this.adStates.interstitial.errorCount++;
+      this.emitAdEvent(AD_EVENTS.INTERSTITIAL_FAILED);
+      console.error('❌ 전면 광고 로드 실패:', error);
+    });
 
-      AdMobInterstitial.addEventListener('interstitialDidOpen', () => {
-        this.adStates.interstitial.lastShown = Date.now();
-        this.dailyLimits.interstitial_count++;
-        this.emitAdEvent(AD_EVENTS.INTERSTITIAL_SHOWN);
-      });
+    this.interstitialAd.addAdEventListener(AdEventType.OPENED, () => {
+      this.adStates.interstitial.lastShown = Date.now();
+      this.dailyLimits.interstitial_count++;
+      this.emitAdEvent(AD_EVENTS.INTERSTITIAL_SHOWN);
+      console.log('📱 전면 광고 표시됨');
+    });
 
-      AdMobInterstitial.addEventListener('interstitialDidClose', () => {
-        this.adStates.interstitial.isLoaded = false;
-        this.emitAdEvent(AD_EVENTS.INTERSTITIAL_DISMISSED);
-        this.preloadInterstitial(); // 자동 재로딩
-      });
-    } catch (error) {
-      console.warn('Failed to setup interstitial listeners:', error);
-    }
+    this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+      this.adStates.interstitial.isLoaded = false;
+      this.emitAdEvent(AD_EVENTS.INTERSTITIAL_DISMISSED);
+      this.preloadInterstitial(); // 자동 재로딩
+      console.log('✅ 전면 광고 닫힘');
+    });
   }
 
   /**
    * 보상형 광고 리스너 설정
    */
   private static setupRewardedListeners(): void {
-    if (!AdMobRewarded) {
-      console.warn('AdMobRewarded not available for listeners');
-      return;
-    }
+    if (!this.rewardedAd) return;
 
-    try {
-      AdMobRewarded.addEventListener('rewardedVideoDidLoad', () => {
-        this.adStates.rewarded.isLoaded = true;
-        this.adStates.rewarded.isLoading = false;
-        this.emitAdEvent(AD_EVENTS.REWARDED_LOADED);
-      });
+    this.rewardedAd.addAdEventListener(AdEventType.LOADED, () => {
+      this.adStates.rewarded.isLoaded = true;
+      this.adStates.rewarded.isLoading = false;
+      this.emitAdEvent(AD_EVENTS.REWARDED_LOADED);
+      console.log('✅ 보상형 광고 로드 완료');
+    });
 
-      AdMobRewarded.addEventListener('rewardedVideoDidFailToLoad', () => {
-        this.adStates.rewarded.isLoaded = false;
-        this.adStates.rewarded.isLoading = false;
-        this.adStates.rewarded.errorCount++;
-        this.emitAdEvent(AD_EVENTS.REWARDED_FAILED);
-      });
+    this.rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      this.adStates.rewarded.isLoaded = false;
+      this.adStates.rewarded.isLoading = false;
+      this.adStates.rewarded.errorCount++;
+      this.emitAdEvent(AD_EVENTS.REWARDED_FAILED);
+      console.error('❌ 보상형 광고 로드 실패:', error);
+    });
 
-      AdMobRewarded.addEventListener('rewardedVideoDidOpen', () => {
-        this.adStates.rewarded.lastShown = Date.now();
-        this.dailyLimits.rewarded_count++;
-        this.emitAdEvent(AD_EVENTS.REWARDED_SHOWN);
-      });
+    this.rewardedAd.addAdEventListener(AdEventType.OPENED, () => {
+      this.adStates.rewarded.lastShown = Date.now();
+      this.dailyLimits.rewarded_count++;
+      this.emitAdEvent(AD_EVENTS.REWARDED_SHOWN);
+      console.log('📱 보상형 광고 표시됨');
+    });
 
-      AdMobRewarded.addEventListener('rewardedVideoUserDidEarnReward', (reward: any) => {
-        console.log('🎁 보상 획득:', reward);
-        this.emitAdEvent(AD_EVENTS.REWARDED_EARNED, reward);
-      });
+    this.rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+      this.adStates.rewarded.isLoaded = false;
+      this.emitAdEvent(AD_EVENTS.REWARDED_DISMISSED);
+      this.preloadRewarded(); // 자동 재로딩
+      console.log('✅ 보상형 광고 닫힘');
+    });
 
-      AdMobRewarded.addEventListener('rewardedVideoDidClose', () => {
-        this.adStates.rewarded.isLoaded = false;
-        this.emitAdEvent(AD_EVENTS.REWARDED_DISMISSED);
-        this.preloadRewarded(); // 자동 재로딩
-      });
-    } catch (error) {
-      console.warn('Failed to setup rewarded listeners:', error);
-    }
+    // 보상 획득 이벤트
+    this.rewardedAd.addAdEventsListener(AdEventType.EARNED_REWARD, (reward) => {
+      console.log('🎁 보상 획득:', reward);
+      this.emitAdEvent(AD_EVENTS.REWARDED_EARNED, reward);
+    });
   }
 
   /**
@@ -291,9 +275,9 @@ export class AdManager {
     if (!this.initialized || this.isPremiumUser || Platform.OS === 'web') return;
 
     try {
-      if (AdMobInterstitial && !this.adStates.interstitial.isLoaded && !this.adStates.interstitial.isLoading) {
+      if (this.interstitialAd && !this.adStates.interstitial.isLoaded && !this.adStates.interstitial.isLoading) {
         this.adStates.interstitial.isLoading = true;
-        await AdMobInterstitial.requestAdAsync();
+        await this.interstitialAd.load();
         console.log('📱 전면 광고 로딩 시작');
       }
     } catch (error) {
@@ -310,9 +294,9 @@ export class AdManager {
     if (!this.initialized || this.isPremiumUser || Platform.OS === 'web') return;
 
     try {
-      if (AdMobRewarded && !this.adStates.rewarded.isLoaded && !this.adStates.rewarded.isLoading) {
+      if (this.rewardedAd && !this.adStates.rewarded.isLoaded && !this.adStates.rewarded.isLoading) {
         this.adStates.rewarded.isLoading = true;
-        await AdMobRewarded.requestAdAsync();
+        await this.rewardedAd.load();
         console.log('🎁 보상형 광고 로딩 시작');
       }
     } catch (error) {
@@ -362,8 +346,8 @@ export class AdManager {
       }
 
       // 광고 표시
-      if (AdMobInterstitial) {
-        await AdMobInterstitial.showAdAsync();
+      if (this.interstitialAd) {
+        await this.interstitialAd.show();
 
         // 수익 추정 (실제로는 AdMob에서 제공)
         const estimatedRevenue = 0.05; // $0.05 예상
@@ -422,8 +406,8 @@ export class AdManager {
       }
 
       // 광고 표시
-      if (AdMobRewarded) {
-        await AdMobRewarded.showAdAsync();
+      if (this.rewardedAd) {
+        await this.rewardedAd.show();
 
         // 수익 추정 (실제로는 AdMob에서 제공)
         const estimatedRevenue = 0.15; // $0.15 예상
@@ -494,7 +478,7 @@ export class AdManager {
    * 배너 광고 단위 ID 조회
    */
   static getBannerAdUnitId(): string {
-    return AD_UNITS.banner;
+    return __DEV__ ? TestIds.BANNER : AD_UNITS.banner;
   }
 
   /**
@@ -557,12 +541,11 @@ export class AdManager {
    */
   static getBannerConfig() {
     return {
-      adUnitID: AD_UNITS.banner,
+      adUnitID: this.getBannerAdUnitId(),
       testDeviceID: __DEV__ ? 'EMULATOR' : null,
       refreshInterval: AD_CONFIG.intervals.banner_refresh
     };
   }
-
 
   /**
    * 액션 카운터 증가 및 전면광고 표시 조건 확인
@@ -605,12 +588,8 @@ export class AdManager {
    * AdManager 정리
    */
   static dispose(): void {
-    if (Platform.OS !== 'web') {
-      // 이벤트 리스너 제거
-      AdMobInterstitial?.removeAllListeners();
-      AdMobRewarded?.removeAllListeners();
-    }
-
+    this.interstitialAd = null;
+    this.rewardedAd = null;
     this.initialized = false;
     console.log('🧹 AdManager 정리 완료');
   }

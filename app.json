@@ -37,7 +37,7 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 32,
+      "versionCode": 33,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
@@ -57,7 +57,10 @@
         "android.permission.VIBRATE",
         "com.android.vending.BILLING"
       ],
-      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.app"
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.tarottimer.app",
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-4284542208210945~5287567450"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png",

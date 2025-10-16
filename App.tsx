@@ -11,8 +11,8 @@ import { SacredGeometryBackground } from './components/SacredGeometryBackground'
 import { MysticalTexture } from './components/MysticalTexture';
 import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
 import { TAROT_CARDS } from './utils/tarotData';
-// 광고 시스템 비활성화 (iOS 빌드 최적화)
-let BannerAd: any = null;
+// 광고 시스템 활성화
+import BannerAd from './components/ads/BannerAd';
 import { TarotProvider } from './contexts/TarotContext';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -44,8 +44,8 @@ try {
 
 import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
-// 광고 매니저 비활성화 (iOS 빌드 최적화)
-let AdManager: any = { initialize: () => Promise.resolve(false), dispose: () => {} };
+// 광고 매니저 활성화
+import AdManager from './utils/adManager';
 import IAPManager from './utils/IAPManager';
 import AnalyticsManager from './utils/analyticsManager';
 import {
