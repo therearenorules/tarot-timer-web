@@ -153,7 +153,11 @@
       "Bash(npm outdated)",
       "Bash(npx eas-cli:*)",
       "Bash(del NUL)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/submissions)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/submissions/e02cc6e6-d4ee-454b-afde-e3960190f6d0)",
+      "Bash(git fetch:*)",
+      "Bash(npx:*)"
     ],
     "deny": [],
     "ask": []
