@@ -1,8 +1,9 @@
 # 개인정보처리방침 (Privacy Policy)
 
-**타로 타이머 (Tarot Timer)**
-**최종 업데이트**: 2025년 1월 17일
-**버전**: 1.0
+**타로 타이머 (Tarot Timer - Learn Card Meanings)**
+**최종 업데이트**: 2025년 10월 15일
+**버전**: 1.0.2
+**개발자**: Tarot Timer Development Team
 
 ## 1. 개인정보처리방침 개요
 

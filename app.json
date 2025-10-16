@@ -40,11 +40,6 @@
       "versionCode": 29,
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
-      "navigationBar": {
-        "visible": "leanback",
-        "barStyle": "dark-content",
-        "backgroundColor": "#1a1625"
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1625"
