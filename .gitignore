@@ -73,3 +73,4 @@ test-*.js
 .cache/
 *.swp
 *.swo
+# google-services.json - EAS Build에서 필요하므로 git에 포함

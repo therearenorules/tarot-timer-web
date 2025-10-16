@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "877858633017",
+    "project_id": "tarot-timer",
+    "storage_bucket": "tarot-timer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:877858633017:android:71e272d3663029108ba4e8",
+        "android_client_info": {
+          "package_name": "com.tarottimer.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCpzIcd8ATUbdGLJhAOliWzr0ungz55dA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
