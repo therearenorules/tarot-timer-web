@@ -21,7 +21,7 @@ import {
   Typography
 } from './DesignSystem';
 import { Icon } from './Icon';
-import IAPManager, { SubscriptionProduct } from '../utils/iapManager';
+import IAPManager, { SubscriptionProduct } from '../utils/IAPManager';
 import { usePremium } from '../contexts/PremiumContext';
 
 interface PremiumUpgradeProps {

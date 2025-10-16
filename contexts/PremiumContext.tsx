@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Platform } from 'react-native';
-import IAPManager from '../utils/iapManager';
+import IAPManager from '../utils/IAPManager';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
 import ReceiptValidator from '../utils/receiptValidator';
 
@@ -33,8 +33,7 @@ interface PremiumContextType {
 export type PremiumFeature =
   | 'unlimited_storage'
   | 'ad_free'
-  | 'premium_themes'
-  | 'priority_support';
+  | 'premium_themes';
 
 // 기본값 정의
 const defaultPremiumStatus: PremiumStatus = {
@@ -95,28 +94,25 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       setIsLoading(true);
       setLastError(null);
 
-      // 다음 업데이트 전까지 프리미엄 기능 무료 제공
-      const freePremiumStatus: PremiumStatus = {
-        is_premium: true,
-        unlimited_storage: true,
-        ad_free: true,
-        premium_themes: true,
-        subscription_type: 'free_trial',
-        purchase_date: new Date().toISOString(),
-        expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1년 무료
-        last_validated: new Date().toISOString(),
-        validation_environment: 'Production'
-      };
-      setPremiumStatus(freePremiumStatus);
-      setIsLoading(false);
-      return;
+      // 7일 무료 체험 상태 확인
+      const trialStatus = await LocalStorageManager.checkTrialStatus();
 
-      // IAP 시스템 초기화 (임시 비활성화)
+      // IAP 시스템 초기화
       await IAPManager.initialize();
 
-      // 현재 구독 상태 로드
-      const currentStatus = await IAPManager.getCurrentSubscriptionStatus();
-      setPremiumStatus(currentStatus);
+      // 현재 구독 상태 로드 (IAP에서)
+      const iapStatus = await IAPManager.getCurrentSubscriptionStatus();
+
+      // IAP 구독이 있으면 IAP 상태 우선, 없으면 무료 체험 상태 사용
+      if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
+        // 유료 구독자
+        setPremiumStatus(iapStatus);
+        console.log('✅ 유료 구독 활성화');
+      } else {
+        // 무료 체험 또는 무료 사용자
+        setPremiumStatus(trialStatus);
+        console.log(trialStatus.is_premium ? '🎁 무료 체험 활성화' : '📱 무료 버전');
+      }
 
       console.log('✅ PremiumContext 초기화 완료');
 
@@ -322,8 +318,6 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         return premiumStatus.ad_free;
       case 'premium_themes':
         return premiumStatus.premium_themes;
-      case 'priority_support':
-        return isPremium; // 모든 프리미엄 사용자가 이용 가능
       default:
         return false;
     }

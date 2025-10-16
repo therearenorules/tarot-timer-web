@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text.primary,
     marginBottom: Spacing.xs,
-    fontFamily: 'NotoSansKR_600SemiBold',
+    fontFamily: 'NotoSansKR_700Bold',
   },
   permissionSubtitle: {
     fontSize: 14,
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
   timezoneOptionTextSelected: {
     color: Colors.brand.accent,
     fontWeight: '600',
-    fontFamily: 'NotoSansKR_600SemiBold',
+    fontFamily: 'NotoSansKR_700Bold',
   },
   checkmark: {
     fontSize: 18,
@@ -1058,7 +1058,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text.primary,
     marginBottom: Spacing.sm,
-    fontFamily: 'NotoSansKR_600SemiBold',
+    fontFamily: 'NotoSansKR_700Bold',
   },
   timePickerRow: {
     flexDirection: 'row',
@@ -1112,7 +1112,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.text.primary,
-    fontFamily: 'NotoSansKR_600SemiBold',
+    fontFamily: 'NotoSansKR_700Bold',
   },
   modalButtonTextPrimary: {
     color: '#000',

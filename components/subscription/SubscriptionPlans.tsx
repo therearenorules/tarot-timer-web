@@ -14,7 +14,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { usePremium } from '../../contexts/PremiumContext';
-import IAPManager, { SubscriptionProduct } from '../../utils/iapManager';
+import IAPManager, { SubscriptionProduct } from '../../utils/IAPManager';
 import {
   Colors,
   Spacing,
