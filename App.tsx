@@ -1,8 +1,8 @@
-// Fixed App with web-safe NotificationProvider
+// Fixed App with web-safe NotificationProvider + Android SafeAreaView fix
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, memo, useCallback, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts, NotoSansKR_400Regular, NotoSansKR_500Medium, NotoSansKR_700Bold } from '@expo-google-fonts/noto-sans-kr';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
@@ -129,6 +129,8 @@ const TabBar = memo(({
   onTabChange: (tab: string) => void;
 }) => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
+
 
   const tabs = [
     { id: 'timer', name: t('navigation.timer'), icon: 'clock' as const },
@@ -138,7 +140,7 @@ const TabBar = memo(({
   ];
 
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, Spacing.sm) }]}>
       {tabs.map(tab => (
         <TouchableOpacity
           key={tab.id}
@@ -225,6 +227,8 @@ const PWAStatus = memo(() => {
 function AppContent() {
   const [activeTab, setActiveTab] = useState('timer');
   const pwa = usePWA();
+  const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
+
 
   // Noto Sans KR 폰트 로드
   const [fontsLoaded] = useFonts({
@@ -334,17 +338,17 @@ function AppContent() {
   // 폰트가 로딩중일 때
   if (!fontsLoaded) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.brand.primary} />
           <Text style={styles.loadingText}>Loading fonts...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* 고급 배경 시스템 */}
       <SacredGeometryBackground opacity={0.15} />
       <MysticalTexture opacity={0.1} />
@@ -368,7 +372,7 @@ function AppContent() {
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
       <StatusBar style="light" backgroundColor="#1a1625" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -454,7 +458,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(45, 27, 71, 0.95)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(212, 184, 255, 0.2)',
-    paddingBottom: Spacing.sm,
+    // paddingBottom은 TabBar에서 insets.bottom으로 동적 처리
     paddingTop: Spacing.sm,
   },
   tab: {

@@ -88,7 +88,9 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
 
   if (!reading) return null;
 
-  const selectedCard = reading.hourlyCards?.[selectedHour];
+  // ✅ FIX: hourlyCards는 배열이므로 배열 접근 방식 사용
+  const hourlyCardsArray = Array.isArray(reading.hourlyCards) ? reading.hourlyCards : [];
+  const selectedCard = hourlyCardsArray[selectedHour];
 
   return (
     <Modal
@@ -127,7 +129,8 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
             })}
           >
             {Array.from({ length: 24 }, (_, hour) => {
-              const card = reading.hourlyCards?.[hour];
+              // ✅ FIX: 배열 접근 방식으로 수정
+              const card = hourlyCardsArray[hour];
               const hasMemo = cardMemos[hour] && cardMemos[hour].trim().length > 0;
               const isSelected = selectedHour === hour;
 
