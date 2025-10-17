@@ -11,8 +11,15 @@ import { SacredGeometryBackground } from './components/SacredGeometryBackground'
 import { MysticalTexture } from './components/MysticalTexture';
 import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
 import { TAROT_CARDS } from './utils/tarotData';
-// 광고 시스템 활성화
-import BannerAd from './components/ads/BannerAd';
+// 광고 시스템 활성화 (웹에서는 조건부 로딩)
+let BannerAd: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    BannerAd = require('./components/ads/BannerAd').default;
+  } catch (error) {
+    console.warn('⚠️ BannerAd 로드 실패:', error);
+  }
+}
 import { TarotProvider } from './contexts/TarotContext';
 import { AuthProvider } from './contexts/AuthContext';
 
