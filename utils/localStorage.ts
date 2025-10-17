@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
 
   // 앱 상태
   APP_FIRST_LAUNCH: 'app_first_launch',
+  APP_INSTALL_INFO: 'app_install_info',
   LAST_SYNC_TIME: 'last_sync_time',
   DATA_VERSION: 'data_version',
 
@@ -85,9 +86,16 @@ export interface JournalEntry {
   updated_at: string;
 }
 
+export interface AppInstallInfo {
+  first_launch_date: string;      // 최초 설치 날짜
+  is_trial_active: boolean;       // 무료 체험 활성화 여부
+  trial_end_date: string;         // 무료 체험 종료 날짜
+  trial_used: boolean;            // 무료 체험 사용 여부
+}
+
 export interface PremiumStatus {
   is_premium: boolean;
-  subscription_type?: 'monthly' | 'yearly';
+  subscription_type?: 'monthly' | 'yearly' | 'trial';
   purchase_date?: string;
   expiry_date?: string;
   store_transaction_id?: string;
@@ -102,9 +110,11 @@ export interface PremiumStatus {
 }
 
 export interface UsageLimits {
-  max_sessions: number;
+  max_daily_sessions: number;
+  max_spread_sessions: number;
   max_journal_entries: number;
-  current_sessions: number;
+  current_daily_sessions: number;
+  current_spread_sessions: number;
   current_journal_entries: number;
   reset_date: string;
 }
@@ -114,7 +124,8 @@ export class LocalStorageManager {
   // 기본 설정
   private static readonly DATA_VERSION = '1.0.0';
   private static readonly FREE_LIMITS = {
-    max_sessions: 10,
+    max_daily_sessions: 30,      // 데일리 타로 30개
+    max_spread_sessions: 15,     // 스프레드 15개
     max_journal_entries: 20
   };
 
@@ -209,7 +220,22 @@ export class LocalStorageManager {
     return await this.getItem<TarotSession[]>(STORAGE_KEYS.TAROT_SESSIONS, []);
   }
 
-  static async addTarotSession(session: Omit<TarotSession, 'id' | 'created_at' | 'updated_at'>): Promise<TarotSession> {
+  static async addTarotSession(session: Omit<TarotSession, 'id' | 'created_at' | 'updated_at'>): Promise<TarotSession | null> {
+    // 프리미엄 상태 확인
+    const premiumStatus = await this.getPremiumStatus();
+
+    // 프리미엄이 아닌 경우 저장 제한 체크
+    if (!premiumStatus.is_premium || !premiumStatus.unlimited_storage) {
+      const sessionType = session.session_type === 'daily' ? 'daily' : 'spread';
+      const limitCheck = await this.checkUsageLimit(sessionType);
+
+      if (limitCheck.isAtLimit) {
+        // 제한 초과 시 null 반환
+        console.warn(`저장 제한 초과: ${sessionType} (${limitCheck.currentCount}/${limitCheck.maxCount})`);
+        return null;
+      }
+    }
+
     const sessions = await this.getTarotSessions();
     const newSession: TarotSession = {
       ...session,
@@ -222,7 +248,8 @@ export class LocalStorageManager {
     await this.setItem(STORAGE_KEYS.TAROT_SESSIONS, sessions);
 
     // 사용량 업데이트
-    await this.updateUsageCount('sessions');
+    const sessionType = session.session_type === 'daily' ? 'daily' : 'spread';
+    await this.updateUsageCount(sessionType);
 
     return newSession;
   }
@@ -316,6 +343,81 @@ export class LocalStorageManager {
     await this.setItem(STORAGE_KEYS.PREMIUM_STATUS, status);
   }
 
+  // 앱 설치 정보 관리 (7일 무료 체험)
+  static async getAppInstallInfo(): Promise<AppInstallInfo | null> {
+    return await this.getItem<AppInstallInfo>(STORAGE_KEYS.APP_INSTALL_INFO);
+  }
+
+  static async setAppInstallInfo(info: AppInstallInfo): Promise<void> {
+    await this.setItem(STORAGE_KEYS.APP_INSTALL_INFO, info);
+  }
+
+  static async checkTrialStatus(): Promise<PremiumStatus> {
+    const installInfo = await this.getAppInstallInfo();
+
+    // 최초 설치 시 7일 무료 체험 시작
+    if (!installInfo) {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 7); // 7일 후
+
+      const newInstallInfo: AppInstallInfo = {
+        first_launch_date: new Date().toISOString(),
+        is_trial_active: true,
+        trial_end_date: trialEndDate.toISOString(),
+        trial_used: true
+      };
+
+      await this.setAppInstallInfo(newInstallInfo);
+
+      console.log('✨ 7일 무료 체험 시작!');
+
+      // 무료 체험 프리미엄 상태 적용
+      return {
+        is_premium: true,
+        ad_free: true,
+        unlimited_storage: true,
+        premium_themes: false,
+        subscription_type: 'trial',
+        purchase_date: new Date().toISOString(),
+        expiry_date: trialEndDate.toISOString()
+      };
+    }
+
+    // 무료 체험 기간 확인
+    const now = new Date();
+    const trialEnd = new Date(installInfo.trial_end_date);
+    const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (installInfo.is_trial_active && now < trialEnd) {
+      // 무료 체험 중
+      console.log(`🎁 무료 체험 중 (남은 기간: ${daysRemaining}일)`);
+
+      return {
+        is_premium: true,
+        ad_free: true,
+        unlimited_storage: true,
+        premium_themes: false,
+        subscription_type: 'trial',
+        purchase_date: installInfo.first_launch_date,
+        expiry_date: installInfo.trial_end_date
+      };
+    } else {
+      // 무료 체험 종료 → 무료 버전으로 전환
+      if (installInfo.is_trial_active) {
+        console.log('⏰ 무료 체험이 종료되었습니다.');
+        installInfo.is_trial_active = false;
+        await this.setAppInstallInfo(installInfo);
+      }
+
+      return {
+        is_premium: false,
+        ad_free: false,
+        unlimited_storage: false,
+        premium_themes: false
+      };
+    }
+  }
+
   // 사용량 제한 관리
   static async getUsageLimits(): Promise<UsageLimits> {
     const limits = await this.getItem<UsageLimits>(STORAGE_KEYS.USAGE_LIMITS);
@@ -323,7 +425,8 @@ export class LocalStorageManager {
     if (!limits) {
       const defaultLimits: UsageLimits = {
         ...this.FREE_LIMITS,
-        current_sessions: 0,
+        current_daily_sessions: 0,
+        current_spread_sessions: 0,
         current_journal_entries: 0,
         reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30일 후
       };
@@ -335,11 +438,14 @@ export class LocalStorageManager {
     return limits;
   }
 
-  static async updateUsageCount(type: 'sessions' | 'journal_entries'): Promise<void> {
+  static async updateUsageCount(type: 'daily' | 'spread' | 'journal_entries'): Promise<void> {
     const limits = await this.getUsageLimits();
+    const sessions = await this.getTarotSessions();
 
-    if (type === 'sessions') {
-      limits.current_sessions = (await this.getTarotSessions()).length;
+    if (type === 'daily') {
+      limits.current_daily_sessions = sessions.filter(s => s.session_type === 'daily').length;
+    } else if (type === 'spread') {
+      limits.current_spread_sessions = sessions.filter(s => s.session_type === 'spread' || s.session_type === 'custom').length;
     } else {
       limits.current_journal_entries = (await this.getJournalEntries()).length;
     }
@@ -347,24 +453,40 @@ export class LocalStorageManager {
     await this.setItem(STORAGE_KEYS.USAGE_LIMITS, limits);
   }
 
-  static async checkUsageLimit(type: 'sessions' | 'journal_entries'): Promise<{ canCreate: boolean; isAtLimit: boolean }> {
+  static async checkUsageLimit(type: 'daily' | 'spread' | 'journal_entries'): Promise<{
+    canCreate: boolean;
+    isAtLimit: boolean;
+    currentCount: number;
+    maxCount: number;
+  }> {
     const premiumStatus = await this.getPremiumStatus();
 
     if (premiumStatus.is_premium && premiumStatus.unlimited_storage) {
-      return { canCreate: true, isAtLimit: false };
+      return { canCreate: true, isAtLimit: false, currentCount: 0, maxCount: 999999 };
     }
 
     const limits = await this.getUsageLimits();
 
-    if (type === 'sessions') {
+    if (type === 'daily') {
       return {
-        canCreate: limits.current_sessions < limits.max_sessions,
-        isAtLimit: limits.current_sessions >= limits.max_sessions
+        canCreate: limits.current_daily_sessions < limits.max_daily_sessions,
+        isAtLimit: limits.current_daily_sessions >= limits.max_daily_sessions,
+        currentCount: limits.current_daily_sessions,
+        maxCount: limits.max_daily_sessions
+      };
+    } else if (type === 'spread') {
+      return {
+        canCreate: limits.current_spread_sessions < limits.max_spread_sessions,
+        isAtLimit: limits.current_spread_sessions >= limits.max_spread_sessions,
+        currentCount: limits.current_spread_sessions,
+        maxCount: limits.max_spread_sessions
       };
     } else {
       return {
         canCreate: limits.current_journal_entries < limits.max_journal_entries,
-        isAtLimit: limits.current_journal_entries >= limits.max_journal_entries
+        isAtLimit: limits.current_journal_entries >= limits.max_journal_entries,
+        currentCount: limits.current_journal_entries,
+        maxCount: limits.max_journal_entries
       };
     }
   }

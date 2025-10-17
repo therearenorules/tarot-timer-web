@@ -588,7 +588,7 @@ export class IAPManager {
   }
 
   // 클래스 정적 변수 추가
-  private static renewalCheckInterval: NodeJS.Timeout | null = null;
+  private static renewalCheckInterval: ReturnType<typeof setInterval> | null = null;
 
   /**
    * 네트워크 오류 시 복구 로직 (NEW)

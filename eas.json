@@ -4,6 +4,20 @@
     "requireCommit": false,
     "appVersionSource": "local"
   },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
+    },
+    "production-android": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
+    }
+  },
   "build": {
     "development": {
       "developmentClient": true,
@@ -73,6 +87,12 @@
         "appName": "Tarot Timer"
       }
     },
+    "production-android": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "production"
+      }
+    },
     "production": {
       "ios": {
         "ascAppId": "6752687014",
@@ -83,10 +103,8 @@
         "appName": "Tarot Timer"
       },
       "android": {
-        "serviceAccountKeyPath": "path/to/google-play-service-account.json",
-        "track": "production",
-        "releaseStatus": "completed",
-        "changesNotSentForReview": false
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "production"
       }
     }
   }

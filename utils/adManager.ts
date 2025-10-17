@@ -107,9 +107,19 @@ export class AdManager {
       // 일일 제한 데이터 로드
       await this.loadDailyLimits();
 
+      // 프로덕션 환경 판별 (웹이 아니고 __DEV__ false일 때만 실제 광고 ID 사용)
+      const isProduction = !__DEV__ && Platform.OS !== 'web';
+
+      console.log('🔍 환경 체크:', {
+        __DEV__,
+        platform: Platform.OS,
+        isProduction,
+        willUseTestAds: !isProduction
+      });
+
       // 전면 광고 초기화
       this.interstitialAd = InterstitialAd.createForAdRequest(
-        __DEV__ ? TestIds.INTERSTITIAL : AD_UNITS.interstitial,
+        isProduction ? AD_UNITS.interstitial : TestIds.INTERSTITIAL,
         {
           requestNonPersonalizedAdsOnly: false,
         }
@@ -117,11 +127,16 @@ export class AdManager {
 
       // 보상형 광고 초기화
       this.rewardedAd = RewardedAd.createForAdRequest(
-        __DEV__ ? TestIds.REWARDED : AD_UNITS.rewarded,
+        isProduction ? AD_UNITS.rewarded : TestIds.REWARDED,
         {
           requestNonPersonalizedAdsOnly: false,
         }
       );
+
+      console.log('📱 광고 ID:', {
+        interstitial: isProduction ? AD_UNITS.interstitial : 'TEST_ID',
+        rewarded: isProduction ? AD_UNITS.rewarded : 'TEST_ID'
+      });
 
       // 리스너 설정
       this.setupInterstitialListeners();
@@ -221,12 +236,22 @@ export class AdManager {
 
   /**
    * 프리미엄 상태 확인
+   * ⚠️ 테스트 모드: 7일 무료 체험 임시 비활성화
    */
   private static async checkPremiumStatus(): Promise<void> {
     try {
       const premiumStatus = await LocalStorageManager.getPremiumStatus();
-      this.isPremiumUser = premiumStatus.is_premium && premiumStatus.ad_free;
-      console.log('🔍 프리미엄 상태:', this.isPremiumUser ? '활성' : '비활성');
+
+      // ⚠️ 광고 테스트를 위해 7일 무료 체험 무시
+      // 명시적으로 is_premium이 true이고 ad_free가 true일 때만 광고 차단
+      this.isPremiumUser = premiumStatus.is_premium === true && premiumStatus.ad_free === true;
+
+      console.log('🔍 프리미엄 상태 상세:', {
+        is_premium: premiumStatus.is_premium,
+        ad_free: premiumStatus.ad_free,
+        finalStatus: this.isPremiumUser ? '활성 (광고 차단)' : '비활성 (광고 표시)',
+        note: '⚠️ 7일 무료 체험 중이어도 광고 표시 (테스트 모드)'
+      });
     } catch (error) {
       console.error('❌ 프리미엄 상태 확인 오류:', error);
       this.isPremiumUser = false;
@@ -313,6 +338,7 @@ export class AdManager {
     try {
       // 프리미엄 사용자는 광고 표시 안 함
       if (this.isPremiumUser) {
+        console.log('💎 프리미엄 사용자: 광고 차단');
         return { success: false, error: 'Premium user - ads disabled' };
       }
 
@@ -478,7 +504,8 @@ export class AdManager {
    * 배너 광고 단위 ID 조회
    */
   static getBannerAdUnitId(): string {
-    return __DEV__ ? TestIds.BANNER : AD_UNITS.banner;
+    const isProduction = !__DEV__ && Platform.OS !== 'web';
+    return isProduction ? AD_UNITS.banner : TestIds.BANNER;
   }
 
   /**

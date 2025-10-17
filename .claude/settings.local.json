@@ -157,7 +157,17 @@
       "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/submissions)",
       "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/submissions/e02cc6e6-d4ee-454b-afde-e3960190f6d0)",
       "Bash(git fetch:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(Select-String \"error TS|Found\")",
+      "Bash(Select-Object -First 50)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/79f4adaa-4e8c-473f-a650-fe73b28b7686)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/4e78e395-1439-4aba-b5c3-bf2984bc7c90)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/79f6ac1d-2141-4690-b5da-9ff2f66ac645)",
+      "Bash(git log:*)",
+      "Bash(del App.tsx.backup)",
+      "Bash(del componentstabsTimerTab.backup.tsx)",
+      "Bash(del componentstabsSettingsTab_backup.tsx)",
+      "Bash(del componentsTarotDaily.tsx.backup-20251017-100911)"
     ],
     "deny": [],
     "ask": []
