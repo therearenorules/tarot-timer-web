@@ -88,6 +88,13 @@ export class AdManager {
         return true;
       }
 
+      // 🔴 긴급 수정: iOS AdMob 일시 비활성화 (Build 33)
+      if (Platform.OS === 'ios') {
+        console.log('🍎 iOS: 광고 시스템 일시 비활성화 (AdMob 설정 대기)');
+        this.initialized = true;
+        return true;
+      }
+
       console.log('📱 AdManager 초기화 시작...');
 
       // Google Mobile Ads SDK 초기화
