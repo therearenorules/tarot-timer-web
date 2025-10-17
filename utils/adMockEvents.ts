@@ -1,9 +1,8 @@
 /**
  * Expo Go 광고 Mock 이벤트 시스템
  * AdManager와 MockAdOverlay 간 통신
+ * React Native 호환 버전 (EventEmitter 미사용)
  */
-
-import { EventEmitter } from 'events';
 
 export interface MockAdEvent {
   type: 'interstitial' | 'rewarded';
@@ -14,11 +13,41 @@ export interface MockAdResult {
   completed: boolean;
 }
 
-class AdMockEventEmitter extends EventEmitter {
+type EventListener = (event: MockAdEvent) => void;
+
+class AdMockEventEmitter {
+  private listeners: EventListener[] = [];
   private pendingAd: {
     resolve: (result: MockAdResult) => void;
     reject: (error: Error) => void;
   } | null = null;
+
+  /**
+   * 이벤트 리스너 등록
+   */
+  on(eventName: string, listener: EventListener): void {
+    if (eventName === 'showAd') {
+      this.listeners.push(listener);
+    }
+  }
+
+  /**
+   * 이벤트 리스너 제거
+   */
+  off(eventName: string, listener: EventListener): void {
+    if (eventName === 'showAd') {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    }
+  }
+
+  /**
+   * 이벤트 발생
+   */
+  private emit(eventName: string, event: MockAdEvent): void {
+    if (eventName === 'showAd') {
+      this.listeners.forEach(listener => listener(event));
+    }
+  }
 
   /**
    * 광고 표시 요청
