@@ -51,8 +51,18 @@ try {
 
 import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
-// 광고 매니저 활성화
-import AdManager from './utils/adManager';
+// 광고 매니저 조건부 로딩 (Expo Go 호환성)
+let AdManager: any = {
+  initialize: () => Promise.resolve(false),
+  dispose: () => {},
+};
+if (Platform.OS !== 'web') {
+  try {
+    AdManager = require('./utils/adManager').default;
+  } catch (error) {
+    console.warn('⚠️ AdManager 로드 실패 (Expo Go에서는 정상):', error);
+  }
+}
 import IAPManager from './utils/IAPManager';
 import AnalyticsManager from './utils/analyticsManager';
 import {
