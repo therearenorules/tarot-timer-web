@@ -25,7 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "29",
+      "buildNumber": "30",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -33,12 +33,12 @@
       },
       "config": {
         "usesNonExemptEncryption": false,
-        "googleMobileAdsAppId": "ca-app-pub-4284542208210945~3728624237"
+        "googleMobileAdsAppId": "ca-app-pub-4284542208210945~6525956491"
       }
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 37,
+      "versionCode": 38,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
@@ -93,7 +93,7 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-4284542208210945~5287567450",
-          "iosAppId": "ca-app-pub-4284542208210945~3728624237",
+          "iosAppId": "ca-app-pub-4284542208210945~6525956491",
           "delayAppMeasurementInit": false
         }
       ]

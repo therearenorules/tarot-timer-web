@@ -25,19 +25,19 @@ export const TEST_AD_UNITS = {
   }
 };
 
-// 프로덕션 광고 단위 ID (실제 배포 시 교체 필요)
+// 프로덕션 광고 단위 ID (실제 AdMob에서 생성된 ID)
 export const PRODUCTION_AD_UNITS = {
-  // iOS 프로덕션 광고 ID (실제 AdMob에서 생성된 ID로 교체 필요)
+  // iOS 프로덕션 광고 ID (2025-10-17 생성)
   ios: {
-    banner: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
-    interstitial: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
-    rewarded: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX'
+    banner: 'ca-app-pub-4284542208210945/1544899037',
+    interstitial: 'ca-app-pub-4284542208210945/5479246942',
+    rewarded: 'ca-app-pub-3940256099942544/1712485313' // 테스트 ID (보상형 광고 미생성)
   },
-  // Android 프로덕션 광고 ID (실제 AdMob에서 생성된 ID로 교체 필요)
+  // Android 프로덕션 광고 ID (2025-10-16 생성)
   android: {
-    banner: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
-    interstitial: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX',
-    rewarded: 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX'
+    banner: 'ca-app-pub-4284542208210945/8535519650',
+    interstitial: 'ca-app-pub-4284542208210945/7190648393',
+    rewarded: 'ca-app-pub-3940256099942544/5224354917' // 테스트 ID (보상형 광고 미생성)
   }
 };
 
@@ -152,11 +152,11 @@ export const AD_PLACEMENTS = {
   }
 };
 
-// 개발자 정보 (실제 배포 시 수정 필요)
+// 개발자 정보 (2025-10-16 Android, 2025-10-17 iOS 설정 완료)
 export const ADMOB_CONFIG = {
   app_id: {
-    ios: 'ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX', // iOS 앱 ID
-    android: 'ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX' // Android 앱 ID
+    ios: 'ca-app-pub-4284542208210945~6525956491', // iOS 앱 ID (2025-10-17 생성)
+    android: 'ca-app-pub-4284542208210945~5287567450' // Android 앱 ID
   },
 
   // 테스트 디바이스 ID (개발 시 실제 광고 테스트용)
