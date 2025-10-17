@@ -92,6 +92,11 @@ const BannerAd: React.FC<BannerAdProps> = ({
     );
   }
 
+  // 🔴 긴급 수정: iOS에서 광고 비활성화 (Build 33)
+  if (Platform.OS === 'ios') {
+    return null;
+  }
+
   // 오류 발생 시 표시하지 않음
   if (error) {
     return null;
