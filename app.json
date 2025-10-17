@@ -32,12 +32,13 @@
         "NSUserNotificationUsageDescription": "24시간 타로 카드 학습 알림과 시간별 카드 뽑기 알림을 위해 알림 권한이 필요합니다."
       },
       "config": {
-        "usesNonExemptEncryption": false
+        "usesNonExemptEncryption": false,
+        "googleMobileAdsAppId": "ca-app-pub-4284542208210945~3728624237"
       }
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 33,
+      "versionCode": 35,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
@@ -85,6 +86,13 @@
           "color": "#7b2cbf",
           "sounds": [],
           "mode": "production"
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-4284542208210945~5287567450",
+          "iosAppId": "ca-app-pub-4284542208210945~3728624237"
         }
       ]
     ],
