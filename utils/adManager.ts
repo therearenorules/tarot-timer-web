@@ -16,6 +16,7 @@ import {
   AD_PLACEMENTS
 } from './adConfig';
 import LocalStorageManager from './localStorage';
+import { adMockEmitter } from './adMockEvents';
 
 // 광고 상태 인터페이스
 interface AdState {
@@ -288,10 +289,20 @@ export class AdManager {
       return { success: true, revenue: 0 };
     }
 
-    // 네이티브 모듈 없으면 시뮬레이션
+    // 네이티브 모듈 없으면 Mock UI 시뮬레이션
     if (!this.nativeModulesLoaded) {
       console.log(`📺 [시뮬레이션] 전면광고 표시: ${placement}`);
-      return { success: true, revenue: 0 };
+      try {
+        const result = await adMockEmitter.showMockAd({
+          type: 'interstitial',
+          placement,
+        });
+        console.log(`✅ [시뮬레이션] 전면광고 완료:`, result);
+        return { success: true, revenue: 0 };
+      } catch (error) {
+        console.error('❌ [시뮬레이션] 전면광고 실패:', error);
+        return { success: false, error: String(error) };
+      }
     }
 
     // 일일 제한 체크
@@ -339,10 +350,24 @@ export class AdManager {
    * 리워드광고 표시
    */
   static async showRewarded(placement: string): Promise<AdShowResult> {
-    // 네이티브 모듈 없으면 시뮬레이션
+    // 네이티브 모듈 없으면 Mock UI 시뮬레이션
     if (!this.nativeModulesLoaded) {
       console.log(`🎁 [시뮬레이션] 리워드광고 표시: ${placement}`);
-      return { success: true, revenue: 0, rewardEarned: true };
+      try {
+        const result = await adMockEmitter.showMockAd({
+          type: 'rewarded',
+          placement,
+        });
+        console.log(`✅ [시뮬레이션] 리워드광고 완료:`, result);
+        return {
+          success: true,
+          revenue: 0,
+          rewardEarned: result.completed,
+        };
+      } catch (error) {
+        console.error('❌ [시뮬레이션] 리워드광고 실패:', error);
+        return { success: false, error: String(error) };
+      }
     }
 
     // 일일 제한 체크

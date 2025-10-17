@@ -72,6 +72,10 @@ import SpreadTab from './components/tabs/SpreadTab';
 import DailyTab from './components/tabs/DailyTab';
 import SettingsTab from './components/tabs/SettingsTab';
 
+// Expo Go 광고 Mock UI
+import MockAdOverlay from './components/ads/MockAdOverlay';
+import { adMockEmitter } from './utils/adMockEvents';
+
 // 로딩 컴포넌트 (최적화된)
 const LoadingSpinner = memo(() => {
   const { t } = useTranslation();
@@ -237,6 +241,11 @@ function AppContent() {
   const pwa = usePWA();
   const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
 
+  // Expo Go Mock 광고 상태
+  const [mockAdVisible, setMockAdVisible] = useState(false);
+  const [mockAdType, setMockAdType] = useState<'interstitial' | 'rewarded'>('interstitial');
+  const [mockAdPlacement, setMockAdPlacement] = useState('');
+
 
   // Noto Sans KR 폰트 로드
   const [fontsLoaded] = useFonts({
@@ -244,6 +253,21 @@ function AppContent() {
     NotoSansKR_500Medium,
     NotoSansKR_700Bold,
   });
+
+  // Mock 광고 이벤트 리스너 설정
+  useEffect(() => {
+    const handleShowAd = (event: any) => {
+      setMockAdType(event.type);
+      setMockAdPlacement(event.placement);
+      setMockAdVisible(true);
+    };
+
+    adMockEmitter.on('showAd', handleShowAd);
+
+    return () => {
+      adMockEmitter.off('showAd', handleShowAd);
+    };
+  }, []);
 
   // 광고 시스템 및 IAP 초기화
   useEffect(() => {
@@ -380,6 +404,17 @@ function AppContent() {
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
       <StatusBar style="light" backgroundColor="#1a1625" />
+
+      {/* Expo Go Mock 광고 오버레이 */}
+      <MockAdOverlay
+        visible={mockAdVisible}
+        adType={mockAdType}
+        placement={mockAdPlacement}
+        onClose={(completed) => {
+          setMockAdVisible(false);
+          adMockEmitter.onAdClosed(completed);
+        }}
+      />
     </View>
   );
 }
