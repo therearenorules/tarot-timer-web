@@ -1,5 +1,6 @@
 // Fixed App with web-safe NotificationProvider + Android SafeAreaView fix
 import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 import React, { useState, memo, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,15 +53,22 @@ try {
 import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
 // 광고 매니저 조건부 로딩 (Expo Go 호환성)
-let AdManager: any = {
-  initialize: () => Promise.resolve(false),
-  dispose: () => {},
-};
-if (Platform.OS !== 'web') {
+// Expo Go 환경 감지: Constants.appOwnership === 'expo'
+const isExpoGo = Constants.appOwnership === 'expo';
+let AdManager: any;
+
+if (Platform.OS === 'web' || isExpoGo) {
+  // 웹 또는 Expo Go: stub 버전 사용
+  AdManager = require('./utils/adManager.expo').default;
+  console.log(`📱 ${Platform.OS === 'web' ? '웹' : 'Expo Go'} 환경: AdManager 시뮬레이션 모드`);
+} else {
+  // 실제 빌드: 네이티브 AdManager 사용
   try {
     AdManager = require('./utils/adManager').default;
+    console.log('📱 네이티브 빌드: 실제 AdManager 로드');
   } catch (error) {
-    console.warn('⚠️ AdManager 로드 실패 (Expo Go에서는 정상):', error);
+    console.warn('⚠️ AdManager 로드 실패, stub으로 대체:', error);
+    AdManager = require('./utils/adManager.expo').default;
   }
 }
 import IAPManager from './utils/IAPManager';
