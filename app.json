@@ -38,7 +38,7 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 35,
+      "versionCode": 36,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
@@ -92,7 +92,8 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-4284542208210945~5287567450",
-          "iosAppId": "ca-app-pub-4284542208210945~3728624237"
+          "iosAppId": "ca-app-pub-4284542208210945~3728624237",
+          "delayAppMeasurementInit": false
         }
       ]
     ],
