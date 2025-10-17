@@ -167,7 +167,8 @@
       "Bash(del App.tsx.backup)",
       "Bash(del componentstabsTimerTab.backup.tsx)",
       "Bash(del componentstabsSettingsTab_backup.tsx)",
-      "Bash(del componentsTarotDaily.tsx.backup-20251017-100911)"
+      "Bash(del componentsTarotDaily.tsx.backup-20251017-100911)",
+      "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/de1e862e-78df-4ff4-9da8-6f84089fab8d)"
     ],
     "deny": [],
     "ask": []
