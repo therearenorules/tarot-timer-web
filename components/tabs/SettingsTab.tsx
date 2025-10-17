@@ -29,10 +29,8 @@ try {
 } catch (error) {
   console.warn('⚠️ RewardedAd 컴포넌트 로드 실패 (보상형 광고 비활성화):', error);
 }
-// import SupabaseTest from '../SupabaseTest';
 import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager';
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
-// import { PremiumUpgrade } from '../PremiumUpgrade';
 import PremiumTest from '../PremiumTest';
 // 조건부 import - 모바일 환경에서 안전하게 로드
 let SubscriptionPlans: any = null;
