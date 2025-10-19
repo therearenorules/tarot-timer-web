@@ -38,7 +38,7 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 38,
+      "versionCode": 39,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
