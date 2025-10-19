@@ -54,6 +54,24 @@ let TestIds: any = null;
 const isExpoGo = Constants.appOwnership === 'expo';
 const isNativeSupported = Platform.OS !== 'web' && !isExpoGo;
 
+// ✅ Android 최적화: 안전한 개발 환경 감지
+const isDevelopment = (() => {
+  // __DEV__가 정의되어 있으면 사용
+  if (typeof __DEV__ !== 'undefined') {
+    return __DEV__;
+  }
+  // 환경 변수 체크 (Expo 빌드)
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+  // Expo Constants 체크
+  if (Constants.manifest?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
+    return false;
+  }
+  // 기본값: 프로덕션으로 간주
+  return false;
+})();
+
 // 네이티브 모듈 로드 함수
 async function loadNativeModules(): Promise<boolean> {
   if (!isNativeSupported) {
@@ -178,6 +196,24 @@ export class AdManager {
   }
 
   /**
+   * ✅ Android 최적화: 배너광고 표시 여부 확인
+   * 프리미엄 사용자는 배너광고 표시하지 않음
+   */
+  static shouldShowBanner(): boolean {
+    if (this.isPremiumUser) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * ✅ Android 최적화: 배너광고 Unit ID 반환
+   */
+  static getBannerAdUnitId(): string {
+    return isDevelopment ? TestIds.BANNER : AD_UNITS.BANNER;
+  }
+
+  /**
    * 전면광고 프리로드
    */
   static async preloadInterstitial(): Promise<boolean> {
@@ -188,7 +224,9 @@ export class AdManager {
     }
 
     try {
-      const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : AD_UNITS.INTERSTITIAL;
+      // ✅ Android 최적화: 안전한 광고 ID 선택
+      const adUnitId = isDevelopment ? TestIds.INTERSTITIAL : AD_UNITS.INTERSTITIAL;
+      console.log(`🎯 전면광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
 
       this.adStates.interstitial.isLoading = true;
 
@@ -239,7 +277,9 @@ export class AdManager {
     }
 
     try {
-      const adUnitId = __DEV__ ? TestIds.REWARDED : AD_UNITS.REWARDED;
+      // ✅ Android 최적화: 안전한 광고 ID 선택
+      const adUnitId = isDevelopment ? TestIds.REWARDED : AD_UNITS.REWARDED;
+      console.log(`🎯 리워드광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
 
       this.adStates.rewarded.isLoading = true;
 
@@ -488,6 +528,22 @@ export class AdManager {
    */
   static getRewardedCount(): number {
     return this.dailyLimits.rewarded_count;
+  }
+
+  /**
+   * ✅ Android 최적화: 광고 이벤트 추적
+   */
+  static trackAdEvent(event: string, adType: string, details?: any): void {
+    console.log(`📊 광고 이벤트: [${adType}] ${event}`, details || '');
+    // 향후 Analytics 연동 가능
+  }
+
+  /**
+   * ✅ Android 최적화: 광고 수익 추적
+   */
+  static trackRevenue(adType: string, revenue: number): void {
+    console.log(`💰 광고 수익: [${adType}] $${revenue.toFixed(4)}`);
+    // 향후 Analytics 연동 가능
   }
 
   /**

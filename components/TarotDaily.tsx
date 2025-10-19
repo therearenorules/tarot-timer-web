@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   Modal,
   Dimensions,
   TextInput,
-  Alert
+  Alert,
+  FlatList
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -436,6 +437,86 @@ const TarotDaily = () => {
     );
   };
 
+  // ✅ Android 성능 최적화: 일일 타로 카드 항목 메모이제이션
+  const DailyReadingCard = memo(({ reading, index, isDeleteMode, isSelected, onPress }: {
+    reading: any;
+    index: number;
+    isDeleteMode: boolean;
+    isSelected: boolean;
+    onPress: (reading: any, itemId: string) => void;
+  }) => {
+    const { t } = useTranslation();
+    const itemId = reading.id || `daily-${index}`;
+
+    return (
+      <TouchableOpacity
+        style={[styles.dailyCard, isSelected && styles.selectedCard]}
+        onPress={() => onPress(reading, itemId)}
+      >
+        <View style={styles.dailyCardHeader}>
+          {isDeleteMode && (
+            <View style={styles.checkboxContainer}>
+              <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                {isSelected && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+            </View>
+          )}
+          <View style={styles.dateInfo}>
+            <Text style={styles.dateText}>{reading.displayDate}</Text>
+            <Text style={styles.typeLabel}>{t('journal.labels.dailyTarotReading')}</Text>
+          </View>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{t('journal.status.completed')}</Text>
+          </View>
+        </View>
+
+        {/* 카드 미리보기 */}
+        <View style={styles.cardPreview}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {reading.hourlyCards?.slice(0, 8).map((card, cardIndex) => (
+              <View key={cardIndex} style={styles.previewCard}>
+                <TarotCardComponent
+                  card={card}
+                  size="tiny"
+                  showText={false}
+                />
+              </View>
+            ))}
+            {reading.hourlyCards?.length > 8 && (
+              <Text style={styles.moreText}>{t('journal.moreCards', { count: reading.hourlyCards.length - 8 })}</Text>
+            )}
+          </ScrollView>
+        </View>
+
+        {/* 인사이트 미리보기 */}
+        {reading.insights && (
+          <View style={styles.insightPreview}>
+            <Text style={styles.insightIcon}>💭</Text>
+            <Text style={styles.insightText} numberOfLines={2}>
+              "{reading.insights}"
+            </Text>
+          </View>
+        )}
+
+        {/* 메모 카운트 */}
+        {reading.memos && Object.keys(reading.memos).length > 0 && (
+          <View style={styles.memoInfo}>
+            <Text style={styles.memoCount}>
+              {t('journal.memoCount', { count: Object.keys(reading.memos).length })}
+            </Text>
+            <Text style={{ fontSize: 16, color: '#f4d03f' }}>›</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  }, (prevProps, nextProps) => {
+    return (
+      prevProps.reading.id === nextProps.reading.id &&
+      prevProps.isDeleteMode === nextProps.isDeleteMode &&
+      prevProps.isSelected === nextProps.isSelected
+    );
+  });
+
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.tabContainer}>
@@ -466,6 +547,52 @@ const TarotDaily = () => {
     </View>
   );
 
+  // ✅ Android 성능 최적화: 카드 클릭 핸들러 메모이제이션
+  const handleDailyCardPress = useCallback((reading, itemId) => {
+    if (isDeleteMode) {
+      const newSelected = new Set(selectedItems);
+      if (selectedItems.has(itemId)) {
+        newSelected.delete(itemId);
+      } else {
+        newSelected.add(itemId);
+      }
+      setSelectedItems(newSelected);
+    } else {
+      setSelectedReading(reading);
+    }
+  }, [isDeleteMode, selectedItems]);
+
+  // ✅ Android 성능 최적화: FlatList renderItem 메모이제이션
+  const renderDailyReadingItem = useCallback(({ item: reading, index }) => {
+    const itemId = reading.id || `daily-${index}`;
+    const isSelected = selectedItems.has(itemId);
+
+    return (
+      <DailyReadingCard
+        reading={reading}
+        index={index}
+        isDeleteMode={isDeleteMode}
+        isSelected={isSelected}
+        onPress={handleDailyCardPress}
+      />
+    );
+  }, [isDeleteMode, selectedItems, handleDailyCardPress]);
+
+  // ✅ Android 성능 최적화: FlatList keyExtractor 메모이제이션
+  const keyExtractor = useCallback((item, index) => {
+    return item.id || `daily-${index}`;
+  }, []);
+
+  // ✅ Android 성능 최적화: FlatList getItemLayout
+  const getItemLayout = useCallback((data, index) => {
+    const ITEM_HEIGHT = 200; // 대략적인 항목 높이
+    return {
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    };
+  }, []);
+
   const renderDailyReadings = () => {
     if (isLoading) {
       return (
@@ -488,111 +615,44 @@ const TarotDaily = () => {
     }
 
     return (
-      <ScrollView style={styles.readingsContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('journal.sections.dailyReadings')}</Text>
-          <View style={styles.headerRight}>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{t('journal.recordCount', { count: dailyReadings.length })}</Text>
+      <FlatList
+        style={styles.readingsContainer}
+        data={dailyReadings}
+        renderItem={renderDailyReadingItem}
+        keyExtractor={keyExtractor}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        initialNumToRender={5}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        updateCellsBatchingPeriod={50}
+        getItemLayout={getItemLayout}
+        ListHeaderComponent={() => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('journal.sections.dailyReadings')}</Text>
+            <View style={styles.headerRight}>
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{t('journal.recordCount', { count: dailyReadings.length })}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.deleteButton, isDeleteMode && styles.deleteButtonActive]}
+                onPress={() => {
+                  if (isDeleteMode && selectedItems.size > 0) {
+                    handleDeleteSelected();
+                  } else {
+                    setIsDeleteMode(!isDeleteMode);
+                    setSelectedItems(new Set());
+                  }
+                }}
+              >
+                <Text style={[styles.deleteButtonText, isDeleteMode && styles.deleteButtonTextActive]}>
+                  {isDeleteMode ? (selectedItems.size > 0 ? t('journal.deleteSelected', { count: selectedItems.size }) : t('journal.deleteCancel')) : t('journal.deleteButton')}
+                </Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[styles.deleteButton, isDeleteMode && styles.deleteButtonActive]}
-              onPress={() => {
-                if (isDeleteMode && selectedItems.size > 0) {
-                  handleDeleteSelected();
-                } else {
-                  setIsDeleteMode(!isDeleteMode);
-                  setSelectedItems(new Set());
-                }
-              }}
-            >
-              <Text style={[styles.deleteButtonText, isDeleteMode && styles.deleteButtonTextActive]}>
-                {isDeleteMode ? (selectedItems.size > 0 ? t('journal.deleteSelected', { count: selectedItems.size }) : t('journal.deleteCancel')) : t('journal.deleteButton')}
-              </Text>
-            </TouchableOpacity>
           </View>
-        </View>
-
-        {dailyReadings.map((reading, index) => {
-          const itemId = reading.id || `daily-${index}`;
-          const isSelected = selectedItems.has(itemId);
-
-          return (
-          <TouchableOpacity
-            key={itemId}
-            style={[styles.dailyCard, isSelected && styles.selectedCard]}
-            onPress={() => {
-              if (isDeleteMode) {
-                const newSelected = new Set(selectedItems);
-                if (isSelected) {
-                  newSelected.delete(itemId);
-                } else {
-                  newSelected.add(itemId);
-                }
-                setSelectedItems(newSelected);
-              } else {
-                setSelectedReading(reading);
-              }
-            }}
-          >
-            <View style={styles.dailyCardHeader}>
-              {isDeleteMode && (
-                <View style={styles.checkboxContainer}>
-                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                  </View>
-                </View>
-              )}
-              <View style={styles.dateInfo}>
-                <Text style={styles.dateText}>{reading.displayDate}</Text>
-                <Text style={styles.typeLabel}>{t('journal.labels.dailyTarotReading')}</Text>
-              </View>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{t('journal.status.completed')}</Text>
-              </View>
-            </View>
-
-            {/* 카드 미리보기 */}
-            <View style={styles.cardPreview}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {reading.hourlyCards?.slice(0, 8).map((card, cardIndex) => (
-                  <View key={cardIndex} style={styles.previewCard}>
-                    <TarotCardComponent
-                      card={card}
-                      size="tiny"
-                      showText={false}
-                    />
-                  </View>
-                ))}
-                {reading.hourlyCards?.length > 8 && (
-                  <Text style={styles.moreText}>{t('journal.moreCards', { count: reading.hourlyCards.length - 8 })}</Text>
-                )}
-              </ScrollView>
-            </View>
-
-            {/* 인사이트 미리보기 */}
-            {reading.insights && (
-              <View style={styles.insightPreview}>
-                <Text style={styles.insightIcon}>💭</Text>
-                <Text style={styles.insightText} numberOfLines={2}>
-                  "{reading.insights}"
-                </Text>
-              </View>
-            )}
-
-            {/* 메모 카운트 */}
-            {reading.memos && Object.keys(reading.memos).length > 0 && (
-              <View style={styles.memoInfo}>
-                <Text style={styles.memoCount}>
-                  {t('journal.memoCount', { count: Object.keys(reading.memos).length })}
-                </Text>
-                <Text style={{ fontSize: 16, color: '#f4d03f' }}>›</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+        )}
+      />
     );
   };
 

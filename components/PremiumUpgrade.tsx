@@ -21,7 +21,7 @@ import {
   Typography
 } from './DesignSystem';
 import { Icon } from './Icon';
-import IAPManager, { SubscriptionProduct } from '../utils/IAPManager';
+import IAPManager, { SubscriptionProduct } from '../utils/iapManager';
 import { usePremium } from '../contexts/PremiumContext';
 
 interface PremiumUpgradeProps {
@@ -102,8 +102,8 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
     }
 
     Alert.alert(
-      t('premium.purchaseSuccess.title'),
-      t('premium.purchaseSuccess.message'),
+      t('settings.premium.purchaseSuccess.title'),
+      t('settings.premium.purchaseSuccess.message'),
       [{ text: t('common.ok') }]
     );
   };
@@ -116,8 +116,8 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
     setPurchasing(null);
 
     Alert.alert(
-      t('premium.purchaseError.title'),
-      error.message || t('premium.purchaseError.message'),
+      t('settings.premium.purchaseError.title'),
+      error.message || t('settings.premium.purchaseError.message'),
       [{ text: t('common.ok') }]
     );
   };
@@ -143,8 +143,8 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
       setPurchasing(null);
 
       Alert.alert(
-        t('premium.purchaseError.title'),
-        error.message || t('premium.purchaseError.message'),
+        t('settings.premium.purchaseError.title'),
+        error.message || t('settings.premium.purchaseError.message'),
         [{ text: t('common.ok') }]
       );
     }
@@ -159,22 +159,22 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
 
       if (success) {
         Alert.alert(
-          t('premium.restore.success.title'),
-          t('premium.restore.success.message'),
+          t('settings.premium.restore.success.title'),
+          t('settings.premium.restore.success.message'),
           [{ text: t('common.ok') }]
         );
       } else {
         Alert.alert(
-          t('premium.restore.notFound.title'),
-          t('premium.restore.notFound.message'),
+          t('settings.premium.restore.notFound.title'),
+          t('settings.premium.restore.notFound.message'),
           [{ text: t('common.ok') }]
         );
       }
     } catch (error) {
       console.error('Restore failed:', error);
       Alert.alert(
-        t('premium.restore.error.title'),
-        t('premium.restore.error.message'),
+        t('settings.premium.restore.error.title'),
+        t('settings.premium.restore.error.message'),
         [{ text: t('common.ok') }]
       );
     }
@@ -185,12 +185,12 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
    */
   const handleManageSubscription = () => {
     Alert.alert(
-      t('premium.manage.title'),
-      t('premium.manage.message'),
+      t('settings.premium.manage.title'),
+      t('settings.premium.manage.message'),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('premium.manage.openStore'),
+          text: t('settings.premium.manage.openStore'),
           onPress: () => {
             // 앱스토어 구독 관리 페이지로 이동
             // 실제 구현에서는 Linking API 사용
@@ -207,8 +207,8 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
       <View style={styles.container}>
         <View style={styles.statusContainer}>
           <Icon name="crown" size={24} color={Colors.brand.secondary} />
-          <Text style={styles.statusTitle}>{t('premium.status.active')}</Text>
-          <Text style={styles.statusSubtitle}>{t('premium.status.description')}</Text>
+          <Text style={styles.statusTitle}>{t('settings.premium.status.active')}</Text>
+          <Text style={styles.statusSubtitle}>{t('settings.premium.status.description')}</Text>
         </View>
 
         <TouchableOpacity
@@ -216,7 +216,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
           onPress={handleManageSubscription}
           activeOpacity={0.7}
         >
-          <Text style={styles.manageButtonText}>{t('premium.manage.button')}</Text>
+          <Text style={styles.manageButtonText}>{t('settings.premium.manage.button')}</Text>
         </TouchableOpacity>
 
         {Platform.OS === 'ios' && (
@@ -225,7 +225,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
             onPress={handleRestorePurchases}
             activeOpacity={0.7}
           >
-            <Text style={styles.restoreButtonText}>{t('premium.restore.button')}</Text>
+            <Text style={styles.restoreButtonText}>{t('settings.premium.restore.button')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -237,27 +237,27 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
     <View style={styles.container}>
       <View style={styles.header}>
         <Icon name="sparkles" size={24} color={Colors.brand.secondary} />
-        <Text style={styles.title}>{t('premium.upgrade.title')}</Text>
-        <Text style={styles.subtitle}>{t('premium.upgrade.subtitle')}</Text>
+        <Text style={styles.title}>{t('settings.premium.upgrade.title')}</Text>
+        <Text style={styles.subtitle}>{t('settings.premium.upgrade.subtitle')}</Text>
       </View>
 
       {/* 프리미엄 혜택 */}
       <View style={styles.benefitsContainer}>
-        <Text style={styles.benefitsTitle}>{t('premium.benefits.title')}</Text>
+        <Text style={styles.benefitsTitle}>{t('settings.premium.benefits.title')}</Text>
 
         <View style={styles.benefitItem}>
           <Icon name="check" size={16} color={Colors.state.success} />
-          <Text style={styles.benefitText}>{t('premium.benefits.unlimitedSaves')}</Text>
+          <Text style={styles.benefitText}>{t('settings.premium.benefits.unlimitedSaves')}</Text>
         </View>
 
         <View style={styles.benefitItem}>
           <Icon name="check" size={16} color={Colors.state.success} />
-          <Text style={styles.benefitText}>{t('premium.benefits.noAds')}</Text>
+          <Text style={styles.benefitText}>{t('settings.premium.benefits.noAds')}</Text>
         </View>
 
         <View style={styles.benefitItem}>
           <Icon name="check" size={16} color={Colors.state.success} />
-          <Text style={styles.benefitText}>{t('premium.benefits.premiumSpreads')}</Text>
+          <Text style={styles.benefitText}>{t('settings.premium.benefits.premiumSpreads')}</Text>
         </View>
 
       </View>
@@ -266,7 +266,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
       {loadingProducts ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={Colors.brand.primary} />
-          <Text style={styles.loadingText}>{t('premium.loading')}</Text>
+          <Text style={styles.loadingText}>{t('settings.premium.loading')}</Text>
         </View>
       ) : (
         <View style={styles.productsContainer}>
@@ -283,7 +283,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
             >
               {product.productId.includes('yearly') && (
                 <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>{t('premium.popular')}</Text>
+                  <Text style={styles.popularText}>{t('settings.premium.popular')}</Text>
                 </View>
               )}
 
@@ -294,7 +294,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
               {purchasing === product.productId ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.selectText}>{t('premium.select')}</Text>
+                <Text style={styles.selectText}>{t('settings.premium.select')}</Text>
               )}
             </TouchableOpacity>
           ))}
@@ -304,7 +304,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
       {/* 웹 플랫폼 안내 */}
       {Platform.OS === 'web' && (
         <View style={styles.webNotice}>
-          <Text style={styles.webNoticeText}>{t('premium.webNotice')}</Text>
+          <Text style={styles.webNoticeText}>{t('settings.premium.webNotice')}</Text>
         </View>
       )}
 
@@ -315,7 +315,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
           onPress={handleRestorePurchases}
           activeOpacity={0.7}
         >
-          <Text style={styles.restoreButtonText}>{t('premium.restore.button')}</Text>
+          <Text style={styles.restoreButtonText}>{t('settings.premium.restore.button')}</Text>
         </TouchableOpacity>
       )}
     </View>

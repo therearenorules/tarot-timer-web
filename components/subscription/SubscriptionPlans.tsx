@@ -11,10 +11,13 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform,
+  Linking
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { usePremium } from '../../contexts/PremiumContext';
-import IAPManager, { SubscriptionProduct } from '../../utils/IAPManager';
+import IAPManager, { SubscriptionProduct } from '../../utils/iapManager';
 import {
   Colors,
   Spacing,
@@ -22,6 +25,10 @@ import {
   Typography
 } from '../DesignSystem';
 import { Icon } from '../Icon';
+
+// 법률 문서 URL
+const PRIVACY_POLICY_URL = 'https://therearenorules.github.io/tarot-timer-landing/privacy.html';
+const TERMS_OF_SERVICE_URL = 'https://therearenorules.github.io/tarot-timer-landing/terms.html';
 
 interface SubscriptionPlansProps {
   onClose?: () => void;
@@ -32,6 +39,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   onClose,
   onSubscriptionSuccess
 }) => {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<SubscriptionProduct[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +75,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       console.log('✅ 구독 상품 로드 완료:', availableProducts.length);
     } catch (error) {
       console.error('❌ 구독 상품 로드 오류:', error);
-      Alert.alert('오류', '구독 상품을 불러오는데 실패했습니다.');
+      Alert.alert(t('settings.premium.plans.loadError'), t('settings.premium.plans.loadErrorMessage'));
     } finally {
       setLoading(false);
     }
@@ -78,7 +86,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
    */
   const handlePurchase = async () => {
     if (!selectedPlan) {
-      Alert.alert('알림', '구독 요금제를 선택해주세요.');
+      Alert.alert(t('settings.premium.plans.selectPlanPrompt'), t('settings.premium.plans.selectPlanMessage'));
       return;
     }
 
@@ -90,11 +98,11 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
       if (success) {
         Alert.alert(
-          '구독 완료!',
-          '프리미엄 구독이 활성화되었습니다. 무제한으로 타로 세션을 즐기세요!',
+          t('settings.premium.plans.purchaseSuccess'),
+          t('settings.premium.plans.purchaseSuccessMessage'),
           [
             {
-              text: '확인',
+              text: t('common.ok'),
               onPress: () => {
                 onSubscriptionSuccess?.();
                 onClose?.();
@@ -103,7 +111,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
           ]
         );
       } else {
-        Alert.alert('구매 실패', '구독 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+        Alert.alert(t('settings.premium.plans.purchaseFailed'), t('settings.premium.plans.purchaseFailedMessage'));
       }
 
     } catch (error) {
@@ -126,11 +134,11 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
       if (success) {
         Alert.alert(
-          '복원 완료',
-          '이전 구매가 성공적으로 복원되었습니다!',
+          t('settings.premium.restore.success.title'),
+          t('settings.premium.restore.success.message'),
           [
             {
-              text: '확인',
+              text: t('common.ok'),
               onPress: () => {
                 onSubscriptionSuccess?.();
                 onClose?.();
@@ -139,12 +147,18 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
           ]
         );
       } else {
-        Alert.alert('복원 실패', '복원할 구매 내역을 찾을 수 없습니다.');
+        Alert.alert(
+          t('settings.premium.restore.notFound.title'),
+          t('settings.premium.restore.notFound.message')
+        );
       }
 
     } catch (error) {
       console.error('❌ 구매 복원 오류:', error);
-      Alert.alert('복원 오류', '구매 복원 중 오류가 발생했습니다.');
+      Alert.alert(
+        t('settings.premium.restore.error.title'),
+        t('settings.premium.restore.error.message')
+      );
     } finally {
       setLoading(false);
     }
@@ -157,6 +171,23 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
     const monthlyTotal = monthlyPrice * 12;
     const discount = ((monthlyTotal - yearlyPrice) / monthlyTotal) * 100;
     return Math.round(discount);
+  };
+
+  /**
+   * 외부 링크 열기
+   */
+  const openURL = async (url: string, title: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(t('common.error'), `${title} 페이지를 열 수 없습니다.`);
+      }
+    } catch (error) {
+      console.error('❌ URL 열기 오류:', error);
+      Alert.alert(t('common.error'), `${title} 페이지를 여는 중 오류가 발생했습니다.`);
+    }
   };
 
   /**
@@ -174,7 +205,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         const monthlyPrice = parseInt(monthlyProduct.price);
         const yearlyPrice = parseInt(product.price);
         const discount = calculateDiscount(monthlyPrice, yearlyPrice);
-        discountInfo = `${discount}% 할인`;
+        discountInfo = t('settings.premium.plans.discount', { percent: discount });
       }
     }
 
@@ -214,14 +245,16 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         <View style={styles.priceContainer}>
           <Text style={styles.price}>{product.localizedPrice}</Text>
           <Text style={styles.priceUnit}>
-            {isYearly ? '/ 년' : '/ 월'}
+            {isYearly ? t('settings.premium.plans.perYear') : t('settings.premium.plans.perMonth')}
           </Text>
         </View>
 
         {/* 월별 가격 (연간 구독인 경우) */}
         {isYearly && (
           <Text style={styles.monthlyEquivalent}>
-            월 {Math.round(parseInt(product.price) / 12).toLocaleString()}원 상당
+            {t('settings.premium.plans.monthlyEquivalent', {
+              price: Math.round(parseInt(product.price) / 12).toLocaleString()
+            })}
           </Text>
         )}
       </TouchableOpacity>
@@ -233,7 +266,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>프리미엄 활성</Text>
+          <Text style={styles.title}>{t('settings.premium.plans.premiumActiveTitle')}</Text>
           {onClose && (
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Icon name="x" size={24} color={Colors.text.secondary} />
@@ -243,14 +276,16 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
         <View style={styles.premiumActiveContainer}>
           <Icon name="check-circle" size={64} color={Colors.state.success} />
-          <Text style={styles.premiumActiveTitle}>프리미엄 구독 활성!</Text>
+          <Text style={styles.premiumActiveTitle}>{t('settings.premium.plans.premiumActiveMessage')}</Text>
           <Text style={styles.premiumActiveDescription}>
-            무제한 타로 세션과 프리미엄 기능을 마음껏 이용하세요.
+            {t('settings.premium.plans.premiumActiveDescription')}
           </Text>
 
           {premiumStatus.expiry_date && (
             <Text style={styles.expiryInfo}>
-              다음 갱신일: {new Date(premiumStatus.expiry_date).toLocaleDateString('ko-KR')}
+              {t('settings.premium.plans.nextRenewal', {
+                date: new Date(premiumStatus.expiry_date).toLocaleDateString()
+              })}
             </Text>
           )}
         </View>
@@ -262,7 +297,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.title}>프리미엄 구독</Text>
+        <Text style={styles.title}>{t('settings.premium.plans.title')}</Text>
         {onClose && (
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Icon name="x" size={24} color={Colors.text.secondary} />
@@ -272,26 +307,26 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
       {/* 프리미엄 기능 소개 */}
       <View style={styles.featuresContainer}>
-        <Text style={styles.featuresTitle}>프리미엄으로 업그레이드</Text>
+        <Text style={styles.featuresTitle}>{t('settings.premium.plans.featuresTitle')}</Text>
 
         <View style={styles.featureItem}>
           <Icon name="infinity" size={20} color={Colors.brand.secondary} />
-          <Text style={styles.featureText}>무제한 타로 세션 저장</Text>
+          <Text style={styles.featureText}>{t('settings.premium.benefits.unlimitedSaves')}</Text>
+        </View>
+
+        <View style={styles.featureItem}>
+          <Icon name="star" size={20} color={Colors.brand.secondary} />
+          <Text style={styles.featureText}>{t('settings.premium.benefits.premiumSpreads')}</Text>
         </View>
 
         <View style={styles.featureItem}>
           <Icon name="x-circle" size={20} color={Colors.brand.secondary} />
-          <Text style={styles.featureText}>광고 제거</Text>
+          <Text style={styles.featureText}>{t('settings.premium.benefits.noAds')}</Text>
         </View>
 
         <View style={styles.featureItem}>
-          <Icon name="palette" size={20} color={Colors.brand.secondary} />
-          <Text style={styles.featureText}>프리미엄 테마</Text>
-        </View>
-
-        <View style={styles.featureItem}>
-          <Icon name="headphones" size={20} color={Colors.brand.secondary} />
-          <Text style={styles.featureText}>우선 고객 지원</Text>
+          <Icon name="zap" size={20} color={Colors.brand.secondary} />
+          <Text style={styles.featureText}>{t('settings.premium.benefits.futureFeatures')}</Text>
         </View>
       </View>
 
@@ -299,13 +334,13 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.brand.primary} />
-          <Text style={styles.loadingText}>구독 옵션을 불러오는 중...</Text>
+          <Text style={styles.loadingText}>{t('settings.premium.plans.loadingText')}</Text>
         </View>
       ) : (
         <>
           {/* 구독 요금제 */}
           <View style={styles.plansContainer}>
-            <Text style={styles.plansTitle}>요금제 선택</Text>
+            <Text style={styles.plansTitle}>{t('settings.premium.plans.selectPlan')}</Text>
             {products.map(renderPlanCard)}
           </View>
 
@@ -326,7 +361,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
                 <Icon name="credit-card" size={20} color={Colors.text.inverse} />
               )}
               <Text style={styles.purchaseButtonText}>
-                {purchasing ? '구매 처리 중...' : '구독 시작'}
+                {purchasing ? t('settings.premium.plans.purchasing') : t('settings.premium.plans.startSubscription')}
               </Text>
             </TouchableOpacity>
 
@@ -337,51 +372,73 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
               activeOpacity={0.7}
             >
               <Icon name="refresh-cw" size={16} color={Colors.brand.primary} />
-              <Text style={styles.restoreButtonText}>구매 복원</Text>
+              <Text style={styles.restoreButtonText}>{t('settings.premium.restore.button')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* 약관 안내 */}
           <View style={styles.disclaimerContainer}>
             <Text style={styles.disclaimerText}>
-              • 구독은 자동 갱신되며 언제든지 취소할 수 있습니다.
+              • {t('settings.premium.plans.disclaimer')}
             </Text>
+            {Platform.OS === 'ios' && (
+              <>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.iosDisclaimer1')}
+                </Text>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.iosDisclaimer2')}
+                </Text>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.iosDisclaimer3')}
+                </Text>
+              </>
+            )}
+            {Platform.OS === 'android' && (
+              <>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.androidDisclaimer1')}
+                </Text>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.androidDisclaimer2')}
+                </Text>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.androidDisclaimer3')}
+                </Text>
+              </>
+            )}
+            {Platform.OS === 'web' && (
+              <>
+                <Text style={styles.disclaimerText}>
+                  • {t('settings.premium.plans.webDisclaimer')}
+                </Text>
+              </>
+            )}
             <Text style={styles.disclaimerText}>
-              • 결제는 iTunes 계정 또는 Google Play를 통해 처리됩니다.
-            </Text>
-            <Text style={styles.disclaimerText}>
-              • 무료 체험 기간 중에도 취소 가능합니다.
+              • {t('settings.premium.plans.freeTrial')}
             </Text>
 
             {/* 법률 문서 링크 */}
             <View style={styles.legalLinksContainer}>
               <TouchableOpacity
                 style={styles.legalLink}
-                onPress={() => {
-                  // TODO: 개인정보 처리방침 URL로 이동
-                  console.log('개인정보 처리방침 열기');
-                  // Linking.openURL('https://tarottimer.com/privacy');
-                }}
+                onPress={() => openURL(PRIVACY_POLICY_URL, t('settings.premium.plans.privacyPolicy'))}
               >
-                <Text style={styles.legalLinkText}>개인정보 처리방침</Text>
+                <Text style={styles.legalLinkText}>{t('settings.premium.plans.privacyPolicy')}</Text>
               </TouchableOpacity>
 
               <Text style={styles.legalDivider}>|</Text>
 
               <TouchableOpacity
                 style={styles.legalLink}
-                onPress={() => {
-                  // TODO: 이용약관 URL로 이동
-                  console.log('이용약관 열기');
-                  // Linking.openURL('https://tarottimer.com/terms');
-                }}
+                onPress={() => openURL(TERMS_OF_SERVICE_URL, t('settings.premium.plans.termsOfService'))}
               >
-                <Text style={styles.legalLinkText}>이용약관</Text>
+                <Text style={styles.legalLinkText}>{t('settings.premium.plans.termsOfService')}</Text>
               </TouchableOpacity>
             </View>
 
             <Text style={[styles.disclaimerText, styles.legalNotice]}>
-              구독을 진행하면 위 약관에 동의하는 것으로 간주됩니다.
+              {t('settings.premium.plans.agreementText')}
             </Text>
           </View>
         </>

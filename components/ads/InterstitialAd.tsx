@@ -3,8 +3,9 @@
  * 타로 세션 완료, 앱 시작 등에서 표시되는 AdMob 전면 광고
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { Platform, DeviceEventEmitter } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePremium } from '../../contexts/PremiumContext';
 import AdManager from '../../utils/adManager';
 import { AD_PLACEMENTS } from '../../utils/adConfig';
@@ -18,6 +19,11 @@ interface InterstitialAdProps {
   onRevenueEarned?: (amount: number) => void;
 }
 
+// 로컬 스토리지 키
+const AD_DAILY_COUNT_KEY = 'ad_daily_count';
+const AD_DAILY_DATE_KEY = 'ad_daily_date';
+const USER_INSTALL_DATE_KEY = 'user_install_date';
+
 const InterstitialAd: React.FC<InterstitialAdProps> = ({
   placement,
   trigger = 'manual',
@@ -27,9 +33,69 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
   onRevenueEarned
 }) => {
   const { isPremium, canAccessFeature } = usePremium();
+  const lastShownTimeRef = React.useRef<number>(0);
+  const [dailyAdCount, setDailyAdCount] = useState(0);
+  const [isLoyalUser, setIsLoyalUser] = useState(false);
+
+  // 사용자 유형에 따른 설정
+  const MAX_DAILY_ADS = 10; // 일반 사용자: 하루 10회
+  const MAX_DAILY_ADS_LOYAL = 5; // 충성 고객: 하루 5회
+  const LOYAL_USER_DAYS = 30; // 30일 이상 사용 시 충성 고객
+  const MIN_INTERVAL_MS = 15 * 60 * 1000; // 15분 간격
 
   // 프리미엄 사용자는 광고 표시하지 않음
   const shouldShowAd = !isPremium && !canAccessFeature('ad_free');
+
+  /**
+   * 충성 고객 여부 및 일일 카운터 초기화
+   */
+  useEffect(() => {
+    const initializeAdTracking = async () => {
+      try {
+        // 1. 충성 고객 감지
+        const installDateStr = await AsyncStorage.getItem(USER_INSTALL_DATE_KEY);
+        let installDate: Date;
+
+        if (!installDateStr) {
+          // 처음 설치한 경우
+          installDate = new Date();
+          await AsyncStorage.setItem(USER_INSTALL_DATE_KEY, installDate.toISOString());
+        } else {
+          installDate = new Date(installDateStr);
+        }
+
+        const daysSinceInstall = Math.floor((Date.now() - installDate.getTime()) / (1000 * 60 * 60 * 24));
+        const isLoyal = daysSinceInstall >= LOYAL_USER_DAYS;
+        setIsLoyalUser(isLoyal);
+
+        if (isLoyal) {
+          console.log(`💎 충성 고객 인식: ${daysSinceInstall}일 사용 - 광고 빈도 50% 감소`);
+        }
+
+        // 2. 일일 광고 카운터 복원 또는 초기화
+        const savedDate = await AsyncStorage.getItem(AD_DAILY_DATE_KEY);
+        const today = new Date().toDateString();
+
+        if (savedDate !== today) {
+          // 날짜가 바뀌면 카운터 리셋
+          await AsyncStorage.setItem(AD_DAILY_DATE_KEY, today);
+          await AsyncStorage.setItem(AD_DAILY_COUNT_KEY, '0');
+          setDailyAdCount(0);
+          console.log('🔄 일일 광고 카운터 리셋 (새로운 날)');
+        } else {
+          // 오늘 날짜면 저장된 카운터 복원
+          const savedCount = await AsyncStorage.getItem(AD_DAILY_COUNT_KEY);
+          const count = savedCount ? parseInt(savedCount, 10) : 0;
+          setDailyAdCount(count);
+          console.log(`📊 오늘 광고 표시 횟수: ${count}회`);
+        }
+      } catch (error) {
+        console.error('광고 추적 초기화 실패:', error);
+      }
+    };
+
+    initializeAdTracking();
+  }, [LOYAL_USER_DAYS]);
 
   /**
    * 전면 광고 표시
@@ -37,6 +103,23 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
   const showInterstitialAd = useCallback(async () => {
     if (!shouldShowAd) {
       console.log('💎 프리미엄 사용자: 전면 광고 건너뛰기');
+      return;
+    }
+
+    // 일일 광고 제한 체크
+    const maxAds = isLoyalUser ? MAX_DAILY_ADS_LOYAL : MAX_DAILY_ADS;
+    if (dailyAdCount >= maxAds) {
+      console.log(`🚫 일일 광고 한도 도달: ${dailyAdCount}/${maxAds} (${isLoyalUser ? '충성 고객' : '일반 사용자'})`);
+      return;
+    }
+
+    // 광고 표시 간격 체크
+    const now = Date.now();
+    const timeSinceLastShown = now - lastShownTimeRef.current;
+
+    if (timeSinceLastShown < MIN_INTERVAL_MS && lastShownTimeRef.current > 0) {
+      const minutesRemaining = Math.ceil((MIN_INTERVAL_MS - timeSinceLastShown) / (60 * 1000));
+      console.log(`⏰ 전면광고 대기 중: ${minutesRemaining}분 후 표시 가능`);
       return;
     }
 
@@ -54,6 +137,14 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
 
       if (result.success) {
         console.log('✅ 전면 광고 표시 성공');
+        lastShownTimeRef.current = Date.now(); // 마지막 표시 시간 기록
+
+        // 일일 카운터 증가
+        const newCount = dailyAdCount + 1;
+        setDailyAdCount(newCount);
+        await AsyncStorage.setItem(AD_DAILY_COUNT_KEY, newCount.toString());
+        console.log(`📊 오늘 광고 표시: ${newCount}/${isLoyalUser ? MAX_DAILY_ADS_LOYAL : MAX_DAILY_ADS}회`);
+
         onAdShown?.();
 
         if (result.revenue) {
@@ -69,7 +160,7 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
       console.error('❌ 전면 광고 오류:', errorMessage);
       onAdFailed?.(errorMessage);
     }
-  }, [shouldShowAd, placement, trigger, onAdShown, onAdFailed, onRevenueEarned]);
+  }, [shouldShowAd, placement, trigger, onAdShown, onAdFailed, onRevenueEarned, MIN_INTERVAL_MS, dailyAdCount, isLoyalUser, MAX_DAILY_ADS, MAX_DAILY_ADS_LOYAL]);
 
   /**
    * 광고 이벤트 리스너 설정

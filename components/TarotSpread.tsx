@@ -38,7 +38,7 @@ export interface SpreadPosition {
   offsetY?: number;          // Y축 오프셋
 }
 
-export type SpreadType = 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'cup-of-relationship' | 'choice';
+export type SpreadType = 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'relationship' | 'choice';
 
 export interface SpreadLayout {
   id: SpreadType;
@@ -115,7 +115,7 @@ const getSpreadLayouts = (t: any): SpreadLayout[] => [
     ]
   },
   {
-    id: 'cup-of-relationship',
+    id: 'relationship',
     name: `💖 ${t('spread.types.relationship')}`,
     nameEn: 'Cup of Relationship Spread',
     description: t('spread.descriptions.relationship'),
@@ -165,7 +165,7 @@ export const TarotSpread: React.FC = () => {
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
   const [readingTitle, setReadingTitle] = useState('');
   const [insights, setInsights] = useState('');
-  const [currentSpreadType, setCurrentSpreadType] = useState<SpreadType>('one-card');
+  const [currentSpreadType, setCurrentSpreadType] = useState<SpreadType>('three-card');
   
   // 저장 관련 상태
   const [isSaveModalVisible, setIsSaveModalVisible] = useState(false);
@@ -203,14 +203,15 @@ export const TarotSpread: React.FC = () => {
 
   // 프리미엄이 필요한 스프레드인지 확인
   const isPremiumSpread = (spreadId: SpreadType): boolean => {
-    const premiumSpreads: SpreadType[] = ['celtic-cross', 'cup-of-relationship', 'choice'];
-    return premiumSpreads.includes(spreadId);
+    // tarotData.ts의 SPREAD_TYPES 정의를 기준으로 프리미엄 여부 확인
+    const spreadType = TarotUtils.getSpreadTypeById(spreadId);
+    return spreadType?.isPremium ?? false;
   };
 
-  // 사용자가 프리미엄 권한을 가지고 있는지 확인 - 개발 중 무료 접근 허용
+  // 사용자가 프리미엄 권한을 가지고 있는지 확인
   const hasPremiumAccess = (): boolean => {
-    // 개발 중에는 모든 프리미엄 기능 무료로 제공
-    return true;
+    // 실제 프리미엄 구독 상태 확인
+    return isPremium;
   };
 
   // 저장된 스프레드 목록 불러오기
@@ -276,9 +277,29 @@ export const TarotSpread: React.FC = () => {
         t('spread.messages.saveComplete', { title: saveTitle }),
         [{ text: t('common.ok') }]
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('스프레드 저장 실패:', error);
-      Alert.alert(t('common.error'), t('spread.errors.saveFailed'));
+
+      // 저장 제한 도달 에러 처리
+      if (error.message === 'STORAGE_LIMIT_REACHED' && error.limitInfo) {
+        const { currentCount, maxCount } = error.limitInfo;
+        Alert.alert(
+          t('spread.errors.storageLimitTitle'),
+          t('spread.errors.storageLimitMessage', { current: currentCount, max: maxCount }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('settings.premium.upgrade'),
+              onPress: () => {
+                // 프리미엄 업그레이드 화면으로 이동하는 로직 추가 가능
+                console.log('프리미엄 업그레이드 요청');
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(t('common.error'), t('spread.errors.saveFailed'));
+      }
     }
   };
 
@@ -348,7 +369,11 @@ export const TarotSpread: React.FC = () => {
   const drawFullSpread = async () => {
     setIsDrawing(true);
     try {
+      console.log('🔮 전체 스프레드 뽑기 시작 - 카드 수:', spreadCards.length);
+
       const newCards = TarotUtils.getRandomCardsNoDuplicates(spreadCards.length);
+      console.log('🎴 뽑은 카드 수:', newCards.length);
+
       const updatedSpread = spreadCards.map((position, index) => ({
         ...position,
         card: newCards[index]
@@ -357,8 +382,16 @@ export const TarotSpread: React.FC = () => {
       setSpreadCards(updatedSpread);
       setSelectedPosition(null);
 
-      // 액션 카운터 증가 (전면광고 표시 로직)
-      await AdManager.incrementActionCounter();
+      console.log('✅ 스프레드 업데이트 완료');
+
+      // 액션 카운터 증가 (전면광고 표시 로직) - 별도 try-catch로 감싸서 광고 오류가 카드 뽑기를 방해하지 않도록
+      try {
+        await AdManager.incrementActionCounter();
+        console.log('📺 광고 카운터 증가 완료');
+      } catch (adError) {
+        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+        // 광고 오류는 무시하고 계속 진행
+      }
 
       // 완료 팝업 제거 (사용자 요청)
       // Alert.alert(
@@ -367,7 +400,9 @@ export const TarotSpread: React.FC = () => {
       //   [{ text: t('common.ok') }]
       // );
     } catch (error) {
-      console.error('스프레드 뽑기 실패:', error);
+      console.error('❌ 스프레드 뽑기 실패:', error);
+      console.error('❌ 오류 상세:', error instanceof Error ? error.message : String(error));
+      console.error('❌ 오류 스택:', error instanceof Error ? error.stack : 'No stack trace');
       Alert.alert(t('common.error'), t('spread.errors.drawFailed'));
     } finally {
       setIsDrawing(false);
@@ -376,26 +411,55 @@ export const TarotSpread: React.FC = () => {
 
   // 개별 카드 뽑기
   const drawSingleCard = async (positionId: number) => {
-    // 현재 스프레드에서 이미 뽑힌 카드들을 제외하고 뽑기
-    const usedCards = spreadCards.filter(pos => pos.card !== null).map(pos => pos.card!);
-    const availableCards = TarotUtils.getAllCards().filter(card =>
-      !usedCards.some(usedCard => usedCard.id === card.id)
-    );
+    try {
+      console.log('🎴 카드 뽑기 시작 - Position ID:', positionId);
 
-    const randomCard = availableCards.length > 0
-      ? availableCards[Math.floor(Math.random() * availableCards.length)]
-      : TarotUtils.getRandomCard(); // fallback to any card if all used
+      // 현재 스프레드에서 이미 뽑힌 카드들을 제외하고 뽑기
+      const usedCards = spreadCards.filter(pos => pos.card !== null).map(pos => pos.card!);
+      console.log('📊 이미 뽑힌 카드 수:', usedCards.length);
 
-    const updatedSpread = spreadCards.map(position =>
-      position.id === positionId
-        ? { ...position, card: randomCard }
-        : position
-    );
-    setSpreadCards(updatedSpread);
-    setSelectedPosition(null);
+      const allCards = TarotUtils.getAllCards();
+      console.log('📚 전체 카드 수:', allCards.length);
 
-    // 액션 카운터 증가 (전면광고 표시 로직)
-    await AdManager.incrementActionCounter();
+      const availableCards = allCards.filter(card =>
+        !usedCards.some(usedCard => usedCard.id === card.id)
+      );
+      console.log('✅ 사용 가능한 카드 수:', availableCards.length);
+
+      if (availableCards.length === 0) {
+        console.warn('⚠️ 사용 가능한 카드가 없습니다. 전체 카드 덱에서 랜덤 선택합니다.');
+      }
+
+      const randomCard = availableCards.length > 0
+        ? availableCards[Math.floor(Math.random() * availableCards.length)]
+        : TarotUtils.getRandomCard(); // fallback to any card if all used
+
+      console.log('🃏 선택된 카드:', randomCard?.name);
+
+      const updatedSpread = spreadCards.map(position =>
+        position.id === positionId
+          ? { ...position, card: randomCard }
+          : position
+      );
+      setSpreadCards(updatedSpread);
+      setSelectedPosition(null);
+
+      console.log('✅ 카드 뽑기 완료');
+
+      // 액션 카운터 증가 (전면광고 표시 로직) - 별도 try-catch로 감싸서 광고 오류가 카드 뽑기를 방해하지 않도록
+      try {
+        await AdManager.incrementActionCounter();
+        console.log('📺 광고 카운터 증가 완료');
+      } catch (adError) {
+        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+        // 광고 오류는 무시하고 계속 진행
+      }
+    } catch (error) {
+      console.error('❌ 카드 뽑기 실패:', error);
+      console.error('❌ 오류 상세:', error instanceof Error ? error.message : String(error));
+      console.error('❌ 오류 스택:', error instanceof Error ? error.stack : 'No stack trace');
+      Alert.alert(t('common.error'), t('spread.errors.drawFailed'));
+    }
   };
 
   // 스프레드 초기화
@@ -410,12 +474,17 @@ export const TarotSpread: React.FC = () => {
 
   // 카드 선택 처리
   const handleCardPress = async (positionId: number, hasCard: boolean) => {
-    if (hasCard) {
-      // 이미 카드가 있는 경우 - 카드 정보 표시
-      setSelectedPosition(selectedPosition === positionId ? null : positionId);
-    } else {
-      // 카드가 없는 경우 - 새 카드 뽑기
-      await drawSingleCard(positionId);
+    try {
+      if (hasCard) {
+        // 이미 카드가 있는 경우 - 카드 정보 표시
+        setSelectedPosition(selectedPosition === positionId ? null : positionId);
+      } else {
+        // 카드가 없는 경우 - 새 카드 뽑기
+        await drawSingleCard(positionId);
+      }
+    } catch (error) {
+      console.error('❌ 카드 선택 처리 실패:', error);
+      Alert.alert(t('common.error'), t('spread.errors.drawFailed'));
     }
   };
 
@@ -450,7 +519,7 @@ export const TarotSpread: React.FC = () => {
       case 'choice':
         return styles.cardSpreadAreaChoice;
       case 'celtic-cross':
-      case 'cup-of-relationship':
+      case 'relationship':
         return styles.cardSpreadAreaLarge;
       default:
         return styles.cardSpreadAreaLarge;
@@ -638,7 +707,7 @@ export const TarotSpread: React.FC = () => {
                       size={getCardSizeBySpreadType()}
                       showText={false}
                       showBack={position.card === null}
-                      noBorder={currentSpreadType === 'celtic-cross' || currentSpreadType === 'cup-of-relationship'}
+                      noBorder={currentSpreadType === 'celtic-cross' || currentSpreadType === 'relationship'}
                     />
                   </View>
                 </TouchableOpacity>

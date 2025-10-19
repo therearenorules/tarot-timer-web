@@ -27,7 +27,7 @@ export default function AdBanner({
   style
 }: AdBannerProps) {
   const [shouldShow, setShouldShow] = useState(false);
-  const [bannerConfig, setBannerConfig] = useState(AdManager.getBannerConfig());
+  const [adUnitID, setAdUnitID] = useState('');
 
   useEffect(() => {
     checkAdDisplay();
@@ -35,8 +35,14 @@ export default function AdBanner({
 
   const checkAdDisplay = async () => {
     try {
-      const shouldShowAds = await AdManager.shouldShowBanner();
+      const shouldShowAds = AdManager.shouldShowBanner();
       setShouldShow(shouldShowAds);
+
+      if (shouldShowAds) {
+        // AdManager에서 배너 광고 Unit ID 가져오기
+        const unitId = AdManager.getBannerAdUnitId();
+        setAdUnitID(unitId);
+      }
     } catch (error) {
       console.error('광고 표시 확인 오류:', error);
       setShouldShow(false);
@@ -60,12 +66,16 @@ export default function AdBanner({
     return null;
   }
 
+  // AdMobBanner가 없거나 광고를 표시하지 않아야 하는 경우
+  if (!AdMobBanner || !adUnitID) {
+    return null;
+  }
+
   return (
     <View style={[styles.container, style]}>
       <AdMobBanner
-        adUnitID={bannerConfig.adUnitID}
+        adUnitID={adUnitID}
         size={size}
-        testDeviceID={bannerConfig.testDeviceID}
         onDidReceiveAd={handleAdLoaded}
         onDidFailToReceiveAdWithError={handleAdFailedToLoad}
         onWillPresentScreen={handleAdOpened}

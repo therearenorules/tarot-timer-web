@@ -66,7 +66,7 @@ export const PremiumTest: React.FC = () => {
   const { isPremium, isActive, daysLeft, subscriptionType } = usePremiumStatus();
   const hasAdFree = usePremiumFeature('ad_free');
   const hasUnlimitedStorage = usePremiumFeature('unlimited_storage');
-  const hasPremiumThemes = usePremiumFeature('premium_themes');
+  const hasPremiumSpreads = usePremiumFeature('premium_spreads');
 
   /**
    * 테스트 로그 추가
@@ -139,9 +139,9 @@ export const PremiumTest: React.FC = () => {
       addTestResult('광고 표시 조건', 'pending', '테스트 중...');
       try {
         if (AdManager) {
-          const shouldShowBanner = await AdManager.shouldShowBanner();
-          const bannerConfig = AdManager.getBannerConfig();
-          addTestResult('광고 표시 조건', 'success', `배너 표시: ${shouldShowBanner}, 설정: ${JSON.stringify(bannerConfig)}`);
+          const shouldShowBanner = AdManager.shouldShowBanner();
+          const bannerUnitId = AdManager.getBannerAdUnitId();
+          addTestResult('광고 표시 조건', 'success', `배너 표시: ${shouldShowBanner}, Unit ID: ${bannerUnitId}`);
         } else {
           addTestResult('광고 표시 조건', 'error', 'AdManager를 사용할 수 없습니다');
         }
@@ -201,6 +201,12 @@ export const PremiumTest: React.FC = () => {
    */
   const togglePremiumSimulation = async () => {
     try {
+      // IAPManager 로드 확인
+      if (!IAPManager) {
+        Alert.alert('오류', 'IAPManager를 사용할 수 없습니다. 모바일 환경에서만 사용 가능합니다.');
+        return;
+      }
+
       const newStatus = !isPremium;
 
       Alert.alert(
@@ -211,9 +217,14 @@ export const PremiumTest: React.FC = () => {
           {
             text: '확인',
             onPress: async () => {
-              // 시뮬레이션 모드에서 프리미엄 상태 변경
-              await IAPManager.simulatePremiumStatusChange(newStatus);
-              await refreshStatus();
+              try {
+                // 시뮬레이션 모드에서 프리미엄 상태 변경
+                await IAPManager.simulatePremiumStatusChange(newStatus);
+                await refreshStatus();
+                Alert.alert('완료', `프리미엄 상태가 ${newStatus ? '활성화' : '비활성화'}되었습니다.`);
+              } catch (error) {
+                Alert.alert('오류', error instanceof Error ? error.message : '상태 변경 실패');
+              }
             }
           }
         ]
@@ -273,9 +284,9 @@ export const PremiumTest: React.FC = () => {
         </View>
 
         <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>프리미엄 테마:</Text>
-          <Text style={[styles.statusValue, hasPremiumThemes ? styles.activeStatus : styles.inactiveStatus]}>
-            {hasPremiumThemes ? '활성' : '비활성'}
+          <Text style={styles.statusLabel}>프리미엄 스프레드:</Text>
+          <Text style={[styles.statusValue, hasPremiumSpreads ? styles.activeStatus : styles.inactiveStatus]}>
+            {hasPremiumSpreads ? '활성' : '비활성'}
           </Text>
         </View>
 

@@ -25,7 +25,7 @@ import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
 // 광고 매니저 비활성화 (iOS 빌드 최적화)
 let AdManager: any = { initialize: () => Promise.resolve(false), dispose: () => {} };
-import IAPManager from './utils/IAPManager';
+import IAPManager from "./utils/iapManager';
 import AnalyticsManager from './utils/analyticsManager';
 import {
   Colors,

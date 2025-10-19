@@ -1464,6 +1464,15 @@ export const TarotUtils = {
   // 스프레드 저장
   saveSpread: async (spread: SavedSpread): Promise<void> => {
     try {
+      // 저장 제한 확인
+      const limitCheck = await LocalStorageManager.checkUsageLimit('spread');
+
+      if (limitCheck.isAtLimit) {
+        const error = new Error('STORAGE_LIMIT_REACHED');
+        (error as any).limitInfo = limitCheck;
+        throw error;
+      }
+
       const existingSpreads = await TarotUtils.loadSavedSpreads();
       const updatedSpreads = [spread, ...existingSpreads];
       await simpleStorage.setItem(STORAGE_KEYS.SPREAD_SAVES, JSON.stringify(updatedSpreads));
@@ -1502,6 +1511,15 @@ export const TarotUtils = {
   // 일일 타로 저장
   saveDailyTarot: async (dailyTarot: DailyTarotSave): Promise<void> => {
     try {
+      // 저장 제한 확인
+      const limitCheck = await LocalStorageManager.checkUsageLimit('daily');
+
+      if (limitCheck.isAtLimit) {
+        const error = new Error('STORAGE_LIMIT_REACHED');
+        (error as any).limitInfo = limitCheck;
+        throw error;
+      }
+
       const storageKey = STORAGE_KEYS.DAILY_TAROT + dailyTarot.date;
       await simpleStorage.setItem(storageKey, JSON.stringify(dailyTarot));
     } catch (error) {
@@ -1539,6 +1557,7 @@ export const TarotUtils = {
 
 // AsyncStorage 기반 지속적 저장소
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LocalStorageManager } from './localStorage';
 
 class SimpleStorage {
   async setItem(key: string, value: string): Promise<void> {

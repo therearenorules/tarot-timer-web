@@ -325,7 +325,7 @@ export class IAPManager {
         store_transaction_id: transactionId,
         unlimited_storage: true,
         ad_free: true,
-        premium_themes: true,
+        premium_spreads: true,
         last_validated: currentDate.toISOString(),
         validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
       };
@@ -509,7 +509,7 @@ export class IAPManager {
         store_transaction_id: undefined,
         unlimited_storage: false,
         ad_free: false,
-        premium_themes: false,
+        premium_spreads: false,
         last_validated: new Date().toISOString(),
         validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
       };
@@ -723,7 +723,7 @@ export class IAPManager {
         store_transaction_id: isPremium ? `sim-${Date.now()}` : undefined,
         unlimited_storage: isPremium,
         ad_free: isPremium,
-        premium_themes: isPremium,
+        premium_spreads: isPremium,
         last_validated: new Date().toISOString(),
         validation_environment: 'Simulation'
       };
@@ -731,10 +731,27 @@ export class IAPManager {
       await LocalStorageManager.updatePremiumStatus(mockStatus);
 
       // 프리미엄 상태 변경 이벤트 발생
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('premiumStatusChanged', {
-          detail: { isPremium }
-        }));
+      // 웹 환경
+      if (Platform.OS === 'web') {
+        try {
+          if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('premiumStatusChanged', {
+              detail: { isPremium }
+            }));
+          }
+        } catch (error) {
+          console.warn('⚠️ CustomEvent 사용 불가:', error);
+        }
+      }
+
+      // 모바일 환경 (React Native)
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        try {
+          const { DeviceEventEmitter } = require('react-native');
+          DeviceEventEmitter.emit('premiumStatusChanged', { isPremium });
+        } catch (error) {
+          console.warn('⚠️ DeviceEventEmitter 사용 불가:', error);
+        }
       }
 
       console.log('🔄 프리미엄 상태 시뮬레이션:', isPremium ? '활성화' : '비활성화');

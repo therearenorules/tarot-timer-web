@@ -12,6 +12,7 @@ import { SacredGeometryBackground } from './components/SacredGeometryBackground'
 import { MysticalTexture } from './components/MysticalTexture';
 import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
 import { TAROT_CARDS } from './utils/tarotData';
+import { ErrorBoundary } from './components/ErrorBoundary';
 // 광고 시스템 활성화 (웹에서는 조건부 로딩)
 let BannerAd: any = null;
 if (Platform.OS !== 'web') {
@@ -54,7 +55,7 @@ import { PremiumProvider } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
 // 광고 매니저 (동적 import로 Expo Go 호환)
 import AdManager from './utils/adManager';
-import IAPManager from './utils/IAPManager';
+import IAPManager from './utils/iapManager';
 import AnalyticsManager from './utils/analyticsManager';
 import {
   Colors,
@@ -269,73 +270,96 @@ function AppContent() {
     };
   }, []);
 
-  // 광고 시스템 및 IAP 초기화
+  // ✅ Android 최적화: 시스템 초기화 순서 개선
   useEffect(() => {
     const initializeSystems = async () => {
       try {
-        console.log('📱 시스템 초기화 시작...');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📱 Android 최적화 시스템 초기화 시작...');
+        console.log(`   • Platform: ${Platform.OS}`);
+        console.log(`   • Version: ${Platform.Version}`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        // 이미지 캐시 및 프리로딩 시스템 초기화 (가장 먼저)
-        console.log('🖼️ 이미지 캐시 시스템 초기화 시작...');
+        // Step 1: 중요 이미지 먼저 프리로드 (UI 렌더링 준비)
+        console.log('🖼️ Step 1: 중요 이미지 프리로드 시작...');
         try {
           await preloadCriticalImages();
-          console.log('✅ 중요 이미지 프리로드 완료');
-
-          // 타로 카드 이미지 백그라운드 프리로딩
-          preloadTarotImages(TAROT_CARDS)
-            .then(() => console.log('✅ 타로 카드 이미지 프리로드 완료'))
-            .catch(error => console.warn('⚠️ 타로 카드 이미지 프리로드 일부 실패:', error));
+          console.log('   ✅ 중요 이미지 프리로드 완료');
         } catch (error) {
-          console.warn('⚠️ 이미지 캐시 시스템 초기화 실패:', error);
+          console.warn('   ⚠️ 중요 이미지 프리로드 실패:', error);
         }
 
-        // 웹에서는 IAP 시스템 초기화 건너뛰기
+        // Step 2: IAP 시스템 초기화 (웹 제외)
         if (Platform.OS !== 'web') {
-          console.log('💳 IAP 시스템 초기화 시작...');
-          const iapSuccess = await IAPManager.initialize();
-          if (iapSuccess) {
-            console.log('✅ IAP 시스템 초기화 완료');
-          } else {
-            console.log('⚠️ IAP 시스템 초기화 실패');
+          console.log('💳 Step 2: IAP 시스템 초기화 시작...');
+          try {
+            const iapSuccess = await IAPManager.initialize();
+            console.log(iapSuccess ? '   ✅ IAP 초기화 완료' : '   ⚠️ IAP 초기화 실패');
+          } catch (error) {
+            console.warn('   ⚠️ IAP 초기화 오류:', error);
           }
         } else {
           console.log('🌐 웹 환경: IAP 시스템 건너뛰기');
         }
 
-        // 분석 시스템 초기화
-        console.log('📊 분석 시스템 초기화 시작...');
+        // Step 3: 분석 시스템 초기화
+        console.log('📊 Step 3: 분석 시스템 초기화 시작...');
         try {
           await AnalyticsManager.startSession();
-          console.log('✅ 분석 시스템 초기화 완료');
+          console.log('   ✅ 분석 시스템 초기화 완료');
         } catch (error) {
-          console.warn('⚠️ 분석 시스템 초기화 실패:', error);
+          console.warn('   ⚠️ 분석 시스템 초기화 실패:', error);
         }
 
-        // 광고 시스템 초기화
+        // Step 4: 광고 시스템 초기화 (마지막, UI 렌더링 후)
         if (Platform.OS !== 'web') {
-          console.log('📱 광고 시스템 초기화 시작...');
-          const adSuccess = await AdManager.initialize();
-          if (adSuccess) {
-            console.log('✅ 광고 시스템 초기화 완료');
-          } else {
-            console.log('⚠️ 광고 시스템 초기화 실패 (프리미엄 사용자일 수 있음)');
-          }
-        } else {
-          console.log('🌐 웹 환경: 광고 시스템 건너뛰기');
+          // ✅ Android: 광고는 1초 후에 초기화 (UI 먼저 표시)
+          setTimeout(async () => {
+            console.log('📱 Step 4: 광고 시스템 초기화 시작 (지연)...');
+            try {
+              const adSuccess = await AdManager.initialize();
+              console.log(adSuccess ? '   ✅ 광고 시스템 초기화 완료' : '   ⚠️ 광고 시스템 초기화 실패');
+            } catch (error) {
+              console.warn('   ⚠️ 광고 초기화 오류:', error);
+            }
+          }, 1000);
         }
+
+        // Step 5: 타로 카드 이미지 백그라운드 프리로딩 (낮은 우선순위)
+        setTimeout(() => {
+          console.log('🎴 Step 5: 타로 카드 이미지 백그라운드 프리로드 시작...');
+          preloadTarotImages(TAROT_CARDS, 0, 'smart')
+            .then(() => console.log('   ✅ 타로 카드 이미지 프리로드 완료'))
+            .catch(error => console.warn('   ⚠️ 타로 카드 이미지 프리로드 실패:', error));
+        }, 2000);
+
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('✅ 초기화 완료 (백그라운드 작업 진행 중)');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       } catch (error) {
-        console.error('❌ 시스템 초기화 오류:', error);
+        console.error('❌ 시스템 초기화 크리티컬 오류:', error);
+        // Android: 오류 발생 시에도 앱은 계속 실행
+        if (Platform.OS === 'android') {
+          console.warn('🤖 Android: 초기화 오류 무시하고 계속 진행');
+        }
       }
     };
 
     initializeSystems();
 
-    // 컴포넌트 언마운트 시 정리
+    // ✅ Android: 메모리 누수 방지 - Cleanup 함수 강화
     return () => {
-      AnalyticsManager.endSession();
-      AdManager.dispose();
-      if (Platform.OS !== 'web') {
-        IAPManager.dispose();
+      console.log('🧹 앱 정리 시작...');
+      try {
+        AnalyticsManager.endSession();
+        AdManager.dispose();
+        if (Platform.OS !== 'web') {
+          IAPManager.dispose();
+        }
+        console.log('✅ 앱 정리 완료');
+      } catch (error) {
+        console.warn('⚠️ 앱 정리 중 오류:', error);
       }
     };
   }, []);
@@ -397,7 +421,7 @@ function AppContent() {
         <BannerAd
           placement="main_screen"
           onAdLoaded={() => console.log('✅ 배너 광고 로드됨')}
-          onAdFailedToLoad={(error) => console.log('❌ 배너 광고 로드 실패:', error)}
+          onAdFailedToLoad={(error: string) => console.log('❌ 배너 광고 로드 실패:', error)}
           onAdClicked={() => console.log('🔍 배너 광고 클릭됨')}
         />
       )}
@@ -423,19 +447,24 @@ function AppContent() {
 // 전역 에러 경계가 있는 최상위 컴포넌트
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <TarotProvider>
-          <NotificationProvider>
-            <PremiumProvider>
-              <TabErrorBoundary tabName="Tarot Timer">
-                <AppContent />
-              </TabErrorBoundary>
-            </PremiumProvider>
-          </NotificationProvider>
-        </TarotProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary
+      fallbackTitle="앱 오류 발생"
+      fallbackMessage="일시적인 문제가 발생했습니다. 앱을 다시 시작해주세요."
+    >
+      <SafeAreaProvider>
+        <AuthProvider>
+          <TarotProvider>
+            <NotificationProvider>
+              <PremiumProvider>
+                <TabErrorBoundary tabName="Tarot Timer">
+                  <AppContent />
+                </TabErrorBoundary>
+              </PremiumProvider>
+            </NotificationProvider>
+          </TarotProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

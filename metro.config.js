@@ -58,4 +58,48 @@ if (config.resolver.platforms.includes('web')) {
   config.resolver.sourceExts = [...(config.resolver.sourceExts || []), 'web.js', 'web.ts', 'web.tsx'];
 }
 
+// ✅ Android 성능 최적화: Transformer 설정
+config.transformer = {
+  ...config.transformer,
+  minifierPath: 'metro-minify-terser',
+  minifierConfig: {
+    ecma: 8,
+    keep_classnames: false,
+    keep_fnames: false,
+    module: true,
+    mangle: {
+      module: true,
+      keep_classnames: false,
+      keep_fnames: false,
+    },
+    compress: {
+      drop_console: true, // 프로덕션에서 console.log 제거
+      drop_debugger: true,
+      ecma: 2020,
+      module: true,
+      passes: 2,
+    },
+    output: {
+      comments: false,
+      ecma: 8,
+    },
+  },
+  // Hermes 최적화
+  hermesParser: true,
+  unstable_allowRequireContext: true,
+};
+
+// ✅ Android 성능 최적화: Serializer 설정
+config.serializer = {
+  ...config.serializer,
+  // 소스맵 최적화
+  createModuleIdFactory: () => (path) => {
+    const projectRootPath = __dirname;
+    if (path.startsWith(projectRootPath)) {
+      return path.substr(projectRootPath.length + 1);
+    }
+    return path;
+  },
+};
+
 module.exports = config;

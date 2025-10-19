@@ -49,18 +49,31 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
   // 오늘의 카드 로드 (고성능 이미지 프리로딩 포함)
   const loadTodayCards = useCallback(async () => {
     try {
+      console.log('🎴 카드 로드 시작...');
+      const startTime = Date.now();
+
       const today = TarotUtils.getTodayDateString();
       const storageKey = STORAGE_KEYS.DAILY_TAROT + today;
       const savedData = await simpleStorage.getItem(storageKey);
 
       if (savedData) {
         const dailySave: DailyTarotSave = JSON.parse(savedData);
+
+        // ✅ 즉시 UI 업데이트 (이미지 로딩 전)
         setDailyCards(dailySave.hourlyCards);
         setCardMemos(dailySave.memos || {});
 
-        // 고성능 이미지 프리로딩 (스마트 우선순위)
+        const loadTime = Date.now() - startTime;
+        console.log(`✅ 카드 데이터 로드 완료 (${loadTime}ms)`);
+
+        // ✅ 이미지 프리로딩은 백그라운드에서 비동기로 (UI 블로킹 안 함)
         if (dailySave.hourlyCards.length > 0) {
-          preloadTarotImages(dailySave.hourlyCards, currentHour, 'smart');
+          preloadTarotImages(dailySave.hourlyCards, currentHour, 'smart').then(() => {
+            const totalTime = Date.now() - startTime;
+            console.log(`⚡ 이미지 프리로드 완료 (총 ${totalTime}ms)`);
+          }).catch(error => {
+            console.warn('⚠️ 이미지 프리로드 실패 (무시 가능):', error);
+          });
         }
       } else {
         // 오늘의 카드가 없으면 상태 초기화
@@ -70,7 +83,7 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
         setSelectedCardIndex(null);
       }
     } catch (error) {
-      console.error('카드 로드 실패:', error);
+      console.error('❌ 카드 로드 실패:', error);
     }
   }, [currentHour]);
 

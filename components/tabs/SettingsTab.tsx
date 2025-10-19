@@ -299,44 +299,103 @@ const SettingsTab: React.FC = () => {
       showsVerticalScrollIndicator={false}
     >
 
-      {/* 프리미엄 구독 관리 섹션 - 준비중 표시 */}
+      {/* 프리미엄 구독 관리 섹션 - Android에서 활성화 */}
       <View style={styles.settingsSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
             <Text style={styles.sectionIconText}>👑</Text>
           </View>
           <Text style={styles.sectionTitle}>{t('settings.premium.title')}</Text>
-          <View style={[styles.comingSoonBadge]}>
-            <Text style={styles.comingSoonText}>{t('common.comingSoon')}</Text>
-          </View>
+          {/* Android: 준비중 배지 제거, 웹: 준비중 표시 */}
+          {Platform.OS === 'web' && (
+            <View style={[styles.comingSoonBadge]}>
+              <Text style={styles.comingSoonText}>{t('common.comingSoon')}</Text>
+            </View>
+          )}
+          {/* Android: 프리미엄 활성 상태 표시 */}
+          {Platform.OS === 'android' && isPremium && (
+            <View style={[styles.activeBadge, { backgroundColor: '#4caf50' }]}>
+              <Text style={styles.activeBadgeText}>{t('settings.premium.active')}</Text>
+            </View>
+          )}
         </View>
 
-        {/* 항상 준비중 메시지 표시 */}
-        <View style={styles.premiumFeatures}>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
-          </View>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
-          </View>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
-          </View>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureBullet}>•</Text>
-            <Text style={styles.featureText}>{t('settings.premium.features.premiumThemes')}</Text>
-          </View>
+        {/* Android: 프리미엄 사용자면 구독 관리, 아니면 업그레이드 */}
+        {Platform.OS === 'android' ? (
+          isPremium ? (
+            // 프리미엄 활성 사용자 - 구독 관리
+            <View style={styles.premiumStatusContainer}>
+              <View style={styles.premiumInfo}>
+                <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionStatus')}</Text>
+                <Text style={styles.premiumStatusValue}>
+                  {isSubscriptionActive ? t('settings.premium.active') : t('settings.premium.expired')}
+                </Text>
+              </View>
+              {daysUntilExpiry !== null && daysUntilExpiry > 0 && (
+                <View style={styles.premiumInfo}>
+                  <Text style={styles.premiumStatusTitle}>{t('settings.premium.remainingPeriod')}</Text>
+                  <Text style={styles.premiumStatusValue}>
+                    {t('settings.premium.daysRemaining', { days: daysUntilExpiry })}
+                  </Text>
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.manageSubscriptionButton}
+                onPress={() => setShowManagementModal(true)}
+              >
+                <Text style={styles.manageSubscriptionButtonText}>
+                  {t('settings.premium.manageSubscription')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // 비프리미엄 사용자 - 업그레이드 안내
+            <View style={styles.premiumFeatures}>
+              <View style={styles.featureRow}>
+                <Text style={styles.featureBullet}>•</Text>
+                <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
+              </View>
+              <View style={styles.featureRow}>
+                <Text style={styles.featureBullet}>•</Text>
+                <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
+              </View>
+              <View style={styles.featureRow}>
+                <Text style={styles.featureBullet}>•</Text>
+                <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
+              </View>
 
-          <TouchableOpacity
-            style={styles.upgradeButton}
-            onPress={handleUpgradePress}
-          >
-            <Text style={styles.upgradeButtonText}>{t('settings.premium.comingSoon')}</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={styles.upgradeButton}
+                onPress={() => setShowSubscriptionModal(true)}
+              >
+                <Text style={styles.upgradeButtonText}>{t('settings.premium.upgradeButton')}</Text>
+              </TouchableOpacity>
+            </View>
+          )
+        ) : (
+          // 웹: 준비중 메시지
+          <View style={styles.premiumFeatures}>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Text style={styles.featureBullet}>•</Text>
+              <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.upgradeButton}
+              onPress={handleUpgradePress}
+            >
+              <Text style={styles.upgradeButtonText}>{t('settings.premium.comingSoon')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* 화면 및 테마 설정 */}

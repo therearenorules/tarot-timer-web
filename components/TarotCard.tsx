@@ -1,5 +1,5 @@
-// components/TarotCard.tsx - 타로 카드 이미지 컴포넌트
-import React, { useState } from 'react';
+// components/TarotCard.tsx - 타로 카드 이미지 컴포넌트 (Android 성능 최적화)
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCard as TarotCardType } from '../utils/tarotData';
@@ -17,9 +17,9 @@ interface TarotCardProps {
   noBorder?: boolean;
 }
 
-export const TarotCardComponent: React.FC<TarotCardProps> = ({ 
-  card, 
-  size = 'medium', 
+export const TarotCardComponent: React.FC<TarotCardProps> = memo(({
+  card,
+  size = 'medium',
   showText = true,
   onPress,
   showBack = false,
@@ -29,7 +29,8 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
   const { t } = useTranslation();
   const { getCardName, isEnglish, isJapanese } = useTarotI18n();
 
-  const getImageSize = () => {
+  // ✅ 이미지 크기 계산 메모이제이션 (size 변경시에만 재계산)
+  const imageSize = useMemo(() => {
     // 실제 타로 카드 비율 0.596 (1144x1919)에 맞게 조정
     const aspectRatio = 0.596;
     switch (size) {
@@ -61,14 +62,13 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
         const defaultHeight = Math.round(200 * 1.02); // 2% 증가
         return { width: Math.round(defaultHeight * aspectRatio), height: defaultHeight };
     }
-  };
+  }, [size]);
 
-  const imageSize = getImageSize();
-
-  const handleImageError = () => {
+  // ✅ 에러 핸들러 메모이제이션 (card, getCardName 변경시에만 재생성)
+  const handleImageError = useCallback(() => {
     console.warn(`Failed to load image for card: ${card ? getCardName(card) : 'Unknown'}`);
     setImageError(true);
-  };
+  }, [card, getCardName]);
 
   // 카드 뒷면 표시하거나 카드가 없는 경우
   if (showBack || !card) {
@@ -146,7 +146,17 @@ export const TarotCardComponent: React.FC<TarotCardProps> = ({
   }
 
   return CardContent;
-};
+}, (prevProps, nextProps) => {
+  // ✅ 커스텀 비교 함수로 불필요한 리렌더링 방지
+  return (
+    prevProps.card?.id === nextProps.card?.id &&
+    prevProps.size === nextProps.size &&
+    prevProps.showText === nextProps.showText &&
+    prevProps.showBack === nextProps.showBack &&
+    prevProps.noBorder === nextProps.noBorder &&
+    prevProps.onPress === nextProps.onPress
+  );
+});
 
 const styles = StyleSheet.create({
   touchable: {

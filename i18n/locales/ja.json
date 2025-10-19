@@ -58,6 +58,16 @@
       "resumed": "タイマーが再開されました",
       "completed": "タイマーが完了しました",
       "halfway": "半分が経過しました"
+    },
+    "errors": {
+      "noCardsToSave": "保存するカードがありません。まずカードを引いてください。",
+      "saveFailed": "デイリータロットの保存中に問題が発生しました。",
+      "storageLimitTitle": "保存容量超過",
+      "storageLimitMessage": "無料版はデイリータロットを最大{{max}}個まで保存できます。\n現在{{current}}個のデイリータロットが保存されています。\n\nプレミアムにアップグレードして無制限保存をご利用ください！"
+    },
+    "messages": {
+      "saveSuccess": "保存完了",
+      "saveComplete": "今日のデイリータロットが日記に保存されました。"
     }
   },
   "spread": {
@@ -129,7 +139,9 @@
       "unsupportedType": "サポートされていないスプレッドタイプです。",
       "loadFailed": "スプレッド読み込み中に問題が発生しました。",
       "deleteFailed": "スプレッド削除中に問題が発生しました。",
-      "drawFailed": "カードを引く際に問題が発生しました。"
+      "drawFailed": "カードを引く際に問題が発生しました。",
+      "storageLimitTitle": "保存容量超過",
+      "storageLimitMessage": "無料版はスプレッドを最大{{max}}個まで保存できます。\n現在{{current}}個のスプレッドが保存されています。\n\nプレミアムにアップグレードして無制限保存をご利用ください！"
     },
     "messages": {
       "deleteComplete": "削除完了",
@@ -262,17 +274,21 @@
       "title": "プレミアムメンバーシップ",
       "upgradeTitle": "プレミアムアップグレード",
       "upgradeMessage": "プレミアム機能をご利用になりますか？\n• すべてのスプレッドのロック解除\n• 高度な分析機能\n• 無制限保存\n• 広告削除",
-      "upgrade": "アップグレード",
+      "upgradeButton": "アップグレード",
       "active": "有効",
       "manage": "プレミアム管理",
+      "upgrade": {
+        "title": "プレミアムアップグレード",
+        "subtitle": "すべての機能を無制限でお楽しみください"
+      },
       "features": {
         "unlockSpreads": "プレミアムスプレッドのロック解除",
         "adFree": "広告なしの体験",
         "unlimitedStorage": "無制限ストレージ",
-        "unlimitedTarotStorage": "無制限タロット保存",
+        "unlimitedTarotStorage": "無制限デイリータロット保存",
         "removeAds": "広告完全削除",
         "premiumSpreads": "プレミアムスプレッド",
-        "premiumThemes": "プレミアムテーマ"
+        "premiumThemes": "プレミアムテーマ (準備中)"
       },
       "comingSoon": "近日公開",
       "comingSoonTitle": "近日公開予定",
@@ -287,7 +303,138 @@
       "days": "日",
       "expired": "期限切れ",
       "subscriptionCompleteTitle": "🎉 サブスクリプション完了！",
-      "subscriptionCompleteMessage": "プレミアムサブスクリプションが有効になりました。すべてのプレミアム機能を自由にご利用ください！"
+      "subscriptionCompleteMessage": "プレミアムサブスクリプションが有効になりました。すべてのプレミアム機能を自由にご利用ください！",
+      "status": "サブスクリプションステータス",
+      "expiryDate": "有効期限",
+      "daysRemaining": "残り{{days}}日",
+      "manageSubscription": "サブスクリプション管理",
+      "benefits": {
+        "title": "プレミアム特典",
+        "unlimitedSaves": "無制限タロットリーディング保存（無料版：15個制限）",
+        "noAds": "すべての広告削除",
+        "premiumSpreads": "プレミアムスプレッド（ケルティッククロス、関係スプレッドなど）",
+        "futureFeatures": "今後追加される新機能を優先利用"
+      },
+      "subscription": {
+        "monthly": "月間プラン",
+        "yearly": "年間プラン",
+        "monthlyPrice": "¥500/月",
+        "yearlyPrice": "¥4,800/年",
+        "yearlySave": "年間20%お得！",
+        "selectPlan": "プランを選択",
+        "startTrial": "無料トライアル開始",
+        "subscribe": "購読する"
+      },
+      "restore": {
+        "button": "購入を復元",
+        "inProgress": "購入復元中...",
+        "success": {
+          "title": "復元完了",
+          "message": "以前の購入が正常に復元されました！"
+        },
+        "notFound": {
+          "title": "購入履歴なし",
+          "message": "復元する購入履歴が見つかりませんでした。"
+        },
+        "error": {
+          "title": "復元失敗",
+          "message": "購入復元中にエラーが発生しました。後でもう一度お試しください。"
+        }
+      },
+      "loading": {
+        "products": "サブスクリプション情報を読み込み中...",
+        "subscribing": "購読処理中...",
+        "restoring": "購入復元中..."
+      },
+      "errors": {
+        "loadProducts": "サブスクリプション情報の読み込みに失敗しました",
+        "subscribe": "購読処理中にエラーが発生しました",
+        "userCancelled": "購読がキャンセルされました"
+      },
+      "management": {
+        "title": "サブスクリプション管理",
+        "refreshComplete": "完了",
+        "refreshSuccess": "サブスクリプション状態が更新されました。",
+        "refreshError": "エラー",
+        "refreshErrorMessage": "状態の更新中にエラーが発生しました。",
+        "cancelTitle": "サブスクリプションのキャンセル",
+        "cancelMessage": "サブスクリプションのキャンセルは、App Storeから直接管理できます。\n\nキャンセル後も、現在のサブスクリプション期間が終了するまでプレミアム機能を引き続き利用できます。",
+        "cancelButton": "閉じる",
+        "openStoreButton": "App Storeを開く",
+        "subscriptionType": {
+          "monthly": "月間サブスクリプション",
+          "yearly": "年間サブスクリプション",
+          "unknown": "不明"
+        },
+        "statusLabels": {
+          "inactive": "非アクティブ",
+          "expired": "期限切れ",
+          "active": "アクティブ"
+        },
+        "detailLabels": {
+          "subscriptionType": "サブスクリプションタイプ:",
+          "purchaseDate": "購入日:",
+          "expiryDate": "有効期限:",
+          "remainingDays": "残り期間:",
+          "lastValidated": "最終検証:",
+          "daysRemaining": "{{days}}日",
+          "expiredLabel": "期限切れ"
+        },
+        "inactiveMessage": "プレミアムサブスクリプションは有効ではありません。",
+        "inactiveSubtext": "無制限のタロットセッションと広告なしの体験を楽しむには、サブスクリプションを開始してください。",
+        "featuresTitle": "プレミアム機能ステータス",
+        "featureNames": {
+          "unlimitedStorage": "無制限ストレージ",
+          "adFree": "広告なし",
+          "premiumSpreads": "プレミアムスプレッド"
+        },
+        "featureStatus": {
+          "active": "有効",
+          "inactive": "無効"
+        },
+        "actions": {
+          "refresh": "状態を更新",
+          "cancel": "サブスクリプションをキャンセル",
+          "upgrade": "プレミアムにアップグレード",
+          "close": "閉じる"
+        }
+      },
+      "plans": {
+        "title": "プレミアムサブスクリプション",
+        "premiumActiveTitle": "プレミアム有効",
+        "premiumActiveMessage": "プレミアムサブスクリプション有効！",
+        "premiumActiveDescription": "無制限のタロットセッションとプレミアム機能をお楽しみください。",
+        "featuresTitle": "プレミアムにアップグレード",
+        "loadingText": "サブスクリプションオプションを読み込み中...",
+        "selectPlan": "プランを選択",
+        "selectPlanPrompt": "通知",
+        "selectPlanMessage": "サブスクリプションプランを選択してください。",
+        "purchaseSuccess": "サブスクリプション完了！",
+        "purchaseSuccessMessage": "プレミアムサブスクリプションが有効になりました。無制限のタロットセッションをお楽しみください！",
+        "purchaseFailed": "購入失敗",
+        "purchaseFailedMessage": "サブスクリプション処理中にエラーが発生しました。もう一度お試しください。",
+        "loadError": "エラー",
+        "loadErrorMessage": "サブスクリプション商品の読み込みに失敗しました。",
+        "startSubscription": "サブスクリプション開始",
+        "purchasing": "購入処理中...",
+        "disclaimer": "サブスクリプションは自動更新され、いつでもキャンセルできます。",
+        "iosDisclaimer1": "購入確定時にiTunesアカウントに課金されます。",
+        "iosDisclaimer2": "現在の期間終了の少なくとも24時間前に自動更新をオフにしない限り、サブスクリプションは自動的に更新されます。",
+        "iosDisclaimer3": "iTunesアカウント設定でサブスクリプションと自動更新を管理できます。",
+        "androidDisclaimer1": "購入確定時にGoogle Playアカウントに課金されます。",
+        "androidDisclaimer2": "現在の期間終了の少なくとも24時間前に自動更新をオフにしない限り、サブスクリプションは自動的に更新されます。",
+        "androidDisclaimer3": "Google Playストアアプリのサブスクリプション設定で管理およびキャンセルできます。",
+        "webDisclaimer": "サブスクリプション管理は各プラットフォームのアプリ設定で可能です。",
+        "freeTrial": "無料トライアル期間中でもキャンセル可能です。",
+        "agreementText": "サブスクリプションを進めることにより、上記の条件に同意したものとみなされます。",
+        "privacyPolicy": "プライバシーポリシー",
+        "termsOfService": "利用規約",
+        "discount": "{{percent}}% オフ",
+        "perYear": "/ 年",
+        "perMonth": "/ 月",
+        "monthlyEquivalent": "月額{{price}}円相当",
+        "nextRenewal": "次回更新日: {{date}}"
+      }
     },
     "display": {
       "title": "画面とテーマ",

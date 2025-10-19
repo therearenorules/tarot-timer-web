@@ -663,9 +663,16 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return false;
     }
 
-    // 중복 스케줄링 방지
+    // 중복 스케줄링 방지 (강화)
     if (isScheduling) {
       console.log('⏳ 이미 스케줄링 진행 중 - 스킵');
+      return false;
+    }
+
+    // ✅ 추가: 마지막 스케줄 시간 체크 (1초 이내 중복 호출 방지)
+    const now = Date.now();
+    if (lastScheduleTime && (now - lastScheduleTime) < 1000) {
+      console.log('⏳ 최근 1초 이내 스케줄링 완료 - 중복 호출 방지');
       return false;
     }
 
@@ -681,15 +688,20 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         return false;
       }
 
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('🔔 강화된 알림 스케줄링 시작...');
 
       // 2. 오늘의 24시간 타로 카드 데이터 로드
       const todayCards = await getTodayTarotCards();
-      console.log(`🎴 타로 카드 데이터: ${todayCards ? '로드 성공' : '없음'}`);
+      console.log(`   • 타로 카드 데이터: ${todayCards ? `${todayCards.length}개` : '없음'}`);
+      console.log(`   • 권한 상태: ${hasRealPermission ? '✅ 허용됨' : '❌ 거부됨'}`);
+      console.log(`   • 시간별 알림: ${settingsToUse.hourlyEnabled ? '✅ 활성화' : '❌ 비활성화'}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       // ✅ 카드 데이터가 없으면 오전 8시 리마인더만 생성
       if (!todayCards || todayCards.length === 0) {
-        console.log('⏸️ 카드를 아직 뽑지 않음 - 오전 8시 리마인더 생성');
+        console.log('⏸️ 카드를 아직 뽑지 않음 - 오전 8시 리마인더만 생성');
+        console.log('   ℹ️  카드 데이터: null 또는 빈 배열');
 
         // 기존 알림 모두 취소 (깨끗한 상태에서 시작)
         await Notifications.cancelAllScheduledNotificationsAsync();
@@ -712,20 +724,20 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           }
         };
 
-        const message = reminderMessages[currentLang] || reminderMessages['ko'];
+        const message = reminderMessages[currentLang as keyof typeof reminderMessages] || reminderMessages['ko'];
 
         // 오전 8시 리마인더 시간 계산 (오늘 또는 내일)
         const reminder8AM = new Date();
         let targetHour = 8; // 기본 8AM
 
         // ✅ 조용한 시간과 충돌 시 조정 (조용한 시간 종료 직후로 변경)
-        const settings = await loadNotificationSettings();
-        if (settings.quietHoursEnabled) {
-          const quietEnd = settings.quietHoursEnd;
+        // settingsToUse 파라미터 사용 (중복 로드 방지)
+        if (settingsToUse.quietHoursEnabled) {
+          const quietEnd = settingsToUse.quietHoursEnd;
 
           // 조용한 시간이 8AM을 포함하는지 확인
           // 예: quietHoursStart=22, quietHoursEnd=9 → 8AM이 조용한 시간에 포함됨
-          if (settings.quietHoursStart > settings.quietHoursEnd) {
+          if (settingsToUse.quietHoursStart > settingsToUse.quietHoursEnd) {
             // 자정 걸침 (예: 22시 ~ 9시)
             if (targetHour < quietEnd) {
               targetHour = quietEnd; // 8 → 9시로 조정
@@ -733,7 +745,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
             }
           } else {
             // 자정 안 걸침 (예: 23시 ~ 1시)
-            if (targetHour >= settings.quietHoursStart && targetHour < quietEnd) {
+            if (targetHour >= settingsToUse.quietHoursStart && targetHour < quietEnd) {
               targetHour = quietEnd;
               console.log(`⏰ 8AM 리마인더가 조용한 시간과 충돌 → ${targetHour}시로 조정`);
             }
@@ -743,8 +755,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         reminder8AM.setHours(targetHour, 0, 0, 0);
 
         // 현재 시간이 목표 시간 이후라면 내일로 설정
-        const now = new Date();
-        if (now.getHours() >= targetHour) {
+        const nowTime = new Date();
+        if (nowTime.getHours() >= targetHour) {
           reminder8AM.setDate(reminder8AM.getDate() + 1);
         }
 
@@ -769,13 +781,25 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
           console.log('✅ 오전 8시 카드 뽑기 리마인더 생성 완료');
           console.log('💡 24시간 카드를 뽑으면 자동으로 시간대별 알림이 생성됩니다.');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         } catch (reminderError) {
           console.error('❌ 8AM 리마인더 생성 실패:', reminderError);
         }
 
         setIsScheduling(false);
+        setLastScheduleTime(Date.now()); // ✅ 추가: 스케줄 시간 기록
         return true; // 리마인더는 생성함
       }
+
+      // ✅ 추가 검증: 카드가 24개가 아니면 비정상 상태
+      if (todayCards.length !== 24) {
+        console.error(`❌ 비정상적인 카드 개수: ${todayCards.length}개 (24개 필요)`);
+        console.error('   ℹ️  알림 스케줄링 중단 - 카드 데이터 재생성 필요');
+        setIsScheduling(false);
+        return false;
+      }
+
+      console.log('✅ 카드 데이터 검증 완료: 24개 카드 확인됨');
 
       // 3. 기존 알림 모두 취소 (안전한 정리)
       await Notifications.cancelAllScheduledNotificationsAsync();
@@ -790,17 +814,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       console.log(`🕐 현재 시각: ${now.getHours()}:${now.getMinutes()}, 조용한 시간: ${settingsToUse.quietHoursStart}:00 - ${settingsToUse.quietHoursEnd}:00`);
 
-      // 5. 현재 시간부터 24시간 범위 계산
-      // 현재 시간이 14:30이면 → 15시부터 다음날 14시까지 (정확히 24시간 커버)
+      // 5. 오늘 하루의 남은 시간 범위 계산
+      // 현재 시간이 14:30이면 → 15시부터 오늘 23시까지만 (오늘 하루만 커버)
+      // 자정(00:00)에는 리셋 알림이 뜨고, 사용자가 새 카드를 뽑으면 다시 스케줄링
       const currentHourIndex = now.getHours();
       const nextHour = new Date(now);
       nextHour.setHours(now.getHours() + 1, 0, 0, 0); // 다음 정각 (분, 초, 밀리초를 0으로)
-      console.log(`⏰ 현재 시간: ${currentHourIndex}시, 다음 정각: ${nextHour.getHours()}시`);
 
-      // 6. 다음 정각부터 정확히 24시간 범위만 스케줄 (현재 시간 제외)
-      // 예: 현재 14시 → 15시부터 다음날 14시까지 (15, 16, ..., 23, 0, 1, ..., 14)
-      for (let i = 0; i < 24 && scheduledCount < maxNotifications; i++) {
-        const targetHour = (currentHourIndex + 1 + i) % 24; // 다음 시간부터 24시간
+      // 오늘 남은 시간 계산 (현재 시간부터 23시까지)
+      const hoursRemainingToday = 23 - currentHourIndex;
+      console.log(`⏰ 현재 시간: ${currentHourIndex}시, 다음 정각: ${nextHour.getHours()}시`);
+      console.log(`📅 오늘 남은 시간: ${hoursRemainingToday}시간 (${nextHour.getHours()}시 ~ 23시)`);
+
+      // 6. 다음 정각부터 오늘 23시까지만 스케줄 (오늘 하루만)
+      // 예: 현재 14시 → 15시부터 23시까지만 (15, 16, 17, 18, 19, 20, 21, 22, 23)
+      for (let i = 0; i < hoursRemainingToday && scheduledCount < maxNotifications; i++) {
+        const targetHour = currentHourIndex + 1 + i; // 다음 시간부터 오늘 23시까지
         const triggerDate = new Date(nextHour.getTime() + (i * 60 * 60 * 1000));
         const hour = targetHour;
 

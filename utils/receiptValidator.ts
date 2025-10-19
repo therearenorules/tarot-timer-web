@@ -467,7 +467,7 @@ export class ReceiptValidator {
         store_transaction_id: validationResult.originalTransactionId || '',
         unlimited_storage: validationResult.isActive,
         ad_free: validationResult.isActive,
-        premium_themes: validationResult.isActive,
+        premium_spreads: validationResult.isActive,
         last_validated: new Date().toISOString(),
         validation_environment: validationResult.environment || 'Unknown'
       };

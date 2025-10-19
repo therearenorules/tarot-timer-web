@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Platform } from 'react-native';
-import IAPManager from '../utils/IAPManager';
+import IAPManager from '../utils/iapManager';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
 import ReceiptValidator from '../utils/receiptValidator';
 
@@ -33,14 +33,14 @@ interface PremiumContextType {
 export type PremiumFeature =
   | 'unlimited_storage'
   | 'ad_free'
-  | 'premium_themes';
+  | 'premium_spreads';
 
 // 기본값 정의
 const defaultPremiumStatus: PremiumStatus = {
   is_premium: false,
   unlimited_storage: false,
   ad_free: false,
-  premium_themes: false
+  premium_spreads: false
 };
 
 // Context 생성
@@ -128,10 +128,22 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
    * 이벤트 리스너 설정
    */
   const setupEventListeners = () => {
-    // 웹 환경에서만 window 이벤트 리스너 사용
+    // 웹 환경: window 이벤트 리스너
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.addEventListener('premiumStatusChanged', handlePremiumStatusChange);
       window.addEventListener('purchaseError', handlePurchaseError);
+    }
+
+    // 모바일 환경: DeviceEventEmitter
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      try {
+        const { DeviceEventEmitter } = require('react-native');
+        const subscription = DeviceEventEmitter.addListener('premiumStatusChanged', handlePremiumStatusChangeMobile);
+        // cleanup 함수를 위해 저장
+        (globalThis as any).__premiumEventSubscription = subscription;
+      } catch (error) {
+        console.warn('⚠️ DeviceEventEmitter 설정 실패:', error);
+      }
     }
   };
 
@@ -139,19 +151,40 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
    * 이벤트 리스너 제거
    */
   const removeEventListeners = () => {
-    // 웹 환경에서만 window 이벤트 리스너 제거
+    // 웹 환경: window 이벤트 리스너 제거
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.removeEventListener('premiumStatusChanged', handlePremiumStatusChange);
       window.removeEventListener('purchaseError', handlePurchaseError);
     }
+
+    // 모바일 환경: DeviceEventEmitter 제거
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      const subscription = (globalThis as any).__premiumEventSubscription;
+      if (subscription) {
+        subscription.remove();
+        delete (globalThis as any).__premiumEventSubscription;
+      }
+    }
   };
 
   /**
-   * 프리미엄 상태 변경 이벤트 핸들러
+   * 프리미엄 상태 변경 이벤트 핸들러 (웹)
    */
   const handlePremiumStatusChange = async (event: CustomEvent) => {
     try {
-      console.log('🔄 프리미엄 상태 변경 감지');
+      console.log('🔄 [웹] 프리미엄 상태 변경 감지');
+      await refreshStatus();
+    } catch (error) {
+      console.error('❌ 상태 변경 처리 오류:', error);
+    }
+  };
+
+  /**
+   * 프리미엄 상태 변경 이벤트 핸들러 (모바일)
+   */
+  const handlePremiumStatusChangeMobile = async (data: any) => {
+    try {
+      console.log('🔄 [모바일] 프리미엄 상태 변경 감지:', data);
       await refreshStatus();
     } catch (error) {
       console.error('❌ 상태 변경 처리 오류:', error);
@@ -316,8 +349,8 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         return premiumStatus.unlimited_storage;
       case 'ad_free':
         return premiumStatus.ad_free;
-      case 'premium_themes':
-        return premiumStatus.premium_themes;
+      case 'premium_spreads':
+        return premiumStatus.premium_spreads;
       default:
         return false;
     }
@@ -391,7 +424,7 @@ export const usePremiumAccess = (feature: string): boolean => {
     case 'unlimited_saves':
       return canAccessFeature('unlimited_storage');
     case 'premium_spreads':
-      return canAccessFeature('premium_themes');
+      return canAccessFeature('premium_spreads');
     case 'notifications':
       return true; // 모든 사용자가 이용 가능
     default:

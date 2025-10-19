@@ -19,7 +19,7 @@ import { LanguageUtils } from '../../i18n/index';
 import { Colors, Spacing, BorderRadius } from '../DesignSystem';
 import { useTimer } from '../../hooks/useTimer';
 import { useTarotCards } from '../../hooks/useTarotCards';
-import { TarotUtils } from '../../utils/tarotData';
+import { TarotUtils, DailyTarotSave } from '../../utils/tarotData';
 import { TarotCardComponent } from '../TarotCard';
 import { Icon } from '../Icon';
 import InterstitialAd from '../ads/InterstitialAd';
@@ -467,6 +467,57 @@ const TimerTab = memo(() => {
     setModalVisible(false);
   };
 
+  // 데일리 타로 저장 핸들러
+  const handleSaveDailyTarot = async () => {
+    try {
+      // 뽑은 카드가 있는지 확인
+      if (!hasCardsForToday || dailyCards.length === 0) {
+        Alert.alert(t('common.error'), t('timer.errors.noCardsToSave'));
+        return;
+      }
+
+      const today = TarotUtils.getTodayDateString();
+      const dailyTarotSave: DailyTarotSave = {
+        id: TarotUtils.generateId(),
+        date: today,
+        hourlyCards: dailyCards,
+        memos: cardMemos,
+        insights: '', // 인사이트는 나중에 추가 가능
+        savedAt: new Date().toISOString()
+      };
+
+      await TarotUtils.saveDailyTarot(dailyTarotSave);
+
+      Alert.alert(
+        '✨ ' + t('timer.messages.saveSuccess'),
+        t('timer.messages.saveComplete'),
+        [{ text: t('common.ok') }]
+      );
+    } catch (error: any) {
+      console.error('데일리 타로 저장 실패:', error);
+
+      // 저장 제한 도달 에러 처리
+      if (error.message === 'STORAGE_LIMIT_REACHED' && error.limitInfo) {
+        const { currentCount, maxCount } = error.limitInfo;
+        Alert.alert(
+          t('timer.errors.storageLimitTitle'),
+          t('timer.errors.storageLimitMessage', { current: currentCount, max: maxCount }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('settings.premium.upgrade'),
+              onPress: () => {
+                console.log('프리미엄 업그레이드 요청');
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(t('common.error'), t('timer.errors.saveFailed'));
+      }
+    }
+  };
+
   const currentDate = LanguageUtils.formatDate(new Date());
 
   return (
@@ -596,7 +647,10 @@ const TimerTab = memo(() => {
         {/* 데일리 타로 저장하기 버튼 */}
         {hasCardsForToday && (
           <View style={styles.saveSection}>
-            <TouchableOpacity style={styles.dailySaveButton}>
+            <TouchableOpacity
+              style={styles.dailySaveButton}
+              onPress={handleSaveDailyTarot}
+            >
               <Text style={styles.dailySaveButtonText}>{t('timer.saveDailyTarot')}</Text>
             </TouchableOpacity>
           </View>

@@ -58,8 +58,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(!lazy);
+  const [retryCount, setRetryCount] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const imageRef = useRef<Image>(null);
+  const maxRetries = 2; // 최대 재시도 횟수
 
   // 캐시 확인
   const isCached = isImageCached(source);
@@ -113,9 +115,24 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   };
 
   const handleError = () => {
-    setLoading(false);
-    setError(true);
-    onError?.();
+    // 재시도 로직
+    if (retryCount < maxRetries) {
+      console.log(`Image load failed, retrying... (${retryCount + 1}/${maxRetries})`);
+      setRetryCount(prev => prev + 1);
+      setLoading(true);
+      setError(false);
+
+      // 잠시 대기 후 재시도
+      setTimeout(() => {
+        if (imageRef.current) {
+          setLoading(true);
+        }
+      }, 500 * (retryCount + 1)); // 점진적 백오프
+    } else {
+      setLoading(false);
+      setError(true);
+      onError?.();
+    }
   };
 
   // 로딩 중 플레이스홀더

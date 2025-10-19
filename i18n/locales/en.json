@@ -58,6 +58,16 @@
       "resumed": "Timer resumed",
       "completed": "Timer completed",
       "halfway": "Halfway through"
+    },
+    "errors": {
+      "noCardsToSave": "No cards to save. Please draw cards first.",
+      "saveFailed": "Failed to save daily tarot.",
+      "storageLimitTitle": "Storage Limit Reached",
+      "storageLimitMessage": "Free version allows up to {{max}} daily tarot saves.\nYou currently have {{current}} daily tarot saves.\n\nUpgrade to Premium for unlimited storage!"
+    },
+    "messages": {
+      "saveSuccess": "Saved",
+      "saveComplete": "Today's daily tarot has been saved to your diary."
     }
   },
   "spread": {
@@ -129,7 +139,9 @@
       "unsupportedType": "Unsupported spread type.",
       "loadFailed": "An error occurred while loading the spread.",
       "deleteFailed": "An error occurred while deleting the spread.",
-      "drawFailed": "An error occurred while drawing cards."
+      "drawFailed": "An error occurred while drawing cards.",
+      "storageLimitTitle": "Storage Limit Reached",
+      "storageLimitMessage": "Free version allows up to {{max}} spread saves.\nYou currently have {{current}} spread saves.\n\nUpgrade to Premium for unlimited storage!"
     },
     "messages": {
       "deleteComplete": "Delete Complete",
@@ -261,18 +273,65 @@
     "premium": {
       "title": "Premium Membership",
       "upgradeTitle": "Premium Upgrade",
-      "upgradeMessage": "Would you like to use premium features?\n• Unlock all spreads\n• Advanced analytics\n• Unlimited storage\n• Remove ads",
-      "upgrade": "Upgrade",
+      "upgradeMessage": "Would you like to use premium features?\n• Unlock premium spreads\n• Unlimited storage (Free: 15 limit)\n• Remove ads",
+      "upgradeButton": "Upgrade",
       "active": "Active",
       "manage": "Manage Premium",
+      "upgrade": {
+        "title": "Upgrade to Premium",
+        "subtitle": "Enjoy all features unlimited"
+      },
+      "benefits": {
+        "title": "Premium Benefits",
+        "unlimitedSaves": "Unlimited tarot reading saves (Free: 15 limit)",
+        "noAds": "Remove all ads",
+        "premiumSpreads": "Premium spreads (Celtic Cross, Relationship, etc.)",
+        "futureFeatures": "Early access to future premium features"
+      },
       "features": {
         "unlockSpreads": "Unlock premium spreads",
         "adFree": "Ad-free experience",
         "unlimitedStorage": "Unlimited storage",
-        "unlimitedTarotStorage": "Unlimited tarot storage",
+        "unlimitedTarotStorage": "Unlimited daily tarot storage",
         "removeAds": "Complete ad removal",
-        "premiumSpreads": "Premium spreads",
-        "premiumThemes": "Premium themes"
+        "premiumSpreads": "Premium spreads"
+      },
+      "loading": "Loading subscription options...",
+      "popular": "Popular",
+      "select": "Select",
+      "webNotice": "Subscription is not available in web environment. Please use mobile app.",
+      "status": {
+        "active": "Premium Active",
+        "description": "You can use all premium features"
+      },
+      "manage": {
+        "title": "Manage Subscription",
+        "message": "Would you like to manage your subscription?",
+        "button": "Manage Subscription",
+        "openStore": "Open Store"
+      },
+      "restore": {
+        "button": "Restore Purchase",
+        "success": {
+          "title": "Restore Complete",
+          "message": "Previous purchase has been successfully restored!"
+        },
+        "notFound": {
+          "title": "No Purchase Found",
+          "message": "Could not find any purchase to restore."
+        },
+        "error": {
+          "title": "Restore Failed",
+          "message": "An error occurred while restoring purchase."
+        }
+      },
+      "purchaseSuccess": {
+        "title": "Subscription Complete",
+        "message": "Premium subscription has been activated!"
+      },
+      "purchaseError": {
+        "title": "Purchase Failed",
+        "message": "An error occurred during purchase."
       },
       "comingSoon": "Coming Soon",
       "comingSoonTitle": "Coming Soon",
@@ -287,7 +346,95 @@
       "days": "days",
       "expired": "Expired",
       "subscriptionCompleteTitle": "🎉 Subscription Complete!",
-      "subscriptionCompleteMessage": "Premium subscription has been activated. Feel free to use all premium features!"
+      "subscriptionCompleteMessage": "Premium subscription has been activated. Feel free to use all premium features!",
+      "status": "Subscription Status",
+      "expiryDate": "Expiry Date",
+      "daysRemaining": "{{days}} days remaining",
+      "manageSubscription": "Manage Subscription",
+      "management": {
+        "title": "Manage Subscription",
+        "refreshComplete": "Complete",
+        "refreshSuccess": "Subscription status has been refreshed.",
+        "refreshError": "Error",
+        "refreshErrorMessage": "An error occurred while refreshing status.",
+        "cancelTitle": "Cancel Subscription",
+        "cancelMessage": "You can manage subscription cancellation directly from the App Store.\n\nEven after cancellation, you can continue to use premium features until the end of your current subscription period.",
+        "cancelButton": "Close",
+        "openStoreButton": "Open App Store",
+        "subscriptionType": {
+          "monthly": "Monthly Subscription",
+          "yearly": "Yearly Subscription",
+          "unknown": "Unknown"
+        },
+        "statusLabels": {
+          "inactive": "Inactive",
+          "expired": "Expired",
+          "active": "Active"
+        },
+        "detailLabels": {
+          "subscriptionType": "Subscription Type:",
+          "purchaseDate": "Purchase Date:",
+          "expiryDate": "Expiry Date:",
+          "remainingDays": "Remaining:",
+          "lastValidated": "Last Validated:",
+          "daysRemaining": "{{days}} days",
+          "expiredLabel": "Expired"
+        },
+        "inactiveMessage": "Premium subscription is not active.",
+        "inactiveSubtext": "Start a subscription to enjoy unlimited tarot sessions and ad-free experience.",
+        "featuresTitle": "Premium Features Status",
+        "featureNames": {
+          "unlimitedStorage": "Unlimited Storage",
+          "adFree": "Ad-Free",
+          "premiumSpreads": "Premium Spreads"
+        },
+        "featureStatus": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "actions": {
+          "refresh": "Refresh Status",
+          "cancel": "Cancel Subscription",
+          "upgrade": "Upgrade to Premium",
+          "close": "Close"
+        }
+      },
+      "plans": {
+        "title": "Premium Subscription",
+        "premiumActiveTitle": "Premium Active",
+        "premiumActiveMessage": "Premium Subscription Active!",
+        "premiumActiveDescription": "Enjoy unlimited tarot sessions and premium features.",
+        "featuresTitle": "Upgrade to Premium",
+        "loadingText": "Loading subscription options...",
+        "selectPlan": "Select Plan",
+        "selectPlanPrompt": "Notification",
+        "selectPlanMessage": "Please select a subscription plan.",
+        "purchaseSuccess": "Subscription Complete!",
+        "purchaseSuccessMessage": "Premium subscription has been activated. Enjoy unlimited tarot sessions!",
+        "purchaseFailed": "Purchase Failed",
+        "purchaseFailedMessage": "An error occurred while processing subscription. Please try again.",
+        "loadError": "Error",
+        "loadErrorMessage": "Failed to load subscription products.",
+        "startSubscription": "Start Subscription",
+        "purchasing": "Processing purchase...",
+        "disclaimer": "Subscription auto-renews and can be cancelled anytime.",
+        "iosDisclaimer1": "Payment will be charged to iTunes Account at confirmation of purchase.",
+        "iosDisclaimer2": "Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period.",
+        "iosDisclaimer3": "Manage subscription and auto-renewal in iTunes Account Settings.",
+        "androidDisclaimer1": "Payment will be charged to Google Play Account at confirmation of purchase.",
+        "androidDisclaimer2": "Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period.",
+        "androidDisclaimer3": "Manage and cancel subscription in Google Play Store app subscription settings.",
+        "webDisclaimer": "Subscription management is available in each platform's app settings.",
+        "freeTrial": "You can cancel even during the free trial period.",
+        "agreementText": "By proceeding with subscription, you agree to the above terms.",
+        "privacyPolicy": "Privacy Policy",
+        "termsOfService": "Terms of Service",
+        "discount": "{{percent}}% Off",
+        "perYear": "/ year",
+        "perMonth": "/ month",
+        "monthlyEquivalent": "Equivalent to {{price}} per month",
+        "nextRenewal": "Next renewal: {{date}}"
+      }
     },
     "display": {
       "title": "Display & Theme",

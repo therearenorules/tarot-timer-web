@@ -7,9 +7,25 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { BannerAd as RNBannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePremium } from '../../contexts/PremiumContext';
 import AdManager from '../../utils/adManager';
 import { AD_CONFIG } from '../../utils/adConfig';
+import Constants from 'expo-constants';
+
+// ✅ Android 최적화: 안전한 개발 환경 감지
+const isDevelopment = (() => {
+  if (typeof __DEV__ !== 'undefined') {
+    return __DEV__;
+  }
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+  if (Constants.manifest?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
+    return false;
+  }
+  return false;
+})();
 
 interface BannerAdProps {
   placement?: 'main_screen' | 'session_complete' | 'journal_entry';
@@ -27,6 +43,7 @@ const BannerAd: React.FC<BannerAdProps> = ({
   onAdClicked
 }) => {
   const { isPremium, canAccessFeature } = usePremium();
+  const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,21 +111,25 @@ const BannerAd: React.FC<BannerAdProps> = ({
 
   // 🔴 긴급 수정: iOS에서 광고 비활성화 (Build 33)
   if (Platform.OS === 'ios') {
+    console.log('🍎 iOS: 배너 광고 비활성화됨 (Build 33 긴급 수정)');
     return null;
   }
+
+  // Android에서만 표시
+  console.log(`📱 Android 배너 광고 준비: ${placement}`);
 
   // 오류 발생 시 표시하지 않음
   if (error) {
     return null;
   }
 
-  // 실제 AdMob 배너 광고
-  const adUnitId = testMode || __DEV__
+  // ✅ Android 최적화: 실제 AdMob 배너 광고 ID 선택
+  const adUnitId = testMode || isDevelopment
     ? TestIds.BANNER
     : AdManager.getBannerAdUnitId();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <RNBannerAd
         unitId={adUnitId}
         size={BannerAdSize.BANNER}

@@ -15,7 +15,7 @@ import {
   Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import IAPManager, { SubscriptionProduct, PurchaseResult } from '../utils/IAPManager';
+import IAPManager, { SubscriptionProduct, PurchaseResult } from '../utils/iapManager';
 import { PremiumStatus } from '../utils/localStorage';
 
 const { width } = Dimensions.get('window');

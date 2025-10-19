@@ -101,7 +101,7 @@ export interface PremiumStatus {
   store_transaction_id?: string;
   unlimited_storage: boolean;
   ad_free: boolean;
-  premium_themes: boolean;
+  premium_spreads: boolean;
   // 영수증 검증 관련 필드 추가
   last_validated?: string;
   validation_environment?: 'Sandbox' | 'Production' | 'Unknown';
@@ -124,7 +124,7 @@ export class LocalStorageManager {
   // 기본 설정
   private static readonly DATA_VERSION = '1.0.0';
   private static readonly FREE_LIMITS = {
-    max_daily_sessions: 30,      // 데일리 타로 30개
+    max_daily_sessions: 15,      // 데일리 타로 15개 (스프레드와 동일)
     max_spread_sessions: 15,     // 스프레드 15개
     max_journal_entries: 20
   };
@@ -335,7 +335,7 @@ export class LocalStorageManager {
       is_premium: false,
       unlimited_storage: false,
       ad_free: false,
-      premium_themes: false
+      premium_spreads: false
     });
   }
 
@@ -376,7 +376,7 @@ export class LocalStorageManager {
         is_premium: true,
         ad_free: true,
         unlimited_storage: true,
-        premium_themes: false,
+        premium_spreads: true,
         subscription_type: 'trial',
         purchase_date: new Date().toISOString(),
         expiry_date: trialEndDate.toISOString()
@@ -396,7 +396,7 @@ export class LocalStorageManager {
         is_premium: true,
         ad_free: true,
         unlimited_storage: true,
-        premium_themes: false,
+        premium_spreads: true,
         subscription_type: 'trial',
         purchase_date: installInfo.first_launch_date,
         expiry_date: installInfo.trial_end_date
