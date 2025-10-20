@@ -64,8 +64,8 @@ const isDevelopment = (() => {
   if (process.env.NODE_ENV === 'development') {
     return true;
   }
-  // Expo Constants 체크
-  if (Constants.manifest?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
+  // Expo Constants 체크 (SDK 46+ 호환)
+  if (Constants.expoConfig?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
     return false;
   }
   // 기본값: 프로덕션으로 간주

@@ -364,6 +364,7 @@
         "subscriptionType": {
           "monthly": "月間サブスクリプション",
           "yearly": "年間サブスクリプション",
+          "trial": "7日間無料トライアル",
           "unknown": "不明"
         },
         "statusLabels": {
@@ -626,6 +627,9 @@
     "completeMessage": "今日一日のタロットカードが準備されました。\n現在{{hour}}時のカード: {{cardName}}",
     "redrawCards": "新しく引く",
     "redrawCard": "再度引く",
+    "redrawWarningTitle": "⚠️ カードを再度引く",
+    "redrawWarningMessage": "すべてのカードを再度引きますか？\n\n既存の24枚のカードと作成したメモがすべて新しいカードに交換されます。",
+    "confirmRedraw": "再度引く",
     "redrawError": "カードを再度引く際に問題が発生しました。",
     "drawError": "カードを引く際に問題が発生しました。"
   },

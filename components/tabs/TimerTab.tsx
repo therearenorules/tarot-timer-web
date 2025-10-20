@@ -1,9 +1,10 @@
-import React, { memo, useState, useRef, useEffect } from 'react';
+import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
+  FlatList,
   StyleSheet,
   TextInput,
   KeyboardAvoidingView,
@@ -251,13 +252,89 @@ const CardDetailModal = memo(({
   );
 });
 
-// 24시간 에너지 흐름 컴포넌트
-const EnergyFlowSection = memo(({ 
-  dailyCards, 
-  currentHour, 
+// ✅ Android 최적화: 개별 카드 렌더링 컴포넌트 (메모이제이션)
+const EnergyCardItem = memo(({
+  hour,
+  card,
+  isCurrentHour,
+  cardMemo,
+  onCardPress,
+  getCardName,
+  t
+}: {
+  hour: number;
+  card: any;
+  isCurrentHour: boolean;
+  cardMemo: string | undefined;
+  onCardPress: (hour: number) => void;
+  getCardName: (card: any) => string;
+  t: any;
+}) => {
+  const handlePress = useCallback(() => {
+    onCardPress(hour);
+  }, [hour, onCardPress]);
+
+  const handleMemoPress = useCallback((e: any) => {
+    e.stopPropagation();
+    onCardPress(hour);
+  }, [hour, onCardPress]);
+
+  const timeText = hour === 0 ? t('timer.midnight') :
+                   hour === 12 ? t('timer.noon') :
+                   hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 });
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.energyCard,
+        isCurrentHour ? styles.currentEnergyCard : null
+      ]}
+      onPress={handlePress}
+    >
+      <View style={styles.energyCardTime}>
+        <Text style={[
+          styles.energyCardTimeText,
+          isCurrentHour ? styles.currentEnergyCardTimeText : null
+        ]}>
+          {timeText}
+        </Text>
+      </View>
+
+      <View style={styles.energyCardImage}>
+        <TarotCardComponent
+          card={card}
+          size="medium"
+          showText={false}
+        />
+      </View>
+
+      <Text style={[
+        styles.energyCardName,
+        isCurrentHour ? styles.currentEnergyCardName : null
+      ]} numberOfLines={1}>
+        {getCardName(card)}
+      </Text>
+
+      {/* 메모 버튼 */}
+      <TouchableOpacity
+        style={styles.memoButton}
+        onPress={handleMemoPress}
+      >
+        <Text style={styles.memoButtonText}>
+          {cardMemo ? '📝' : '📄'}
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+});
+
+// ✅ Android 최적화: FlatList 기반 24시간 에너지 흐름 컴포넌트
+const EnergyFlowSection = memo(({
+  dailyCards,
+  currentHour,
   onCardPress,
   cardMemos,
-  onRedraw 
+  onRedraw
 }: {
   dailyCards: any[];
   currentHour: number;
@@ -267,15 +344,49 @@ const EnergyFlowSection = memo(({
 }) => {
   const { t } = useTranslation();
   const { getCardName } = useTarotI18n();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   // 현재 시간이 바뀔 때마다 스크롤 위치 조정
   useEffect(() => {
-    if (scrollViewRef.current && dailyCards.length > 0) {
-      const scrollX = currentHour * (cardWidth + Spacing.sm);
-      scrollViewRef.current.scrollTo({ x: scrollX, animated: true });
+    if (flatListRef.current && dailyCards.length > 0) {
+      flatListRef.current.scrollToIndex({
+        index: currentHour,
+        animated: true,
+        viewPosition: 0.5 // 중앙 정렬
+      });
     }
   }, [currentHour, dailyCards.length]);
+
+  // 24시간 데이터 생성
+  const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    card: dailyCards[hour],
+    isCurrentHour: hour === currentHour,
+    cardMemo: cardMemos[hour]
+  })).filter(item => item.card !== null && item.card !== undefined);
+
+  // 렌더 아이템 함수 (useCallback으로 최적화)
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <EnergyCardItem
+      hour={item.hour}
+      card={item.card}
+      isCurrentHour={item.isCurrentHour}
+      cardMemo={item.cardMemo}
+      onCardPress={onCardPress}
+      getCardName={getCardName}
+      t={t}
+    />
+  ), [onCardPress, getCardName, t]);
+
+  // keyExtractor (useCallback으로 최적화)
+  const keyExtractor = useCallback((item: any) => `hour-${item.hour}`, []);
+
+  // getItemLayout (성능 최적화 - 스크롤 성능 향상)
+  const getItemLayout = useCallback((data: any, index: number) => ({
+    length: cardWidth + Spacing.sm,
+    offset: (cardWidth + Spacing.sm) * index,
+    index,
+  }), []);
 
   return (
     <View style={styles.energyFlowSection}>
@@ -285,72 +396,33 @@ const EnergyFlowSection = memo(({
           <Text style={styles.redrawButtonText}>{t('timer.redraw')}</Text>
         </TouchableOpacity>
       </View>
-      
-      <ScrollView 
-        ref={scrollViewRef}
-        horizontal 
+
+      <FlatList
+        ref={flatListRef}
+        data={hourlyData}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.cardScrollContainer}
         snapToInterval={cardWidth + Spacing.sm}
         decelerationRate="fast"
-      >
-      {Array.from({ length: 24 }, (_, hour) => {
-        const card = dailyCards[hour];
-        const isCurrentHour = hour === currentHour;
-        
-        if (!card) return null;
-        
-        return (
-          <TouchableOpacity
-            key={hour}
-            style={[
-              styles.energyCard,
-              isCurrentHour ? styles.currentEnergyCard : null
-            ]}
-            onPress={() => onCardPress(hour)}
-          >
-            <View style={styles.energyCardTime}>
-              <Text style={[
-                styles.energyCardTimeText,
-                isCurrentHour ? styles.currentEnergyCardTimeText : null
-              ]}>
-                {hour === 0 ? t('timer.midnight') : 
-                 hour === 12 ? t('timer.noon') : 
-                 hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 })}
-              </Text>
-            </View>
-            
-            <View style={styles.energyCardImage}>
-              <TarotCardComponent 
-                card={card}
-                size="medium"
-                showText={false}
-              />
-            </View>
-            
-            <Text style={[
-              styles.energyCardName,
-              isCurrentHour ? styles.currentEnergyCardName : null
-            ]} numberOfLines={1}>
-              {getCardName(card)}
-            </Text>
-            
-            {/* 메모 버튼 */}
-            <TouchableOpacity 
-              style={styles.memoButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                onCardPress(hour);
-              }}
-            >
-              <Text style={styles.memoButtonText}>
-                {cardMemos[hour] ? '📝' : '📄'}
-              </Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        );
-      })}
-      </ScrollView>
+        // ✅ iOS/Android 최적화: 가상화 설정
+        initialNumToRender={5} // 초기 5개만 렌더링
+        maxToRenderPerBatch={3} // 배치당 3개씩 렌더링
+        windowSize={7} // 현재 뷰포트 기준 앞뒤 7개 유지
+        removeClippedSubviews={Platform.OS !== 'web'} // iOS/Android 메모리 최적화
+        // ✅ 성능 최적화
+        updateCellsBatchingPeriod={50}
+        onScrollToIndexFailed={(info) => {
+          // 스크롤 실패 시 재시도
+          const wait = new Promise(resolve => setTimeout(resolve, 500));
+          wait.then(() => {
+            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+          });
+        }}
+      />
     </View>
   );
 });

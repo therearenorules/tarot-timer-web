@@ -364,6 +364,7 @@
         "subscriptionType": {
           "monthly": "Monthly Subscription",
           "yearly": "Yearly Subscription",
+          "trial": "7-Day Free Trial",
           "unknown": "Unknown"
         },
         "statusLabels": {
@@ -626,6 +627,9 @@
     "completeMessage": "Your tarot cards for today are ready.\nCurrent card for {{hour}} o'clock: {{cardName}}",
     "redrawCards": "Draw New",
     "redrawCard": "Redraw",
+    "redrawWarningTitle": "⚠️ Redraw Cards",
+    "redrawWarningMessage": "Would you like to redraw all cards?\n\nAll existing 24 cards and memos will be replaced with new cards.",
+    "confirmRedraw": "Redraw",
     "redrawError": "An error occurred while redrawing the card.",
     "drawError": "An error occurred while drawing cards."
   },

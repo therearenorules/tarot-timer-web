@@ -99,6 +99,8 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
         return t('settings.premium.management.subscriptionType.monthly');
       case 'yearly':
         return t('settings.premium.management.subscriptionType.yearly');
+      case 'trial':
+        return t('settings.premium.management.subscriptionType.trial');
       default:
         return t('settings.premium.management.subscriptionType.unknown');
     }

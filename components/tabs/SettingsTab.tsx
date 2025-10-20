@@ -312,16 +312,16 @@ const SettingsTab: React.FC = () => {
               <Text style={styles.comingSoonText}>{t('common.comingSoon')}</Text>
             </View>
           )}
-          {/* Android: 프리미엄 활성 상태 표시 */}
-          {Platform.OS === 'android' && isPremium && (
+          {/* iOS/Android: 프리미엄 활성 상태 표시 */}
+          {Platform.OS !== 'web' && isPremium && (
             <View style={[styles.activeBadge, { backgroundColor: '#4caf50' }]}>
               <Text style={styles.activeBadgeText}>{t('settings.premium.active')}</Text>
             </View>
           )}
         </View>
 
-        {/* Android: 프리미엄 사용자면 구독 관리, 아니면 업그레이드 */}
-        {Platform.OS === 'android' ? (
+        {/* iOS/Android: 프리미엄 사용자면 구독 관리, 아니면 업그레이드 */}
+        {Platform.OS !== 'web' ? (
           isPremium ? (
             // 프리미엄 활성 사용자 - 구독 관리
             <View style={styles.premiumStatusContainer}>

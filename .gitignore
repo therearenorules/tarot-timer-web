@@ -77,3 +77,4 @@ test-*.js
 
 # Google Play Service Account credentials (보안 필수)
 google-play-service-account.json
+nul

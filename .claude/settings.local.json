@@ -169,7 +169,12 @@
       "Bash(del componentstabsSettingsTab_backup.tsx)",
       "Bash(del componentsTarotDaily.tsx.backup-20251017-100911)",
       "Bash(start https://expo.dev/accounts/threebooks/projects/tarot-timer/builds/de1e862e-78df-4ff4-9da8-6f84089fab8d)",
-      "Read(//Users/threebooks/**)"
+      "Read(//Users/threebooks/**)",
+      "Bash(start:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(for file in i18n/locales/*.json)",
+      "Bash(do node:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

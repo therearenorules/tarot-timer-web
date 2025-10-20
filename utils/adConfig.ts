@@ -6,8 +6,27 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// 개발 환경 여부 확인
-const isDevelopment = __DEV__;
+// ✅ Android 최적화: 안전한 개발 환경 감지
+const isDevelopment = (() => {
+  // 1. 명시적 프로덕션 환경 변수 확인 (최우선)
+  if (Constants.expoConfig?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
+    return false;
+  }
+
+  // 2. EAS 빌드 프로필 확인
+  if (Constants.executionEnvironment === 'standalone') {
+    // 스탠드얼론 빌드는 프로덕션으로 간주
+    return false;
+  }
+
+  // 3. __DEV__ 플래그 (개발 환경에서만 true)
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    return true;
+  }
+
+  // 4. 기본값: 프로덕션 (안전한 선택)
+  return false;
+})();
 
 // AdMob 테스트 광고 단위 ID (Google 제공)
 export const TEST_AD_UNITS = {
@@ -62,7 +81,7 @@ export const AD_CONFIG = {
   // 광고 표시 간격 설정
   intervals: {
     banner_refresh: 60000, // 60초마다 배너 새로고침
-    interstitial_cooldown: 180000, // 3분 간격으로 전면 광고
+    interstitial_cooldown: 600000, // 10분 간격으로 전면 광고
     rewarded_cooldown: 300000 // 5분 간격으로 보상형 광고
   },
 
