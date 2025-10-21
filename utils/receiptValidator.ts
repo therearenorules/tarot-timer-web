@@ -46,7 +46,7 @@ export interface GooglePlayReceiptData {
 
 export class ReceiptValidator {
   // App Store Connect 공유 비밀키 (실제 배포시 환경변수로 관리)
-  private static readonly APP_STORE_SHARED_SECRET = process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || 'your-shared-secret';
+  private static readonly APP_STORE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET || process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || 'your-shared-secret';
 
   // Google Play Service Account (실제 배포시 환경변수로 관리)
   private static readonly GOOGLE_PLAY_SERVICE_ACCOUNT = process.env.EXPO_PUBLIC_GOOGLE_PLAY_SERVICE_ACCOUNT;
@@ -344,22 +344,113 @@ export class ReceiptValidator {
   }
 
   /**
-   * Google Play 영수증 검증
+   * Google Play 영수증 검증 (실제 Google Play Developer API 연동)
    */
   private static async validateGooglePlayReceipt(receiptData: string, transactionId: string): Promise<ReceiptValidationResult> {
     try {
-      // Google Play Developer API를 사용한 영수증 검증
-      // 실제 구현에서는 서버 사이드에서 수행하는 것을 권장
+      const receipt: GooglePlayReceiptData = JSON.parse(receiptData);
 
-      console.log('🔍 Google Play 영수증 검증 시뮬레이션');
+      // Google Play Developer API 호출 (서버 사이드 권장)
+      const serviceAccount = this.GOOGLE_PLAY_SERVICE_ACCOUNT;
 
-      // 임시 검증 로직 (실제로는 Google Play Developer API 사용)
-      const mockValidation = this.validateGooglePlayReceiptMock(receiptData, transactionId);
+      if (!serviceAccount) {
+        this.secureLog('warn', 'Google Play Service Account가 설정되지 않았습니다. Mock 검증으로 전환합니다.');
+        return this.validateGooglePlayReceiptMock(receiptData, transactionId);
+      }
 
-      return mockValidation;
+      // Google Play Developer API를 통한 실제 영수증 검증
+      const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${receipt.packageName}/purchases/subscriptions/${receipt.productId}/tokens/${receipt.purchaseToken}`;
+
+      this.secureLog('info', 'Google Play API 호출', {
+        packageName: receipt.packageName,
+        productId: receipt.productId
+      });
+
+      // 타임아웃과 함께 요청
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), SECURITY_CONFIG.VALIDATION_TIMEOUT);
+
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${serviceAccount}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'TarotTimer/1.0'
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const responseData = await response.json();
+
+        // Google Play 구독 상태 확인
+        const expiryTimeMillis = responseData.expiryTimeMillis;
+        const purchaseTimeMillis = responseData.startTimeMillis;
+
+        if (!expiryTimeMillis || !purchaseTimeMillis) {
+          this.secureLog('warn', 'Google Play 응답에 필수 데이터 누락');
+          return {
+            isValid: false,
+            isActive: false,
+            error: '영수증 데이터가 불완전합니다.'
+          };
+        }
+
+        const expirationDate = new Date(parseInt(expiryTimeMillis));
+        const purchaseDate = new Date(parseInt(purchaseTimeMillis));
+
+        // 타임스탬프 검증
+        if (!this.validateTimestamp(purchaseDate.getTime())) {
+          this.secureLog('warn', '영수증 타임스탬프 검증 실패');
+          return {
+            isValid: false,
+            isActive: false,
+            error: '영수증 타임스탬프가 유효하지 않습니다.'
+          };
+        }
+
+        const isActive = new Date() < expirationDate && responseData.paymentState === 1;
+
+        this.secureLog('info', 'Google Play 영수증 검증 성공', {
+          isActive,
+          expirationDate: expirationDate.toISOString(),
+          paymentState: responseData.paymentState
+        });
+
+        return {
+          isValid: true,
+          isActive,
+          expirationDate,
+          originalTransactionId: transactionId,
+          environment: responseData.purchaseType === 0 ? 'Sandbox' : 'Production'
+        };
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          this.secureLog('warn', 'Google Play API 요청 타임아웃');
+          throw new Error('Google Play 서버 응답 시간 초과');
+        }
+        throw error;
+      }
 
     } catch (error) {
-      console.error('❌ Google Play 영수증 검증 오류:', error);
+      this.secureLog('error', 'Google Play 영수증 검증 오류', {
+        error: error instanceof Error ? error.message : '알 수 없는 오류'
+      });
+
+      // 오류 발생 시 Mock 검증으로 폴백 (개발 환경용)
+      if (error instanceof SyntaxError) {
+        this.secureLog('warn', 'JSON 파싱 오류, Mock 검증으로 전환');
+        return this.validateGooglePlayReceiptMock(receiptData, transactionId);
+      }
+
       return {
         isValid: false,
         isActive: false,

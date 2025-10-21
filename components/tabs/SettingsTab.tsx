@@ -32,6 +32,7 @@ try {
 import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager';
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 import PremiumTest from '../PremiumTest';
+import BannerAd from '../ads/BannerAd';
 // 조건부 import - 모바일 환경에서 안전하게 로드
 let SubscriptionPlans: any = null;
 let SubscriptionManagement: any = null;
@@ -1026,6 +1027,13 @@ const SettingsTab: React.FC = () => {
 
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />
+
+      {/* 하단 배너 광고 */}
+      <BannerAd
+        placement="main_screen"
+        onAdLoaded={() => console.log('✅ SettingsTab 배너 광고 로드됨')}
+        onAdFailedToLoad={(error) => console.log('❌ SettingsTab 배너 광고 실패:', error)}
+      />
     </ScrollView>
   );
 };

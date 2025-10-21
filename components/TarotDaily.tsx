@@ -25,6 +25,7 @@ import {
   Spacing,
   BorderRadius
 } from './DesignSystem';
+import BannerAd from './ads/BannerAd';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -802,6 +803,13 @@ const TarotDaily = () => {
         visible={!!selectedSpread}
         spread={selectedSpread}
         onClose={() => setSelectedSpread(null)}
+      />
+
+      {/* 하단 배너 광고 */}
+      <BannerAd
+        placement="journal_entry"
+        onAdLoaded={() => console.log('✅ JournalTab 배너 광고 로드됨')}
+        onAdFailedToLoad={(error) => console.log('❌ JournalTab 배너 광고 실패:', error)}
       />
     </View>
   );

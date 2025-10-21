@@ -6,12 +6,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
-import { BannerAd as RNBannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePremium } from '../../contexts/PremiumContext';
 import AdManager from '../../utils/adManager';
 import { AD_CONFIG } from '../../utils/adConfig';
 import Constants from 'expo-constants';
+
+// ✅ 조건부 import - Expo Go 호환
+let RNBannerAd: any = null;
+let BannerAdSize: any = null;
+let TestIds: any = null;
+
+try {
+  const adModule = require('react-native-google-mobile-ads');
+  RNBannerAd = adModule.BannerAd;
+  BannerAdSize = adModule.BannerAdSize;
+  TestIds = adModule.TestIds;
+} catch (error) {
+  console.warn('⚠️ react-native-google-mobile-ads not available (Expo Go)');
+}
 
 // ✅ Android 최적화: 안전한 개발 환경 감지
 const isDevelopment = (() => {
@@ -47,6 +60,11 @@ const BannerAd: React.FC<BannerAdProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 네이티브 모듈이 없으면 (Expo Go) 조기 반환
+  if (!RNBannerAd || !BannerAdSize || !TestIds) {
+    return null;
+  }
 
   // 프리미엄 사용자는 광고 표시하지 않음
   // ✅ 버그 수정: 로딩 중일 때는 광고 표시하지 않음 (무료 체험 확인 대기)
@@ -110,14 +128,8 @@ const BannerAd: React.FC<BannerAdProps> = ({
     );
   }
 
-  // 🔴 긴급 수정: iOS에서 광고 비활성화 (Build 33)
-  if (Platform.OS === 'ios') {
-    console.log('🍎 iOS: 배너 광고 비활성화됨 (Build 33 긴급 수정)');
-    return null;
-  }
-
-  // Android에서만 표시
-  console.log(`📱 Android 배너 광고 준비: ${placement}`);
+  // ✅ iOS/Android 모두 배너 광고 활성화
+  console.log(`📱 ${Platform.OS} 배너 광고 준비: ${placement}`);
 
   // 오류 발생 시 표시하지 않음
   if (error) {
