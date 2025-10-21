@@ -47,7 +47,7 @@ const NotificationSettings: React.FC = memo(() => {
     scheduleAttempts,
   } = useNotifications();
 
-  const { subscriptionStatus } = usePremium();
+  const { premiumStatus, isPremium } = usePremium();
 
   const [showTimezoneModal, setShowTimezoneModal] = useState(false);
   const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
@@ -379,7 +379,7 @@ const NotificationSettings: React.FC = memo(() => {
       </View>
 
       {/* 구독 상태 (프리미엄 컨텍스트 연동) */}
-      {subscriptionStatus && (
+      {isPremium && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Icon name="crown" size={20} color={Colors.brand.accent} />
@@ -389,24 +389,14 @@ const NotificationSettings: React.FC = memo(() => {
           <View style={styles.subscriptionCard}>
             <View style={styles.subscriptionHeader}>
               <Text style={styles.subscriptionTier}>
-                {subscriptionStatus.tier === 'free' ? '무료' :
-                 subscriptionStatus.tier === 'trial' ? '체험' : '프리미엄'}
+                {premiumStatus.is_premium ? '프리미엄' : '무료'}
               </Text>
-              {subscriptionStatus.periods.isTrialActive && (
-                <Text style={styles.trialBadge}>
-                  체험 {subscriptionStatus.periods.trialDaysLeft}일 남음
-                </Text>
-              )}
             </View>
 
-            <Text style={styles.subscriptionUsage}>
-              저장: {subscriptionStatus.usage.totalSaves}/{subscriptionStatus.usage.saveLimit}
-              {subscriptionStatus.features.hasUnlimitedSaves && ' (무제한)'}
-            </Text>
-
             <Text style={styles.subscriptionFeatures}>
-              사용 가능한 스프레드: {subscriptionStatus.features.allowedSpreads.length}개
-              {subscriptionStatus.features.hasPremiumSpreads && ' (프리미엄 포함)'}
+              {premiumStatus.ad_free && '✓ 광고 없음\n'}
+              {premiumStatus.unlimited_storage && '✓ 무제한 저장\n'}
+              {premiumStatus.premium_spreads && '✓ 프리미엄 스프레드'}
             </Text>
           </View>
         </View>

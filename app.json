@@ -67,12 +67,7 @@
         "googleMobileAdsAppId": "ca-app-pub-4284542208210945~5287567450"
       },
       "jsEngine": "hermes",
-      "enableProguardInReleaseBuilds": true,
-      "enableShrinkResourcesInReleaseBuilds": true,
-      "allowBackup": false,
-      "networkSecurityConfig": {
-        "cleartextTrafficPermitted": false
-      }
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png",

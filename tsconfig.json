@@ -16,6 +16,7 @@
     "dist",
     "build",
     "backups",
+    "backup-old-app-files",
     "tarot-timer-web-clean-*",
     "backend/**/*",
     "**/__tests__/**/*",

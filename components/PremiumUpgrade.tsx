@@ -32,7 +32,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
   onPurchaseComplete
 }) => {
   const { t } = useTranslation();
-  const { subscriptionStatus, isLoading } = usePremium();
+  const { premiumStatus, isPremium, isLoading } = usePremium();
 
   const [products, setProducts] = useState<SubscriptionProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -202,7 +202,7 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
   };
 
   // 현재 프리미엄 사용자인 경우
-  if (subscriptionStatus.isActive && subscriptionStatus.tier === 'premium') {
+  if (isPremium && premiumStatus.is_premium) {
     return (
       <View style={styles.container}>
         <View style={styles.statusContainer}>
