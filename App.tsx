@@ -33,6 +33,17 @@ if (__DEV__) {
   }).catch(() => {
     // 테스트 파일이 없어도 앱은 정상 동작
   });
+
+  // 시간대 검증 유틸리티 로드 (개발 모드)
+  import('./utils/timezoneValidation').then(module => {
+    console.log('🌍 시간대 검증 유틸리티 로드 완료');
+    console.log('📌 사용 방법:');
+    console.log('   - validateTimezoneScenarios() : 시간대별 시뮬레이션');
+    console.log('   - testAppKillScenario() : 앱 종료 시나리오 검증');
+    console.log('   - runFullValidation() : 전체 검증 실행');
+  }).catch(() => {
+    // 테스트 파일이 없어도 앱은 정상 동작
+  });
 }
 
 // 웹에서는 웹 전용 NotificationProvider 사용
@@ -268,6 +279,29 @@ function AppContent() {
     return () => {
       adMockEmitter.off('showAd', handleShowAd);
     };
+  }, []);
+
+  // ✅ Android 메모리 모니터링 (개발 모드)
+  useEffect(() => {
+    if (__DEV__ && Platform.OS === 'android') {
+      const memoryInterval = setInterval(() => {
+        if (global.performance && (global.performance as any).memory) {
+          const memory = (global.performance as any).memory;
+          const usedMB = (memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
+          const totalMB = (memory.totalJSHeapSize / 1024 / 1024).toFixed(2);
+          const limitMB = (memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2);
+
+          console.log(`📊 메모리: ${usedMB}MB / ${totalMB}MB (한계: ${limitMB}MB)`);
+
+          // ⚠️ 메모리 경고 (150MB 초과 시)
+          if (memory.usedJSHeapSize > 150 * 1024 * 1024) {
+            console.warn(`⚠️ 메모리 높음: ${usedMB}MB - 캐시 정리 권장`);
+          }
+        }
+      }, 60000); // 1분마다 체크
+
+      return () => clearInterval(memoryInterval);
+    }
   }, []);
 
   // ✅ Android 최적화: 시스템 초기화 순서 개선

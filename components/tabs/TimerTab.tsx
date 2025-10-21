@@ -409,12 +409,12 @@ const EnergyFlowSection = memo(({
         snapToInterval={cardWidth + Spacing.sm}
         decelerationRate="fast"
         // ✅ iOS/Android 최적화: 가상화 설정
-        initialNumToRender={5} // 초기 5개만 렌더링
-        maxToRenderPerBatch={3} // 배치당 3개씩 렌더링
-        windowSize={7} // 현재 뷰포트 기준 앞뒤 7개 유지
+        initialNumToRender={Platform.OS === 'android' ? 3 : 5} // Android: 초기 3개만 (메모리 절약)
+        maxToRenderPerBatch={Platform.OS === 'android' ? 2 : 3} // Android: 배치당 2개씩
+        windowSize={Platform.OS === 'android' ? 5 : 7} // Android: 앞뒤 5개로 축소
         removeClippedSubviews={Platform.OS !== 'web'} // iOS/Android 메모리 최적화
         // ✅ 성능 최적화
-        updateCellsBatchingPeriod={50}
+        updateCellsBatchingPeriod={100} // Android 안정성을 위해 100ms로 증가
         onScrollToIndexFailed={(info) => {
           // 스크롤 실패 시 재시도
           const wait = new Promise(resolve => setTimeout(resolve, 500));

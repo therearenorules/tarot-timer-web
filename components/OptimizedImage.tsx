@@ -83,6 +83,16 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
 
 
   // 레이지 로딩 (필요한 경우)
+  // ✅ 컴포넌트 언마운트 시 애니메이션 정리 (메모리 누수 방지)
+  useEffect(() => {
+    return () => {
+      // 애니메이션 정리
+      fadeAnim.stopAnimation();
+      fadeAnim.setValue(0);
+    };
+  }, [fadeAnim]);
+
+  // 레이지 로딩 (필요한 경우)
   useEffect(() => {
     if (lazy && !shouldLoad) {
       // 여기서는 간단히 타이머로 구현, 실제로는 Intersection Observer 사용
@@ -104,14 +114,23 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
     setLoading(false);
     setError(false);
 
-    // 페이드 인 애니메이션
-    Animated.timing(fadeAnim, {
+    // ✅ 캐시된 이미지는 애니메이션 스킵 (메모리 절약)
+    if (isCached) {
+      fadeAnim.setValue(1);
+      onLoad?.();
+      return;
+    }
+
+    // 새 이미지만 페이드 인 애니메이션
+    const animation = Animated.timing(fadeAnim, {
       toValue: 1,
       duration: fadeDuration,
       useNativeDriver: true,
-    }).start();
+    });
 
-    onLoad?.();
+    animation.start(() => {
+      onLoad?.();
+    });
   };
 
   const handleError = () => {

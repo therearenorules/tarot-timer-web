@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 
-// 날짜 문자열 가져오기 헬퍼 (YYYY-MM-DD 형식)
+// 날짜 문자열 가져오기 헬퍼 (YYYY-MM-DD 형식, 로컬 시간대 기준)
 const getDateString = (): string => {
-  return new Date().toISOString().split('T')[0];
+  // ✅ 로컬 시간대 기준으로 날짜 생성 (UTC 버그 수정)
+  // 이유: toISOString()은 UTC 기준이므로 시간대에 따라 전날로 인식되는 버그 발생
+  // 예: 한국 2025-10-21 00:30 → UTC 2025-10-20 15:30 → "2025-10-20" (잘못됨)
+  // 수정: 디바이스 로컬 시간 기준으로 날짜 생성
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export interface UseTimerReturn {

@@ -3,7 +3,7 @@
  * 타로 카드 이미지의 빠른 로딩을 위한 캐시 시스템
  */
 
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface CacheEntry {
@@ -24,7 +24,8 @@ class ImageCacheManager {
   private config: CacheConfig = {
     maxSize: 50 * 1024 * 1024, // 50MB
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
-    maxEntries: 200
+    // ✅ Android 메모리 절약: 최대 항목 수 축소 (200 → 150)
+    maxEntries: Platform.OS === 'android' ? 150 : 200
   };
 
   private readonly CACHE_KEY = 'image_cache_registry';
@@ -119,6 +120,11 @@ class ImageCacheManager {
     if (this.cacheRegistry.has(key)) {
       this.updateLastAccessed(key);
       return Promise.resolve(true);
+    }
+
+    // ✅ Android 메모리 절약: 캐시 크기 제한 체크
+    if (this.cacheRegistry.size >= this.config.maxEntries) {
+      await this.enforceSize();
     }
 
     const uri = this.getImageUri(source);

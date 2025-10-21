@@ -59,21 +59,31 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       if (savedData) {
         const dailySave: DailyTarotSave = JSON.parse(savedData);
 
-        // ✅ 즉시 UI 업데이트 (이미지 로딩 전)
-        setDailyCards(dailySave.hourlyCards);
-        setCardMemos(dailySave.memos || {});
+        // ✅ 날짜 검증 추가 (이중 보호 - UTC 버그 및 캐시 오류 방지)
+        if (dailySave.date === today) {
+          // ✅ 날짜가 일치하는 경우에만 카드 로드
+          setDailyCards(dailySave.hourlyCards);
+          setCardMemos(dailySave.memos || {});
 
-        const loadTime = Date.now() - startTime;
-        console.log(`✅ 카드 데이터 로드 완료 (${loadTime}ms)`);
+          const loadTime = Date.now() - startTime;
+          console.log(`✅ 카드 데이터 로드 완료 (${loadTime}ms) - 날짜: ${today}`);
 
-        // ✅ 이미지 프리로딩은 백그라운드에서 비동기로 (UI 블로킹 안 함)
-        if (dailySave.hourlyCards.length > 0) {
-          preloadTarotImages(dailySave.hourlyCards, currentHour, 'smart').then(() => {
-            const totalTime = Date.now() - startTime;
-            console.log(`⚡ 이미지 프리로드 완료 (총 ${totalTime}ms)`);
-          }).catch(error => {
-            console.warn('⚠️ 이미지 프리로드 실패 (무시 가능):', error);
-          });
+          // ✅ 이미지 프리로딩은 백그라운드에서 비동기로 (UI 블로킹 안 함)
+          if (dailySave.hourlyCards.length > 0) {
+            preloadTarotImages(dailySave.hourlyCards, currentHour, 'smart').then(() => {
+              const totalTime = Date.now() - startTime;
+              console.log(`⚡ 이미지 프리로드 완료 (총 ${totalTime}ms)`);
+            }).catch(error => {
+              console.warn('⚠️ 이미지 프리로드 실패 (무시 가능):', error);
+            });
+          }
+        } else {
+          // ❌ 날짜 불일치 - 캐시된 오래된 데이터 무시
+          console.warn(`⚠️ 날짜 불일치 감지: 저장된 날짜(${dailySave.date}) !== 오늘(${today})`);
+          console.log('🧹 오래된 카드 데이터 무시 - 새로운 카드 뽑기 필요');
+          setDailyCards([]);
+          setCardMemos({});
+          setSelectedCardIndex(null);
         }
       } else {
         // 오늘의 카드가 없으면 상태 초기화
