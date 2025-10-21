@@ -29,12 +29,15 @@ const RewardedAd: React.FC<RewardedAdProps> = ({
   disabled = false,
   style
 }) => {
-  const { isPremium } = usePremium();
+  const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
   const [isLoading, setIsLoading] = useState(false);
   const [lastWatched, setLastWatched] = useState<number>(0);
 
   // 쿨다운 시간 (5분)
   const COOLDOWN_TIME = 5 * 60 * 1000;
+
+  // 프리미엄 사용자는 보상형 광고 불필요 (무제한)
+  const shouldShowRewardedAd = !premiumLoading && !isPremium && !premiumStatus.ad_free;
 
   /**
    * 쿨다운 확인
@@ -99,7 +102,12 @@ const RewardedAd: React.FC<RewardedAdProps> = ({
   }, [isLoading, disabled, isCooldownActive, onRewardEarned, onAdFailed, onAdClosed]);
 
   // 프리미엄 사용자는 보상형 광고 버튼을 다르게 표시
-  if (isPremium) {
+  // ✅ 버그 수정: 로딩 중일 때는 아무것도 표시하지 않음
+  if (premiumLoading) {
+    return null;
+  }
+
+  if (!shouldShowRewardedAd) {
     return (
       <View style={[styles.premiumContainer, style]}>
         <View style={styles.premiumBadge}>

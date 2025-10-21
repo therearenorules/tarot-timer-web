@@ -42,14 +42,15 @@ const BannerAd: React.FC<BannerAdProps> = ({
   onAdFailedToLoad,
   onAdClicked
 }) => {
-  const { isPremium, canAccessFeature } = usePremium();
+  const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
   const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 프리미엄 사용자는 광고 표시하지 않음
-  const shouldShowAd = !isPremium && !canAccessFeature('ad_free');
+  // ✅ 버그 수정: 로딩 중일 때는 광고 표시하지 않음 (무료 체험 확인 대기)
+  const shouldShowAd = !premiumLoading && !isPremium && !premiumStatus.ad_free;
 
   useEffect(() => {
     const initializeBannerAd = async () => {

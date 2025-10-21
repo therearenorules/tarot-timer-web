@@ -32,7 +32,7 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
   onAdFailed,
   onRevenueEarned
 }) => {
-  const { isPremium, canAccessFeature } = usePremium();
+  const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
   const lastShownTimeRef = React.useRef<number>(0);
   const [dailyAdCount, setDailyAdCount] = useState(0);
   const [isLoyalUser, setIsLoyalUser] = useState(false);
@@ -44,7 +44,8 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
   const MIN_INTERVAL_MS = 15 * 60 * 1000; // 15분 간격
 
   // 프리미엄 사용자는 광고 표시하지 않음
-  const shouldShowAd = !isPremium && !canAccessFeature('ad_free');
+  // ✅ 버그 수정: 로딩 중일 때는 광고 표시하지 않음 (무료 체험 확인 대기)
+  const shouldShowAd = !premiumLoading && !isPremium && !premiumStatus.ad_free;
 
   /**
    * 충성 고객 여부 및 일일 카운터 초기화
