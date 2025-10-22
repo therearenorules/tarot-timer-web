@@ -1,5 +1,6 @@
 // Web-safe version of NotificationContext
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import { Platform } from 'react-native';
 
 // 웹 환경에서는 모든 notification 기능을 mock으로 처리

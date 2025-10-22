@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, memo } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import {
   View,
   Image,

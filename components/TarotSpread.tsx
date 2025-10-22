@@ -1,5 +1,6 @@
 // components/TarotSpread.tsx - 타로 스프레드 컴포넌트
 import React, { useState, useEffect } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCard, TarotUtils, SavedSpread } from '../utils/tarotData';

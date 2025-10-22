@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSafeState } from '../../hooks/useSafeState';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Defs, RadialGradient as SvgRadialGradient, Stop } from 'react-native-svg';

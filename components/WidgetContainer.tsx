@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import { View, Platform, StyleSheet } from 'react-native';
 import PWAWidget from '../widgets/PWAWidget';
 import { WidgetManager } from '../utils/widgetManager';

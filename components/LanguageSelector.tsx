@@ -2,6 +2,7 @@
 // Integrated with i18n system for multi-language support
 
 import React, { useState, memo } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './Icon';

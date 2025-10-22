@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import {
   View,
   Text,

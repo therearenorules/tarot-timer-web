@@ -1,5 +1,6 @@
 // components/TarotCard.tsx - 타로 카드 이미지 컴포넌트 (Android 성능 최적화)
 import React, { useState, useMemo, useCallback, memo } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCard as TarotCardType } from '../utils/tarotData';

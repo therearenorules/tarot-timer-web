@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import { View, Text, StyleSheet } from 'react-native';
 import { checkConnection } from '../utils/supabase';
 import { useAuth } from '../contexts/AuthContext';
