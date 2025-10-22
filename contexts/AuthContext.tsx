@@ -1,10 +1,10 @@
 /**
-import { useSafeState } from '../hooks/useSafeState';
  * 인증 컨텍스트 (Supabase 통합)
  * 타로 타이머 웹앱용 인증 시스템
  */
 
 import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import {
