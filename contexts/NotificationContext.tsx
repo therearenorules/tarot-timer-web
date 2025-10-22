@@ -212,6 +212,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [scheduleAttempts, setScheduleAttempts] = useSafeState<number>(0);
   const [isScheduling, setIsScheduling] = useSafeState<boolean>(false);
 
+  // ✅ FIX: hasPermission ref로 관리 (AppState 리스너 재생성 방지)
+  const hasPermissionRef = useRef(Platform.OS === 'web' ? false : false);
+
   // 실시간 권한 상태 체크 함수 (useCallback으로 메모이제이션)
   const checkRealTimePermission = useCallback(async (): Promise<boolean> => {
     if (!isMobileEnvironment || !Notifications) {
@@ -222,9 +225,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       const { status } = await Notifications.getPermissionsAsync();
       const actualPermission = status === 'granted';
 
+      // ✅ FIX: ref를 사용하여 최신 값 비교 (의존성 배열에서 제거)
       // Context 상태와 실제 권한이 다르면 동기화
-      if (hasPermission !== actualPermission) {
-        console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermission}, 실제=${actualPermission}`);
+      if (hasPermissionRef.current !== actualPermission) {
+        console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermissionRef.current}, 실제=${actualPermission}`);
+        hasPermissionRef.current = actualPermission;
         setHasPermission(actualPermission);
 
         // 권한이 꺼진 경우 스케줄된 알림 정리
@@ -243,7 +248,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.error('❌ 실시간 권한 체크 실패:', error);
       return false;
     }
-  }, [hasPermission]);
+  }, []); // ✅ FIX: 빈 의존성 배열 - ref 사용으로 hasPermission 제거
 
   // 앱 상태 변화 감지 및 권한 재확인
   useEffect(() => {
@@ -270,8 +275,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       };
 
       appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+      console.log('✅ NotificationContext AppState 리스너 설정 완료');
     } catch (error) {
-      console.warn('AppState 리스너 설정 실패:', error);
+      console.warn('⚠️ NotificationContext AppState 리스너 설정 실패:', error);
     }
 
     return () => {
@@ -281,9 +287,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       }
       if (appStateSubscription?.remove) {
         appStateSubscription.remove();
+        console.log('🧹 NotificationContext AppState 리스너 정리 완료');
       }
     };
-  }, [checkRealTimePermission]);
+  }, []); // ✅ FIX: 빈 의존성 배열 - 리스너는 마운트 시 한 번만 생성
 
   // 컴포넌트 마운트 시 초기 설정
   useEffect(() => {

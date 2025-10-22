@@ -90,7 +90,18 @@ export function useTimer(): UseTimerReturn {
         // 앱이 백그라운드에 있는 동안 날짜가 바뀌었는지 체크
         if (lastDate.current !== currentDate) {
           console.log(`📱 앱 복귀 시 날짜 변경 감지: ${lastDate.current} → ${currentDate}`);
-          triggerMidnightReset();
+
+          // ✅ FIX: triggerMidnightReset() 직접 호출 대신 콜백 직접 실행
+          // 이유: 의존성 배열에서 triggerMidnightReset 제거하기 위함
+          console.log('🌙 자정 감지 - 24시간 카드 초기화 시작');
+          midnightResetCallbacks.current.forEach(callback => {
+            try {
+              callback();
+            } catch (error) {
+              console.error('❌ 자정 리셋 콜백 오류:', error);
+            }
+          });
+
           lastDate.current = currentDate;
 
           // 시간도 업데이트
@@ -102,11 +113,13 @@ export function useTimer(): UseTimerReturn {
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
+    console.log('✅ useTimer AppState 리스너 설정 완료');
 
     return () => {
       subscription?.remove();
+      console.log('🧹 useTimer AppState 리스너 정리 완료');
     };
-  }, [triggerMidnightReset]);
+  }, []); // ✅ FIX: 빈 의존성 배열 - 리스너는 마운트 시 한 번만 생성
 
   const onSessionComplete = useCallback((callback: () => void) => {
     sessionCompleteCallbacks.current.add(callback);
