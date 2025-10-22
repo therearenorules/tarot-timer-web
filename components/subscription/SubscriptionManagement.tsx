@@ -50,9 +50,17 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
    */
   const handleRefreshStatus = async () => {
     try {
-      setValidating(true);
+      // ✅ setState를 try-catch로 보호
+      try {
+        setValidating(true);
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+        return;
+      }
+
       await validateSubscription();
       await refreshStatus();
+
       Alert.alert(
         t('settings.premium.management.refreshComplete'),
         t('settings.premium.management.refreshSuccess')
@@ -63,7 +71,12 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
         t('settings.premium.management.refreshErrorMessage')
       );
     } finally {
-      setValidating(false);
+      // ✅ finally 블록의 setState도 보호
+      try {
+        setValidating(false);
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+      }
     }
   };
 

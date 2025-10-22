@@ -220,13 +220,33 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
    */
   const refreshStatus = async (): Promise<void> => {
     try {
-      setLastError(null);
+      // ✅ setState 호출을 try-catch로 보호
+      try {
+        setLastError(null);
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+        return;
+      }
+
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-      setPremiumStatus(currentStatus);
+
+      // ✅ setState 호출을 try-catch로 보호
+      try {
+        setPremiumStatus(currentStatus);
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+        return;
+      }
+
       console.log('✅ 구독 상태 새로고침 완료');
     } catch (error) {
       console.error('❌ 상태 새로고침 오류:', error);
-      setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
+      // ✅ setState 호출을 try-catch로 보호
+      try {
+        setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+      }
     }
   };
 
@@ -299,7 +319,13 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
    */
   const validateSubscription = async (): Promise<boolean> => {
     try {
-      setLastError(null);
+      // ✅ setState를 try 블록 안으로 이동하여 보호
+      try {
+        setLastError(null);
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+        return false;
+      }
 
       console.log('🔍 구독 상태 검증 시작...');
 
@@ -312,7 +338,12 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '구독 검증 중 오류가 발생했습니다.';
-      setLastError(errorMessage);
+      // ✅ setState 호출 시 컴포넌트 언마운트 방지
+      try {
+        setLastError(errorMessage);
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+      }
       console.error('❌ 구독 검증 오류:', error);
       return false;
     }
