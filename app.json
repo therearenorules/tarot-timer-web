@@ -26,7 +26,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "52",
+      "buildNumber": "54",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -39,7 +39,7 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 52,
+      "versionCode": 54,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
