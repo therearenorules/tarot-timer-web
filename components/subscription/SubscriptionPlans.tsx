@@ -3,7 +3,8 @@
  * 앱스토어 결제 시스템과 연동된 프리미엄 구독 화면
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useSafeState } from "../../hooks/useSafeState";
 import {
   View,
   Text,
@@ -40,10 +41,10 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   onSubscriptionSuccess
 }) => {
   const { t } = useTranslation();
-  const [products, setProducts] = useState<SubscriptionProduct[]>([]);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(false);
+  const [products, setProducts] = useSafeState<SubscriptionProduct[]>([]);
+  const [selectedPlan, setSelectedPlan] = useSafeState<string | null>(null);
+  const [loading, setLoading] = useSafeState(true);
+  const [purchasing, setPurchasing] = useSafeState(false);
 
   const {
     premiumStatus,

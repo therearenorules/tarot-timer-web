@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { useAuth } from './AuthContext';
 import { simpleStorage, STORAGE_KEYS, TarotCard, DailyTarotSave, TarotUtils } from '../utils/tarotData';
 import i18next from 'i18next';
+import { useSafeState } from '../hooks/useSafeState';
 
 // expo-notifications를 조건부로 import
 let Notifications: any = null;
@@ -201,15 +202,15 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { getAuthHeaders, isAuthenticated } = useAuth();
-  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<any | null>(null);
-  const [hasPermission, setHasPermission] = useState(Platform.OS === 'web' ? false : false); // 웹에서는 기본값 false
-  const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
+  const [expoPushToken, setExpoPushToken] = useSafeState<string | null>(null);
+  const [notification, setNotification] = useSafeState<any | null>(null);
+  const [hasPermission, setHasPermission] = useSafeState(Platform.OS === 'web' ? false : false);
+  const [settings, setSettings] = useSafeState<NotificationSettings>(DEFAULT_SETTINGS);
 
-  // 알림 상태 추적을 위한 추가 상태
-  const [lastScheduleTime, setLastScheduleTime] = useState<number | null>(null);
-  const [scheduleAttempts, setScheduleAttempts] = useState<number>(0);
-  const [isScheduling, setIsScheduling] = useState<boolean>(false);
+  // 알림 상태 추적을 위한 추가 상태 (useSafeState 적용)
+  const [lastScheduleTime, setLastScheduleTime] = useSafeState<number | null>(null);
+  const [scheduleAttempts, setScheduleAttempts] = useSafeState<number>(0);
+  const [isScheduling, setIsScheduling] = useSafeState<boolean>(false);
 
   // 실시간 권한 상태 체크 함수 (useCallback으로 메모이제이션)
   const checkRealTimePermission = useCallback(async (): Promise<boolean> => {
@@ -224,14 +225,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       // Context 상태와 실제 권한이 다르면 동기화
       if (hasPermission !== actualPermission) {
         console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermission}, 실제=${actualPermission}`);
-
-        // ✅ setState 호출 전에 컴포넌트 마운트 상태 체크 (간접적으로)
-        try {
-          setHasPermission(actualPermission);
-        } catch (stateError) {
-          console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-          return actualPermission; // 상태 업데이트는 실패해도 실제 권한 반환
-        }
+        setHasPermission(actualPermission);
 
         // 권한이 꺼진 경우 스케줄된 알림 정리
         if (!actualPermission) {
@@ -697,7 +691,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
 
     try {
-      // ✅ setState를 try 블록 안으로 이동 (컴포넌트 언마운트 시 크래시 방지)
+      // useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
       setIsScheduling(true);
       setScheduleAttempts(prev => prev + 1);
       // 1. 실시간 권한 확인

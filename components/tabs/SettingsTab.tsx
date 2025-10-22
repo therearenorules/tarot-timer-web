@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useSafeState } from '../../hooks/useSafeState';
 import {
   View,
   Text,
@@ -58,7 +59,7 @@ const NotificationDiagnostics: React.FC = () => {
     expoPushToken
   } = useNotifications();
 
-  const [diagnostics, setDiagnostics] = useState({
+  const [diagnostics, setDiagnostics] = useSafeState({
     realTimePermission: null as boolean | null,
     scheduledCount: null as number | null,
     checking: false
@@ -129,15 +130,15 @@ const SettingsTab: React.FC = () => {
     isLoading: premiumLoading
   } = usePremium();
 
-  const [localDataStatus, setLocalDataStatus] = useState<LocalDataStatus>({
+  const [localDataStatus, setLocalDataStatus] = useSafeState<LocalDataStatus>({
     totalSessions: 0,
     totalJournalEntries: 0,
     storageUsed: 0
   });
-  const [cloudBackupEnabled, setCloudBackupEnabled] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showManagementModal, setShowManagementModal] = useState(false);
-  const [adminClickCount, setAdminClickCount] = useState(0);
+  const [cloudBackupEnabled, setCloudBackupEnabled] = useSafeState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useSafeState(false);
+  const [showManagementModal, setShowManagementModal] = useSafeState(false);
+  const [adminClickCount, setAdminClickCount] = useSafeState(0);
 
   // Context에서 가져온 값들을 로컬 상태 대신 사용
   const notificationsEnabled = hasPermission;
@@ -149,11 +150,11 @@ const SettingsTab: React.FC = () => {
   const quietHoursEnd = notificationSettings?.quietHoursEnd ?? 8;
 
   // 로컬 상태는 Context에 없는 항목들만 유지
-  const [saveReminders, setSaveReminders] = useState(true);
+  const [saveReminders, setSaveReminders] = useSafeState(true);
 
   // Modal state
-  const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
-  const [tempQuietHours, setTempQuietHours] = useState({
+  const [showQuietHoursModal, setShowQuietHoursModal] = useSafeState(false);
+  const [tempQuietHours, setTempQuietHours] = useSafeState({
     start: quietHoursStart,
     end: quietHoursEnd,
   });

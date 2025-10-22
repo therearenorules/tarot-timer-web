@@ -1,3 +1,4 @@
+import { useSafeState } from "./../hooks/useSafeState";
 /**
  * 프리미엄 업그레이드 컴포넌트
  * 설정탭에서 사용되는 구독 관리 인터페이스
@@ -34,9 +35,9 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
   const { t } = useTranslation();
   const { premiumStatus, isPremium, isLoading } = usePremium();
 
-  const [products, setProducts] = useState<SubscriptionProduct[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [products, setProducts] = useSafeState<SubscriptionProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useSafeState(true);
+  const [purchasing, setPurchasing] = useSafeState<string | null>(null);
 
   useEffect(() => {
     loadSubscriptionProducts();
