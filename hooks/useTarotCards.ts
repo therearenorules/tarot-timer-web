@@ -146,26 +146,6 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     }
   }, [cardMemos]);
 
-  // 24시간 카드 뽑기
-  const drawDailyCards = useCallback(() => {
-    if (hasCardsForToday) {
-      Alert.alert(
-        i18next.t('cards.redrawAllTitle'),
-        i18next.t('cards.redrawAllMessage'),
-        [
-          { text: i18next.t('common.cancel'), style: 'cancel' },
-          {
-            text: i18next.t('cards.redrawCards'),
-            style: 'destructive',
-            onPress: performDrawDailyCards
-          }
-        ]
-      );
-    } else {
-      performDrawDailyCards();
-    }
-  }, [hasCardsForToday, performDrawDailyCards]);
-
   // 실제 카드 뽑기 실행 (즉시 이미지 프리로딩)
   const performDrawDailyCards = useCallback(async () => {
     setIsLoading(true);
@@ -240,6 +220,26 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
       setIsLoading(false);
     }
   }, [currentHour, saveDailyCards, notificationContext]);
+
+  // 24시간 카드 뽑기
+  const drawDailyCards = useCallback(() => {
+    if (hasCardsForToday) {
+      Alert.alert(
+        i18next.t('cards.redrawAllTitle'),
+        i18next.t('cards.redrawAllMessage'),
+        [
+          { text: i18next.t('common.cancel'), style: 'cancel' },
+          {
+            text: i18next.t('cards.redrawCards'),
+            style: 'destructive',
+            onPress: performDrawDailyCards
+          }
+        ]
+      );
+    } else {
+      performDrawDailyCards();
+    }
+  }, [hasCardsForToday, performDrawDailyCards]);
 
   // 개별 카드 다시 뽑기
   const redrawSingleCard = useCallback(async (hourIndex: number) => {

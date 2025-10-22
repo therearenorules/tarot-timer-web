@@ -1,0 +1,361 @@
+components/ads/BannerAd.tsx(37,27): error TS2339: Property 'extra' does not exist on type 'EmbeddedManifest'.
+components/ads/BannerAd.tsx(81,59): error TS2554: Expected 0 arguments, but got 1.
+components/ads/BannerAd.tsx(160,30): error TS7006: Parameter 'loadError' implicitly has an 'any' type.
+components/ads/BannerAd.tsx(171,57): error TS2554: Expected 2 arguments, but got 3.
+components/ads/RewardedAd.tsx(72,38): error TS2554: Expected 1 arguments, but got 0.
+components/ads/RewardedAd.tsx(186,38): error TS2554: Expected 1 arguments, but got 0.
+components/FeedbackModal.tsx(46,41): error TS2345: Argument of type '"feedback_submitted"' is not assignable to parameter of type '"card_draw" | "app_launch" | "tarot_session_start" | "tarot_session_complete" | "journal_entry_add" | "premium_feature_use" | "setting_change" | "spread_select" | "export_data" | "import_data"'.
+components/FeedbackModal.tsx(295,3): error TS2322: Type '{ color: string; fontSize: number; fontFamily: string; fontWeight: string; lineHeight: number; }' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'.
+  Type '{ color: string; fontSize: number; fontFamily: string; fontWeight: string; lineHeight: number; }' is not assignable to type 'TextStyle'.
+    Types of property 'fontWeight' are incompatible.
+      Type 'string' is not assignable to type '100 | 200 | "normal" | "bold" | 500 | "medium" | "light" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | 300 | 400 | 600 | 700 | 800 | 900 | "ultralight" | "thin" | ... 6 more ... | undefined'.
+components/FeedbackModal.tsx(346,3): error TS2322: Type '{ color: string; lineHeight: number; fontSize: number; fontFamily: string; fontWeight: string; }' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'.
+  Type '{ color: string; lineHeight: number; fontSize: number; fontFamily: string; fontWeight: string; }' is not assignable to type 'TextStyle'.
+    Types of property 'fontWeight' are incompatible.
+      Type 'string' is not assignable to type '100 | 200 | "normal" | "bold" | 500 | "medium" | "light" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | 300 | 400 | 600 | 700 | 800 | 900 | "ultralight" | "thin" | ... 6 more ... | undefined'.
+components/FeedbackModal.tsx(368,26): error TS2339: Property 'secondary' does not exist on type '{ primary: { fontSize: number; fontFamily: string; fontWeight: string; color: string; textAlign: "center"; }; }'.
+components/FeedbackModal.tsx(379,35): error TS2339: Property 'disabled' does not exist on type '{ success: string; warning: string; error: string; info: string; }'.
+components/FeedbackModal.tsx(381,3): error TS2322: Type '{ color: string; fontSize: number; fontFamily: string; fontWeight: string; textAlign: "center"; }' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'.
+  Type '{ color: string; fontSize: number; fontFamily: string; fontWeight: string; textAlign: "center"; }' is not assignable to type 'TextStyle'.
+    Types of property 'fontWeight' are incompatible.
+      Type 'string' is not assignable to type '100 | 200 | "normal" | "bold" | 500 | "medium" | "light" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | 300 | 400 | 600 | 700 | 800 | 900 | "ultralight" | "thin" | ... 6 more ... | undefined'.
+components/GradientButton.tsx(30,22): error TS2345: Argument of type '{ shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: string; borderColor: string; }' is not assignable to parameter of type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+  Type '{ shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: string; borderColor: string; }' is missing the following properties from type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }': overflow, position, borderRadius, paddingVertical, and 2 more.
+components/GradientButton.tsx(32,22): error TS2345: Argument of type '{ shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: string; borderColor: string; borderWidth: number; }' is not assignable to parameter of type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+  Type '{ shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; backgroundColor: string; borderColor: string; borderWidth: number; }' is missing the following properties from type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }': overflow, position, borderRadius, paddingVertical, paddingHorizontal
+components/GradientButton.tsx(36,22): error TS2345: Argument of type '{ paddingVertical: number; paddingHorizontal: number; borderRadius: number; }' is not assignable to parameter of type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+  Type '{ paddingVertical: number; paddingHorizontal: number; borderRadius: number; }' is missing the following properties from type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }': overflow, position, shadowColor, shadowOffset, and 6 more.
+components/GradientButton.tsx(38,22): error TS2345: Argument of type '{ paddingVertical: number; paddingHorizontal: number; borderRadius: number; }' is not assignable to parameter of type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+  Type '{ paddingVertical: number; paddingHorizontal: number; borderRadius: number; }' is missing the following properties from type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }': overflow, position, shadowColor, shadowOffset, and 6 more.
+components/GradientButton.tsx(42,22): error TS2345: Argument of type '{ backgroundColor: string; borderColor: string; opacity: number; shadowOpacity: number; elevation: number; }' is not assignable to parameter of type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+  Type '{ backgroundColor: string; borderColor: string; opacity: number; shadowOpacity: number; elevation: number; }' is missing the following properties from type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }': overflow, position, shadowColor, shadowOffset, and 5 more.
+components/GradientButton.tsx(46,22): error TS2345: Argument of type 'ViewStyle | RegisteredStyle<ViewStyle> | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>>' is not assignable to parameter of type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+  Type 'ViewStyle' is not assignable to type '{ overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }'.
+    Types of property 'overflow' are incompatible.
+      Type '"scroll" | "hidden" | "visible" | undefined' is not assignable to type '"hidden"'.
+        Type 'undefined' is not assignable to type '"hidden"'.
+components/GradientButton.tsx(57,22): error TS2345: Argument of type '{ fontSize: number; fontWeight: "500"; }' is not assignable to parameter of type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }'.
+  Type '{ fontSize: number; fontWeight: "500"; }' is missing the following properties from type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }': color, letterSpacing, textShadowColor, textShadowOffset, textShadowRadius
+components/GradientButton.tsx(59,22): error TS2345: Argument of type '{ fontSize: number; fontWeight: "700"; letterSpacing: number; }' is not assignable to parameter of type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }'.
+  Type '{ fontSize: number; fontWeight: "700"; letterSpacing: number; }' is missing the following properties from type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }': color, textShadowColor, textShadowOffset, textShadowRadius
+components/GradientButton.tsx(64,22): error TS2345: Argument of type '{ color: string; fontWeight: "700"; textShadowColor: string; textShadowRadius: number; }' is not assignable to parameter of type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }'.
+  Type '{ color: string; fontWeight: "700"; textShadowColor: string; textShadowRadius: number; }' is missing the following properties from type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }': fontSize, letterSpacing, textShadowOffset
+components/GradientButton.tsx(66,22): error TS2345: Argument of type '{ color: string; fontWeight: "600"; }' is not assignable to parameter of type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }'.
+  Type '{ color: string; fontWeight: "600"; }' is missing the following properties from type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }': fontSize, letterSpacing, textShadowColor, textShadowOffset, textShadowRadius
+components/GradientButton.tsx(71,22): error TS2345: Argument of type '{ color: string; textShadowOpacity: number; }' is not assignable to parameter of type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }'.
+  Type '{ color: string; textShadowOpacity: number; }' is missing the following properties from type '{ color: string; fontSize: number; fontWeight: "600"; letterSpacing: number; textShadowColor: string; textShadowOffset: { width: number; height: number; }; textShadowRadius: number; }': fontSize, fontWeight, letterSpacing, textShadowColor, and 2 more.
+components/GradientButton.tsx(185,5): error TS2345: Argument of type '{ button: { overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }; ... 11 more ...; disabledButtonText: { ...; }; }' is not assignable to parameter of type '{ button: { overflow: "hidden"; position: "relative"; shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; borderRadius: number; ... 4 more ...; backgroundColor: string; }; ... 11 more ...; disabledButtonText: { ...; }; } & NamedStyles...'.
+  Property 'disabledButtonText' is incompatible with index signature.
+    Object literal may only specify known properties, but 'textShadowOpacity' does not exist in type 'ViewStyle | TextStyle | ImageStyle'. Did you mean to write 'shadowOpacity'?
+components/NotificationSettings.tsx(374,59): error TS2339: Property 'feedback' does not exist on type '{ brand: { primary: string; secondary: string; accent: string; mystic: string; }; glass: { primary: string; secondary: string; tertiary: string; overlay: string; }; border: { primary: string; secondary: string; ... 4 more ...; active: string; }; ... 7 more ...; accent: { ...; }; }'.
+components/NotificationSettings.tsx(375,64): error TS2339: Property 'feedback' does not exist on type '{ brand: { primary: string; secondary: string; accent: string; mystic: string; }; glass: { primary: string; secondary: string; tertiary: string; overlay: string; }; border: { primary: string; secondary: string; ... 4 more ...; active: string; }; ... 7 more ...; accent: { ...; }; }'.
+components/PremiumTest.tsx(87,39): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(100,38): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(113,33): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(126,35): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(139,33): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(153,31): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(171,33): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/PremiumTest.tsx(184,40): error TS2345: Argument of type '"pending"' is not assignable to parameter of type '"error" | "success"'.
+components/SafeIcon.tsx(52,11): error TS2740: Type '{ timer: string; clock: string; cards: string; 'tarot-cards': string; 'tarot-card': string; journal: string; 'book-open': string; settings: string; refresh: string; 'rotate-ccw': string; eye: string; 'eye-off': string; ... 22 more ...; x: string; }' is missing the following properties from type 'Record<IconName, string>': play, "refresh-cw", "chevron-right", "bell-off", and 9 more.
+components/SparkleAnimation.tsx(140,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(157,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(174,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(200,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(209,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(219,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(228,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(238,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(247,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(273,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/SparkleAnimation.tsx(282,7): error TS2345: Argument of type 'number' is not assignable to parameter of type 'AnimationCallback'.
+components/subscription/SubscriptionPlans.tsx(361,23): error TS2322: Type '"credit-card"' is not assignable to type 'IconName'.
+components/tabs/SettingsTab.tsx(826,31): error TS2551: Property 'sectionContent' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'. Did you mean 'sectionIconText'?
+components/tabs/SettingsTab.tsx(837,33): error TS2339: Property 'settingRow' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'.
+components/tabs/SettingsTab.tsx(838,35): error TS2339: Property 'settingInfo' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'.
+components/tabs/SettingsTab.tsx(839,37): error TS2339: Property 'settingLabel' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'.
+components/tabs/SettingsTab.tsx(840,37): error TS2551: Property 'settingDescription' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'. Did you mean 'settingsSection'?
+components/tabs/SettingsTab.tsx(857,37): error TS2339: Property 'settingLabel' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'.
+components/tabs/SettingsTab.tsx(862,22): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(863,34): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(870,51): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(873,18): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(881,18): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(884,31): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(893,29): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(896,22): error TS2304: Cannot find name 'syncStatus'.
+components/tabs/SettingsTab.tsx(904,35): error TS2339: Property 'settingLabel' does not exist on type '{ container: { flex: number; backgroundColor: string; }; header: { alignItems: "center"; paddingTop: number; paddingHorizontal: number; paddingBottom: number; }; iconContainer: { width: number; height: number; ... 4 more ...; marginBottom: number; }; ... 90 more ...; comingSoonText: { ...; }; }'.
+components/tabs/SettingsTab.tsx(934,30): error TS7006: Parameter 'rewardType' implicitly has an 'any' type.
+components/tabs/SettingsTab.tsx(934,42): error TS7006: Parameter 'amount' implicitly has an 'any' type.
+components/tabs/SettingsTab.tsx(942,26): error TS7006: Parameter 'error' implicitly has an 'any' type.
+components/tabs/TimerTab.tsx(156,42): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ScrollViewProps): ScrollView', gave the following error.
+    Type '{ width: string; maxWidth: number; height: string; maxHeight: string; } | { width: string; height: number; maxWidth: number; maxHeight?: undefined; }' is not assignable to type 'Falsy | ViewStyle | RegisteredStyle<ViewStyle> | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>> | readonly (Falsy | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Type '{ width: string; maxWidth: number; height: string; maxHeight: string; }' is not assignable to type 'Falsy | ViewStyle | RegisteredStyle<ViewStyle> | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>> | readonly (Falsy | ... 1 more ... | RegisteredStyle<...>)[]'.
+        Type '{ width: string; maxWidth: number; height: string; maxHeight: string; }' is not assignable to type 'ViewStyle'.
+          Types of property 'height' are incompatible.
+            Type 'string' is not assignable to type 'DimensionValue | undefined'.
+  Overload 2 of 2, '(props: ScrollViewProps, context: any): ScrollView', gave the following error.
+    Type '{ width: string; maxWidth: number; height: string; maxHeight: string; } | { width: string; height: number; maxWidth: number; maxHeight?: undefined; }' is not assignable to type 'Falsy | ViewStyle | RegisteredStyle<ViewStyle> | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>> | readonly (Falsy | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Type '{ width: string; maxWidth: number; height: string; maxHeight: string; }' is not assignable to type 'Falsy | ViewStyle | RegisteredStyle<ViewStyle> | RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>> | readonly (Falsy | ... 1 more ... | RegisteredStyle<...>)[]'.
+        Type '{ width: string; maxWidth: number; height: string; maxHeight: string; }' is not assignable to type 'ViewStyle'.
+          Types of property 'height' are incompatible.
+            Type 'string' is not assignable to type 'DimensionValue | undefined'.
+components/tabs/TimerTab.tsx(526,20): error TS2345: Argument of type 'TarotCard' is not assignable to parameter of type 'SetStateAction<null>'.
+  Type 'TarotCard' provides no match for the signature '(prevState: null): null'.
+components/TarotCard.tsx(113,13): error TS2559: Type '({ imageRendering?: string | undefined; WebkitBackfaceVisibility?: string | undefined; WebkitTransform?: string | undefined; borderRadius: number; backfaceVisibility: "hidden"; transform: { ...; }[]; } | { ...; })[]' has no properties in common with type 'ImageStyle'.
+components/TarotCard.tsx(203,5): error TS2345: Argument of type '{ touchable: { margin: number; }; cardContainer: { alignItems: "center"; backgroundColor: string; borderRadius: number; padding: number; borderWidth: number; borderColor: string; elevation: number; shadowColor: string; shadowOffset: { ...; }; shadowOpacity: number; shadowRadius: number; }; ... 7 more ...; errorText:...' is not assignable to parameter of type '{ touchable: { margin: number; }; cardContainer: { alignItems: "center"; backgroundColor: string; borderRadius: number; padding: number; borderWidth: number; borderColor: string; elevation: number; shadowColor: string; shadowOffset: { ...; }; shadowOpacity: number; shadowRadius: number; }; ... 7 more ...; errorText:...'.
+  Property 'cardImageContainer' is incompatible with index signature.
+    Object literal may only specify known properties, and 'shouldRasterizeIOS' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+components/TarotDaily.tsx(33,29): error TS7031: Binding element 'visible' implicitly has an 'any' type.
+components/TarotDaily.tsx(33,38): error TS7031: Binding element 'reading' implicitly has an 'any' type.
+components/TarotDaily.tsx(33,47): error TS7031: Binding element 'onClose' implicitly has an 'any' type.
+components/TarotDaily.tsx(33,56): error TS7031: Binding element 'onMemoSaved' implicitly has an 'any' type.
+components/TarotDaily.tsx(47,34): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{}'.
+  No index signature with a parameter of type 'number' was found on type '{}'.
+components/TarotDaily.tsx(48,19): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{}'.
+  No index signature with a parameter of type 'number' was found on type '{}'.
+components/TarotDaily.tsx(54,28): error TS7006: Parameter 'hour' implicitly has an 'any' type.
+components/TarotDaily.tsx(124,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ScrollViewProps): ScrollView', gave the following error.
+    Type '{ children: (Element | null)[]; horizontal: true; showsHorizontalScrollIndicator: false; contentContainerStyle: { paddingHorizontal: number; }; removeClippedSubviews: true; initialNumToRender: number; maxToRenderPerBatch: number; windowSize: number; getItemLayout: (data: any, index: any) => { ...; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<ScrollView> & Readonly<ScrollViewProps>'.
+      Property 'initialNumToRender' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<ScrollView> & Readonly<ScrollViewProps>'.
+  Overload 2 of 2, '(props: ScrollViewProps, context: any): ScrollView', gave the following error.
+    Type '{ children: (Element | null)[]; horizontal: true; showsHorizontalScrollIndicator: false; contentContainerStyle: { paddingHorizontal: number; }; removeClippedSubviews: true; initialNumToRender: number; maxToRenderPerBatch: number; windowSize: number; getItemLayout: (data: any, index: any) => { ...; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<ScrollView> & Readonly<ScrollViewProps>'.
+      Property 'initialNumToRender' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<ScrollView> & Readonly<ScrollViewProps>'.
+components/TarotDaily.tsx(127,29): error TS7006: Parameter 'data' implicitly has an 'any' type.
+components/TarotDaily.tsx(127,35): error TS7006: Parameter 'index' implicitly has an 'any' type.
+components/TarotDaily.tsx(136,31): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{}'.
+  No index signature with a parameter of type 'number' was found on type '{}'.
+components/TarotDaily.tsx(136,50): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{}'.
+  No index signature with a parameter of type 'number' was found on type '{}'.
+components/TarotDaily.tsx(209,25): error TS7031: Binding element 'visible' implicitly has an 'any' type.
+components/TarotDaily.tsx(209,34): error TS7031: Binding element 'spread' implicitly has an 'any' type.
+components/TarotDaily.tsx(209,42): error TS7031: Binding element 'onClose' implicitly has an 'any' type.
+components/TarotDaily.tsx(234,77): error TS2554: Expected 1 arguments, but got 2.
+components/TarotDaily.tsx(238,37): error TS7006: Parameter 'position' implicitly has an 'any' type.
+components/TarotDaily.tsx(238,47): error TS7006: Parameter 'index' implicitly has an 'any' type.
+components/TarotDaily.tsx(340,24): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+components/TarotDaily.tsx(353,25): error TS2345: Argument of type 'SavedSpread[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'SavedSpread[]' is not assignable to type 'never[]'.
+    Type 'SavedSpread' is not assignable to type 'never'.
+components/TarotDaily.tsx(374,40): error TS2339: Property 'id' does not exist on type 'never'.
+components/TarotDaily.tsx(377,55): error TS2339: Property 'savedAt' does not exist on type 'never'.
+components/TarotDaily.tsx(415,39): error TS2339: Property 'id' does not exist on type 'never'.
+components/TarotDaily.tsx(418,30): error TS2339: Property 'id' does not exist on type 'never'.
+components/TarotDaily.tsx(419,32): error TS2551: Property 'deleteSavedSpread' does not exist on type '{ getRandomCard: () => TarotCard; getRandomCards: (count?: number) => TarotCard[]; getRandomCardsNoDuplicates: (count?: number) => TarotCard[]; getRandomCardExcluding: (excludeCard: TarotCard) => TarotCard; ... 14 more ...; generateId: () => string; }'. Did you mean 'deleteSpread'?
+components/TarotDaily.tsx(419,57): error TS2339: Property 'id' does not exist on type 'never'.
+components/TarotDaily.tsx(477,52): error TS7006: Parameter 'card' implicitly has an 'any' type.
+components/TarotDaily.tsx(477,58): error TS7006: Parameter 'cardIndex' implicitly has an 'any' type.
+components/TarotDaily.tsx(552,45): error TS7006: Parameter 'reading' implicitly has an 'any' type.
+components/TarotDaily.tsx(552,54): error TS7006: Parameter 'itemId' implicitly has an 'any' type.
+components/TarotDaily.tsx(567,55): error TS7031: Binding element 'reading' implicitly has an 'any' type.
+components/TarotDaily.tsx(567,64): error TS7031: Binding element 'index' implicitly has an 'any' type.
+components/TarotDaily.tsx(583,37): error TS7006: Parameter 'item' implicitly has an 'any' type.
+components/TarotDaily.tsx(583,43): error TS7006: Parameter 'index' implicitly has an 'any' type.
+components/TarotDaily.tsx(588,38): error TS7006: Parameter 'data' implicitly has an 'any' type.
+components/TarotDaily.tsx(588,44): error TS7006: Parameter 'index' implicitly has an 'any' type.
+components/TarotDaily.tsx(703,33): error TS2339: Property 'id' does not exist on type 'never'.
+components/TarotDaily.tsx(733,58): error TS2339: Property 'title' does not exist on type 'never'.
+components/TarotDaily.tsx(735,61): error TS2339: Property 'createdAt' does not exist on type 'never'.
+components/TarotDaily.tsx(739,92): error TS2339: Property 'positions' does not exist on type 'never'.
+components/TarotDaily.tsx(746,25): error TS2339: Property 'positions' does not exist on type 'never'.
+components/TarotDaily.tsx(746,53): error TS7006: Parameter 'position' implicitly has an 'any' type.
+components/TarotDaily.tsx(746,63): error TS7006: Parameter 'cardIndex' implicitly has an 'any' type.
+components/TarotDaily.tsx(755,25): error TS2339: Property 'positions' does not exist on type 'never'.
+components/TarotDaily.tsx(756,89): error TS2339: Property 'positions' does not exist on type 'never'.
+components/TarotDaily.tsx(762,69): error TS2339: Property 'spreadName' does not exist on type 'never'.
+components/TarotDaily.tsx(762,81): error TS2554: Expected 1 arguments, but got 2.
+components/TarotDaily.tsx(762,88): error TS2339: Property 'spreadNameEn' does not exist on type 'never'.
+components/TarotDaily.tsx(771,28): error TS7006: Parameter 'updatedReading' implicitly has an 'any' type.
+components/TarotDaily.tsx(773,22): error TS2345: Argument of type '(prevReadings: never[]) => any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prevReadings: never[]) => any[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type 'any[]' is not assignable to type 'never[]'.
+      Type 'any' is not assignable to type 'never'.
+components/TarotDaily.tsx(775,17): error TS2339: Property 'dateKey' does not exist on type 'never'.
+components/TarotDaily.tsx(1265,3): error TS1117: An object literal cannot have multiple properties with the same name.
+components/TarotDaily.tsx(1280,3): error TS1117: An object literal cannot have multiple properties with the same name.
+components/TarotDaily.tsx(1287,3): error TS1117: An object literal cannot have multiple properties with the same name.
+components/TarotSpread.tsx(389,25): error TS2339: Property 'incrementActionCounter' does not exist on type 'typeof AdManager'.
+components/TarotSpread.tsx(451,25): error TS2339: Property 'incrementActionCounter' does not exist on type 'typeof AdManager'.
+components/TarotSpread.tsx(511,12): error TS2678: Type '"one-card"' is not comparable to type 'SpreadType'.
+components/TarotSpread.tsx(747,23): error TS2322: Type '"bookmark"' is not assignable to type 'IconName'.
+components/TarotSpread.tsx(822,27): error TS2322: Type '"bookmark"' is not assignable to type 'IconName'.
+components/TarotSpread.tsx(853,31): error TS2322: Type '"trash-2"' is not assignable to type 'IconName'.
+components/TarotSpread.tsx(1071,32): error TS2339: Property 'large' does not exist on type '{ small: number; sm: number; medium: number; md: number; lg: number; xl: number; xxl: number; round: number; }'.
+components/TarotSpread.tsx(1158,3): error TS1117: An object literal cannot have multiple properties with the same name.
+components/TarotSpread.tsx(1171,3): error TS1117: An object literal cannot have multiple properties with the same name.
+components/TarotSpread.tsx(1267,32): error TS2339: Property 'large' does not exist on type '{ small: number; sm: number; medium: number; md: number; lg: number; xl: number; xxl: number; round: number; }'.
+components/WidgetContainer.tsx(30,45): error TS2339: Property 'isWidgetSupported' does not exist on type 'typeof WidgetManager'.
+components/WidgetContainer.tsx(43,29): error TS2341: Property 'startAutoUpdate' is private and only accessible within class 'WidgetManager'.
+components/WidgetContainer.tsx(43,45): error TS2554: Expected 0 arguments, but got 1.
+contexts/AuthContext.tsx(81,37): error TS18047: 'supabase' is possibly 'null'.
+contexts/AuthContext.tsx(127,52): error TS18047: 'supabase' is possibly 'null'.
+contexts/AuthContext.tsx(138,13): error TS18047: 'supabase' is possibly 'null'.
+contexts/AuthContext.tsx(277,20): error TS2345: Argument of type '(prev: AuthState) => { profile: any[]; isAuthenticated: boolean; isLoading: boolean; initialized: boolean; user: User | null; session: Session | null; }' is not assignable to parameter of type 'SetStateAction<AuthState>'.
+  Type '(prev: AuthState) => { profile: any[]; isAuthenticated: boolean; isLoading: boolean; initialized: boolean; user: User | null; session: Session | null; }' is not assignable to type '(prevState: AuthState) => AuthState'.
+    Call signature return types '{ profile: any[]; isAuthenticated: boolean; isLoading: boolean; initialized: boolean; user: User | null; session: Session | null; }' and 'AuthState' are incompatible.
+      The types of 'profile' are incompatible between these types.
+        Property 'id' is missing in type 'any[]' but required in type 'UserProfile'.
+contexts/AuthContext.tsx(317,5): error TS2322: Type '(email: string, password: string, userData?: any) => Promise<{ user: SupabaseUser | null; session: Session | null; }>' is not assignable to type '(email: string, password: string, userData?: any) => Promise<{ user: User; session: Session; }>'.
+  Type 'Promise<{ user: User | null; session: Session | null; }>' is not assignable to type 'Promise<{ user: User; session: Session; }>'.
+    Type '{ user: User | null; session: Session | null; }' is not assignable to type '{ user: User; session: Session; }'.
+      Types of property 'user' are incompatible.
+        Type 'User | null' is not assignable to type 'User'.
+          Type 'null' is not assignable to type 'User'.
+contexts/AuthContext.tsx(321,5): error TS2322: Type '(updates: Partial<UserProfile>) => Promise<any[]>' is not assignable to type '(updates: Partial<UserProfile>) => Promise<UserProfile>'.
+  Type 'Promise<any[]>' is not assignable to type 'Promise<UserProfile>'.
+    Property 'id' is missing in type 'any[]' but required in type 'UserProfile'.
+contexts/NotificationContext.tsx(344,78): error TS7006: Parameter 'notification' implicitly has an 'any' type.
+contexts/NotificationContext.tsx(349,82): error TS7006: Parameter 'response' implicitly has an 'any' type.
+contexts/NotificationContext.tsx(433,65): error TS7006: Parameter 'n' implicitly has an 'any' type.
+contexts/PremiumContext.tsx(133,14): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | BeforeUnloadEvent | ErrorEvent | UIEvent | AnimationEvent | ... 26 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.
+    Argument of type '"premiumStatusChanged"' is not assignable to parameter of type 'keyof WindowEventMap'.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: CustomEvent) => Promise<void>' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.
+      Type '(event: CustomEvent) => Promise<void>' is not assignable to type 'EventListener'.
+        Types of parameters 'event' and 'evt' are incompatible.
+          Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+contexts/PremiumContext.tsx(134,14): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | BeforeUnloadEvent | ErrorEvent | UIEvent | AnimationEvent | ... 26 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.
+    Argument of type '"purchaseError"' is not assignable to parameter of type 'keyof WindowEventMap'.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.
+      Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.
+        Types of parameters 'event' and 'evt' are incompatible.
+          Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+contexts/PremiumContext.tsx(156,14): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | BeforeUnloadEvent | ErrorEvent | UIEvent | AnimationEvent | ... 26 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.
+    Argument of type '"premiumStatusChanged"' is not assignable to parameter of type 'keyof WindowEventMap'.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: CustomEvent) => Promise<void>' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.
+      Type '(event: CustomEvent) => Promise<void>' is not assignable to type 'EventListener'.
+        Types of parameters 'event' and 'evt' are incompatible.
+          Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+contexts/PremiumContext.tsx(157,14): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | BeforeUnloadEvent | ErrorEvent | UIEvent | AnimationEvent | ... 26 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.
+    Argument of type '"purchaseError"' is not assignable to parameter of type 'keyof WindowEventMap'.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.
+    Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.
+      Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.
+        Types of parameters 'event' and 'evt' are incompatible.
+          Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+hooks/usePWA.ts(30,11): error TS2430: Interface 'NavigatorWithShare' incorrectly extends interface 'Navigator'.
+  Types of property 'share' are incompatible.
+    Type '((data: ShareData) => Promise<void>) | undefined' is not assignable to type '(data?: ShareData | undefined) => Promise<void>'.
+      Type 'undefined' is not assignable to type '(data?: ShareData | undefined) => Promise<void>'.
+hooks/useTarotCards.ts(138,13): error TS2739: Type '{ date: string; hourlyCards: TarotCard[]; memos: Record<number, string>; }' is missing the following properties from type 'DailyTarotSave': id, insights, savedAt
+hooks/useTarotCards.ts(167,25): error TS2448: Block-scoped variable 'performDrawDailyCards' used before its declaration.
+hooks/useTarotCards.ts(167,25): error TS2454: Variable 'performDrawDailyCards' is used before being assigned.
+services/AuthService.ts(109,11): error TS2322: Type 'User | null' is not assignable to type 'User | undefined'.
+  Type 'null' is not assignable to type 'User | undefined'.
+services/AuthService.ts(110,11): error TS2322: Type 'AuthTokens | null' is not assignable to type 'AuthTokens | undefined'.
+  Type 'null' is not assignable to type 'AuthTokens | undefined'.
+services/AuthService.ts(151,11): error TS2322: Type 'User | null' is not assignable to type 'User | undefined'.
+  Type 'null' is not assignable to type 'User | undefined'.
+services/AuthService.ts(152,11): error TS2322: Type 'AuthTokens | null' is not assignable to type 'AuthTokens | undefined'.
+  Type 'null' is not assignable to type 'AuthTokens | undefined'.
+tarot-admin-dashboard/src/app/layout.tsx(21,11): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("c:/Users/cntus/Desktop/tarot-timer-web/tarot-admin-dashboard/node_modules/@types/react/index").ReactNode'.
+  Type 'ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type 'ReactNode'.
+    Property 'children' is missing in type 'ReactElement<unknown, string | JSXElementConstructor<any>>' but required in type 'ReactPortal'.
+tarot-admin-dashboard/src/app/page.tsx(4,28): error TS2307: Cannot find module '@/components/AdminStats' or its corresponding type declarations.
+tarot-admin-dashboard/src/app/page.tsx(5,31): error TS2307: Cannot find module '@/components/UserAnalytics' or its corresponding type declarations.
+tarot-admin-dashboard/src/app/page.tsx(6,30): error TS2307: Cannot find module '@/components/SystemHealth' or its corresponding type declarations.
+tarot-admin-dashboard/src/app/page.tsx(75,18): error TS18046: 'error' is of type 'unknown'.
+tarot-admin-dashboard/src/app/page.tsx(76,18): error TS18046: 'error' is of type 'unknown'.
+tarot-admin-dashboard/src/app/page.tsx(77,17): error TS18046: 'error' is of type 'unknown'.
+utils/adManager.ts(213,54): error TS2551: Property 'BANNER' does not exist on type '{ banner: string; interstitial: string; rewarded: string; }'. Did you mean 'banner'?
+utils/adManager.ts(228,72): error TS2551: Property 'INTERSTITIAL' does not exist on type '{ banner: string; interstitial: string; rewarded: string; }'. Did you mean 'interstitial'?
+utils/adManager.ts(242,24): error TS2339: Property 'INTERSTITIAL' does not exist on type '{ banner_load: number; interstitial_load: number; rewarded_load: number; }'.
+utils/adManager.ts(281,68): error TS2551: Property 'REWARDED' does not exist on type '{ banner: string; interstitial: string; rewarded: string; }'. Did you mean 'rewarded'?
+utils/adManager.ts(295,24): error TS2339: Property 'REWARDED' does not exist on type '{ banner_load: number; interstitial_load: number; rewarded_load: number; }'.
+utils/adManager.ts(349,58): error TS2339: Property 'MAX_DAILY' does not exist on type '{ intervals: { banner_refresh: number; interstitial_cooldown: number; rewarded_cooldown: number; }; conditions: { min_session_time: number; max_daily_ads: { interstitial: number; rewarded: number; }; }; timing: { ...; }; banner: { ...; }; premium: { ...; }; }'.
+utils/adManager.ts(375,42): error TS2339: Property 'CPM' does not exist on type '{ intervals: { banner_refresh: number; interstitial_cooldown: number; rewarded_cooldown: number; }; conditions: { min_session_time: number; max_daily_ads: { interstitial: number; rewarded: number; }; }; timing: { ...; }; banner: { ...; }; premium: { ...; }; }'.
+utils/adManager.ts(414,54): error TS2339: Property 'MAX_DAILY' does not exist on type '{ intervals: { banner_refresh: number; interstitial_cooldown: number; rewarded_cooldown: number; }; conditions: { min_session_time: number; max_daily_ads: { interstitial: number; rewarded: number; }; }; timing: { ...; }; banner: { ...; }; premium: { ...; }; }'.
+utils/adManager.ts(444,48): error TS2339: Property 'CPM' does not exist on type '{ intervals: { banner_refresh: number; interstitial_cooldown: number; rewarded_cooldown: number; }; conditions: { min_session_time: number; max_daily_ads: { interstitial: number; rewarded: number; }; }; timing: { ...; }; banner: { ...; }; premium: { ...; }; }'.
+utils/adManager.ts(472,33): error TS2339: Property 'set' does not exist on type 'typeof LocalStorageManager'.
+utils/adManager.ts(483,48): error TS2339: Property 'get' does not exist on type 'typeof LocalStorageManager'.
+utils/analyticsManager.ts(70,29): error TS2345: Argument of type '"app_close"' is not assignable to parameter of type '"card_draw" | "app_launch" | "tarot_session_start" | "tarot_session_complete" | "journal_entry_add" | "premium_feature_use" | "setting_change" | "spread_select" | "export_data" | "import_data"'.
+utils/analyticsManager.ts(188,25): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+utils/analyticsManager.ts(348,48): error TS2367: This comparison appears to be unintentional because the types '"card_draw" | "app_launch" | "tarot_session_start" | "tarot_session_complete" | "journal_entry_add" | "premium_feature_use" | "setting_change" | "spread_select" | "export_data" | "import_data"' and '"app_close"' have no overlap.
+utils/iapManager.ts(145,41): error TS7006: Parameter 'sub' implicitly has an 'any' type.
+utils/iapManager.ts(549,9): error TS2322: Type '"GracePeriod"' is not assignable to type '"Sandbox" | "Production" | "Unknown" | undefined'.
+utils/iapManager.ts(728,9): error TS2322: Type '"Simulation"' is not assignable to type '"Sandbox" | "Production" | "Unknown" | undefined'.
+utils/localDataManager.ts(46,66): error TS2345: Argument of type '"sessions"' is not assignable to parameter of type '"journal_entries" | "daily" | "spread"'.
+utils/localDataManager.ts(53,36): error TS18047: 'newSession' is possibly 'null'.
+utils/localDataManager.ts(55,5): error TS2322: Type 'TarotSession | null' is not assignable to type 'TarotSession'.
+  Type 'null' is not assignable to type 'TarotSession'.
+utils/localDataManager.ts(132,45): error TS2551: Property 'isPremium' does not exist on type 'PremiumStatus'. Did you mean 'is_premium'?
+utils/localDataManager.ts(152,9): error TS2322: Type '{} | undefined' is not assignable to type 'string | undefined'.
+  Type '{}' is not assignable to type 'string'.
+utils/localDataManager.ts(187,54): error TS2345: Argument of type '"journal_entries" | "sessions"' is not assignable to parameter of type '"journal_entries" | "daily" | "spread"'.
+  Type '"sessions"' is not assignable to type '"journal_entries" | "daily" | "spread"'.
+utils/localStorage.ts(220,5): error TS2322: Type 'TarotSession[] | null' is not assignable to type 'TarotSession[]'.
+  Type 'null' is not assignable to type 'TarotSession[]'.
+utils/localStorage.ts(285,5): error TS2322: Type 'JournalEntry[] | null' is not assignable to type 'JournalEntry[]'.
+  Type 'null' is not assignable to type 'JournalEntry[]'.
+utils/localStorage.ts(334,5): error TS2322: Type 'PremiumStatus | null' is not assignable to type 'PremiumStatus'.
+  Type 'null' is not assignable to type 'PremiumStatus'.
+utils/localStorage.ts(416,9): error TS2353: Object literal may only specify known properties, and 'premium_themes' does not exist in type 'PremiumStatus'.
+utils/localStorage.ts(521,5): error TS2322: Type 'boolean | null' is not assignable to type 'boolean'.
+  Type 'null' is not assignable to type 'boolean'.
+utils/localStorage.ts(578,5): error TS2322: Type 'boolean | null' is not assignable to type 'boolean'.
+  Type 'null' is not assignable to type 'boolean'.
+utils/receiptValidator.ts(312,11): error TS18046: 'error' is of type 'unknown'.
+utils/receiptValidator.ts(331,40): error TS2552: Cannot find name 'responseData'. Did you mean 'Response'?
+utils/receiptValidator.ts(331,81): error TS2552: Cannot find name 'responseData'. Did you mean 'Response'?
+utils/receiptValidator.ts(334,15): error TS2552: Cannot find name 'responseData'. Did you mean 'Response'?
+utils/receiptValidator.ts(436,13): error TS18046: 'error' is of type 'unknown'.
+utils/receiptValidator.ts(557,9): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+utils/supabase.ts(58,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(73,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(91,29): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(103,29): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(117,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(134,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(149,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(166,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(183,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(198,35): error TS18047: 'supabase' is possibly 'null'.
+utils/supabase.ts(215,10): error TS18047: 'supabase' is possibly 'null'.
+utils/widgetSync.ts(9,30): error TS2307: Cannot find module './timerService' or its corresponding type declarations.
+utils/widgetSync.ts(195,44): error TS2554: Expected 0 arguments, but got 1.
+utils/widgetSync.ts(236,9): error TS2322: Type 'string' is not assignable to type '{ hours: number; minutes: number; seconds: number; }'.
+utils/widgetSync.ts(249,9): error TS2322: Type 'string' is not assignable to type '{ hours: number; minutes: number; seconds: number; }'.
+widgets/PWAWidget.tsx(43,9): error TS2322: Type 'string' is not assignable to type '{ hours: number; minutes: number; seconds: number; }'.
+widgets/PWAWidget.tsx(121,17): error TS2339: Property 'cardName' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(124,17): error TS2339: Property 'progressText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(127,17): error TS2322: Type '"flame"' is not assignable to type 'IconName'.
+widgets/PWAWidget.tsx(129,19): error TS2339: Property 'streakText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(157,19): error TS2339: Property 'cardName' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(160,19): error TS2322: Type '"flame"' is not assignable to type 'IconName'.
+widgets/PWAWidget.tsx(162,21): error TS2339: Property 'streakText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(172,61): error TS2339: Property 'progressPercent' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(174,36): error TS2339: Property 'progressPercent' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(180,23): error TS2339: Property 'progressText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(183,24): error TS2339: Property 'progressText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(188,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ hours: number; minutes: number; seconds: number; } | undefined' is not assignable to type 'ReactNode'.
+      Type '{ hours: number; minutes: number; seconds: number; }' is not assignable to type 'ReactNode'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ hours: number; minutes: number; seconds: number; } | undefined' is not assignable to type 'ReactNode'.
+      Type '{ hours: number; minutes: number; seconds: number; }' is not assignable to type 'ReactNode'.
+widgets/PWAWidget.tsx(221,19): error TS2322: Type '"flame"' is not assignable to type 'IconName'.
+widgets/PWAWidget.tsx(223,21): error TS2339: Property 'streakText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(231,19): error TS2339: Property 'cardName' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(241,54): error TS2339: Property 'progressText' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(247,34): error TS2339: Property 'progressPercent' does not exist on type 'WidgetData'.
+widgets/PWAWidget.tsx(253,44): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ hours: number; minutes: number; seconds: number; } | undefined' is not assignable to type 'ReactNode'.
+      Type '{ hours: number; minutes: number; seconds: number; }' is not assignable to type 'ReactNode'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ hours: number; minutes: number; seconds: number; } | undefined' is not assignable to type 'ReactNode'.
+      Type '{ hours: number; minutes: number; seconds: number; }' is not assignable to type 'ReactNode'.
+widgets/PWAWidget.tsx(279,13): error TS2322: Type '"loader"' is not assignable to type 'IconName'.
+widgets/PWAWidget.tsx(297,13): error TS2322: Type '"exclamation-triangle"' is not assignable to type 'IconName'.

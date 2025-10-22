@@ -34,7 +34,9 @@ const isDevelopment = (() => {
   if (process.env.NODE_ENV === 'development') {
     return true;
   }
-  if (Constants.manifest?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
+  // ✅ FIX: Constants.expoConfig로 변경 (타입 오류 수정)
+  const expoConfig = Constants.expoConfig || (Constants as any).manifest2?.extra?.expoClient;
+  if (expoConfig?.extra?.EXPO_PUBLIC_APP_ENV === 'production') {
     return false;
   }
   return false;
@@ -78,7 +80,7 @@ const BannerAd: React.FC<BannerAdProps> = ({
       }
 
       // 배치별 광고 표시 설정 확인
-      const shouldShowBanner = AdManager.shouldShowBanner(placement);
+      const shouldShowBanner = AdManager.shouldShowBanner();
       if (!shouldShowBanner) {
         console.log(`⚠️ 배치 "${placement}"에서 배너 광고 비활성화`);
         return;
@@ -141,36 +143,48 @@ const BannerAd: React.FC<BannerAdProps> = ({
     ? TestIds.BANNER
     : AdManager.getBannerAdUnitId();
 
-  return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <RNBannerAd
-        unitId={adUnitId}
-        size={BannerAdSize.BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: false,
-        }}
-        onAdLoaded={() => {
-          console.log('✅ 배너 광고 로드 완료');
-          setIsLoaded(true);
-          AdManager.trackAdEvent('banner_loaded', placement);
-          onAdLoaded?.();
-        }}
-        onAdFailedToLoad={(loadError) => {
-          const errorMsg = loadError?.message || '알 수 없는 오류';
-          console.error('❌ 배너 광고 로드 실패:', errorMsg);
-          setError(errorMsg);
-          AdManager.trackAdEvent('banner_failed', placement, { error: errorMsg });
-          onAdFailedToLoad?.(errorMsg);
-        }}
-        onAdOpened={() => {
-          console.log('📱 배너 광고 클릭됨');
-          AdManager.trackAdEvent('banner_clicked', placement);
-          AdManager.trackRevenue('banner', placement, 0.01);
-          onAdClicked?.();
-        }}
-      />
-    </View>
-  );
+  // ✅ FIX: 광고 컴포넌트 렌더링 에러 방지
+  try {
+    return (
+      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+        <RNBannerAd
+          unitId={adUnitId}
+          size={BannerAdSize.BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: false,
+          }}
+          onAdLoaded={() => {
+            console.log('✅ 배너 광고 로드 완료');
+            setIsLoaded(true);
+            AdManager.trackAdEvent('banner_loaded', placement);
+            onAdLoaded?.();
+          }}
+          onAdFailedToLoad={(loadError: any) => {
+            const errorMsg = loadError?.message || '알 수 없는 오류';
+            console.error('❌ 배너 광고 로드 실패:', errorMsg);
+            setError(errorMsg);
+            setIsVisible(false); // ✅ FIX: 광고 숨김
+            AdManager.trackAdEvent('banner_failed', placement, { error: errorMsg });
+            onAdFailedToLoad?.(errorMsg);
+          }}
+          onAdOpened={() => {
+            console.log('📱 배너 광고 클릭됨');
+            AdManager.trackAdEvent('banner_clicked', placement);
+            AdManager.trackRevenue('banner', 0.01);
+            onAdClicked?.();
+          }}
+        />
+      </View>
+    );
+  } catch (renderError) {
+    // ✅ FIX: 렌더링 에러 발생 시 에러 로깅 후 null 반환 (크래시 방지)
+    const errorMsg = renderError instanceof Error ? renderError.message : '배너 광고 렌더링 실패';
+    console.error('🚨 배너 광고 렌더링 에러:', errorMsg);
+    setError(errorMsg);
+    setIsVisible(false);
+    onAdFailedToLoad?.(errorMsg);
+    return null;
+  }
 };
 
 const styles = StyleSheet.create({

@@ -1518,10 +1518,11 @@ export const TarotUtils = {
   // 일일 타로 저장
   saveDailyTarot: async (dailyTarot: DailyTarotSave): Promise<void> => {
     try {
-      // 저장 제한 확인
+      // 저장 제한 확인 (실시간 카운트)
       const limitCheck = await LocalStorageManager.checkUsageLimit('daily');
 
       if (limitCheck.isAtLimit) {
+        console.warn(`⚠️ DailyTarot 저장 제한 도달: ${limitCheck.currentCount}/${limitCheck.maxCount}`);
         const error = new Error('STORAGE_LIMIT_REACHED');
         (error as any).limitInfo = limitCheck;
         throw error;
@@ -1529,8 +1530,12 @@ export const TarotUtils = {
 
       const storageKey = STORAGE_KEYS.DAILY_TAROT + dailyTarot.date;
       await simpleStorage.setItem(storageKey, JSON.stringify(dailyTarot));
+
+      // ✅ FIX: 저장 성공 후 카운트 업데이트
+      await LocalStorageManager.updateUsageCount('daily');
+      console.log(`✅ DailyTarot 저장 성공: ${dailyTarot.date} (${limitCheck.currentCount + 1}/${limitCheck.maxCount})`);
     } catch (error) {
-      console.error('일일 타로 저장 실패:', error);
+      console.error('❌ 일일 타로 저장 실패:', error);
       throw error;
     }
   },

@@ -69,7 +69,7 @@ const RewardedAd: React.FC<RewardedAdProps> = ({
 
       console.log('🎁 보상형 광고 시청 시작');
 
-      const result = await AdManager.showRewarded();
+      const result = await AdManager.showRewarded(placement);
 
       if (result.success) {
         console.log('✅ 보상형 광고 시청 완료 - 보상 지급');
@@ -183,7 +183,7 @@ export const useRewardedAd = () => {
     try {
       setIsLoading(true);
 
-      const result = await AdManager.showRewarded();
+      const result = await AdManager.showRewarded(placement);
 
       if (result.success && result.rewardEarned) {
         console.log('✅ Hook: 보상형 광고 시청 완료');

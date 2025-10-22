@@ -46,7 +46,10 @@ export interface GooglePlayReceiptData {
 
 export class ReceiptValidator {
   // App Store Connect 공유 비밀키 (실제 배포시 환경변수로 관리)
-  private static readonly APP_STORE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET || process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || 'your-shared-secret';
+  private static readonly APP_STORE_SHARED_SECRET =
+    process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || // 로컬 개발 (.env 파일)
+    process.env.APPLE_SHARED_SECRET ||                 // EAS Build (EAS Secret)
+    'your-shared-secret';                              // Fallback (절대 사용되지 않음)
 
   // Google Play Service Account (실제 배포시 환경변수로 관리)
   private static readonly GOOGLE_PLAY_SERVICE_ACCOUNT = process.env.EXPO_PUBLIC_GOOGLE_PLAY_SERVICE_ACCOUNT;

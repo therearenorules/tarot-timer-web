@@ -174,7 +174,9 @@
       "Bash(git remote set-url:*)",
       "Bash(for file in i18n/locales/*.json)",
       "Bash(do node:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git reset:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "ask": []

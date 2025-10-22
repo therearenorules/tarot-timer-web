@@ -440,11 +440,25 @@ export class LocalStorageManager {
 
   static async updateUsageCount(type: 'daily' | 'spread' | 'journal_entries'): Promise<void> {
     const limits = await this.getUsageLimits();
-    const sessions = await this.getTarotSessions();
 
     if (type === 'daily') {
-      limits.current_daily_sessions = sessions.filter(s => s.session_type === 'daily').length;
+      // ✅ FIX: 실제 DailyTarot 저장 개수 카운트
+      // STORAGE_KEYS.DAILY_TAROT + date 형식으로 저장된 모든 키를 확인
+      let dailyCount = 0;
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
+        dailyCount = dailyTarotKeys.length;
+        console.log(`📊 실제 DailyTarot 저장 개수: ${dailyCount}개`);
+      } catch (error) {
+        console.error('DailyTarot 카운트 실패:', error);
+        // 에러 시 기존 로직 유지 (TarotSession 카운트)
+        const sessions = await this.getTarotSessions();
+        dailyCount = sessions.filter(s => s.session_type === 'daily').length;
+      }
+      limits.current_daily_sessions = dailyCount;
     } else if (type === 'spread') {
+      const sessions = await this.getTarotSessions();
       limits.current_spread_sessions = sessions.filter(s => s.session_type === 'spread' || s.session_type === 'custom').length;
     } else {
       limits.current_journal_entries = (await this.getJournalEntries()).length;
@@ -468,10 +482,21 @@ export class LocalStorageManager {
     const limits = await this.getUsageLimits();
 
     if (type === 'daily') {
+      // ✅ FIX: 실시간으로 실제 DailyTarot 저장 개수 확인
+      let actualDailyCount = limits.current_daily_sessions;
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
+        actualDailyCount = dailyTarotKeys.length;
+        console.log(`🔍 DailyTarot 저장 제한 확인: ${actualDailyCount}/${limits.max_daily_sessions}`);
+      } catch (error) {
+        console.error('DailyTarot 카운트 실패, 캐시된 값 사용:', error);
+      }
+
       return {
-        canCreate: limits.current_daily_sessions < limits.max_daily_sessions,
-        isAtLimit: limits.current_daily_sessions >= limits.max_daily_sessions,
-        currentCount: limits.current_daily_sessions,
+        canCreate: actualDailyCount < limits.max_daily_sessions,
+        isAtLimit: actualDailyCount >= limits.max_daily_sessions,
+        currentCount: actualDailyCount,
         maxCount: limits.max_daily_sessions
       };
     } else if (type === 'spread') {
