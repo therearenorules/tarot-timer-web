@@ -114,8 +114,9 @@ export class IAPManager {
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     try {
-      if (Platform.OS === 'web') {
-        // 웹 환경용 시뮬레이션 데이터
+      // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션 데이터 사용
+      if (!isMobile || !RNIap) {
+        console.log('🌐 시뮬레이션 모드: 구독 상품 시뮬레이션 데이터 로드');
         this.products = [
           {
             productId: SUBSCRIPTION_SKUS.monthly,
@@ -179,8 +180,9 @@ export class IAPManager {
 
       console.log('💳 구독 구매 시작:', productId);
 
-      if (Platform.OS === 'web') {
-        // 웹 환경용 시뮬레이션
+      // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션
+      if (!isMobile || !RNIap) {
+        console.log('🌐 시뮬레이션 모드: 구매 시뮬레이션');
         const result = await this.simulateWebPurchase(productId);
         if (result.success) {
           await this.processPurchaseSuccess(productId, 'web_simulation_' + Date.now());
@@ -245,8 +247,9 @@ export class IAPManager {
    */
   static async restorePurchases(): Promise<boolean> {
     try {
-      if (Platform.OS === 'web') {
-        console.log('🌐 웹 환경: 구매 복원 시뮬레이션');
+      // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션
+      if (!isMobile || !RNIap) {
+        console.log('🌐 시뮬레이션 모드: 구매 복원 시뮬레이션');
         return true;
       }
 
