@@ -446,9 +446,9 @@ function AppContent() {
       <AppHeader activeTab={activeTab} />
       <PWAStatus />
 
-      <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
+      <View style={styles.main}>
         {renderContent()}
-      </ScrollView>
+      </View>
 
       {/* 배너 광고 */}
       {BannerAd && (
