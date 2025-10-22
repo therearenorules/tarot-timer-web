@@ -269,10 +269,17 @@ export class ReceiptValidator {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const responseData = await response.json();
+      // Expo Go 환경에서 response.json() 실패 대비
+      let responseData: any;
+      try {
+        responseData = await response.json();
+      } catch (jsonError) {
+        this.secureLog('warn', 'App Store 응답 파싱 실패 (Expo Go 환경일 수 있음)');
+        throw new Error('App Store 응답을 파싱할 수 없습니다.');
+      }
 
       // App Store 응답 상태 코드 확인
-      if (responseData.status === 0) {
+      if (responseData && responseData.status === 0) {
         // 성공: 구독 정보 파싱
         const latestReceiptInfo = responseData.latest_receipt_info?.[0];
         const pendingRenewalInfo = responseData.pending_renewal_info?.[0];
@@ -331,18 +338,29 @@ export class ReceiptValidator {
       21008: '이 영수증은 Production용입니다.'
     };
 
-    const errorMessage = errorMessages[responseData.status] || `App Store 오류: ${responseData.status}`;
+    // responseData가 유효한 경우에만 처리
+    if (responseData && typeof responseData.status === 'number') {
+      const errorMessage = errorMessages[responseData.status] || `App Store 오류: ${responseData.status}`;
 
-    this.secureLog('warn', 'App Store 영수증 검증 실패', {
-      status: responseData.status,
-      error: errorMessage,
-      environment: isSandbox ? 'Sandbox' : 'Production'
-    });
+      this.secureLog('warn', 'App Store 영수증 검증 실패', {
+        status: responseData.status,
+        error: errorMessage,
+        environment: isSandbox ? 'Sandbox' : 'Production'
+      });
 
+      return {
+        isValid: false,
+        isActive: false,
+        error: errorMessage
+      };
+    }
+
+    // responseData가 없거나 유효하지 않은 경우
+    this.secureLog('warn', 'App Store 응답 데이터가 유효하지 않음');
     return {
       isValid: false,
       isActive: false,
-      error: errorMessage
+      error: 'App Store 응답 데이터가 유효하지 않습니다.'
     };
   }
 
@@ -390,11 +408,18 @@ export class ReceiptValidator {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const responseData = await response.json();
+        // Expo Go 환경에서 response.json() 실패 대비
+        let responseData: any;
+        try {
+          responseData = await response.json();
+        } catch (jsonError) {
+          this.secureLog('warn', 'Google Play 응답 파싱 실패 (Expo Go 환경일 수 있음)');
+          throw new Error('Google Play 응답을 파싱할 수 없습니다.');
+        }
 
         // Google Play 구독 상태 확인
-        const expiryTimeMillis = responseData.expiryTimeMillis;
-        const purchaseTimeMillis = responseData.startTimeMillis;
+        const expiryTimeMillis = responseData?.expiryTimeMillis;
+        const purchaseTimeMillis = responseData?.startTimeMillis;
 
         if (!expiryTimeMillis || !purchaseTimeMillis) {
           this.secureLog('warn', 'Google Play 응답에 필수 데이터 누락');
