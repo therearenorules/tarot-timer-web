@@ -42,10 +42,15 @@ export default function AdBanner({
       if (shouldShowAds) {
         // AdManager에서 배너 광고 Unit ID 가져오기
         const unitId = AdManager.getBannerAdUnitId();
+        if (!unitId) {
+          console.log('🌐 Expo Go 환경: 배너광고 시뮬레이션 모드');
+          setShouldShow(false);
+          return;
+        }
         setAdUnitID(unitId);
       }
     } catch (error) {
-      console.error('광고 표시 확인 오류:', error);
+      console.warn('⚠️ 광고 표시 확인 오류 (Expo Go 환경일 수 있음):', error);
       setShouldShow(false);
     }
   };

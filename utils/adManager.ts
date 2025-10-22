@@ -210,6 +210,11 @@ export class AdManager {
    * ✅ Android 최적화: 배너광고 Unit ID 반환
    */
   static getBannerAdUnitId(): string {
+    // Expo Go 환경에서는 TestIds가 null일 수 있음
+    if (!isNativeSupported || !TestIds) {
+      console.log('🌐 시뮬레이션 모드: 배너광고 ID 사용 불가');
+      return '';
+    }
     return isDevelopment ? TestIds.BANNER : AD_UNITS.BANNER;
   }
 
