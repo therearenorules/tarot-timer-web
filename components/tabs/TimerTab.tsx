@@ -52,6 +52,8 @@ const CardDetailModal = memo(({
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const scrollViewRef = useRef<ScrollView>(null);
   const memoInputRef = useRef<TextInput>(null);
+  // ✅ setTimeout cleanup을 위한 ref 추가
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const onChange = (result: any) => {
@@ -79,6 +81,16 @@ const CardDetailModal = memo(({
       showSubscription.remove();
     };
   }, [visible]);
+
+  // ✅ Cleanup: 컴포넌트 언마운트 시 timeout 정리
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // 모달 스타일 (화면 비율 기반 동적 계산)
   const getModalStyle = () => {
@@ -228,8 +240,13 @@ const CardDetailModal = memo(({
                   textAlignVertical="top"
                   maxLength={500}
                   onFocus={() => {
+                    // ✅ 기존 timeout 취소 (메모리 누수 방지)
+                    if (scrollTimeoutRef.current) {
+                      clearTimeout(scrollTimeoutRef.current);
+                    }
+
                     // 간단하고 안정적인 스크롤 방식
-                    setTimeout(() => {
+                    scrollTimeoutRef.current = setTimeout(() => {
                       if (scrollViewRef.current) {
                         // 메모 섹션을 뷰포트 상단으로 이동
                         const scrollOffset = Platform.OS === 'web' ? 250 : 350;
@@ -238,6 +255,7 @@ const CardDetailModal = memo(({
                           animated: true
                         });
                       }
+                      scrollTimeoutRef.current = null; // cleanup
                     }, Platform.OS === 'web' ? 100 : 200);
                   }}
                 />
@@ -346,6 +364,8 @@ const EnergyFlowSection = memo(({
   const { t } = useTranslation();
   const { getCardName } = useTarotI18n();
   const flatListRef = useRef<FlatList>(null);
+  // ✅ 스크롤 재시도 timeout cleanup을 위한 ref
+  const scrollRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 현재 시간이 바뀔 때마다 스크롤 위치 조정
   useEffect(() => {
@@ -357,6 +377,16 @@ const EnergyFlowSection = memo(({
       });
     }
   }, [currentHour, dailyCards.length]);
+
+  // ✅ Cleanup: 컴포넌트 언마운트 시 timeout 정리
+  useEffect(() => {
+    return () => {
+      if (scrollRetryTimeoutRef.current) {
+        clearTimeout(scrollRetryTimeoutRef.current);
+        scrollRetryTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // 24시간 데이터 생성
   const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
@@ -417,11 +447,16 @@ const EnergyFlowSection = memo(({
         // ✅ 성능 최적화
         updateCellsBatchingPeriod={100} // Android 안정성을 위해 100ms로 증가
         onScrollToIndexFailed={(info) => {
+          // ✅ 기존 timeout 취소
+          if (scrollRetryTimeoutRef.current) {
+            clearTimeout(scrollRetryTimeoutRef.current);
+          }
+
           // 스크롤 실패 시 재시도
-          const wait = new Promise(resolve => setTimeout(resolve, 500));
-          wait.then(() => {
+          scrollRetryTimeoutRef.current = setTimeout(() => {
             flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
-          });
+            scrollRetryTimeoutRef.current = null; // cleanup
+          }, 500);
         }}
       />
     </View>

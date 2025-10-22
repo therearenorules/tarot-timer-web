@@ -70,7 +70,10 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active' && premiumStatus.is_premium) {
-        validateSubscription();
+        // ✅ 비동기 함수 호출에 오류 처리 추가
+        validateSubscription().catch((error) => {
+          console.warn('⚠️ 포어그라운드 복귀 시 구독 검증 실패:', error);
+        });
       }
     };
 
@@ -176,6 +179,12 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       await refreshStatus();
     } catch (error) {
       console.error('❌ 상태 변경 처리 오류:', error);
+      // ✅ setState 호출 시 컴포넌트 언마운트 방지
+      try {
+        setLastError(error instanceof Error ? error.message : '상태 변경 처리 오류');
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+      }
     }
   };
 
@@ -188,6 +197,12 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       await refreshStatus();
     } catch (error) {
       console.error('❌ 상태 변경 처리 오류:', error);
+      // ✅ setState 호출 시 컴포넌트 언마운트 방지
+      try {
+        setLastError(error instanceof Error ? error.message : '상태 변경 처리 오류');
+      } catch (stateError) {
+        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+      }
     }
   };
 
