@@ -16,6 +16,7 @@ import {
   Dimensions
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeState } from '../hooks/useSafeState';
 import { Colors, Spacing, BorderRadius, Typography } from './DesignSystem';
 import AnalyticsManager from '../utils/analyticsManager';
 

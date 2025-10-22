@@ -14,6 +14,7 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
+import { useSafeState } from '../../hooks/useSafeState';
 
 const { width, height } = Dimensions.get('window');
 

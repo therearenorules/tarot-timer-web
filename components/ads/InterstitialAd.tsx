@@ -7,6 +7,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePremium } from '../../contexts/PremiumContext';
+import { useSafeState } from '../../hooks/useSafeState';
 import AdManager from '../../utils/adManager';
 import { AD_PLACEMENTS } from '../../utils/adConfig';
 

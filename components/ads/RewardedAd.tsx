@@ -6,6 +6,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { usePremium } from '../../contexts/PremiumContext';
+import { useSafeState } from '../../hooks/useSafeState';
 import AdManager from '../../utils/adManager';
 import { Icon } from '../Icon';
 import { Colors, Spacing, BorderRadius } from '../DesignSystem';

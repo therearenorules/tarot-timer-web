@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeState } from '../hooks/useSafeState';
 // 웹 환경에서는 expo-ads-admob을 조건부로 import
 let AdMobBanner: any = null;
 if (Platform.OS !== 'web') {
