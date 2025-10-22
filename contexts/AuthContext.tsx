@@ -122,6 +122,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 초기화 및 인증 상태 리스너 설정
   useEffect(() => {
+    let subscription: any = null;
+    let isMounted = true; // ✅ CRITICAL FIX: 마운트 상태 추적
+
     const initializeAuth = async () => {
       try {
         // 현재 세션 확인
@@ -131,13 +134,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           console.error('세션 확인 오류:', error);
         }
 
+        // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
+        if (!isMounted) return;
+
         await updateAuthState(session);
 
         // 인증 상태 변경 리스너 설정
         const {
-          data: { subscription },
+          data: { subscription: authSubscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log('인증 상태 변경:', event, session?.user?.email);
+
+          // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
+          if (!isMounted) return;
 
           switch (event) {
             case 'SIGNED_IN':
@@ -152,7 +161,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             case 'USER_UPDATED':
               if (session?.user) {
                 const profileData = await fetchProfile(session.user.id);
-                setAuthState(prev => ({ ...prev, profile: profileData }));
+                if (isMounted) {
+                  setAuthState(prev => ({ ...prev, profile: profileData }));
+                }
               }
               break;
             default:
@@ -160,18 +171,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         });
 
-        setAuthState(prev => ({ ...prev, initialized: true }));
+        subscription = authSubscription;
 
-        return () => {
-          subscription.unsubscribe();
-        };
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, initialized: true }));
+        }
       } catch (error) {
         console.error('인증 초기화 오류:', error);
-        setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
+        }
       }
     };
 
     initializeAuth();
+
+    // ✅ CRITICAL FIX: cleanup 함수를 useEffect에서 직접 반환
+    return () => {
+      isMounted = false; // 마운트 해제 표시
+      if (subscription) {
+        subscription.unsubscribe();
+        console.log('🧹 AuthContext Supabase subscription 정리 완료');
+      }
+    };
   }, []);
 
   // 로그인
