@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePremium } from '../../contexts/PremiumContext';
+import { useSafeState } from '../../hooks/useSafeState';
 import AdManager from '../../utils/adManager';
 import { AD_CONFIG } from '../../utils/adConfig';
 import Constants from 'expo-constants';
