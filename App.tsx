@@ -306,6 +306,9 @@ function AppContent() {
 
   // ✅ Android 최적화: 시스템 초기화 순서 개선
   useEffect(() => {
+    let adInitTimeout: NodeJS.Timeout | null = null; // ✅ CRITICAL FIX: timeout 추적
+    let imagePreloadTimeout: NodeJS.Timeout | null = null; // ✅ CRITICAL FIX: timeout 추적
+
     const initializeSystems = async () => {
       try {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -348,7 +351,7 @@ function AppContent() {
         // Step 4: 광고 시스템 초기화 (마지막, UI 렌더링 후)
         if (Platform.OS !== 'web') {
           // ✅ Android: 광고는 1초 후에 초기화 (UI 먼저 표시)
-          setTimeout(async () => {
+          adInitTimeout = setTimeout(async () => {
             console.log('📱 Step 4: 광고 시스템 초기화 시작 (지연)...');
             try {
               const adSuccess = await AdManager.initialize();
@@ -360,7 +363,7 @@ function AppContent() {
         }
 
         // Step 5: 타로 카드 이미지 백그라운드 프리로딩 (낮은 우선순위)
-        setTimeout(() => {
+        imagePreloadTimeout = setTimeout(() => {
           console.log('🎴 Step 5: 타로 카드 이미지 백그라운드 프리로드 시작...');
           preloadTarotImages(TAROT_CARDS, 0, 'smart')
             .then(() => console.log('   ✅ 타로 카드 이미지 프리로드 완료'))
@@ -382,9 +385,20 @@ function AppContent() {
 
     initializeSystems();
 
-    // ✅ Android: 메모리 누수 방지 - Cleanup 함수 강화
+    // ✅ CRITICAL FIX: 메모리 누수 방지 - Cleanup 함수 강화
     return () => {
       console.log('🧹 앱 정리 시작...');
+
+      // ✅ CRITICAL FIX: timeout 정리
+      if (adInitTimeout) {
+        clearTimeout(adInitTimeout);
+        console.log('   🧹 광고 초기화 timeout 정리');
+      }
+      if (imagePreloadTimeout) {
+        clearTimeout(imagePreloadTimeout);
+        console.log('   🧹 이미지 프리로드 timeout 정리');
+      }
+
       try {
         AnalyticsManager.endSession();
         AdManager.dispose();

@@ -73,11 +73,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               {this.props.fallbackMessage || '일시적인 문제가 발생했습니다.\n앱을 다시 시작해주세요.'}
             </Text>
 
-            {__DEV__ && this.state.error && (
+            {this.state.error && (
               <View style={styles.errorDetails}>
-                <Text style={styles.errorTitle}>Error Details (Dev Only)</Text>
+                <Text style={styles.errorTitle}>
+                  {__DEV__ ? 'Error Details (Dev Only)' : '오류 정보'}
+                </Text>
                 <Text style={styles.errorText}>{this.state.error.message}</Text>
-                {this.state.error.stack && (
+                {__DEV__ && this.state.error.stack && (
                   <Text style={styles.errorStack} numberOfLines={10}>
                     {this.state.error.stack}
                   </Text>
