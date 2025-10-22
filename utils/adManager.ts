@@ -531,6 +531,25 @@ export class AdManager {
   }
 
   /**
+   * 액션 카운터 증가 및 전면광고 표시
+   */
+  static async incrementActionCounter(): Promise<void> {
+    this.actionCounter++;
+    console.log(`🎯 액션 카운터: ${this.actionCounter}/${this.ACTION_THRESHOLD}`);
+
+    if (this.actionCounter >= this.ACTION_THRESHOLD) {
+      console.log('📺 전면광고 표시 조건 충족');
+      this.actionCounter = 0; // 카운터 리셋
+
+      try {
+        await this.showInterstitial('action_triggered');
+      } catch (error) {
+        console.warn('⚠️ 전면광고 표시 실패 (무시):', error);
+      }
+    }
+  }
+
+  /**
    * ✅ Android 최적화: 광고 이벤트 추적
    */
   static trackAdEvent(event: string, adType: string, details?: any): void {
