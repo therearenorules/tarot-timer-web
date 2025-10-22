@@ -228,18 +228,20 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
   useEffect(() => {
     if (!shouldShowAd) return;
 
+    let timeoutId: NodeJS.Timeout | null = null; // ✅ CRITICAL FIX: timeout 추적
+
     const executeBasedOnTrigger = async () => {
       switch (trigger) {
         case 'session_complete':
           // 타로 세션 완료 시 3초 후 광고 표시
-          setTimeout(() => {
+          timeoutId = setTimeout(() => {
             showInterstitialAd();
           }, 3000);
           break;
 
         case 'app_launch':
           // 앱 시작 시 5초 후 광고 표시 (사용자 경험 고려)
-          setTimeout(() => {
+          timeoutId = setTimeout(() => {
             showInterstitialAd();
           }, 5000);
           break;
@@ -254,6 +256,13 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
     };
 
     executeBasedOnTrigger();
+
+    // ✅ CRITICAL FIX: cleanup에서 timeout clear
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [trigger, shouldShowAd, showInterstitialAd]);
 
   // 이 컴포넌트는 UI를 렌더링하지 않음 (광고 관리용 로직 컴포넌트)

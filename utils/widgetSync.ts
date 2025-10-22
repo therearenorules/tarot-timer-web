@@ -44,6 +44,10 @@ class WidgetSyncService {
   private syncQueue: Array<() => Promise<void>> = [];
   private listeners: Array<(status: SyncStatus) => void> = [];
 
+  // ✅ CRITICAL FIX: 이벤트 리스너 함수 참조 저장 (제거 시 동일 참조 필요)
+  private boundOnlineHandler = this.handleOnlineStatusChange.bind(this);
+  private boundOfflineHandler = this.handleOnlineStatusChange.bind(this);
+
   private constructor() {
     this.setupNetworkListeners();
   }
@@ -113,8 +117,9 @@ class WidgetSyncService {
    */
   private setupNetworkListeners(): void {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.addEventListener('online', this.handleOnlineStatusChange.bind(this));
-      window.addEventListener('offline', this.handleOnlineStatusChange.bind(this));
+      // ✅ CRITICAL FIX: bind()로 생성한 함수 참조를 저장해서 제거 시 사용
+      window.addEventListener('online', this.boundOnlineHandler);
+      window.addEventListener('offline', this.boundOfflineHandler);
     }
   }
 
@@ -492,8 +497,9 @@ class WidgetSyncService {
     this.listeners = [];
 
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.removeEventListener('online', this.handleOnlineStatusChange.bind(this));
-      window.removeEventListener('offline', this.handleOnlineStatusChange.bind(this));
+      // ✅ CRITICAL FIX: 등록 시 사용한 동일한 함수 참조로 제거
+      window.removeEventListener('online', this.boundOnlineHandler);
+      window.removeEventListener('offline', this.boundOfflineHandler);
     }
 
     console.log('[WidgetSync] 서비스 정리 완료');
