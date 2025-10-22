@@ -98,8 +98,10 @@ export function useTimer(): UseTimerReturn {
 
   // AppState 리스너 (포어그라운드 복귀 시 날짜 체크)
   useEffect(() => {
+    let isMounted = true; // ✅ CRITICAL FIX: 마운트 상태 추적
+
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active') {
+      if (nextAppState === 'active' && isMounted) {
         const currentDate = getDateString();
 
         // 앱이 백그라운드에 있는 동안 날짜가 바뀌었는지 체크
@@ -119,10 +121,12 @@ export function useTimer(): UseTimerReturn {
 
           lastDate.current = currentDate;
 
-          // 시간도 업데이트
-          const newTime = new Date();
-          setCurrentTime(newTime);
-          lastHour.current = newTime.getHours();
+          // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 state 업데이트
+          if (isMounted) {
+            const newTime = new Date();
+            setCurrentTime(newTime);
+            lastHour.current = newTime.getHours();
+          }
         }
       }
     };
@@ -131,6 +135,7 @@ export function useTimer(): UseTimerReturn {
     console.log('✅ useTimer AppState 리스너 설정 완료');
 
     return () => {
+      isMounted = false; // ✅ CRITICAL FIX: 컴포넌트 언마운트 표시
       subscription?.remove();
       console.log('🧹 useTimer AppState 리스너 정리 완료');
     };

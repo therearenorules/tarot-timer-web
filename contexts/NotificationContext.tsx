@@ -256,6 +256,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     let appStateSubscription: any = null;
     let timeoutId: NodeJS.Timeout | null = null;
+    let isMounted = true; // ✅ CRITICAL FIX: 마운트 상태 추적
 
     try {
       const { AppState } = require('react-native');
@@ -264,11 +265,24 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (nextAppState === 'active') {
           console.log('📱 앱 포어그라운드 복귀 - 권한 상태 재확인');
 
-          // ✅ setTimeout을 저장하고 cleanup에서 clear (메모리 누수 방지)
+          // ✅ CRITICAL FIX: 이전 timeout이 있으면 먼저 clear
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+
+          // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
           timeoutId = setTimeout(() => {
+            if (!isMounted) {
+              console.log('⚠️ 컴포넌트 언마운트됨 - 권한 체크 스킵');
+              return;
+            }
+
             // ✅ try-catch로 감싸서 안전하게 호출
             checkRealTimePermission().catch((error) => {
-              console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
+              if (isMounted) {
+                console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
+              }
             });
           }, 1000);
         }
@@ -281,9 +295,13 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
 
     return () => {
+      // ✅ CRITICAL FIX: 컴포넌트 언마운트 표시
+      isMounted = false;
+
       // ✅ cleanup: timeout과 subscription 모두 정리
       if (timeoutId) {
         clearTimeout(timeoutId);
+        timeoutId = null;
       }
       if (appStateSubscription?.remove) {
         appStateSubscription.remove();

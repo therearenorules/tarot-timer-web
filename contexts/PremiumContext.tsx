@@ -75,15 +75,19 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
     }
 
     let subscription: any = null;
+    let isMounted = true; // ✅ CRITICAL FIX: 마운트 상태 추적
 
     try {
       const { AppState } = require('react-native');
 
       const handleAppStateChange = (nextAppState: string) => {
-        if (nextAppState === 'active') {
+        if (nextAppState === 'active' && isMounted) {
+          // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
           // ✅ 최신 premiumStatus를 refreshStatus에서 가져오도록 수정
           refreshStatus().catch((error) => {
-            console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
+            if (isMounted) {
+              console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
+            }
           });
         }
       };
@@ -95,6 +99,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
     }
 
     return () => {
+      isMounted = false; // ✅ CRITICAL FIX: 컴포넌트 언마운트 표시
       if (subscription?.remove) {
         subscription.remove();
         console.log('🧹 PremiumContext AppState 리스너 정리 완료');
