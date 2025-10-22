@@ -3,7 +3,7 @@
  * 현재 구독 상태 확인, 취소, 변경 등의 기능 제공
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
   Typography
 } from '../DesignSystem';
 import { Icon } from '../Icon';
+import { useSafeState } from '../../hooks/useSafeState';
 
 interface SubscriptionManagementProps {
   onClose?: () => void;
@@ -34,7 +35,7 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
   onUpgrade
 }) => {
   const { t } = useTranslation();
-  const [validating, setValidating] = useState(false);
+  const [validating, setValidating] = useSafeState(false);
 
   const {
     premiumStatus,
@@ -47,17 +48,11 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
 
   /**
    * 구독 상태 새로고침
+   * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const handleRefreshStatus = async () => {
     try {
-      // ✅ setState를 try-catch로 보호
-      try {
-        setValidating(true);
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-        return;
-      }
-
+      setValidating(true);
       await validateSubscription();
       await refreshStatus();
 
@@ -71,12 +66,7 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
         t('settings.premium.management.refreshErrorMessage')
       );
     } finally {
-      // ✅ finally 블록의 setState도 보호
-      try {
-        setValidating(false);
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-      }
+      setValidating(false);
     }
   };
 

@@ -3,11 +3,12 @@
  * 앱스토어 결제 기반 전역 구독 상태 관리 및 실시간 업데이트
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import IAPManager from '../utils/iapManager';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
 import ReceiptValidator from '../utils/receiptValidator';
+import { useSafeState } from '../hooks/useSafeState';
 
 // Context 인터페이스 정의
 interface PremiumContextType {
@@ -52,9 +53,9 @@ interface PremiumProviderProps {
 }
 
 export function PremiumProvider({ children }: PremiumProviderProps) {
-  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus>(defaultPremiumStatus);
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastError, setLastError] = useState<string | null>(null);
+  const [premiumStatus, setPremiumStatus] = useSafeState<PremiumStatus>(defaultPremiumStatus);
+  const [isLoading, setIsLoading] = useSafeState(true);
+  const [lastError, setLastError] = useSafeState<string | null>(null);
 
   // 초기 로딩
   useEffect(() => {
@@ -172,6 +173,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 프리미엄 상태 변경 이벤트 핸들러 (웹)
+   * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const handlePremiumStatusChange = async (event: CustomEvent) => {
     try {
@@ -179,17 +181,13 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       await refreshStatus();
     } catch (error) {
       console.error('❌ 상태 변경 처리 오류:', error);
-      // ✅ setState 호출 시 컴포넌트 언마운트 방지
-      try {
-        setLastError(error instanceof Error ? error.message : '상태 변경 처리 오류');
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-      }
+      setLastError(error instanceof Error ? error.message : '상태 변경 처리 오류');
     }
   };
 
   /**
    * 프리미엄 상태 변경 이벤트 핸들러 (모바일)
+   * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const handlePremiumStatusChangeMobile = async (data: any) => {
     try {
@@ -197,12 +195,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       await refreshStatus();
     } catch (error) {
       console.error('❌ 상태 변경 처리 오류:', error);
-      // ✅ setState 호출 시 컴포넌트 언마운트 방지
-      try {
-        setLastError(error instanceof Error ? error.message : '상태 변경 처리 오류');
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-      }
+      setLastError(error instanceof Error ? error.message : '상태 변경 처리 오류');
     }
   };
 
@@ -217,36 +210,17 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 구독 상태 새로고침
+   * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const refreshStatus = async (): Promise<void> => {
     try {
-      // ✅ setState 호출을 try-catch로 보호
-      try {
-        setLastError(null);
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-        return;
-      }
-
+      setLastError(null);
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-
-      // ✅ setState 호출을 try-catch로 보호
-      try {
-        setPremiumStatus(currentStatus);
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-        return;
-      }
-
+      setPremiumStatus(currentStatus);
       console.log('✅ 구독 상태 새로고침 완료');
     } catch (error) {
       console.error('❌ 상태 새로고침 오류:', error);
-      // ✅ setState 호출을 try-catch로 보호
-      try {
-        setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-      }
+      setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
     }
   };
 
@@ -316,21 +290,14 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 구독 상태 검증
+   * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const validateSubscription = async (): Promise<boolean> => {
     try {
-      // ✅ setState를 try 블록 안으로 이동하여 보호
-      try {
-        setLastError(null);
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-        return false;
-      }
-
+      setLastError(null);
       console.log('🔍 구독 상태 검증 시작...');
 
       const isValid = await IAPManager.forceValidateSubscription();
-
       await refreshStatus();
 
       console.log('✅ 구독 상태 검증 완료:', isValid ? '유효' : '무효');
@@ -338,12 +305,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '구독 검증 중 오류가 발생했습니다.';
-      // ✅ setState 호출 시 컴포넌트 언마운트 방지
-      try {
-        setLastError(errorMessage);
-      } catch (stateError) {
-        console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
-      }
+      setLastError(errorMessage);
       console.error('❌ 구독 검증 오류:', error);
       return false;
     }
