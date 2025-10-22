@@ -127,6 +127,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const initializeAuth = async () => {
       try {
+        // ✅ CRITICAL FIX: supabase가 null이면 초기화 건너뛰기
+        if (!supabase) {
+          console.warn('⚠️ Supabase 클라이언트가 초기화되지 않음 - 인증 건너뛰기');
+          if (isMounted) {
+            setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
+          }
+          return;
+        }
+
         // 현재 세션 확인
         const { data: { session }, error } = await supabase.auth.getSession();
 

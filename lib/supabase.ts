@@ -13,9 +13,11 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey, {
       auth: {
-        // 개발 중이므로 자동 새로고침 비활성화
-        autoRefreshToken: false,
-        persistSession: false,
+        // ✅ CRITICAL FIX: 프로덕션 빌드에서 세션 유지 활성화
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
       },
     })
   : null;
