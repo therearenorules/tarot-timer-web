@@ -55,7 +55,18 @@ export function useTimer(): UseTimerReturn {
       // 날짜가 바뀌었을 때 (자정 초기화)
       if (lastDate.current !== newDate) {
         console.log(`🌙 자정 감지: ${lastDate.current} → ${newDate}`);
-        triggerMidnightReset();
+
+        // ✅ FIX: triggerMidnightReset() 직접 호출 대신 콜백 직접 실행
+        // 이유: setInterval 내부에서 호출되므로 의존성 배열에서 제거 필요
+        console.log('🌙 자정 감지 - 24시간 카드 초기화 시작');
+        midnightResetCallbacks.current.forEach(callback => {
+          try {
+            callback();
+          } catch (error) {
+            console.error('❌ 자정 리셋 콜백 오류:', error);
+          }
+        });
+
         lastDate.current = newDate;
       }
 
@@ -78,8 +89,12 @@ export function useTimer(): UseTimerReturn {
       setCurrentTime(newTime);
     }, 60000); // 1분마다 업데이트
 
-    return () => clearInterval(timer);
-  }, [triggerMidnightReset]);
+    console.log('✅ useTimer setInterval 설정 완료');
+    return () => {
+      clearInterval(timer);
+      console.log('🧹 useTimer setInterval 정리 완료');
+    };
+  }, []); // ✅ FIX: 빈 의존성 배열 - 타이머는 마운트 시 한 번만 생성
 
   // AppState 리스너 (포어그라운드 복귀 시 날짜 체크)
   useEffect(() => {
