@@ -69,26 +69,38 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   // 주기적 검증 (앱이 포그라운드로 돌아올 때)
   useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'active' && premiumStatus.is_premium) {
-        // ✅ 비동기 함수 호출에 오류 처리 추가
-        validateSubscription().catch((error) => {
-          console.warn('⚠️ 포어그라운드 복귀 시 구독 검증 실패:', error);
-        });
+    // React Native 환경에서만 AppState 사용
+    if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+      return;
+    }
+
+    let subscription: any = null;
+
+    try {
+      const { AppState } = require('react-native');
+
+      const handleAppStateChange = (nextAppState: string) => {
+        if (nextAppState === 'active') {
+          // ✅ 최신 premiumStatus를 refreshStatus에서 가져오도록 수정
+          refreshStatus().catch((error) => {
+            console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
+          });
+        }
+      };
+
+      subscription = AppState.addEventListener('change', handleAppStateChange);
+      console.log('✅ PremiumContext AppState 리스너 설정 완료');
+    } catch (error) {
+      console.warn('⚠️ AppState 리스너 설정 실패:', error);
+    }
+
+    return () => {
+      if (subscription?.remove) {
+        subscription.remove();
+        console.log('🧹 PremiumContext AppState 리스너 정리 완료');
       }
     };
-
-    // React Native 환경에서만 AppState 사용
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      try {
-        const { AppState } = require('react-native');
-        const subscription = AppState.addEventListener('change', handleAppStateChange);
-        return () => subscription?.remove();
-      } catch (error) {
-        console.log('AppState not available:', error);
-      }
-    }
-  }, [premiumStatus.is_premium]);
+  }, []); // ✅ 의존성 배열 비움 - 마운트 시 한 번만 설정
 
   /**
    * 컨텍스트 초기화
