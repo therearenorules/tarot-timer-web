@@ -1,4 +1,5 @@
-import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
+import React, { memo, useRef, useEffect, useCallback } from 'react';
+import { useSafeState } from '../../hooks/useSafeState';
 import {
   View,
   Text,
@@ -49,7 +50,7 @@ const CardDetailModal = memo(({
 }) => {
   const { t } = useTranslation();
   const { getCardName, getCardMeaning, isEnglish, currentLanguage } = useTarotI18n();
-  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [screenData, setScreenData] = useSafeState(Dimensions.get('window'));
   const scrollViewRef = useRef<ScrollView>(null);
   const memoInputRef = useRef<TextInput>(null);
   // ✅ setTimeout cleanup을 위한 ref 추가
@@ -504,7 +505,7 @@ const TimerTab = memo(() => {
     };
   };
   
-  const [welcomeText] = useState(() => getRandomWelcomeText());
+  const [welcomeText] = useSafeState(() => getRandomWelcomeText());
   const {
     dailyCards,
     isLoading,
@@ -534,10 +535,10 @@ const TimerTab = memo(() => {
     };
   }, [onMidnightReset, removeMidnightResetCallback, handleMidnightReset]);
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalCard, setModalCard] = useState(null);
-  const [modalHour, setModalHour] = useState(0);
-  const [modalMemo, setModalMemo] = useState('');
+  const [modalVisible, setModalVisible] = useSafeState(false);
+  const [modalCard, setModalCard] = useSafeState(null);
+  const [modalHour, setModalHour] = useSafeState(0);
+  const [modalMemo, setModalMemo] = useSafeState('');
 
   // 다시 뽑기 경고 다이얼로그
   const handleRedrawWarning = () => {
