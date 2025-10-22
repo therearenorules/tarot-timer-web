@@ -224,12 +224,23 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       // Context 상태와 실제 권한이 다르면 동기화
       if (hasPermission !== actualPermission) {
         console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermission}, 실제=${actualPermission}`);
-        setHasPermission(actualPermission);
+
+        // ✅ setState 호출 전에 컴포넌트 마운트 상태 체크 (간접적으로)
+        try {
+          setHasPermission(actualPermission);
+        } catch (stateError) {
+          console.warn('⚠️ setState 실패 (컴포넌트 언마운트됨):', stateError);
+          return actualPermission; // 상태 업데이트는 실패해도 실제 권한 반환
+        }
 
         // 권한이 꺼진 경우 스케줄된 알림 정리
         if (!actualPermission) {
           console.log('📵 권한 상실 감지 - 스케줄된 알림 정리');
-          await Notifications.cancelAllScheduledNotificationsAsync();
+          try {
+            await Notifications.cancelAllScheduledNotificationsAsync();
+          } catch (cancelError) {
+            console.warn('⚠️ 알림 취소 실패 (무시 가능):', cancelError);
+          }
         }
       }
 
@@ -245,16 +256,21 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (!isMobileEnvironment || !Notifications) return;
 
     let appStateSubscription: any = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     try {
       const { AppState } = require('react-native');
 
-      const handleAppStateChange = async (nextAppState: string) => {
+      const handleAppStateChange = (nextAppState: string) => {
         if (nextAppState === 'active') {
           console.log('📱 앱 포어그라운드 복귀 - 권한 상태 재확인');
-          // 앱이 활성화되면 권한 상태 재확인
-          setTimeout(async () => {
-            await checkRealTimePermission();
+
+          // ✅ setTimeout을 저장하고 cleanup에서 clear (메모리 누수 방지)
+          timeoutId = setTimeout(() => {
+            // ✅ try-catch로 감싸서 안전하게 호출
+            checkRealTimePermission().catch((error) => {
+              console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
+            });
           }, 1000);
         }
       };
@@ -265,6 +281,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
 
     return () => {
+      // ✅ cleanup: timeout과 subscription 모두 정리
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       if (appStateSubscription?.remove) {
         appStateSubscription.remove();
       }
@@ -676,10 +696,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       return false;
     }
 
-    setIsScheduling(true);
-    setScheduleAttempts(prev => prev + 1);
-
     try {
+      // ✅ setState를 try 블록 안으로 이동 (컴포넌트 언마운트 시 크래시 방지)
+      setIsScheduling(true);
+      setScheduleAttempts(prev => prev + 1);
       // 1. 실시간 권한 확인
       const hasRealPermission = await checkRealTimePermission();
       if (!hasRealPermission) {
