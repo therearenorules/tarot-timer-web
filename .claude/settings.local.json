@@ -9,7 +9,8 @@
       "Bash(eas build:*)",
       "Bash(eas submit:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(python -c \"\nimport re\nimport os\n\nunsafe_listeners = []\n\nfor root, dirs, files in os.walk(''.''):\n    if ''node_modules'' in root or ''.git'' in root:\n        continue\n    for file in files:\n        if file.endswith((''.tsx'', ''.ts'')):\n            filepath = os.path.join(root, file)\n            try:\n                with open(filepath, ''r'', encoding=''utf-8'') as f:\n                    content = f.read()\n                    \n                # addEventListener를 찾되 바로 다음에 cleanup이 있는지 확인\n                matches = re.finditer(r''\\.addEventListener\\([^)]+\\)'', content)\n                for match in matches:\n                    start = match.start()\n                    # 다음 200자 내에 removeEventListener 또는 .remove()가 있는지 확인\n                    next_200 = content[start:start+500]\n                    if ''removeEventListener'' not in next_200 and ''.remove()'' not in next_200 and ''subscription.remove'' not in next_200:\n                        line_num = content[:start].count(''\\n'') + 1\n                        unsafe_listeners.append(f''{filepath}:{line_num}'')\n            except:\n                pass\n\nfor listener in unsafe_listeners[:15]:\n    print(listener)\n\")"
     ],
     "deny": [],
     "ask": []

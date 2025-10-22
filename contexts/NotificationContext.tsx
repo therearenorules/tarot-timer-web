@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { useAuth } from './AuthContext';
 import { simpleStorage, STORAGE_KEYS, TarotCard, DailyTarotSave, TarotUtils } from '../utils/tarotData';
