@@ -75,14 +75,28 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
             {this.state.error && (
               <View style={styles.errorDetails}>
-                <Text style={styles.errorTitle}>
-                  {__DEV__ ? 'Error Details (Dev Only)' : '오류 정보'}
-                </Text>
-                <Text style={styles.errorText}>{this.state.error.message}</Text>
-                {__DEV__ && this.state.error.stack && (
-                  <Text style={styles.errorStack} numberOfLines={10}>
-                    {this.state.error.stack}
-                  </Text>
+                <Text style={styles.errorTitle}>오류 상세 정보</Text>
+
+                {/* 오류 메시지 */}
+                <Text style={styles.errorLabel}>메시지:</Text>
+                <Text style={styles.errorText}>{this.state.error.message || '알 수 없는 오류'}</Text>
+
+                {/* 오류 이름 */}
+                {this.state.error.name && (
+                  <>
+                    <Text style={styles.errorLabel}>타입:</Text>
+                    <Text style={styles.errorText}>{this.state.error.name}</Text>
+                  </>
+                )}
+
+                {/* 스택 트레이스 (항상 표시) */}
+                {this.state.error.stack && (
+                  <>
+                    <Text style={styles.errorLabel}>스택:</Text>
+                    <Text style={styles.errorStack} numberOfLines={15}>
+                      {this.state.error.stack}
+                    </Text>
+                  </>
                 )}
               </View>
             )}
@@ -137,18 +151,27 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: Spacing.xl,
-    maxHeight: 200,
+    maxHeight: 300,
   },
   errorTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#ff4444',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
+  },
+  errorLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#f4d03f',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   errorText: {
     fontSize: 12,
     color: Colors.text.primary,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    lineHeight: 18,
   },
   errorStack: {
     fontSize: 10,
