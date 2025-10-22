@@ -29,10 +29,10 @@ export default function PremiumSubscription({
   onClose,
   onPurchaseSuccess
 }: PremiumSubscriptionProps) {
-  const [products, setProducts] = useState<SubscriptionProduct[]>([]);
-  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [products, setProducts] = useSafeState<SubscriptionProduct[]>([]);
+  const [premiumStatus, setPremiumStatus] = useSafeState<PremiumStatus | null>(null);
+  const [loading, setLoading] = useSafeState(true);
+  const [purchasing, setPurchasing] = useSafeState<string | null>(null);
 
   useEffect(() => {
     initializeIAP();

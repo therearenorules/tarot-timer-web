@@ -30,9 +30,9 @@ export const MockAdOverlay: React.FC<MockAdOverlayProps> = ({
   onClose,
   placement,
 }) => {
-  const [countdown, setCountdown] = useState(adType === 'rewarded' ? 5 : 3);
-  const [canClose, setCanClose] = useState(adType === 'interstitial');
-  const [fadeAnim] = useState(new Animated.Value(0));
+  const [countdown, setCountdown] = useSafeState(adType === 'rewarded' ? 5 : 3);
+  const [canClose, setCanClose] = useSafeState(adType === 'interstitial');
+  const [fadeAnim] = useSafeState(new Animated.Value(0));
 
   useEffect(() => {
     if (visible) {

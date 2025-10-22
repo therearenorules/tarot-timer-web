@@ -21,8 +21,8 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   autoUpdate = true,
   updateInterval = 5
 }) => {
-  const [isSupported, setIsSupported] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isSupported, setIsSupported] = useSafeState(false);
+  const [isInitialized, setIsInitialized] = useSafeState(false);
 
   // 위젯 지원 여부 확인
   const checkWidgetSupport = useCallback(async () => {

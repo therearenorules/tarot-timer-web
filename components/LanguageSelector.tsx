@@ -32,8 +32,8 @@ export const LanguageSelector = memo(({
   showLabel = true
 }: LanguageSelectorProps) => {
   const { t, i18n } = useTranslation();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useSafeState(false);
+  const [isLoading, setIsLoading] = useSafeState(false);
 
   const currentLanguage = LanguageUtils.getCurrentLanguageInfo();
   const availableLanguages = Object.values(LANGUAGES);

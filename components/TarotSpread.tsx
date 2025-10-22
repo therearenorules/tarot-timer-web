@@ -158,21 +158,21 @@ export const TarotSpread: React.FC = () => {
   // 동적으로 생성된 스프레드 레이아웃
   const SPREAD_LAYOUTS = getSpreadLayouts(t);
   
-  const [selectedSpread, setSelectedSpread] = useState<SpreadLayout | null>(null);
-  const [question, setQuestion] = useState('');
-  const [spreadCards, setSpreadCards] = useState<SpreadPosition[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
-  const [readingTitle, setReadingTitle] = useState('');
-  const [insights, setInsights] = useState('');
-  const [currentSpreadType, setCurrentSpreadType] = useState<SpreadType>('three-card');
+  const [selectedSpread, setSelectedSpread] = useSafeState<SpreadLayout | null>(null);
+  const [question, setQuestion] = useSafeState('');
+  const [spreadCards, setSpreadCards] = useSafeState<SpreadPosition[]>([]);
+  const [isDrawing, setIsDrawing] = useSafeState(false);
+  const [selectedPosition, setSelectedPosition] = useSafeState<number | null>(null);
+  const [readingTitle, setReadingTitle] = useSafeState('');
+  const [insights, setInsights] = useSafeState('');
+  const [currentSpreadType, setCurrentSpreadType] = useSafeState<SpreadType>('three-card');
   
   // 저장 관련 상태
-  const [isSaveModalVisible, setIsSaveModalVisible] = useState(false);
-  const [saveTitle, setSaveTitle] = useState('');
-  const [saveInsights, setSaveInsights] = useState('');
-  const [savedSpreads, setSavedSpreads] = useState<SavedSpread[]>([]);
-  const [isLoadModalVisible, setIsLoadModalVisible] = useState(false);
+  const [isSaveModalVisible, setIsSaveModalVisible] = useSafeState(false);
+  const [saveTitle, setSaveTitle] = useSafeState('');
+  const [saveInsights, setSaveInsights] = useSafeState('');
+  const [savedSpreads, setSavedSpreads] = useSafeState<SavedSpread[]>([]);
+  const [isLoadModalVisible, setIsLoadModalVisible] = useSafeState(false);
   // premiumStatus 상태 제거 - PremiumContext 사용
 
   // 애니메이션 훅들

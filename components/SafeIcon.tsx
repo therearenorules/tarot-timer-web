@@ -20,8 +20,8 @@ const SafeIcon: React.FC<SafeIconProps> = ({
   color = '#ffffff',
   fallbackText
 }) => {
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useSafeState(false);
+  const [isLoading, setIsLoading] = useSafeState(true);
 
   useEffect(() => {
     // iOS에서 SVG 로드 테스트

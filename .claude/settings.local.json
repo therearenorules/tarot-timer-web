@@ -176,7 +176,14 @@
       "Bash(do node:*)",
       "Bash(done)",
       "Bash(git reset:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(for:*)",
+      "Bash(do)",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(if ! grep -q \"useSafeState\" \"$file\")",
+      "Bash(echo \"Needs import: $file\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

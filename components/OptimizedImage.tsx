@@ -55,10 +55,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   blurRadius,
   tintColor,
 }) => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [shouldLoad, setShouldLoad] = useState(!lazy);
-  const [retryCount, setRetryCount] = useState(0);
+  const [loading, setLoading] = useSafeState(true);
+  const [error, setError] = useSafeState(false);
+  const [shouldLoad, setShouldLoad] = useSafeState(!lazy);
+  const [retryCount, setRetryCount] = useSafeState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const imageRef = useRef<Image>(null);
   const maxRetries = 2; // 최대 재시도 횟수

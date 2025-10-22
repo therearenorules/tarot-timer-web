@@ -28,10 +28,10 @@ interface FeedbackModalProps {
 
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
-  const [feedbackType, setFeedbackType] = useState<'bug' | 'feature' | 'general'>('general');
-  const [message, setMessage] = useState('');
-  const [rating, setRating] = useState<number>(0);
-  const [submitting, setSubmitting] = useState(false);
+  const [feedbackType, setFeedbackType] = useSafeState<'bug' | 'feature' | 'general'>('general');
+  const [message, setMessage] = useSafeState('');
+  const [rating, setRating] = useSafeState<number>(0);
+  const [submitting, setSubmitting] = useSafeState(false);
 
   const handleSubmit = async () => {
     if (!message.trim()) {

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useSafeState } from '../../hooks/useSafeState';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -61,7 +62,7 @@ const AccessibilityContext = createContext<{
 
 // 접근성 프로바이더
 export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<AccessibilitySettings>(defaultSettings);
+  const [settings, setSettings] = useSafeState<AccessibilitySettings>(defaultSettings);
 
   // 설정 로드
   useEffect(() => {

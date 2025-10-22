@@ -12,8 +12,8 @@ interface MobileCompatibilityProps {
 }
 
 const MobileCompatibility: React.FC<MobileCompatibilityProps> = ({ children }) => {
-  const [isReady, setIsReady] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState({
+  const [isReady, setIsReady] = useSafeState(false);
+  const [deviceInfo, setDeviceInfo] = useSafeState({
     platform: Platform.OS,
     version: Platform.Version,
     dimensions: Dimensions.get('window')

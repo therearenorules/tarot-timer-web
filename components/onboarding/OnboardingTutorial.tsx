@@ -24,8 +24,8 @@ const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   onComplete,
   currentTab = 'timer'
 }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isFirstTime, setIsFirstTime] = useState(true);
+  const [currentStep, setCurrentStep] = useSafeState(0);
+  const [isFirstTime, setIsFirstTime] = useSafeState(true);
 
   // 온보딩 단계 정의 (탭별로 다른 내용)
   const getStepsForTab = (tab: string): OnboardingStep[] => {

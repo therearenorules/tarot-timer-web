@@ -1,9 +1,10 @@
 /**
+import { useSafeState } from '../hooks/useSafeState';
  * 인증 컨텍스트 (Supabase 통합)
  * 타로 타이머 웹앱용 인증 시스템
  */
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import {
@@ -73,7 +74,7 @@ export const useAuth = (): AuthContextType => {
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>(DEFAULT_AUTH_STATE);
+  const [authState, setAuthState] = useSafeState<AuthState>(DEFAULT_AUTH_STATE);
 
   // 프로필 정보 가져오기
   const fetchProfile = async (userId: string): Promise<UserProfile | null> => {

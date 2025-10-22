@@ -49,10 +49,10 @@ const NotificationSettings: React.FC = memo(() => {
 
   const { premiumStatus, isPremium } = usePremium();
 
-  const [showTimezoneModal, setShowTimezoneModal] = useState(false);
-  const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
-  const [tempQuietStart, setTempQuietStart] = useState(settings.quietHoursStart);
-  const [tempQuietEnd, setTempQuietEnd] = useState(settings.quietHoursEnd);
+  const [showTimezoneModal, setShowTimezoneModal] = useSafeState(false);
+  const [showQuietHoursModal, setShowQuietHoursModal] = useSafeState(false);
+  const [tempQuietStart, setTempQuietStart] = useSafeState(settings.quietHoursStart);
+  const [tempQuietEnd, setTempQuietEnd] = useSafeState(settings.quietHoursEnd);
 
   // 알림 권한 요청
   const handleRequestPermission = useCallback(async () => {

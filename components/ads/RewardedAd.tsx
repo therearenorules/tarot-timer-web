@@ -30,8 +30,8 @@ const RewardedAd: React.FC<RewardedAdProps> = ({
   style
 }) => {
   const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastWatched, setLastWatched] = useState<number>(0);
+  const [isLoading, setIsLoading] = useSafeState(false);
+  const [lastWatched, setLastWatched] = useSafeState<number>(0);
 
   // 쿨다운 시간 (5분)
   const COOLDOWN_TIME = 5 * 60 * 1000;
@@ -172,8 +172,8 @@ const RewardedAd: React.FC<RewardedAdProps> = ({
  * 보상형 광고 Hook
  */
 export const useRewardedAd = () => {
-  const [isAvailable, setIsAvailable] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAvailable, setIsAvailable] = useSafeState(true);
+  const [isLoading, setIsLoading] = useSafeState(false);
 
   const showRewardedAd = useCallback(async (callbacks?: {
     onRewardEarned?: (rewardType: string, amount: number) => void;

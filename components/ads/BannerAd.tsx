@@ -59,9 +59,9 @@ const BannerAd: React.FC<BannerAdProps> = ({
 }) => {
   const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
   const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useSafeState(false);
+  const [isVisible, setIsVisible] = useSafeState(false);
+  const [error, setError] = useSafeState<string | null>(null);
 
   // 네이티브 모듈이 없으면 (Expo Go) 조기 반환
   if (!RNBannerAd || !BannerAdSize || !TestIds) {

@@ -25,7 +25,7 @@ export const TarotCardComponent: React.FC<TarotCardProps> = memo(({
   showBack = false,
   noBorder = false
 }) => {
-  const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useSafeState(false);
   const { t } = useTranslation();
   const { getCardName, isEnglish, isJapanese } = useTarotI18n();
 

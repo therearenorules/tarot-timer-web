@@ -33,9 +33,9 @@ const { width: screenWidth } = Dimensions.get('window');
 const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
   const { t } = useTranslation();
   const { getCardName } = useTarotI18n();
-  const [selectedHour, setSelectedHour] = useState(0);
-  const [memoText, setMemoText] = useState('');
-  const [cardMemos, setCardMemos] = useState({});
+  const [selectedHour, setSelectedHour] = useSafeState(0);
+  const [memoText, setMemoText] = useSafeState('');
+  const [cardMemos, setCardMemos] = useSafeState({});
 
   useEffect(() => {
     if (reading && reading.memos) {
@@ -293,16 +293,16 @@ const TarotDaily = () => {
   const { t } = useTranslation();
   const { getSpreadName } = useTarotI18n();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState('daily');
-  const [dailyReadings, setDailyReadings] = useState([]);
-  const [spreadReadings, setSpreadReadings] = useState([]);
-  const [selectedReading, setSelectedReading] = useState(null);
-  const [selectedSpread, setSelectedSpread] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState(new Set());
-  const [isSpreadDeleteMode, setIsSpreadDeleteMode] = useState(false);
-  const [selectedSpreadItems, setSelectedSpreadItems] = useState(new Set());
+  const [activeTab, setActiveTab] = useSafeState('daily');
+  const [dailyReadings, setDailyReadings] = useSafeState([]);
+  const [spreadReadings, setSpreadReadings] = useSafeState([]);
+  const [selectedReading, setSelectedReading] = useSafeState(null);
+  const [selectedSpread, setSelectedSpread] = useSafeState(null);
+  const [isLoading, setIsLoading] = useSafeState(false);
+  const [isDeleteMode, setIsDeleteMode] = useSafeState(false);
+  const [selectedItems, setSelectedItems] = useSafeState(new Set());
+  const [isSpreadDeleteMode, setIsSpreadDeleteMode] = useSafeState(false);
+  const [selectedSpreadItems, setSelectedSpreadItems] = useSafeState(new Set());
 
   useEffect(() => {
     loadDailyReadings();

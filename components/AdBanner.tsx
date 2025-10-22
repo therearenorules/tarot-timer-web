@@ -26,8 +26,8 @@ export default function AdBanner({
   size = 'banner',
   style
 }: AdBannerProps) {
-  const [shouldShow, setShouldShow] = useState(false);
-  const [adUnitID, setAdUnitID] = useState('');
+  const [shouldShow, setShouldShow] = useSafeState(false);
+  const [adUnitID, setAdUnitID] = useSafeState('');
 
   useEffect(() => {
     checkAdDisplay();

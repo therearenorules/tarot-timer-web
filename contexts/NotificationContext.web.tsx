@@ -57,11 +57,11 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 // 웹 전용 Provider
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
-  const [hasPermission, setHasPermission] = useState(false);
-  const [lastScheduleTime, setLastScheduleTime] = useState<Date | null>(null);
-  const [scheduleAttempts, setScheduleAttempts] = useState(0);
-  const [isScheduling, setIsScheduling] = useState(false);
+  const [settings, setSettings] = useSafeState<NotificationSettings>(defaultSettings);
+  const [hasPermission, setHasPermission] = useSafeState(false);
+  const [lastScheduleTime, setLastScheduleTime] = useSafeState<Date | null>(null);
+  const [scheduleAttempts, setScheduleAttempts] = useSafeState(0);
+  const [isScheduling, setIsScheduling] = useSafeState(false);
 
   // 웹에서는 localStorage에 설정 저장
   useEffect(() => {

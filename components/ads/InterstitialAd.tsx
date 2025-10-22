@@ -34,8 +34,8 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
 }) => {
   const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
   const lastShownTimeRef = React.useRef<number>(0);
-  const [dailyAdCount, setDailyAdCount] = useState(0);
-  const [isLoyalUser, setIsLoyalUser] = useState(false);
+  const [dailyAdCount, setDailyAdCount] = useSafeState(0);
+  const [isLoyalUser, setIsLoyalUser] = useSafeState(false);
 
   // 사용자 유형에 따른 설정
   const MAX_DAILY_ADS = 10; // 일반 사용자: 하루 10회

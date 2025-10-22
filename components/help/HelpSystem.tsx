@@ -22,9 +22,9 @@ const HelpSystem: React.FC<HelpSystemProps> = ({
   onClose,
   initialCategory = 'general'
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useSafeState(initialCategory);
+  const [searchQuery, setSearchQuery] = useSafeState('');
+  const [expandedItem, setExpandedItem] = useSafeState<string | null>(null);
 
   // 도움말 데이터
   const helpData: HelpItem[] = [

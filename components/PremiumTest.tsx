@@ -3,7 +3,8 @@
  * 모든 프리미엄 기능과 연동이 올바르게 작동하는지 확인
  */
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useSafeState } from '../hooks/useSafeState';
 import {
   View,
   Text,
@@ -45,13 +46,13 @@ try {
 }
 
 export const PremiumTest: React.FC = () => {
-  const [testResults, setTestResults] = useState<Array<{
+  const [testResults, setTestResults] = useSafeState<Array<{
     name: string;
     status: 'pending' | 'success' | 'error';
     message: string;
   }>>([]);
 
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useSafeState(false);
 
   // 프리미엄 상태 훅들
   const {

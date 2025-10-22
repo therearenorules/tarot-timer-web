@@ -14,11 +14,11 @@ interface ConnectionStatus {
 }
 
 export const SupabaseTest: React.FC = () => {
-  const [status, setStatus] = useState<ConnectionStatus>({
+  const [status, setStatus] = useSafeState<ConnectionStatus>({
     isConnected: false,
     timestamp: '',
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useSafeState(true);
   const { initialized, user, session } = useAuth();
 
   useEffect(() => {
