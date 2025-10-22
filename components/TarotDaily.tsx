@@ -10,7 +10,9 @@ import {
   Dimensions,
   TextInput,
   Alert,
-  FlatList
+  FlatList,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -102,7 +104,11 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.dailyViewerContainer}>
+      <KeyboardAvoidingView
+        style={styles.dailyViewerContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         {/* 헤더 - 스프레드와 동일한 스타일 */}
         <View style={styles.dailyViewerHeader}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -115,93 +121,99 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
           <View style={{ width: 30 }} />
         </View>
 
-        {/* 24시간 카드 가로 스크롤 - 성능 최적화 */}
-        <View style={styles.cardScrollSection}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardScrollContainer}
-            removeClippedSubviews={true}
-            initialNumToRender={6}
-            maxToRenderPerBatch={4}
-            windowSize={8}
-            getItemLayout={(data, index) => ({
-              length: 80,
-              offset: 80 * index,
-              index,
-            })}
-          >
-            {Array.from({ length: 24 }, (_, hour) => {
-              // ✅ FIX: 배열 접근 방식으로 수정
-              const card = hourlyCardsArray[hour];
-              const hasMemo = cardMemos[hour] && cardMemos[hour].trim().length > 0;
-              const isSelected = selectedHour === hour;
+        <ScrollView
+          style={styles.dailyViewerScrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 24시간 카드 가로 스크롤 - 성능 최적화 */}
+          <View style={styles.cardScrollSection}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardScrollContainer}
+              removeClippedSubviews={true}
+              initialNumToRender={6}
+              maxToRenderPerBatch={4}
+              windowSize={8}
+              getItemLayout={(data, index) => ({
+                length: 80,
+                offset: 80 * index,
+                index,
+              })}
+            >
+              {Array.from({ length: 24 }, (_, hour) => {
+                // ✅ FIX: 배열 접근 방식으로 수정
+                const card = hourlyCardsArray[hour];
+                const hasMemo = cardMemos[hour] && cardMemos[hour].trim().length > 0;
+                const isSelected = selectedHour === hour;
 
-              if (!card) return null;
+                if (!card) return null;
 
-              return (
-                <TouchableOpacity
-                  key={hour}
-                  style={[
-                    styles.hourlyCardItem,
-                    isSelected && styles.hourlyCardSelected
-                  ]}
-                  onPress={() => handleCardPress(hour)}
-                >
-                  <Text style={styles.hourLabel}>
-                    {hour === 0 ? t('timer.midnight') :
-                     hour === 12 ? t('timer.noon') :
-                     hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 })}
-                  </Text>
+                return (
+                  <TouchableOpacity
+                    key={hour}
+                    style={[
+                      styles.hourlyCardItem,
+                      isSelected && styles.hourlyCardSelected
+                    ]}
+                    onPress={() => handleCardPress(hour)}
+                  >
+                    <Text style={styles.hourLabel}>
+                      {hour === 0 ? t('timer.midnight') :
+                       hour === 12 ? t('timer.noon') :
+                       hour < 12 ? t('timer.am', { hour }) : t('timer.pm', { hour: hour - 12 })}
+                    </Text>
 
-                  <View style={styles.cardImageContainer}>
-                    <TarotCardComponent
-                      card={card}
-                      size="small"
-                      showText={false}
-                    />
-                    {hasMemo && (
-                      <View style={styles.memoIndicator}>
-                        <Text style={styles.memoIndicatorText}>📝</Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* 선택된 카드 정보 */}
-        {selectedCard && (
-          <View style={styles.selectedCardInfo}>
-            <Text style={styles.selectedTimeText}>
-              {selectedHour === 0 ? t('timer.midnight') :
-               selectedHour === 12 ? t('timer.noon') :
-               selectedHour < 12 ? t('timer.am', { hour: selectedHour }) : t('timer.pm', { hour: selectedHour - 12 })}
-            </Text>
-            <Text style={styles.selectedCardName}>{getCardName(selectedCard)}</Text>
+                    <View style={styles.cardImageContainer}>
+                      <TarotCardComponent
+                        card={card}
+                        size="small"
+                        showText={false}
+                      />
+                      {hasMemo && (
+                        <View style={styles.memoIndicator}>
+                          <Text style={styles.memoIndicatorText}>📝</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
-        )}
 
-        {/* 메모 섹션 */}
-        <View style={styles.memoSection}>
-          <Text style={styles.memoSectionTitle}>{t('journal.entry.memo')}</Text>
-          <TextInput
-            style={styles.memoInput}
-            value={memoText}
-            onChangeText={setMemoText}
-            placeholder={t('journal.memoPlaceholder')}
-            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-            multiline
-            textAlignVertical="top"
-          />
-          <TouchableOpacity style={styles.memoSaveButton} onPress={saveMemo}>
-            <Text style={styles.memoSaveButtonText}>{t('journal.saveMemo')}</Text>
-          </TouchableOpacity>
-        </View>
+          {/* 선택된 카드 정보 */}
+          {selectedCard && (
+            <View style={styles.selectedCardInfo}>
+              <Text style={styles.selectedTimeText}>
+                {selectedHour === 0 ? t('timer.midnight') :
+                 selectedHour === 12 ? t('timer.noon') :
+                 selectedHour < 12 ? t('timer.am', { hour: selectedHour }) : t('timer.pm', { hour: selectedHour - 12 })}
+              </Text>
+              <Text style={styles.selectedCardName}>{getCardName(selectedCard)}</Text>
+            </View>
+          )}
 
-      </View>
+          {/* 메모 섹션 */}
+          <View style={styles.memoSection}>
+            <Text style={styles.memoSectionTitle}>{t('journal.entry.memo')}</Text>
+            <TextInput
+              style={styles.memoInput}
+              value={memoText}
+              onChangeText={setMemoText}
+              placeholder={t('journal.memoPlaceholder')}
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              multiline
+              textAlignVertical="top"
+            />
+            <TouchableOpacity style={styles.memoSaveButton} onPress={saveMemo}>
+              <Text style={styles.memoSaveButtonText}>{t('journal.saveMemo')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -1094,6 +1106,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(15, 12, 27, 0.95)',
   },
+  dailyViewerScrollContent: {
+    flex: 1,
+  },
   dailyViewerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1193,9 +1208,9 @@ const styles = StyleSheet.create({
 
   // 메모 섹션
   memoSection: {
-    flex: 1,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    paddingBottom: Spacing.xl,
   },
   memoSectionTitle: {
     fontSize: 16,
@@ -1205,7 +1220,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   memoInput: {
-    flex: 1,
     backgroundColor: 'rgba(45, 27, 71, 0.4)',
     borderRadius: BorderRadius.md,
     borderWidth: 1,
@@ -1215,7 +1229,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'NotoSansKR_400Regular',
     textAlignVertical: 'top',
-    minHeight: 100,
+    minHeight: 120,
+    maxHeight: 200,
   },
   memoSaveButton: {
     backgroundColor: Colors.brand.primary,
