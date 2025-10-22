@@ -211,6 +211,9 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
               <Text style={styles.memoSaveButtonText}>{t('journal.saveMemo')}</Text>
             </TouchableOpacity>
           </View>
+
+          {/* 키보드 여백 확보용 빈 공간 */}
+          <View style={{ height: 150 }} />
         </ScrollView>
 
       </KeyboardAvoidingView>
@@ -1209,8 +1212,8 @@ const styles = StyleSheet.create({
   // 메모 섹션
   memoSection: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    paddingBottom: Spacing.xl,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xxl,
   },
   memoSectionTitle: {
     fontSize: 16,
@@ -1229,82 +1232,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'NotoSansKR_400Regular',
     textAlignVertical: 'top',
-    minHeight: 120,
-    maxHeight: 200,
+    minHeight: 100,
+    maxHeight: 180,
   },
   memoSaveButton: {
     backgroundColor: Colors.brand.primary,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
   },
   memoSaveButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'NotoSansKR_700Bold',
     fontWeight: '600',
-  },
-
-  // 메모 모달
-  memoModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-  },
-  memoModal: {
-    backgroundColor: 'rgba(15, 12, 27, 0.95)',
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    width: '100%',
-    maxWidth: 400,
-    borderWidth: 2,
-    borderColor: Colors.brand.accent,
-  },
-  memoModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  memoModalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-  },
-  modalCloseButton: {
-    padding: Spacing.sm,
-  },
-  memoInput: {
-    backgroundColor: 'rgba(244, 208, 63, 0.1)',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    fontSize: 16,
-    color: Colors.text.primary,
-    minHeight: 120,
-    textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: 'rgba(244, 208, 63, 0.3)',
-    marginBottom: Spacing.lg,
-  },
-  memoModalActions: {
-    alignItems: 'center',
-  },
-  memoSaveButton: {
-    backgroundColor: Colors.brand.accent,
-    borderRadius: BorderRadius.xl,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    minWidth: 120,
-  },
-  memoSaveButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
   },
 
   // 스프레드 뷰어 모달
