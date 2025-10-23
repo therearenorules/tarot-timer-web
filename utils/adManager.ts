@@ -154,18 +154,38 @@ export class AdManager {
         return true;
       }
 
+      // ✅ CRITICAL FIX: 광고 SDK 안전 체크
+      if (typeof mobileAds !== 'function') {
+        console.log('⚠️ mobileAds 함수 사용 불가, 시뮬레이션 모드로 전환');
+        this.initialized = true;
+        return true;
+      }
+
       // Google Mobile Ads SDK 초기화
       await mobileAds().initialize();
       console.log('✅ Google Mobile Ads SDK 초기화 완료');
 
-      // 전면광고 프리로드
-      await this.preloadInterstitial();
+      // ✅ CRITICAL FIX: 각 단계를 try-catch로 감싸서 한 단계 실패해도 계속 진행
+      try {
+        // 전면광고 프리로드
+        await this.preloadInterstitial();
+      } catch (error) {
+        console.warn('⚠️ 전면광고 프리로드 실패, 계속 진행:', error);
+      }
 
-      // 리워드광고 프리로드
-      await this.preloadRewarded();
+      try {
+        // 리워드광고 프리로드
+        await this.preloadRewarded();
+      } catch (error) {
+        console.warn('⚠️ 리워드광고 프리로드 실패, 계속 진행:', error);
+      }
 
-      // 일일 제한 복원
-      await this.restoreDailyLimits();
+      try {
+        // 일일 제한 복원
+        await this.restoreDailyLimits();
+      } catch (error) {
+        console.warn('⚠️ 일일 제한 복원 실패, 계속 진행:', error);
+      }
 
       this.initialized = true;
       console.log('✅ AdManager 초기화 완료');

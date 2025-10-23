@@ -94,17 +94,34 @@ export class IAPManager {
         return true;
       }
 
-      // 구독 상품 정보 로드
-      await this.loadProducts();
+      // ✅ CRITICAL FIX: 각 단계를 try-catch로 감싸서 한 단계 실패해도 계속 진행
+      try {
+        // 구독 상품 정보 로드
+        await this.loadProducts();
+      } catch (error) {
+        console.warn('⚠️ 구독 상품 로드 실패, 계속 진행:', error);
+      }
 
-      // 구매 복원 처리 (앱 시작 시 자동 호출)
-      await this.restorePurchases();
+      try {
+        // 구매 복원 처리 (앱 시작 시 자동 호출)
+        await this.restorePurchases();
+      } catch (error) {
+        console.warn('⚠️ 구매 복원 실패, 계속 진행:', error);
+      }
 
-      // 구독 갱신 자동 처리 시작
-      await this.processSubscriptionRenewal();
+      try {
+        // 구독 갱신 자동 처리 시작
+        await this.processSubscriptionRenewal();
+      } catch (error) {
+        console.warn('⚠️ 구독 갱신 처리 실패, 계속 진행:', error);
+      }
 
-      // 주기적 갱신 모니터링 시작
-      this.startPeriodicRenewalCheck();
+      try {
+        // 주기적 갱신 모니터링 시작
+        this.startPeriodicRenewalCheck();
+      } catch (error) {
+        console.warn('⚠️ 주기적 갱신 모니터링 시작 실패, 계속 진행:', error);
+      }
 
       this.initialized = true;
       console.log('✅ IAP 매니저 초기화 완료');
