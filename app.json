@@ -11,6 +11,8 @@
     "extra": {
       "EXPO_PUBLIC_API_URL": "https://api.tarottimer.app",
       "APPLE_SHARED_SECRET": "${APPLE_SHARED_SECRET}",
+      "supabaseUrl": "${SUPABASE_URL}",
+      "supabaseAnonKey": "${SUPABASE_ANON_KEY}",
       "eas": {
         "projectId": "268f44c1-406f-4387-8589-e62144024eaa"
       }
@@ -26,7 +28,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "55",
+      "buildNumber": "56",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -39,7 +41,7 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 54,
+      "versionCode": 56,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",

@@ -5,7 +5,12 @@
       "Bash(dir google-services.json)",
       "Bash(cat:*)",
       "Bash(dir:*)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "Bash(timeout:*)",
+      "Bash(git push:*)",
+      "Bash(eas secret:list:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

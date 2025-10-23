@@ -15,7 +15,8 @@ import {
   resetPassword,
   updateProfile,
   UserProfile,
-} from '../utils/supabase';
+  isSupabaseAvailable,
+} from '../lib/supabase';
 
 // 인증 상태 인터페이스
 interface AuthState {
@@ -127,9 +128,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const initializeAuth = async () => {
       try {
-        // ✅ CRITICAL FIX: supabase가 null이면 초기화 건너뛰기
-        if (!supabase) {
-          console.warn('⚠️ Supabase 클라이언트가 초기화되지 않음 - 인증 건너뛰기');
+        // ✅ CRITICAL FIX: Supabase가 사용 불가능하면 초기화 건너뛰기
+        if (!isSupabaseAvailable()) {
+          console.error('🔴 CRITICAL: Supabase 환경변수가 설정되지 않았습니다!');
+          console.log('📌 오프라인 모드로 실행 - 인증 기능 비활성화');
           if (isMounted) {
             setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
           }
