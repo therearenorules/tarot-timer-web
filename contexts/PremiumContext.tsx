@@ -115,14 +115,29 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       setIsLoading(true);
       setLastError(null);
 
-      // 7일 무료 체험 상태 확인
-      const trialStatus = await LocalStorageManager.checkTrialStatus();
+      // ✅ CRITICAL FIX: 무료 체험 상태 확인 (안전 모드)
+      let trialStatus = defaultPremiumStatus;
+      try {
+        trialStatus = await LocalStorageManager.checkTrialStatus();
+        console.log('✅ 무료 체험 상태 확인 완료');
+      } catch (error) {
+        console.error('❌ LocalStorageManager.checkTrialStatus 오류:', error);
+        console.log('📌 기본 무료 버전으로 계속 진행');
+      }
 
-      // IAP 시스템 초기화
-      await IAPManager.initialize();
+      // ✅ CRITICAL FIX: IAP 시스템 초기화 (안전 모드)
+      let iapStatus = defaultPremiumStatus;
+      try {
+        await IAPManager.initialize();
+        console.log('✅ IAPManager 초기화 완료');
 
-      // 현재 구독 상태 로드 (IAP에서)
-      const iapStatus = await IAPManager.getCurrentSubscriptionStatus();
+        // 현재 구독 상태 로드 (IAP에서)
+        iapStatus = await IAPManager.getCurrentSubscriptionStatus();
+        console.log('✅ IAP 구독 상태 로드 완료');
+      } catch (error) {
+        console.error('❌ IAPManager 초기화 오류:', error);
+        console.log('📌 IAP 없이 계속 진행');
+      }
 
       // IAP 구독이 있으면 IAP 상태 우선, 없으면 무료 체험 상태 사용
       if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
@@ -140,6 +155,8 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
     } catch (error) {
       console.error('❌ PremiumContext 초기화 오류:', error);
       setLastError(error instanceof Error ? error.message : '초기화 오류');
+      // ✅ CRITICAL FIX: 오류가 발생해도 기본 상태로 앱 계속 실행
+      setPremiumStatus(defaultPremiumStatus);
     } finally {
       setIsLoading(false);
     }

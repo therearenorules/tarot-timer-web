@@ -413,7 +413,7 @@ export class LocalStorageManager {
         is_premium: false,
         ad_free: false,
         unlimited_storage: false,
-        premium_themes: false
+        premium_spreads: false
       };
     }
   }
