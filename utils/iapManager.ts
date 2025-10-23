@@ -79,6 +79,13 @@ export class IAPManager {
 
       console.log('💳 IAP 매니저 초기화 시작...');
 
+      // ✅ CRITICAL FIX: RNIap 메서드 존재 확인
+      if (typeof RNIap.initConnection !== 'function') {
+        console.log('⚠️ react-native-iap API 사용 불가. 시뮬레이션 모드로 전환합니다.');
+        this.initialized = true;
+        return true;
+      }
+
       // RNIap 초기화
       const isReady = await RNIap.initConnection();
       if (!isReady) {
@@ -115,7 +122,7 @@ export class IAPManager {
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     try {
       // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션 데이터 사용
-      if (!isMobile || !RNIap) {
+      if (!isMobile || !RNIap || typeof RNIap.getSubscriptions !== 'function') {
         console.log('🌐 시뮬레이션 모드: 구독 상품 시뮬레이션 데이터 로드');
         this.products = [
           {
@@ -190,6 +197,11 @@ export class IAPManager {
         return result;
       }
 
+      // ✅ CRITICAL FIX: RNIap.requestSubscription 메서드 존재 확인
+      if (typeof RNIap.requestSubscription !== 'function') {
+        throw new Error('react-native-iap API 사용 불가');
+      }
+
       // 실제 구매 처리 (네트워크 재시도 적용)
       const purchase = await this.retryWithExponentialBackoff(async () => {
         return await RNIap.requestSubscription({
@@ -248,7 +260,7 @@ export class IAPManager {
   static async restorePurchases(): Promise<boolean> {
     try {
       // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션
-      if (!isMobile || !RNIap) {
+      if (!isMobile || !RNIap || typeof RNIap.getAvailablePurchases !== 'function') {
         console.log('🌐 시뮬레이션 모드: 구매 복원 시뮬레이션');
         return true;
       }
@@ -473,7 +485,7 @@ export class IAPManager {
    */
   private static async checkRenewalStatus(): Promise<void> {
     try {
-      if (Platform.OS === 'web') {
+      if (Platform.OS === 'web' || !RNIap || typeof RNIap.getAvailablePurchases !== 'function') {
         console.log('🌐 웹 환경: 갱신 상태 확인 건너뜀');
         return;
       }
@@ -772,7 +784,7 @@ export class IAPManager {
       // 주기적 갱신 모니터링 중지
       this.stopPeriodicRenewalCheck();
 
-      if (Platform.OS !== 'web' && this.initialized) {
+      if (Platform.OS !== 'web' && this.initialized && RNIap && typeof RNIap.endConnection === 'function') {
         await RNIap.endConnection();
         this.initialized = false;
         console.log('✅ IAP 연결 해제 완료');

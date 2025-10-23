@@ -48,6 +48,8 @@ let mobileAds: any = null;
 let InterstitialAd: any = null;
 let RewardedAd: any = null;
 let AdEventType: any = null;
+let RewardedAdEventType: any = null;
+let InterstitialAdEventType: any = null;
 let TestIds: any = null;
 
 // Expo Go 환경 감지
@@ -85,6 +87,8 @@ async function loadNativeModules(): Promise<boolean> {
     InterstitialAd = adModule.InterstitialAd;
     RewardedAd = adModule.RewardedAd;
     AdEventType = adModule.AdEventType;
+    RewardedAdEventType = adModule.RewardedAdEventType || adModule.AdEventType;
+    InterstitialAdEventType = adModule.InterstitialAdEventType || adModule.AdEventType;
     TestIds = adModule.TestIds;
 
     console.log('✅ react-native-google-mobile-ads 네이티브 모듈 로드 성공');
@@ -246,7 +250,9 @@ export class AdManager {
           resolve(false);
         }, AD_TIMEOUTS.INTERSTITIAL);
 
-        this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+        const EventType = InterstitialAdEventType || AdEventType;
+
+        this.interstitialAd.addAdEventListener(EventType.LOADED, () => {
           clearTimeout(timeout);
           this.adStates.interstitial.isLoaded = true;
           this.adStates.interstitial.isLoading = false;
@@ -254,7 +260,7 @@ export class AdManager {
           resolve(true);
         });
 
-        this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
+        this.interstitialAd.addAdEventListener(EventType.ERROR, (error: any) => {
           clearTimeout(timeout);
           this.adStates.interstitial.isLoading = false;
           this.adStates.interstitial.errorCount++;
@@ -299,7 +305,9 @@ export class AdManager {
           resolve(false);
         }, AD_TIMEOUTS.REWARDED);
 
-        this.rewardedAd.addAdEventListener(AdEventType.LOADED, () => {
+        const EventType = RewardedAdEventType || AdEventType;
+
+        this.rewardedAd.addAdEventListener(EventType.LOADED, () => {
           clearTimeout(timeout);
           this.adStates.rewarded.isLoaded = true;
           this.adStates.rewarded.isLoading = false;
@@ -307,7 +315,7 @@ export class AdManager {
           resolve(true);
         });
 
-        this.rewardedAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
+        this.rewardedAd.addAdEventListener(EventType.ERROR, (error: any) => {
           clearTimeout(timeout);
           this.adStates.rewarded.isLoading = false;
           this.adStates.rewarded.errorCount++;
@@ -431,14 +439,15 @@ export class AdManager {
       }
 
       let rewardEarned = false;
+      const EventType = RewardedAdEventType || AdEventType;
 
       return new Promise((resolve) => {
-        this.rewardedAd.addAdEventListener(AdEventType.EARNED_REWARD, (reward: any) => {
+        this.rewardedAd.addAdEventListener(EventType.EARNED_REWARD, (reward: any) => {
           rewardEarned = true;
           console.log(`🎁 리워드 획득: ${reward.amount} ${reward.type}`);
         });
 
-        this.rewardedAd.addAdEventListener(AdEventType.CLOSED, async () => {
+        this.rewardedAd.addAdEventListener(EventType.CLOSED, async () => {
           this.adStates.rewarded.isLoaded = false;
 
           if (rewardEarned) {
