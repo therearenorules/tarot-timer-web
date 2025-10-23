@@ -2,7 +2,7 @@
  * 글로벌 에러 경계 컴포넌트 (Android 크래시 방지 강화 + 로그 수집)
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Share, Alert } from 'react-native';
 import { Colors, Spacing, BorderRadius, Typography } from './DesignSystem';
 import { Icon } from './Icon';
 
@@ -94,6 +94,58 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }
   };
 
+  // ✅ 충돌 보고 전송 함수
+  handleSendCrashReport = async () => {
+    try {
+      const { error, errorInfo } = this.state;
+      if (!error) return;
+
+      // 크래시 리포트 텍스트 생성
+      const crashReport = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔴 타로 타이머 크래시 리포트
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ 시간: ${new Date().toISOString()}
+📱 플랫폼: ${Platform.OS}
+🏗️ 빌드 타입: ${__DEV__ ? 'development' : 'production'}
+
+━━━ 오류 정보 ━━━
+타입: ${error.name}
+메시지: ${error.message}
+
+━━━ 스택 트레이스 ━━━
+${error.stack || '스택 없음'}
+
+━━━ 컴포넌트 스택 ━━━
+${errorInfo?.componentStack || '컴포넌트 스택 없음'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      `.trim();
+
+      // Share API로 공유 (이메일, 메시지 등)
+      const result = await Share.share({
+        message: crashReport,
+        title: '타로 타이머 크래시 리포트',
+      });
+
+      if (result.action === Share.sharedAction) {
+        Alert.alert(
+          '감사합니다!',
+          '충돌 보고를 보내주셔서 감사합니다. 빠르게 수정하겠습니다.',
+          [{ text: '확인' }]
+        );
+      }
+    } catch (error) {
+      console.error('❌ 충돌 보고 전송 실패:', error);
+      Alert.alert(
+        '전송 실패',
+        '충돌 보고 전송에 실패했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -137,14 +189,27 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               </View>
             )}
 
-            <TouchableOpacity
-              style={styles.resetButton}
-              onPress={this.handleReset}
-              activeOpacity={0.8}
-            >
-              <Icon name="refresh" size={20} color="#fff" />
-              <Text style={styles.resetButtonText}>다시 시도</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              {/* 충돌 보고 보내기 버튼 */}
+              <TouchableOpacity
+                style={[styles.resetButton, styles.reportButton]}
+                onPress={this.handleSendCrashReport}
+                activeOpacity={0.8}
+              >
+                <Icon name="send" size={20} color="#fff" />
+                <Text style={styles.resetButtonText}>충돌 보고 보내기</Text>
+              </TouchableOpacity>
+
+              {/* 다시 시도 버튼 */}
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={this.handleReset}
+                activeOpacity={0.8}
+              >
+                <Icon name="refresh" size={20} color="#fff" />
+                <Text style={styles.resetButtonText}>다시 시도</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       );
@@ -214,14 +279,22 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
+  buttonContainer: {
+    width: '100%',
+    gap: Spacing.md,
+  },
   resetButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.brand.primary,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.xl,
     gap: Spacing.sm,
+  },
+  reportButton: {
+    backgroundColor: '#ff9800', // 오렌지 색상 (보고 버튼)
   },
   resetButtonText: {
     fontSize: 16,
