@@ -88,6 +88,16 @@ import SettingsTab from './components/tabs/SettingsTab';
 import MockAdOverlay from './components/ads/MockAdOverlay';
 import { adMockEmitter } from './utils/adMockEvents';
 
+// AsyncStorage 동적 로드 (웹/모바일 호환) - 크래시 로그용
+let AsyncStorage: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  } catch (error) {
+    console.warn('⚠️ AsyncStorage not available');
+  }
+}
+
 // 로딩 컴포넌트 (최적화된)
 const LoadingSpinner = memo(() => {
   const { t } = useTranslation();
@@ -113,8 +123,40 @@ class TabErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error(`Error in ${this.props.tabName} tab:`, error, errorInfo);
+
+    // ✅ CRITICAL: 탭 에러 로그를 AsyncStorage에 저장 (TestFlight 디버깅용)
+    const crashLog = {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      platform: Platform.OS,
+      buildType: __DEV__ ? 'development' : 'production',
+      tabName: this.props.tabName, // 어느 탭에서 에러 발생했는지 기록
+    };
+
+    console.error('💾 저장할 탭 크래시 로그:', crashLog);
+
+    // AsyncStorage에 크래시 로그 저장
+    if (AsyncStorage) {
+      try {
+        // 기존 로그 가져오기
+        const existingLogsJson = await AsyncStorage.getItem('CRASH_LOGS');
+        const existingLogs = existingLogsJson ? JSON.parse(existingLogsJson) : [];
+
+        // 새 로그 추가 (최대 10개 유지)
+        const updatedLogs = [crashLog, ...existingLogs].slice(0, 10);
+
+        await AsyncStorage.setItem('CRASH_LOGS', JSON.stringify(updatedLogs));
+        console.log(`✅ ${this.props.tabName} 탭 크래시 로그 AsyncStorage에 저장 완료`);
+      } catch (storageError) {
+        console.error('❌ 탭 크래시 로그 저장 실패:', storageError);
+      }
+    }
+
     // 개발 환경에서 더 자세한 오류 정보 출력
     if (__DEV__) {
       console.log('Error Stack:', error.stack);
@@ -257,6 +299,50 @@ function AppContent() {
   const [mockAdVisible, setMockAdVisible] = useState(false);
   const [mockAdType, setMockAdType] = useState<'interstitial' | 'rewarded'>('interstitial');
   const [mockAdPlacement, setMockAdPlacement] = useState('');
+
+  // ✅ CRITICAL: 앱 시작 시 이전 크래시 로그 출력 (TestFlight 디버깅)
+  useEffect(() => {
+    const loadCrashLogs = async () => {
+      if (AsyncStorage) {
+        try {
+          const logsJson = await AsyncStorage.getItem('CRASH_LOGS');
+          if (logsJson) {
+            const logs = JSON.parse(logsJson);
+            if (logs.length > 0) {
+              console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+              console.log('🔍 이전 세션 크래시 로그 발견!');
+              console.log(`   • 총 ${logs.length}개의 크래시 로그`);
+              console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+              logs.forEach((log: any, index: number) => {
+                console.log(`\n📌 크래시 로그 #${index + 1}`);
+                console.log(`   • 시간: ${log.timestamp}`);
+                console.log(`   • 탭: ${log.tabName || '알 수 없음'}`);
+                console.log(`   • 타입: ${log.name}`);
+                console.log(`   • 메시지: ${log.message}`);
+                console.log(`   • 플랫폼: ${log.platform}`);
+                console.log(`   • 빌드 타입: ${log.buildType}`);
+                if (log.stack) {
+                  console.log(`   • 스택:\n${log.stack}`);
+                }
+                if (log.componentStack) {
+                  console.log(`   • 컴포넌트 스택:\n${log.componentStack}`);
+                }
+              });
+
+              console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+            } else {
+              console.log('✅ 이전 세션 크래시 없음 - 정상');
+            }
+          }
+        } catch (error) {
+          console.error('❌ 크래시 로그 로드 실패:', error);
+        }
+      }
+    };
+
+    loadCrashLogs();
+  }, []);
 
 
   // Noto Sans KR 폰트 로드

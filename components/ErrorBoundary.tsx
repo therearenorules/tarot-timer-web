@@ -1,10 +1,20 @@
 /**
- * 글로벌 에러 경계 컴포넌트 (Android 크래시 방지 강화)
+ * 글로벌 에러 경계 컴포넌트 (Android 크래시 방지 강화 + 로그 수집)
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Colors, Spacing, BorderRadius, Typography } from './DesignSystem';
 import { Icon } from './Icon';
+
+// AsyncStorage 동적 로드 (웹/모바일 호환)
+let AsyncStorage: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  } catch (error) {
+    console.warn('⚠️ AsyncStorage not available');
+  }
+}
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -29,18 +39,44 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('🔴 ErrorBoundary caught an error:', error);
     console.error('📍 Error Stack:', error.stack);
     console.error('🔍 Component Stack:', errorInfo.componentStack);
 
+    // ✅ CRITICAL: 에러 로그를 AsyncStorage에 저장 (TestFlight 디버깅용)
+    const crashLog = {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      platform: Platform.OS,
+      buildType: __DEV__ ? 'development' : 'production',
+    };
+
+    console.error('💾 저장할 크래시 로그:', crashLog);
+
+    // AsyncStorage에 크래시 로그 저장
+    if (AsyncStorage) {
+      try {
+        // 기존 로그 가져오기
+        const existingLogsJson = await AsyncStorage.getItem('CRASH_LOGS');
+        const existingLogs = existingLogsJson ? JSON.parse(existingLogsJson) : [];
+
+        // 새 로그 추가 (최대 10개 유지)
+        const updatedLogs = [crashLog, ...existingLogs].slice(0, 10);
+
+        await AsyncStorage.setItem('CRASH_LOGS', JSON.stringify(updatedLogs));
+        console.log('✅ 크래시 로그 AsyncStorage에 저장 완료');
+      } catch (storageError) {
+        console.error('❌ 크래시 로그 저장 실패:', storageError);
+      }
+    }
+
     // Android 크래시 리포팅
     if (Platform.OS === 'android') {
-      console.error('🤖 Android Error Report:', {
-        message: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString(),
-      });
+      console.error('🤖 Android Error Report:', crashLog);
     }
 
     this.setState({ errorInfo });
