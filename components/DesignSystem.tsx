@@ -77,6 +77,14 @@ export const Colors = {
     info: '#3B82F6',
   },
 
+  // Feedback 색상 (status와 동일, 호환성)
+  feedback: {
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    info: '#3B82F6',
+  },
+
   // 레거시 컬러 구조 (호환성)
   primary: {
     main: '#F59E0B',                            // 주요 색상 (호환성)

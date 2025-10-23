@@ -81,14 +81,19 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       const { AppState } = require('react-native');
 
       const handleAppStateChange = (nextAppState: string) => {
-        if (nextAppState === 'active' && isMounted) {
-          // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
-          // ✅ 최신 premiumStatus를 refreshStatus에서 가져오도록 수정
-          refreshStatus().catch((error) => {
-            if (isMounted) {
-              console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
-            }
-          });
+        // ✅ CRITICAL FIX: AppState 핸들러 전체를 try-catch로 감싸기
+        try {
+          if (nextAppState === 'active' && isMounted) {
+            // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
+            // ✅ 최신 premiumStatus를 refreshStatus에서 가져오도록 수정
+            refreshStatus().catch((error) => {
+              if (isMounted) {
+                console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
+              }
+            });
+          }
+        } catch (error) {
+          console.error('❌ AppState 핸들러 에러:', error);
         }
       };
 

@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 // 익명 분석 데이터 타입 정의
 export interface AnalyticsEvent {
   id: string;
-  event_type: 'app_launch' | 'tarot_session_start' | 'tarot_session_complete' | 'journal_entry_add' | 'premium_feature_use' | 'setting_change' | 'card_draw' | 'spread_select' | 'export_data' | 'import_data';
+  event_type: 'app_launch' | 'tarot_session_start' | 'tarot_session_complete' | 'journal_entry_add' | 'premium_feature_use' | 'setting_change' | 'card_draw' | 'spread_select' | 'export_data' | 'import_data' | 'feedback_submitted';
   timestamp: string;
   session_id: string; // 세션별 고유 ID (앱 실행마다 새로 생성)
   device_info: DeviceInfo;

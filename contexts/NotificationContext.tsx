@@ -262,29 +262,34 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       const { AppState } = require('react-native');
 
       const handleAppStateChange = (nextAppState: string) => {
-        if (nextAppState === 'active') {
-          console.log('📱 앱 포어그라운드 복귀 - 권한 상태 재확인');
+        // ✅ CRITICAL FIX: AppState 핸들러 전체를 try-catch로 감싸기
+        try {
+          if (nextAppState === 'active') {
+            console.log('📱 앱 포어그라운드 복귀 - 권한 상태 재확인');
 
-          // ✅ CRITICAL FIX: 이전 timeout이 있으면 먼저 clear
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-
-          // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
-          timeoutId = setTimeout(() => {
-            if (!isMounted) {
-              console.log('⚠️ 컴포넌트 언마운트됨 - 권한 체크 스킵');
-              return;
+            // ✅ CRITICAL FIX: 이전 timeout이 있으면 먼저 clear
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
             }
 
-            // ✅ try-catch로 감싸서 안전하게 호출
-            checkRealTimePermission().catch((error) => {
-              if (isMounted) {
-                console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
+            // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
+            timeoutId = setTimeout(() => {
+              if (!isMounted) {
+                console.log('⚠️ 컴포넌트 언마운트됨 - 권한 체크 스킵');
+                return;
               }
-            });
-          }, 1000);
+
+              // ✅ try-catch로 감싸서 안전하게 호출
+              checkRealTimePermission().catch((error) => {
+                if (isMounted) {
+                  console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
+                }
+              });
+            }, 1000);
+          }
+        } catch (error) {
+          console.error('❌ AppState 핸들러 에러:', error);
         }
       };
 

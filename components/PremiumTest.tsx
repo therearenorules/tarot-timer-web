@@ -72,7 +72,7 @@ export const PremiumTest: React.FC = () => {
   /**
    * 테스트 로그 추가
    */
-  const addTestResult = (name: string, status: 'success' | 'error', message: string) => {
+  const addTestResult = (name: string, status: 'pending' | 'success' | 'error', message: string) => {
     setTestResults(prev => [...prev, { name, status, message }]);
   };
 
