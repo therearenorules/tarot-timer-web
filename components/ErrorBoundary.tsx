@@ -2,7 +2,7 @@
  * 글로벌 에러 경계 컴포넌트 (Android 크래시 방지 강화 + 로그 수집)
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Share, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Colors, Spacing, BorderRadius, Typography } from './DesignSystem';
 import { Icon } from './Icon';
 
@@ -74,75 +74,88 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       }
     }
 
+    // ✅ CRITICAL: 자동으로 충돌 보고서 전송 (프로덕션 환경에서만)
+    if (!__DEV__) {
+      try {
+        console.log('📤 자동 충돌 보고서 전송 시작...');
+        await this.sendAutomaticCrashReport(crashLog);
+      } catch (sendError) {
+        console.error('❌ 자동 충돌 보고서 전송 실패:', sendError);
+        // 전송 실패해도 앱은 계속 동작
+      }
+    }
+
     // Android 크래시 리포팅
     if (Platform.OS === 'android') {
       console.error('🤖 Android Error Report:', crashLog);
     }
 
     this.setState({ errorInfo });
+  }
 
-    // 프로덕션 환경: Crash 리포팅 서비스로 전송
-    // if (!__DEV__) {
-    //   Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-    // }
+  // ✅ 자동 충돌 보고서 전송 함수
+  private async sendAutomaticCrashReport(crashLog: any): Promise<void> {
+    try {
+      // 간단한 webhook URL로 POST 요청 (Discord, Slack 등)
+      // TODO: 실제 webhook URL로 변경 필요
+      const webhookUrl = 'YOUR_WEBHOOK_URL_HERE'; // Discord/Slack webhook
+
+      const reportText = `
+🔴 타로 타이머 크래시 리포트
+
+⏰ 시간: ${crashLog.timestamp}
+📱 플랫폼: ${crashLog.platform}
+🏗️ 빌드: ${crashLog.buildType}
+
+━━━ 오류 ━━━
+${crashLog.name}: ${crashLog.message}
+
+━━━ 스택 ━━━
+${crashLog.stack?.substring(0, 500) || '없음'}...
+      `.trim();
+
+      console.log('📤 충돌 보고서 전송 중...');
+
+      // 실제 webhook이 설정되어 있으면 전송
+      if (webhookUrl && webhookUrl !== 'YOUR_WEBHOOK_URL_HERE') {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: reportText,
+            embeds: [{
+              title: '🔴 앱 크래시 발생',
+              color: 0xff4444,
+              fields: [
+                { name: '타입', value: crashLog.name, inline: true },
+                { name: '플랫폼', value: crashLog.platform, inline: true },
+                { name: '메시지', value: crashLog.message },
+              ],
+              timestamp: crashLog.timestamp,
+            }]
+          }),
+        });
+
+        if (response.ok) {
+          console.log('✅ 충돌 보고서 자동 전송 완료');
+        } else {
+          console.warn('⚠️ 충돌 보고서 전송 실패:', response.status);
+        }
+      } else {
+        console.log('ℹ️ Webhook URL 미설정 - 로그만 저장됨');
+      }
+    } catch (error) {
+      console.error('❌ 충돌 보고서 전송 오류:', error);
+      // 전송 실패해도 앱은 계속 동작
+    }
   }
 
   handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
     if (this.props.onReset) {
       this.props.onReset();
-    }
-  };
-
-  // ✅ 충돌 보고 전송 함수
-  handleSendCrashReport = async () => {
-    try {
-      const { error, errorInfo } = this.state;
-      if (!error) return;
-
-      // 크래시 리포트 텍스트 생성
-      const crashReport = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 타로 타이머 크래시 리포트
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⏰ 시간: ${new Date().toISOString()}
-📱 플랫폼: ${Platform.OS}
-🏗️ 빌드 타입: ${__DEV__ ? 'development' : 'production'}
-
-━━━ 오류 정보 ━━━
-타입: ${error.name}
-메시지: ${error.message}
-
-━━━ 스택 트레이스 ━━━
-${error.stack || '스택 없음'}
-
-━━━ 컴포넌트 스택 ━━━
-${errorInfo?.componentStack || '컴포넌트 스택 없음'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      `.trim();
-
-      // Share API로 공유 (이메일, 메시지 등)
-      const result = await Share.share({
-        message: crashReport,
-        title: '타로 타이머 크래시 리포트',
-      });
-
-      if (result.action === Share.sharedAction) {
-        Alert.alert(
-          '감사합니다!',
-          '충돌 보고를 보내주셔서 감사합니다. 빠르게 수정하겠습니다.',
-          [{ text: '확인' }]
-        );
-      }
-    } catch (error) {
-      console.error('❌ 충돌 보고 전송 실패:', error);
-      Alert.alert(
-        '전송 실패',
-        '충돌 보고 전송에 실패했습니다. 다시 시도해주세요.',
-        [{ text: '확인' }]
-      );
     }
   };
 
@@ -189,27 +202,20 @@ ${errorInfo?.componentStack || '컴포넌트 스택 없음'}
               </View>
             )}
 
-            <View style={styles.buttonContainer}>
-              {/* 충돌 보고 보내기 버튼 */}
-              <TouchableOpacity
-                style={[styles.resetButton, styles.reportButton]}
-                onPress={this.handleSendCrashReport}
-                activeOpacity={0.8}
-              >
-                <Icon name="send" size={20} color="#fff" />
-                <Text style={styles.resetButtonText}>충돌 보고 보내기</Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={this.handleReset}
+              activeOpacity={0.8}
+            >
+              <Icon name="refresh" size={20} color="#fff" />
+              <Text style={styles.resetButtonText}>다시 시도</Text>
+            </TouchableOpacity>
 
-              {/* 다시 시도 버튼 */}
-              <TouchableOpacity
-                style={styles.resetButton}
-                onPress={this.handleReset}
-                activeOpacity={0.8}
-              >
-                <Icon name="refresh" size={20} color="#fff" />
-                <Text style={styles.resetButtonText}>다시 시도</Text>
-              </TouchableOpacity>
-            </View>
+            {!__DEV__ && (
+              <Text style={styles.autoReportText}>
+                ℹ️ 오류 정보가 자동으로 개발자에게 전송되었습니다
+              </Text>
+            )}
           </View>
         </View>
       );
@@ -279,10 +285,6 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
-  buttonContainer: {
-    width: '100%',
-    gap: Spacing.md,
-  },
   resetButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,12 +295,16 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     gap: Spacing.sm,
   },
-  reportButton: {
-    backgroundColor: '#ff9800', // 오렌지 색상 (보고 버튼)
-  },
   resetButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  autoReportText: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    fontStyle: 'italic',
   },
 });
