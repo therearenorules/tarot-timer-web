@@ -430,7 +430,21 @@ export function usePremium(): PremiumContextType {
   const context = useContext(PremiumContext);
 
   if (context === undefined) {
-    throw new Error('usePremium must be used within a PremiumProvider');
+    // ✅ CRITICAL FIX: throw 대신 기본값 반환 (앱 크래시 방지)
+    console.warn('⚠️ usePremium called outside PremiumProvider, returning default values');
+    return {
+      premiumStatus: defaultPremiumStatus,
+      isLoading: false,
+      lastError: 'PremiumProvider not initialized',
+      refreshStatus: async () => {},
+      purchaseSubscription: async () => false,
+      restorePurchases: async () => false,
+      validateSubscription: async () => false,
+      isPremium: false,
+      isSubscriptionActive: false,
+      daysUntilExpiry: null,
+      canAccessFeature: () => false,
+    };
   }
 
   return context;
