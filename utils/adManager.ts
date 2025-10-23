@@ -499,22 +499,22 @@ export class AdManager {
   }
 
   /**
-   * 일일 제한 저장
+   * ✅ FIX: 일일 제한 저장 (setItem으로 수정)
    */
   private static async saveDailyLimits(): Promise<void> {
     try {
-      await LocalStorageManager.set('daily_ad_limits', this.dailyLimits);
+      await LocalStorageManager.setItem('daily_ad_limits', this.dailyLimits);
     } catch (error) {
       console.error('❌ 일일 제한 저장 실패:', error);
     }
   }
 
   /**
-   * 일일 제한 복원
+   * ✅ FIX: 일일 제한 복원 (getItem으로 수정)
    */
   private static async restoreDailyLimits(): Promise<void> {
     try {
-      const stored = await LocalStorageManager.get<DailyAdLimits>('daily_ad_limits');
+      const stored = await LocalStorageManager.getItem<DailyAdLimits>('daily_ad_limits');
 
       if (stored) {
         const today = new Date().toDateString();
