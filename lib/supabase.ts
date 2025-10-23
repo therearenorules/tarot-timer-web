@@ -5,32 +5,46 @@ import Constants from 'expo-constants';
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// 🔴 CRITICAL: 환경변수 누락 시 더미 URL/키로 클라이언트 생성 (크래시 방지)
-const FALLBACK_URL = 'https://placeholder.supabase.co';
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.placeholder';
+// URL 유효성 검사 함수
+const isValidHttpUrl = (string: string | undefined): boolean => {
+  if (!string) return false;
+  try {
+    const url = new URL(string);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (_) {
+    return false;
+  }
+};
 
-const finalUrl = supabaseUrl || FALLBACK_URL;
-const finalKey = supabaseKey || FALLBACK_KEY;
+// Supabase가 올바르게 설정되어 있는지 확인
+const isValidSupabaseConfig = isValidHttpUrl(supabaseUrl) &&
+  supabaseKey &&
+  supabaseKey.length > 20 &&
+  !supabaseUrl?.includes('dummy') &&
+  !supabaseUrl?.includes('placeholder') &&
+  !supabaseKey?.includes('dummy');
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('🔴 CRITICAL: Supabase 환경변수가 설정되지 않았습니다!');
-  console.error('📌 앱은 오프라인 모드로 실행됩니다.');
-  console.error('📌 app.json의 extra.supabaseUrl과 extra.supabaseAnonKey를 설정하세요.');
+if (!isValidSupabaseConfig) {
+  console.warn('⚠️ Supabase 환경변수가 설정되지 않았거나 유효하지 않습니다.');
+  console.warn('📌 앱은 오프라인 모드로 실행됩니다.');
+  console.warn('📌 프로덕션 빌드 시 EAS Secrets에 EXPO_PUBLIC_SUPABASE_URL과 EXPO_PUBLIC_SUPABASE_ANON_KEY를 설정하세요.');
 }
 
-// Supabase 클라이언트 생성 (항상 생성, null 반환 방지)
-export const supabase: SupabaseClient = createClient(finalUrl, finalKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-  },
-});
+// Supabase 클라이언트 생성 (유효한 설정이 있을 때만)
+export const supabase: SupabaseClient | null = isValidSupabaseConfig
+  ? createClient(supabaseUrl!, supabaseKey!, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      },
+    })
+  : null;
 
 // Supabase 연결 상태 확인 함수
 export const isSupabaseAvailable = (): boolean => {
-  return !!(supabaseUrl && supabaseKey);
+  return isValidSupabaseConfig && supabase !== null;
 };
 
 // 타입 정의
@@ -68,7 +82,7 @@ export interface SpreadReading {
 export const supabaseHelpers = {
   // 사용자 데이터 가져오기
   async getUser(userId: string): Promise<User | null> {
-    if (!isSupabaseAvailable()) return null;
+    if (!isSupabaseAvailable() || !supabase) return null;
 
     const { data, error } = await supabase
       .from('users')
@@ -86,9 +100,9 @@ export const supabaseHelpers = {
 
   // 일일 세션 데이터 가져오기
   async getDailySession(userId: string, date: string): Promise<DailyTarotSession | null> {
-    if (!isSupabaseAvailable()) return null;
+    if (!isSupabaseAvailable() || !supabase) return null;
 
-    const { data, error } = await supabase
+    const { data, error} = await supabase
       .from('daily_tarot_sessions')
       .select('*')
       .eq('user_id', userId)
@@ -105,7 +119,7 @@ export const supabaseHelpers = {
 
   // 스프레드 리딩 저장
   async saveSpreadReading(reading: Omit<SpreadReading, 'id' | 'created_at'>): Promise<SpreadReading | null> {
-    if (!isSupabaseAvailable()) return null;
+    if (!isSupabaseAvailable() || !supabase) return null;
 
     const { data, error } = await supabase
       .from('spread_readings')
@@ -127,7 +141,7 @@ export const supabaseHelpers = {
     date: string,
     completedHours: number[]
   ): Promise<DailyTarotSession | null> {
-    if (!isSupabaseAvailable()) return null;
+    if (!isSupabaseAvailable() || !supabase) return null;
 
     const { data, error } = await supabase
       .from('daily_tarot_sessions')
@@ -150,7 +164,7 @@ export const supabaseHelpers = {
 
   // 실시간 구독 설정 (향후 사용)
   subscribeToUserChanges(userId: string, callback: (payload: any) => void) {
-    if (!isSupabaseAvailable()) return null;
+    if (!isSupabaseAvailable() || !supabase) return null;
 
     return supabase
       .channel(`user_${userId}`)
@@ -182,7 +196,7 @@ export interface UserProfile {
  * 이메일/비밀번호 로그인
  */
 export async function signInWithEmail(email: string, password: string) {
-  if (!isSupabaseAvailable()) {
+  if (!isSupabaseAvailable() || !supabase) {
     throw new Error('Supabase가 설정되지 않았습니다. 오프라인 모드에서는 로그인할 수 없습니다.');
   }
 
@@ -199,7 +213,7 @@ export async function signInWithEmail(email: string, password: string) {
  * 이메일/비밀번호 회원가입
  */
 export async function signUpWithEmail(email: string, password: string, userData?: any) {
-  if (!isSupabaseAvailable()) {
+  if (!isSupabaseAvailable() || !supabase) {
     throw new Error('Supabase가 설정되지 않았습니다. 오프라인 모드에서는 회원가입할 수 없습니다.');
   }
 
@@ -219,7 +233,7 @@ export async function signUpWithEmail(email: string, password: string, userData?
  * 로그아웃
  */
 export async function signOut() {
-  if (!isSupabaseAvailable()) {
+  if (!isSupabaseAvailable() || !supabase) {
     console.warn('Supabase가 설정되지 않았습니다. 로컬 세션만 삭제합니다.');
     return;
   }
@@ -232,7 +246,7 @@ export async function signOut() {
  * 비밀번호 재설정 이메일 전송
  */
 export async function resetPassword(email: string) {
-  if (!isSupabaseAvailable()) {
+  if (!isSupabaseAvailable() || !supabase) {
     throw new Error('Supabase가 설정되지 않았습니다. 오프라인 모드에서는 비밀번호를 재설정할 수 없습니다.');
   }
 
@@ -244,7 +258,7 @@ export async function resetPassword(email: string) {
  * 사용자 프로필 업데이트
  */
 export async function updateProfile(userId: string, updates: Partial<UserProfile>) {
-  if (!isSupabaseAvailable()) {
+  if (!isSupabaseAvailable() || !supabase) {
     throw new Error('Supabase가 설정되지 않았습니다.');
   }
 

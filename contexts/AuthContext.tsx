@@ -79,6 +79,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 프로필 정보 가져오기
   const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
+    // ✅ CRITICAL FIX: supabase null 체크
+    if (!supabase) {
+      console.warn('⚠️ Supabase 클라이언트가 없습니다. 프로필 조회 건너뛰기');
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -132,6 +138,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!isSupabaseAvailable()) {
           console.error('🔴 CRITICAL: Supabase 환경변수가 설정되지 않았습니다!');
           console.log('📌 오프라인 모드로 실행 - 인증 기능 비활성화');
+          if (isMounted) {
+            setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
+          }
+          return;
+        }
+
+        // ✅ CRITICAL FIX: supabase null 체크
+        if (!supabase) {
+          console.warn('⚠️ Supabase 클라이언트가 없습니다. 세션 체크 건너뛰기');
           if (isMounted) {
             setAuthState(prev => ({ ...prev, isLoading: false, initialized: true }));
           }
