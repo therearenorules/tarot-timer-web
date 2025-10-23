@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import { useSafeState } from './useSafeState';
 
 // 날짜 문자열 가져오기 헬퍼 (YYYY-MM-DD 형식, 로컬 시간대 기준)
 const getDateString = (): string => {
@@ -25,7 +26,8 @@ export interface UseTimerReturn {
 }
 
 export function useTimer(): UseTimerReturn {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // ✅ CRITICAL FIX: useSafeState로 변경 (언마운트된 컴포넌트에 setState 방지)
+  const [currentTime, setCurrentTime] = useSafeState(new Date());
   const lastHour = useRef<number>(new Date().getHours());
   const lastDate = useRef<string>(getDateString());
   const sessionCompleteCallbacks = useRef<Set<() => void>>(new Set());

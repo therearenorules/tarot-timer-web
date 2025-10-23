@@ -3,7 +3,7 @@
  * 앱스토어 결제 기반 전역 구독 상태 관리 및 실시간 업데이트
  */
 
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import IAPManager from '../utils/iapManager';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
@@ -57,6 +57,9 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   const [isLoading, setIsLoading] = useSafeState(true);
   const [lastError, setLastError] = useSafeState<string | null>(null);
 
+  // ✅ CRITICAL FIX: Stale Closure 문제 해결 - refreshStatus의 최신 참조 유지
+  const refreshStatusRef = useRef<() => Promise<void>>();
+
   // 초기 로딩
   useEffect(() => {
     initializePremiumContext();
@@ -84,13 +87,14 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         // ✅ CRITICAL FIX: AppState 핸들러 전체를 try-catch로 감싸기
         try {
           if (nextAppState === 'active' && isMounted) {
-            // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 실행
-            // ✅ 최신 premiumStatus를 refreshStatus에서 가져오도록 수정
-            refreshStatus().catch((error) => {
-              if (isMounted) {
-                console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
-              }
-            });
+            // ✅ CRITICAL FIX: Stale Closure 해결 - ref를 통해 항상 최신 refreshStatus 사용
+            if (refreshStatusRef.current) {
+              refreshStatusRef.current().catch((error) => {
+                if (isMounted) {
+                  console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
+                }
+              });
+            }
           }
         } catch (error) {
           console.error('❌ AppState 핸들러 에러:', error);
@@ -110,7 +114,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         console.log('🧹 PremiumContext AppState 리스너 정리 완료');
       }
     };
-  }, []); // ✅ 의존성 배열 비움 - 마운트 시 한 번만 설정
+  }, []); // ✅ 의존성 배열 비움 - 마운트 시 한 번만 설정, ref가 항상 최신 함수를 가리킴
 
   /**
    * 컨텍스트 초기화
@@ -262,6 +266,11 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
     }
   };
+
+  // ✅ CRITICAL FIX: refreshStatus가 변경될 때마다 ref 업데이트 (Stale Closure 방지)
+  useEffect(() => {
+    refreshStatusRef.current = refreshStatus;
+  }, [refreshStatus]);
 
   /**
    * 구독 구매

@@ -215,6 +215,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   // ✅ FIX: hasPermission ref로 관리 (AppState 리스너 재생성 방지)
   const hasPermissionRef = useRef(Platform.OS === 'web' ? false : false);
 
+  // ✅ CRITICAL FIX: Stale Closure 문제 해결 - checkRealTimePermission의 최신 참조 유지
+  const checkRealTimePermissionRef = useRef<() => Promise<boolean>>();
+
   // 실시간 권한 상태 체크 함수 (useCallback으로 메모이제이션)
   const checkRealTimePermission = useCallback(async (): Promise<boolean> => {
     if (!isMobileEnvironment || !Notifications) {
@@ -250,6 +253,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   }, []); // ✅ FIX: 빈 의존성 배열 - ref 사용으로 hasPermission 제거
 
+  // ✅ CRITICAL FIX: checkRealTimePermission이 변경될 때마다 ref 업데이트 (Stale Closure 방지)
+  useEffect(() => {
+    checkRealTimePermissionRef.current = checkRealTimePermission;
+  }, [checkRealTimePermission]);
+
   // 앱 상태 변화 감지 및 권한 재확인
   useEffect(() => {
     if (!isMobileEnvironment || !Notifications) return;
@@ -280,12 +288,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
                 return;
               }
 
-              // ✅ try-catch로 감싸서 안전하게 호출
-              checkRealTimePermission().catch((error) => {
-                if (isMounted) {
-                  console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
-                }
-              });
+              // ✅ CRITICAL FIX: Stale Closure 해결 - ref를 통해 항상 최신 checkRealTimePermission 사용
+              if (checkRealTimePermissionRef.current) {
+                checkRealTimePermissionRef.current().catch((error) => {
+                  if (isMounted) {
+                    console.warn('⚠️ 포어그라운드 복귀 시 권한 체크 실패:', error);
+                  }
+                });
+              }
             }, 1000);
           }
         } catch (error) {
