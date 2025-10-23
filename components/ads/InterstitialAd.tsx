@@ -35,8 +35,11 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
 }) => {
   const { isPremium, premiumStatus, isLoading: premiumLoading } = usePremium();
   const lastShownTimeRef = React.useRef<number>(0);
-  const [dailyAdCount, setDailyAdCount] = useSafeState(0);
-  const [isLoyalUser, setIsLoyalUser] = useSafeState(false);
+
+  // ✅ FIX: useState 대신 useRef 사용 (의존성 제거 + 크래시 방지)
+  const dailyAdCountRef = React.useRef<number>(0);
+  const isLoyalUserRef = React.useRef<boolean>(false);
+  const isMountedRef = React.useRef<boolean>(true);
 
   // 사용자 유형에 따른 설정
   const MAX_DAILY_ADS = 10; // 일반 사용자: 하루 10회
@@ -49,9 +52,11 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
   const shouldShowAd = !premiumLoading && !isPremium && !premiumStatus.ad_free;
 
   /**
-   * 충성 고객 여부 및 일일 카운터 초기화
+   * ✅ FIX: 충성 고객 여부 및 일일 카운터 초기화 (마운트 안전성 추가)
    */
   useEffect(() => {
+    isMountedRef.current = true;
+
     const initializeAdTracking = async () => {
       try {
         // 1. 충성 고객 감지
@@ -68,10 +73,14 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
 
         const daysSinceInstall = Math.floor((Date.now() - installDate.getTime()) / (1000 * 60 * 60 * 24));
         const isLoyal = daysSinceInstall >= LOYAL_USER_DAYS;
-        setIsLoyalUser(isLoyal);
 
-        if (isLoyal) {
-          console.log(`💎 충성 고객 인식: ${daysSinceInstall}일 사용 - 광고 빈도 50% 감소`);
+        // ✅ FIX: 마운트 확인 후 ref 업데이트 (setState 제거)
+        if (isMountedRef.current) {
+          isLoyalUserRef.current = isLoyal;
+
+          if (isLoyal) {
+            console.log(`💎 충성 고객 인식: ${daysSinceInstall}일 사용 - 광고 빈도 50% 감소`);
+          }
         }
 
         // 2. 일일 광고 카운터 복원 또는 초기화
@@ -82,14 +91,22 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
           // 날짜가 바뀌면 카운터 리셋
           await AsyncStorage.setItem(AD_DAILY_DATE_KEY, today);
           await AsyncStorage.setItem(AD_DAILY_COUNT_KEY, '0');
-          setDailyAdCount(0);
-          console.log('🔄 일일 광고 카운터 리셋 (새로운 날)');
+
+          // ✅ FIX: 마운트 확인 후 ref 업데이트
+          if (isMountedRef.current) {
+            dailyAdCountRef.current = 0;
+            console.log('🔄 일일 광고 카운터 리셋 (새로운 날)');
+          }
         } else {
           // 오늘 날짜면 저장된 카운터 복원
           const savedCount = await AsyncStorage.getItem(AD_DAILY_COUNT_KEY);
           const count = savedCount ? parseInt(savedCount, 10) : 0;
-          setDailyAdCount(count);
-          console.log(`📊 오늘 광고 표시 횟수: ${count}회`);
+
+          // ✅ FIX: 마운트 확인 후 ref 업데이트
+          if (isMountedRef.current) {
+            dailyAdCountRef.current = count;
+            console.log(`📊 오늘 광고 표시 횟수: ${count}회`);
+          }
         }
       } catch (error) {
         console.error('광고 추적 초기화 실패:', error);
@@ -97,21 +114,32 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
     };
 
     initializeAdTracking();
-  }, [LOYAL_USER_DAYS]);
+
+    // ✅ FIX: cleanup 함수 추가
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []); // ✅ FIX: 빈 의존성 배열 (한 번만 실행)
 
   /**
-   * 전면 광고 표시
+   * ✅ FIX: 전면 광고 표시 (의존성 최소화 + ref 사용)
    */
   const showInterstitialAd = useCallback(async () => {
+    // ✅ FIX: 마운트 확인
+    if (!isMountedRef.current) {
+      console.log('⚠️ 컴포넌트 언마운트됨 - 광고 표시 중단');
+      return;
+    }
+
     if (!shouldShowAd) {
       console.log('💎 프리미엄 사용자: 전면 광고 건너뛰기');
       return;
     }
 
-    // 일일 광고 제한 체크
-    const maxAds = isLoyalUser ? MAX_DAILY_ADS_LOYAL : MAX_DAILY_ADS;
-    if (dailyAdCount >= maxAds) {
-      console.log(`🚫 일일 광고 한도 도달: ${dailyAdCount}/${maxAds} (${isLoyalUser ? '충성 고객' : '일반 사용자'})`);
+    // ✅ FIX: ref 사용으로 변경
+    const maxAds = isLoyalUserRef.current ? MAX_DAILY_ADS_LOYAL : MAX_DAILY_ADS;
+    if (dailyAdCountRef.current >= maxAds) {
+      console.log(`🚫 일일 광고 한도 도달: ${dailyAdCountRef.current}/${maxAds} (${isLoyalUserRef.current ? '충성 고객' : '일반 사용자'})`);
       return;
     }
 
@@ -133,19 +161,25 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
     }
 
     try {
-      console.log(`📱 전면 광고 표시 시도: ${placement} - ${trigger}`);
+      console.log(`📱 전면 광고 표시 시도: ${placement}`);
 
       const result = await AdManager.showInterstitial(placement);
+
+      // ✅ FIX: 마운트 확인 후에만 처리
+      if (!isMountedRef.current) {
+        console.log('⚠️ 광고 표시 중 컴포넌트 언마운트됨');
+        return;
+      }
 
       if (result.success) {
         console.log('✅ 전면 광고 표시 성공');
         lastShownTimeRef.current = Date.now(); // 마지막 표시 시간 기록
 
-        // 일일 카운터 증가
-        const newCount = dailyAdCount + 1;
-        setDailyAdCount(newCount);
+        // ✅ FIX: ref 사용으로 변경 (setState 제거)
+        const newCount = dailyAdCountRef.current + 1;
+        dailyAdCountRef.current = newCount;
         await AsyncStorage.setItem(AD_DAILY_COUNT_KEY, newCount.toString());
-        console.log(`📊 오늘 광고 표시: ${newCount}/${isLoyalUser ? MAX_DAILY_ADS_LOYAL : MAX_DAILY_ADS}회`);
+        console.log(`📊 오늘 광고 표시: ${newCount}/${isLoyalUserRef.current ? MAX_DAILY_ADS_LOYAL : MAX_DAILY_ADS}회`);
 
         onAdShown?.();
 
@@ -162,36 +196,41 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
       console.error('❌ 전면 광고 오류:', errorMessage);
       onAdFailed?.(errorMessage);
     }
-  }, [shouldShowAd, placement, trigger, onAdShown, onAdFailed, onRevenueEarned, MIN_INTERVAL_MS, dailyAdCount, isLoyalUser, MAX_DAILY_ADS, MAX_DAILY_ADS_LOYAL]);
+  }, [shouldShowAd, placement]); // ✅ FIX: 의존성 11개 → 2개로 감소
 
   /**
-   * 광고 이벤트 리스너 설정
+   * ✅ FIX: 광고 이벤트 리스너 설정 (한 번만 등록)
    */
   useEffect(() => {
-    if (!shouldShowAd) return;
+    // ✅ FIX: 콜백 ref 사용 (의존성 제거)
+    const callbacksRef = {
+      onDismissed: onAdDismissed,
+      onFailed: onAdFailed,
+      onRevenueEarned: onRevenueEarned,
+    };
 
     // 전면 광고 이벤트 리스너 설정
     const handleInterstitialDismissed = () => {
       console.log('🔄 전면 광고 닫힘');
-      onAdDismissed?.();
+      callbacksRef.onDismissed?.();
     };
 
     const handleInterstitialFailed = (data: any) => {
       console.log('❌전면 광고 실패:', data);
-      onAdFailed?.(data?.error || '광고 로드 실패');
+      callbacksRef.onFailed?.(data?.error || '광고 로드 실패');
     };
 
     const handleRevenueEarned = (data: any) => {
       const { amount } = data;
       console.log('💰 전면 광고 수익:', amount);
-      onRevenueEarned?.(amount);
+      callbacksRef.onRevenueEarned?.(amount);
     };
 
     let dismissedListener: any = null;
     let failedListener: any = null;
     let revenueListener: any = null;
 
-    // 플랫폼별 이벤트 리스너 등록
+    // ✅ FIX: 플랫폼별 이벤트 리스너 등록 (한 번만)
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined') {
         window.addEventListener('ad_interstitial_dismissed', handleInterstitialDismissed);
@@ -220,29 +259,34 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
         revenueListener?.remove();
       }
     };
-  }, [shouldShowAd, onAdDismissed, onAdFailed, onRevenueEarned]);
+  }, []); // ✅ FIX: 빈 의존성 배열 (한 번만 등록)
 
   /**
-   * 트리거별 자동 실행 로직
+   * ✅ FIX: 트리거별 자동 실행 로직 (의존성 제거)
    */
   useEffect(() => {
     if (!shouldShowAd) return;
+    if (!isMountedRef.current) return;
 
-    let timeoutId: NodeJS.Timeout | null = null; // ✅ CRITICAL FIX: timeout 추적
+    let timeoutId: NodeJS.Timeout | null = null;
 
-    const executeBasedOnTrigger = async () => {
+    const executeBasedOnTrigger = () => {
       switch (trigger) {
         case 'session_complete':
           // 타로 세션 완료 시 3초 후 광고 표시
           timeoutId = setTimeout(() => {
-            showInterstitialAd();
+            if (isMountedRef.current) {
+              showInterstitialAd();
+            }
           }, 3000);
           break;
 
         case 'app_launch':
           // 앱 시작 시 5초 후 광고 표시 (사용자 경험 고려)
           timeoutId = setTimeout(() => {
-            showInterstitialAd();
+            if (isMountedRef.current) {
+              showInterstitialAd();
+            }
           }, 5000);
           break;
 
@@ -257,13 +301,13 @@ const InterstitialAd: React.FC<InterstitialAdProps> = ({
 
     executeBasedOnTrigger();
 
-    // ✅ CRITICAL FIX: cleanup에서 timeout clear
+    // ✅ FIX: cleanup에서 timeout clear
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
-  }, [trigger, shouldShowAd, showInterstitialAd]);
+  }, [trigger, shouldShowAd, showInterstitialAd]); // ✅ FIX: showInterstitialAd는 의존성에 유지 (stable)
 
   // 이 컴포넌트는 UI를 렌더링하지 않음 (광고 관리용 로직 컴포넌트)
   return null;

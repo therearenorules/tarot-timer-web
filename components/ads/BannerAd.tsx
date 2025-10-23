@@ -73,7 +73,10 @@ const BannerAd: React.FC<BannerAdProps> = ({
   // ✅ 버그 수정: 로딩 중일 때는 광고 표시하지 않음 (무료 체험 확인 대기)
   const shouldShowAd = !premiumLoading && !isPremium && !premiumStatus.ad_free;
 
+  // ✅ FIX: AdManager 초기화는 한 번만 실행
   useEffect(() => {
+    let isMounted = true;
+
     const initializeBannerAd = async () => {
       if (!shouldShowAd) {
         console.log('💎 프리미엄 사용자: 배너 광고 비활성화');
@@ -88,31 +91,43 @@ const BannerAd: React.FC<BannerAdProps> = ({
       }
 
       try {
-        // AdManager 초기화 확인
-        await AdManager.initialize();
+        // ✅ FIX: AdManager 초기화 제거 (App.tsx에서 전역 초기화)
+        // await AdManager.initialize();
 
         // 웹 환경에서는 시뮬레이션 모드
         if (Platform.OS === 'web') {
-          setIsVisible(true);
-          setIsLoaded(true);
-          onAdLoaded?.();
+          if (isMounted) {
+            setIsVisible(true);
+            setIsLoaded(true);
+            onAdLoaded?.();
+          }
           return;
         }
 
-        // 배너 광고 표시 설정
-        setIsVisible(true);
-        console.log('📱 배너 광고 초기화 완료');
+        // ✅ FIX: 마운트 확인 후에만 setState
+        if (isMounted) {
+          setIsVisible(true);
+          console.log('📱 배너 광고 초기화 완료');
+        }
 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '배너 광고 로드 실패';
         console.error('❌ 배너 광고 초기화 오류:', errorMessage);
-        setError(errorMessage);
-        onAdFailedToLoad?.(errorMessage);
+
+        if (isMounted) {
+          setError(errorMessage);
+          onAdFailedToLoad?.(errorMessage);
+        }
       }
     };
 
     initializeBannerAd();
-  }, [shouldShowAd, placement, onAdLoaded, onAdFailedToLoad]);
+
+    // ✅ FIX: cleanup 함수 추가
+    return () => {
+      isMounted = false;
+    };
+  }, [shouldShowAd]); // ✅ FIX: 의존성 최소화 (placement, callback 제거)
 
   // 광고를 표시하지 않는 경우 null 반환
   if (!shouldShowAd || !isVisible) {

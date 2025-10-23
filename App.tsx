@@ -83,6 +83,7 @@ import TimerTab from './components/tabs/TimerTab';
 import SpreadTab from './components/tabs/SpreadTab';
 import DailyTab from './components/tabs/DailyTab';
 import SettingsTab from './components/tabs/SettingsTab';
+import { TestErrorButton } from './components/TestErrorButton'; // 테스트용
 
 // Expo Go 광고 Mock UI
 import MockAdOverlay from './components/ads/MockAdOverlay';
@@ -517,7 +518,10 @@ function AppContent() {
       ),
       settings: (
         <TabErrorBoundary tabName={i18next.t('navigation.settings')}>
-          <SettingsTab />
+          <View style={{ flex: 1 }}>
+            {__DEV__ && <TestErrorButton />}
+            <SettingsTab />
+          </View>
         </TabErrorBoundary>
       ),
     };

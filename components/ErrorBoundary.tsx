@@ -2,7 +2,7 @@
  * 글로벌 에러 경계 컴포넌트 (Android 크래시 방지 강화 + 로그 수집)
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking } from 'react-native';
 import { Colors, Spacing, BorderRadius, Typography } from './DesignSystem';
 import { Icon } from './Icon';
 
@@ -74,17 +74,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       }
     }
 
-    // ✅ CRITICAL: 자동으로 충돌 보고서 전송 (프로덕션 환경에서만)
-    if (!__DEV__) {
-      try {
-        console.log('📤 자동 충돌 보고서 전송 시작...');
-        await this.sendAutomaticCrashReport(crashLog);
-      } catch (sendError) {
-        console.error('❌ 자동 충돌 보고서 전송 실패:', sendError);
-        // 전송 실패해도 앱은 계속 동작
-      }
-    }
-
     // Android 크래시 리포팅
     if (Platform.OS === 'android') {
       console.error('🤖 Android Error Report:', crashLog);
@@ -93,64 +82,94 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.setState({ errorInfo });
   }
 
-  // ✅ 자동 충돌 보고서 전송 함수
-  private async sendAutomaticCrashReport(crashLog: any): Promise<void> {
+  // ✅ 이메일로 모든 충돌 보고서 전송
+  handleSendCrashReport = async () => {
     try {
-      // 간단한 webhook URL로 POST 요청 (Discord, Slack 등)
-      // TODO: 실제 webhook URL로 변경 필요
-      const webhookUrl = 'YOUR_WEBHOOK_URL_HERE'; // Discord/Slack webhook
+      // AsyncStorage에서 모든 크래시 로그 가져오기
+      let allCrashLogs: any[] = [];
 
-      const reportText = `
-🔴 타로 타이머 크래시 리포트
-
-⏰ 시간: ${crashLog.timestamp}
-📱 플랫폼: ${crashLog.platform}
-🏗️ 빌드: ${crashLog.buildType}
-
-━━━ 오류 ━━━
-${crashLog.name}: ${crashLog.message}
-
-━━━ 스택 ━━━
-${crashLog.stack?.substring(0, 500) || '없음'}...
-      `.trim();
-
-      console.log('📤 충돌 보고서 전송 중...');
-
-      // 실제 webhook이 설정되어 있으면 전송
-      if (webhookUrl && webhookUrl !== 'YOUR_WEBHOOK_URL_HERE') {
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: reportText,
-            embeds: [{
-              title: '🔴 앱 크래시 발생',
-              color: 0xff4444,
-              fields: [
-                { name: '타입', value: crashLog.name, inline: true },
-                { name: '플랫폼', value: crashLog.platform, inline: true },
-                { name: '메시지', value: crashLog.message },
-              ],
-              timestamp: crashLog.timestamp,
-            }]
-          }),
-        });
-
-        if (response.ok) {
-          console.log('✅ 충돌 보고서 자동 전송 완료');
-        } else {
-          console.warn('⚠️ 충돌 보고서 전송 실패:', response.status);
+      if (AsyncStorage) {
+        const logsJson = await AsyncStorage.getItem('CRASH_LOGS');
+        if (logsJson) {
+          allCrashLogs = JSON.parse(logsJson);
         }
+      }
+
+      // 현재 오류도 포함
+      if (this.state.error) {
+        const currentCrash = {
+          message: this.state.error.message,
+          name: this.state.error.name,
+          stack: this.state.error.stack,
+          componentStack: this.state.errorInfo?.componentStack,
+          timestamp: new Date().toISOString(),
+          platform: Platform.OS,
+          buildType: __DEV__ ? 'development' : 'production',
+        };
+        allCrashLogs = [currentCrash, ...allCrashLogs];
+      }
+
+      // 이메일 본문 생성 (모든 오류 포함)
+      let emailBody = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔴 타로 타이머 크래시 리포트
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 총 ${allCrashLogs.length}개의 오류 발견
+
+`;
+
+      // 각 오류를 번호를 매겨 추가
+      allCrashLogs.forEach((log, index) => {
+        emailBody += `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 오류 #${index + 1}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏰ 발생 시간: ${log.timestamp}
+📱 플랫폼: ${log.platform}
+🏗️ 빌드: ${log.buildType}
+${log.tabName ? `📑 탭: ${log.tabName}` : ''}
+
+━━━ 오류 타입 ━━━
+${log.name}
+
+━━━ 오류 메시지 ━━━
+${log.message}
+
+━━━ 스택 트레이스 ━━━
+${log.stack || '없음'}
+
+━━━ 컴포넌트 스택 ━━━
+${log.componentStack || '없음'}
+
+`;
+      });
+
+      // 이메일 주소 및 제목
+      const emailTo = 'changsekwon@gmail.com';
+      const subject = `🔴 타로 타이머 크래시 보고 (${allCrashLogs.length}건)`;
+
+      // URL 인코딩
+      const encodedSubject = encodeURIComponent(subject);
+      const encodedBody = encodeURIComponent(emailBody);
+
+      // mailto 링크 생성
+      const mailtoUrl = `mailto:${emailTo}?subject=${encodedSubject}&body=${encodedBody}`;
+
+      console.log('📧 이메일 앱 열기 시도...');
+
+      // 이메일 앱 열기
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await Linking.openURL(mailtoUrl);
+        console.log('✅ 이메일 앱 열기 성공');
       } else {
-        console.log('ℹ️ Webhook URL 미설정 - 로그만 저장됨');
+        console.warn('⚠️ 이메일 앱을 열 수 없습니다');
       }
     } catch (error) {
-      console.error('❌ 충돌 보고서 전송 오류:', error);
-      // 전송 실패해도 앱은 계속 동작
+      console.error('❌ 이메일 전송 오류:', error);
     }
-  }
+  };
 
   handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
@@ -203,6 +222,15 @@ ${crashLog.stack?.substring(0, 500) || '없음'}...
             )}
 
             <TouchableOpacity
+              style={styles.sendReportButton}
+              onPress={this.handleSendCrashReport}
+              activeOpacity={0.8}
+            >
+              <Icon name="mail" size={20} color="#fff" />
+              <Text style={styles.sendReportButtonText}>오류 보고 보내기</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.resetButton}
               onPress={this.handleReset}
               activeOpacity={0.8}
@@ -210,12 +238,6 @@ ${crashLog.stack?.substring(0, 500) || '없음'}...
               <Icon name="refresh" size={20} color="#fff" />
               <Text style={styles.resetButtonText}>다시 시도</Text>
             </TouchableOpacity>
-
-            {!__DEV__ && (
-              <Text style={styles.autoReportText}>
-                ℹ️ 오류 정보가 자동으로 개발자에게 전송되었습니다
-              </Text>
-            )}
           </View>
         </View>
       );
@@ -285,6 +307,22 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
+  sendReportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ff6b00',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  sendReportButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
   resetButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,12 +337,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
-  },
-  autoReportText: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    marginTop: Spacing.md,
-    fontStyle: 'italic',
   },
 });
