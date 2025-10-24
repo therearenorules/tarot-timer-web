@@ -60,6 +60,11 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   // ✅ CRITICAL FIX: Stale Closure 문제 해결 - refreshStatus의 최신 참조 유지
   const refreshStatusRef = useRef<() => Promise<void>>();
 
+  // ✅ FIX: Debounce 패턴 - 중복 호출 방지
+  const lastRefreshTime = useRef<number>(0);
+  const pendingRefresh = useRef<NodeJS.Timeout | null>(null);
+  const DEBOUNCE_DELAY = 1000; // 1초
+
   // 초기 로딩
   useEffect(() => {
     initializePremiumContext();
@@ -67,6 +72,12 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
     return () => {
       removeEventListeners();
+
+      // ✅ Cleanup: pending refresh 정리
+      if (pendingRefresh.current) {
+        clearTimeout(pendingRefresh.current);
+        pendingRefresh.current = null;
+      }
     };
   }, []);
 
@@ -322,9 +333,42 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   /**
    * 구독 상태 새로고침
    * ✅ FIX: 무료 체험 만료 + IAP 구독 상태 동시 확인
+   * ✅ FIX: Debounce 패턴 적용 - 1초 이내 중복 호출 방지
    * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const refreshStatus = useCallback(async (): Promise<void> => {
+    // ✅ Debounce 체크: 마지막 실행 후 1초 이내라면 대기열에 추가
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastRefreshTime.current;
+
+    if (timeSinceLastRefresh < DEBOUNCE_DELAY) {
+      console.log(`⏳ 새로고침 디바운스: ${Math.round((DEBOUNCE_DELAY - timeSinceLastRefresh) / 1000)}초 후 재시도`);
+
+      // 이전 대기 중인 refresh 취소
+      if (pendingRefresh.current) {
+        clearTimeout(pendingRefresh.current);
+      }
+
+      // 새로운 refresh 예약
+      return new Promise<void>((resolve) => {
+        pendingRefresh.current = setTimeout(async () => {
+          pendingRefresh.current = null;
+          await refreshStatusInternal();
+          resolve();
+        }, DEBOUNCE_DELAY - timeSinceLastRefresh);
+      });
+    }
+
+    // 즉시 실행
+    lastRefreshTime.current = now;
+    return refreshStatusInternal();
+  }, []); // ✅ CRITICAL FIX: 빈 의존성 배열로 함수 안정화 (Hermes 엔진 호환)
+
+  /**
+   * 내부 구독 상태 새로고침 로직
+   * (디바운스 후 실제 실행되는 함수)
+   */
+  const refreshStatusInternal = async (): Promise<void> => {
     try {
       setLastError(null);
       console.log('🔄 구독 상태 새로고침 시작...');
@@ -400,7 +444,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       console.error('❌ 상태 새로고침 오류:', error);
       setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
     }
-  }, []); // ✅ CRITICAL FIX: 빈 의존성 배열로 함수 안정화 (Hermes 엔진 호환)
+  };
 
   // ✅ CRITICAL FIX: refreshStatus가 생성될 때 한 번만 ref 업데이트
   useEffect(() => {
