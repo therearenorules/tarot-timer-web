@@ -24,8 +24,8 @@ import { useTarotCards } from '../../hooks/useTarotCards';
 import { TarotUtils, DailyTarotSave } from '../../utils/tarotData';
 import { TarotCardComponent } from '../TarotCard';
 import { Icon } from '../Icon';
-import InterstitialAd from '../ads/InterstitialAd';
-// BannerAd 제거: 전면광고만 사용으로 unitId 크래시 방지
+import AdManager from '../../utils/adManager';
+// 광고 시스템: 베너 제거, 전면광고는 AdManager 직접 호출
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth * 0.35; // 화면 너비의 35% (더 얇게)
@@ -479,9 +479,22 @@ const TimerTab = memo(() => {
 
   // 세션 완료 시 전면 광고 콜백 등록
   useEffect(() => {
-    const sessionCompleteHandler = () => {
-      console.log('🕒 타로 세션 완료 감지 - 전면 광고 준비');
-      // InterstitialAd 컴포넌트에서 자동으로 처리됨
+    const sessionCompleteHandler = async () => {
+      console.log('🕒 타로 세션 완료 감지 - 전면 광고 표시');
+
+      // ✅ 3초 딜레이 후 전면 광고 표시 (사용자 경험 고려)
+      setTimeout(async () => {
+        try {
+          const result = await AdManager.showInterstitial('session_complete');
+          if (result.success) {
+            console.log('✅ 타로 세션 완료 - 전면 광고 표시 성공');
+          } else {
+            console.log('⚠️ 전면 광고 표시 실패:', result.error);
+          }
+        } catch (error) {
+          console.error('❌ 전면 광고 표시 오류:', error);
+        }
+      }, 3000);
     };
 
     onSessionComplete(sessionCompleteHandler);
@@ -634,15 +647,7 @@ const TimerTab = memo(() => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* 세션 완료 시 전면 광고 */}
-      <InterstitialAd
-        placement="session_complete"
-        trigger="session_complete"
-        onAdShown={() => console.log('✅ 타로 세션 완료 - 전면 광고 표시됨')}
-        onAdDismissed={() => console.log('🔄 전면 광고 닫힘')}
-        onAdFailed={(error) => console.log('❌ 전면 광고 실패:', error)}
-        onRevenueEarned={(amount) => console.log('💰 전면 광고 수익:', amount)}
-      />
+      {/* 전면광고는 세션 완료 시 AdManager.showInterstitial()로 직접 호출 */}
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 날짜 섹션 */}
         <View style={styles.dateSection}>
