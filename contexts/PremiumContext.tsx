@@ -330,12 +330,18 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       console.log('🔄 구독 상태 새로고침 시작...');
 
       // ✅ FIX: 시뮬레이션 모드 체크 - 시뮬레이션 중이면 저장된 상태 사용
+      // 🔒 SECURITY: 프로덕션에서는 시뮬레이션 모드 차단
       const currentStatus = await LocalStorageManager.getPremiumStatus();
       if (currentStatus.is_simulation) {
-        console.log('🎮 시뮬레이션 모드 - 저장된 상태 사용');
-        setPremiumStatus(currentStatus);
-        console.log('✅ 구독 상태 새로고침 완료 (시뮬레이션)');
-        return;
+        if (__DEV__) {
+          console.log('🎮 시뮬레이션 모드 - 저장된 상태 사용 (개발 환경)');
+          setPremiumStatus(currentStatus);
+          console.log('✅ 구독 상태 새로고침 완료 (시뮬레이션)');
+          return;
+        } else {
+          console.warn('⚠️ 프로덕션에서 시뮬레이션 모드 차단 - 실제 상태로 전환');
+          // 프로덕션에서는 시뮬레이션 플래그 무시하고 실제 상태 확인
+        }
       }
 
       // 1. 무료 체험 상태 확인 (타임아웃 3초)

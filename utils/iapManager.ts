@@ -745,8 +745,15 @@ export class IAPManager {
   /**
    * 프리미엄 상태 시뮬레이션 (테스트용)
    * ✅ FIX: AdManager와 동기화하여 광고 표시 상태도 즉시 변경
+   * 🔒 SECURITY: 프로덕션에서는 차단
    */
   static async simulatePremiumStatusChange(isPremium: boolean): Promise<void> {
+    // 🔒 프로덕션에서는 시뮬레이션 차단
+    if (!__DEV__) {
+      console.error('🚫 프로덕션에서 시뮬레이션 모드 사용 불가');
+      throw new Error('Simulation mode is only available in development');
+    }
+
     try {
       const mockStatus: PremiumStatus = {
         is_premium: isPremium,
