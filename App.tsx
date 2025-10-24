@@ -66,7 +66,7 @@ try {
   console.warn('⚠️ NotificationProvider 로드 실패 (알림 비활성화):', error);
 }
 
-import { PremiumProvider } from './contexts/PremiumContext';
+import { PremiumProvider, usePremium } from './contexts/PremiumContext';
 import { usePWA } from './hooks/usePWA';
 // 광고 매니저 (동적 import로 Expo Go 호환)
 import AdManager from './utils/adManager';
@@ -342,6 +342,9 @@ function AppContent() {
   const pwa = usePWA();
   const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
 
+  // ✅ FIX: PremiumContext와 AdManager 동기화 (전면광고 표시 수정)
+  const { isPremium } = usePremium();
+
   // Expo Go Mock 광고 상태
   const [mockAdVisible, setMockAdVisible] = useState(false);
   const [mockAdType, setMockAdType] = useState<'interstitial' | 'rewarded'>('interstitial');
@@ -391,6 +394,11 @@ function AppContent() {
     loadCrashLogs();
   }, []);
 
+  // ✅ FIX: Premium 상태가 변경될 때마다 AdManager 동기화
+  useEffect(() => {
+    AdManager.setPremiumStatus(isPremium);
+    console.log(`🔄 AdManager 프리미엄 상태 동기화: ${isPremium ? '활성화' : '비활성화'}`);
+  }, [isPremium]);
 
   // Noto Sans KR 폰트 로드
   const [fontsLoaded] = useFonts({
