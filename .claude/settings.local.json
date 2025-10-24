@@ -34,7 +34,10 @@
       "Bash(eas submit:*)",
       "Bash(start cmd /k \"npx expo start --port 8090\")",
       "Bash(eas build:list:*)",
-      "Bash(eas submission:list:*)"
+      "Bash(eas submission:list:*)",
+      "Bash(start http://localhost:8090)",
+      "Bash(npm run test:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

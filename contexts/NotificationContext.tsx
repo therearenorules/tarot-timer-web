@@ -545,8 +545,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     // 🔄 설정 변경 시 알림 자동 재스케줄링
     if (hasPermission && isMobileEnvironment && Notifications) {
       try {
-        // 시간별 알림 활성화/비활성화 또는 조용한 시간 변경 시 재스케줄링
-        if ('hourlyEnabled' in newSettings || 'quietHoursStart' in newSettings || 'quietHoursEnd' in newSettings) {
+        // ✅ FIX: 조용한 시간 활성화/비활성화 체크 추가
+        // 시간별 알림 활성화/비활성화 또는 조용한 시간 관련 설정 변경 시 재스케줄링
+        if ('hourlyEnabled' in newSettings ||
+            'quietHoursEnabled' in newSettings ||
+            'quietHoursStart' in newSettings ||
+            'quietHoursEnd' in newSettings) {
           console.log('알림 설정 변경됨 - 자동 재스케줄링 시작');
 
           // 기존 알림 취소 후 새 설정으로 재스케줄
