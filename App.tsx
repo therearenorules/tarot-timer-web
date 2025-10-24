@@ -545,34 +545,39 @@ function AppContent() {
     };
   }, []);
 
+  // ✅ 성능 최적화: 모든 탭을 마운트 상태로 유지하고 CSS로만 숨김 처리
+  // 탭 전환 시 재렌더링 없이 즉시 전환, 상태 유지
   const renderContent = useCallback(() => {
-    const tabComponents = {
-      timer: (
-        <TabErrorBoundary tabName={i18next.t('navigation.timer')}>
-          <TimerTab />
-        </TabErrorBoundary>
-      ),
-      spread: (
-        <TabErrorBoundary tabName={i18next.t('navigation.spread')}>
-          <SpreadTab />
-        </TabErrorBoundary>
-      ),
-      journal: (
-        <TabErrorBoundary tabName={i18next.t('navigation.journal')}>
-          <DailyTab />
-        </TabErrorBoundary>
-      ),
-      settings: (
-        <TabErrorBoundary tabName={i18next.t('navigation.settings')}>
-          <View style={{ flex: 1 }}>
-            {__DEV__ && <TestErrorButton />}
-            <SettingsTab />
-          </View>
-        </TabErrorBoundary>
-      ),
-    };
+    return (
+      <>
+        <View style={[styles.tabContainer, activeTab === 'timer' && styles.tabVisible]}>
+          <TabErrorBoundary tabName={i18next.t('navigation.timer')}>
+            <TimerTab />
+          </TabErrorBoundary>
+        </View>
 
-    return tabComponents[activeTab as keyof typeof tabComponents] || tabComponents.timer;
+        <View style={[styles.tabContainer, activeTab === 'spread' && styles.tabVisible]}>
+          <TabErrorBoundary tabName={i18next.t('navigation.spread')}>
+            <SpreadTab />
+          </TabErrorBoundary>
+        </View>
+
+        <View style={[styles.tabContainer, activeTab === 'journal' && styles.tabVisible]}>
+          <TabErrorBoundary tabName={i18next.t('navigation.journal')}>
+            <DailyTab />
+          </TabErrorBoundary>
+        </View>
+
+        <View style={[styles.tabContainer, activeTab === 'settings' && styles.tabVisible]}>
+          <TabErrorBoundary tabName={i18next.t('navigation.settings')}>
+            <View style={{ flex: 1 }}>
+              {__DEV__ && <TestErrorButton />}
+              <SettingsTab />
+            </View>
+          </TabErrorBoundary>
+        </View>
+      </>
+    );
   }, [activeTab]);
 
   // 폰트가 로딩중일 때
@@ -761,6 +766,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.state.error,
     marginBottom: Spacing.md,
+  },
+
+  // ✅ 탭 컨테이너 최적화: 모든 탭을 마운트 상태로 유지하고 visibility만 제어
+  tabContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0,
+    pointerEvents: 'none', // 숨겨진 탭은 터치 이벤트 차단
+  },
+  tabVisible: {
+    opacity: 1,
+    pointerEvents: 'auto', // 보이는 탭만 터치 이벤트 활성화
   },
   errorMessage: {
     fontSize: 16,
