@@ -218,7 +218,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   // ✅ CRITICAL FIX: Stale Closure 문제 해결 - checkRealTimePermission의 최신 참조 유지
   const checkRealTimePermissionRef = useRef<() => Promise<boolean>>();
 
-  // 실시간 권한 상태 체크 함수 (useCallback으로 메모이제이션)
+  // ✅ CRITICAL FIX: 실시간 권한 상태 체크 함수 - Hermes 엔진 호환
+  // setHasPermission을 의존성에 명시적으로 추가하여 Stale Closure 방지
   const checkRealTimePermission = useCallback(async (): Promise<boolean> => {
     if (!isMobileEnvironment || !Notifications) {
       return false;
@@ -228,7 +229,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       const { status } = await Notifications.getPermissionsAsync();
       const actualPermission = status === 'granted';
 
-      // ✅ FIX: ref를 사용하여 최신 값 비교 (의존성 배열에서 제거)
+      // ✅ FIX: ref를 사용하여 최신 값 비교
       // Context 상태와 실제 권한이 다르면 동기화
       if (hasPermissionRef.current !== actualPermission) {
         console.log(`🔄 권한 상태 불일치 감지: Context=${hasPermissionRef.current}, 실제=${actualPermission}`);
@@ -251,7 +252,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       console.error('❌ 실시간 권한 체크 실패:', error);
       return false;
     }
-  }, []); // ✅ FIX: 빈 의존성 배열 - ref 사용으로 hasPermission 제거
+  }, [setHasPermission]); // ✅ CRITICAL FIX: setHasPermission 의존성 명시 (Hermes 호환)
 
   // ✅ CRITICAL FIX: checkRealTimePermission이 변경될 때마다 ref 업데이트 (Stale Closure 방지)
   useEffect(() => {
@@ -327,67 +328,87 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // 컴포넌트 마운트 시 초기 설정
   useEffect(() => {
-    // 웹 환경에서는 푸시 토큰 등록을 스킵
-    if (!isMobileEnvironment) {
-      console.log('Non-mobile platform detected, skipping push token registration');
-      // 웹 환경에서는 설정만 로드
-      loadNotificationSettings();
-      return;
-    }
-
-    // Notifications 모듈이 없으면 설정만 로드하고 리턴
-    if (!Notifications) {
-      console.log('Notifications module not available, loading settings only');
-      loadNotificationSettings();
-      return;
-    }
-
-    // 초기화: 권한 체크와 토큰 등록을 분리
-    const initializeNotifications = async () => {
+    // ✅ CRITICAL FIX: 전체 초기화를 try-catch로 감싸기 (앱 크래시 방지)
+    const safeInitialize = async () => {
       try {
-        // 1. 먼저 권한 체크
-        const { status } = await Notifications.getPermissionsAsync();
-        const hasNotificationPermission = status === 'granted';
-
-        console.log('🔔 알림 권한 상태:', status, hasNotificationPermission ? '✅ 권한 있음' : '❌ 권한 없음');
-        setHasPermission(hasNotificationPermission);
-
-        // 2. 권한이 있으면 토큰 등록 시도
-        if (hasNotificationPermission) {
-          const token = await registerForPushNotificationsAsync();
-          setExpoPushToken(token);
-
-          if (token) {
-            console.log('🔔 토큰 등록 완료 - 자동 알림 스케줄링 시작');
-            // 설정 로드 후 알림 스케줄링 (약간의 지연)
-            setTimeout(async () => {
-              try {
-                const savedSettings = await loadNotificationSettingsSync();
-                if (savedSettings.hourlyEnabled) {
-                  await scheduleHourlyNotificationsWithSettings(savedSettings);
-                  console.log('✅ 자동 알림 스케줄링 완료');
-                }
-              } catch (error) {
-                console.error('❌ 자동 알림 스케줄링 실패:', error);
-              }
-            }, 1000);
-          } else {
-            console.warn('⚠️ 권한은 있지만 토큰 생성 실패');
-          }
+        // 웹 환경에서는 푸시 토큰 등록을 스킵
+        if (!isMobileEnvironment) {
+          console.log('Non-mobile platform detected, skipping push token registration');
+          // 웹 환경에서는 설정만 로드
+          await loadNotificationSettings().catch(err => {
+            console.error('❌ 설정 로드 실패 (무시):', err);
+          });
+          return;
         }
 
-        // 3. 설정 로드는 권한과 무관하게 실행
-        await loadNotificationSettings();
-      } catch (error) {
-        console.error('❌ 알림 초기화 실패:', error);
-        await loadNotificationSettings();
+        // Notifications 모듈이 없으면 설정만 로드하고 리턴
+        if (!Notifications) {
+          console.log('Notifications module not available, loading settings only');
+          await loadNotificationSettings().catch(err => {
+            console.error('❌ 설정 로드 실패 (무시):', err);
+          });
+          return;
+        }
+
+        // 초기화: 권한 체크와 토큰 등록을 분리
+        const initializeNotifications = async () => {
+          try {
+            // 1. 먼저 권한 체크
+            const { status } = await Notifications.getPermissionsAsync();
+            const hasNotificationPermission = status === 'granted';
+
+            console.log('🔔 알림 권한 상태:', status, hasNotificationPermission ? '✅ 권한 있음' : '❌ 권한 없음');
+            setHasPermission(hasNotificationPermission);
+
+            // 2. 권한이 있으면 토큰 등록 시도
+            if (hasNotificationPermission) {
+              try {
+                const token = await registerForPushNotificationsAsync();
+                setExpoPushToken(token);
+
+                if (token) {
+                  console.log('🔔 토큰 등록 완료 - 자동 알림 스케줄링 시작');
+                  // 설정 로드 후 알림 스케줄링 (약간의 지연)
+                  setTimeout(async () => {
+                    try {
+                      const savedSettings = await loadNotificationSettingsSync();
+                      if (savedSettings.hourlyEnabled) {
+                        await scheduleHourlyNotificationsWithSettings(savedSettings);
+                        console.log('✅ 자동 알림 스케줄링 완료');
+                      }
+                    } catch (error) {
+                      console.error('❌ 자동 알림 스케줄링 실패 (무시):', error);
+                    }
+                  }, 1000);
+                } else {
+                  console.warn('⚠️ 권한은 있지만 토큰 생성 실패 (무시)');
+                }
+              } catch (tokenError) {
+                console.error('❌ 토큰 등록 오류 (무시):', tokenError);
+              }
+            }
+
+            // 3. 설정 로드는 권한과 무관하게 실행
+            await loadNotificationSettings().catch(err => {
+              console.error('❌ 설정 로드 실패 (무시):', err);
+            });
+          } catch (error) {
+            console.error('❌ 알림 초기화 실패 (무시):', error);
+            // ✅ CRITICAL FIX: 초기화 실패해도 설정은 로드 시도
+            await loadNotificationSettings().catch(err => {
+              console.error('❌ 설정 로드 실패 (무시):', err);
+            });
+          }
+        };
+
+        await initializeNotifications();
+      } catch (outerError) {
+        // ✅ CRITICAL FIX: 최상위 오류 캐치 (앱 크래시 절대 방지)
+        console.error('❌ NotificationContext 초기화 최상위 오류 (무시):', outerError);
       }
     };
 
-    initializeNotifications()
-      .catch(error => {
-        console.error('Error registering for push notifications:', error);
-      });
+    safeInitialize();
 
     // 모바일 환경에서만 알림 리스너 설정
     let notificationListener: any = null;

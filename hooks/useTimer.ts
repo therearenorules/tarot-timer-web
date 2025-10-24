@@ -101,40 +101,55 @@ export function useTimer(): UseTimerReturn {
   // AppState 리스너 (포어그라운드 복귀 시 날짜 체크)
   useEffect(() => {
     let isMounted = true; // ✅ CRITICAL FIX: 마운트 상태 추적
+    let timeoutId: NodeJS.Timeout | null = null; // ✅ CRITICAL FIX: timeout 추적
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // ✅ CRITICAL FIX: AppState 핸들러 전체를 try-catch로 감싸기
       try {
         if (nextAppState === 'active' && isMounted) {
-          const currentDate = getDateString();
-
-          // 앱이 백그라운드에 있는 동안 날짜가 바뀌었는지 체크
-          if (lastDate.current !== currentDate) {
-            console.log(`📱 앱 복귀 시 날짜 변경 감지: ${lastDate.current} → ${currentDate}`);
-
-            // ✅ FIX: triggerMidnightReset() 직접 호출 대신 콜백 직접 실행
-            // 이유: 의존성 배열에서 triggerMidnightReset 제거하기 위함
-            console.log('🌙 자정 감지 - 24시간 카드 초기화 시작');
-            midnightResetCallbacks.current.forEach(callback => {
-              try {
-                callback();
-              } catch (error) {
-                console.error('❌ 자정 리셋 콜백 오류:', error);
-              }
-            });
-
-            lastDate.current = currentDate;
-
-            // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 state 업데이트
-            if (isMounted) {
-              const newTime = new Date();
-              setCurrentTime(newTime);
-              lastHour.current = newTime.getHours();
-            }
+          // ✅ CRITICAL FIX: 이전 timeout 정리
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
           }
+
+          // ✅ CRITICAL FIX: 1.5초 디바운스 (다른 Context들보다 늦게 실행)
+          timeoutId = setTimeout(() => {
+            if (!isMounted) {
+              console.log('⚠️ useTimer 언마운트됨 - 날짜 체크 스킵');
+              return;
+            }
+
+            const currentDate = getDateString();
+
+            // 앱이 백그라운드에 있는 동안 날짜가 바뀌었는지 체크
+            if (lastDate.current !== currentDate) {
+              console.log(`📱 useTimer: 앱 복귀 시 날짜 변경 감지 - ${lastDate.current} → ${currentDate}`);
+
+              // ✅ FIX: triggerMidnightReset() 직접 호출 대신 콜백 직접 실행
+              // 이유: 의존성 배열에서 triggerMidnightReset 제거하기 위함
+              console.log('🌙 useTimer: 자정 감지 - 24시간 카드 초기화 시작');
+              midnightResetCallbacks.current.forEach(callback => {
+                try {
+                  callback();
+                } catch (error) {
+                  console.error('❌ useTimer: 자정 리셋 콜백 오류 (무시):', error);
+                }
+              });
+
+              lastDate.current = currentDate;
+
+              // ✅ CRITICAL FIX: 컴포넌트가 마운트된 상태에서만 state 업데이트
+              if (isMounted) {
+                const newTime = new Date();
+                setCurrentTime(newTime);
+                lastHour.current = newTime.getHours();
+              }
+            }
+          }, 1500); // 1.5초 디바운스 (NotificationContext와 PremiumContext보다 늦게)
         }
       } catch (error) {
-        console.error('❌ useTimer AppState 핸들러 에러:', error);
+        console.error('❌ useTimer AppState 핸들러 에러 (무시):', error);
       }
     };
 
@@ -143,6 +158,13 @@ export function useTimer(): UseTimerReturn {
 
     return () => {
       isMounted = false; // ✅ CRITICAL FIX: 컴포넌트 언마운트 표시
+
+      // ✅ CRITICAL FIX: timeout 정리
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
       subscription?.remove();
       console.log('🧹 useTimer AppState 리스너 정리 완료');
     };

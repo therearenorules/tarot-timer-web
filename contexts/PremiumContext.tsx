@@ -3,7 +3,7 @@
  * 앱스토어 결제 기반 전역 구독 상태 관리 및 실시간 업데이트
  */
 
-import React, { createContext, useContext, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import IAPManager from '../utils/iapManager';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
@@ -79,6 +79,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
     let subscription: any = null;
     let isMounted = true; // ✅ CRITICAL FIX: 마운트 상태 추적
+    let timeoutId: NodeJS.Timeout | null = null; // ✅ CRITICAL FIX: timeout 추적
 
     try {
       const { AppState } = require('react-native');
@@ -87,28 +88,49 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         // ✅ CRITICAL FIX: AppState 핸들러 전체를 try-catch로 감싸기
         try {
           if (nextAppState === 'active' && isMounted) {
-            // ✅ CRITICAL FIX: Stale Closure 해결 - ref를 통해 항상 최신 refreshStatus 사용
-            if (refreshStatusRef.current) {
-              refreshStatusRef.current().catch((error) => {
-                if (isMounted) {
-                  console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패:', error);
-                }
-              });
+            // ✅ CRITICAL FIX: 이전 timeout 정리
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
             }
+
+            // ✅ CRITICAL FIX: 1초 디바운스 (연속 호출 방지)
+            timeoutId = setTimeout(() => {
+              if (!isMounted) {
+                console.log('⚠️ PremiumContext 언마운트됨 - 상태 갱신 스킵');
+                return;
+              }
+
+              // ✅ CRITICAL FIX: Stale Closure 해결 - ref를 통해 항상 최신 refreshStatus 사용
+              if (refreshStatusRef.current) {
+                refreshStatusRef.current().catch((error) => {
+                  if (isMounted) {
+                    console.warn('⚠️ 포어그라운드 복귀 시 구독 상태 갱신 실패 (무시):', error);
+                  }
+                });
+              }
+            }, 1000); // 1초 디바운스
           }
         } catch (error) {
-          console.error('❌ AppState 핸들러 에러:', error);
+          console.error('❌ PremiumContext AppState 핸들러 에러 (무시):', error);
         }
       };
 
       subscription = AppState.addEventListener('change', handleAppStateChange);
       console.log('✅ PremiumContext AppState 리스너 설정 완료');
     } catch (error) {
-      console.warn('⚠️ AppState 리스너 설정 실패:', error);
+      console.warn('⚠️ PremiumContext AppState 리스너 설정 실패 (무시):', error);
     }
 
     return () => {
       isMounted = false; // ✅ CRITICAL FIX: 컴포넌트 언마운트 표시
+
+      // ✅ CRITICAL FIX: timeout 정리
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
       if (subscription?.remove) {
         subscription.remove();
         console.log('🧹 PremiumContext AppState 리스너 정리 완료');
@@ -255,7 +277,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
    * 구독 상태 새로고침
    * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
-  const refreshStatus = async (): Promise<void> => {
+  const refreshStatus = useCallback(async (): Promise<void> => {
     try {
       setLastError(null);
       const currentStatus = await LocalStorageManager.getPremiumStatus();
@@ -265,9 +287,9 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       console.error('❌ 상태 새로고침 오류:', error);
       setLastError(error instanceof Error ? error.message : '상태 새로고침 오류');
     }
-  };
+  }, []); // ✅ CRITICAL FIX: 빈 의존성 배열로 함수 안정화 (Hermes 엔진 호환)
 
-  // ✅ CRITICAL FIX: refreshStatus가 변경될 때마다 ref 업데이트 (Stale Closure 방지)
+  // ✅ CRITICAL FIX: refreshStatus가 생성될 때 한 번만 ref 업데이트
   useEffect(() => {
     refreshStatusRef.current = refreshStatus;
   }, [refreshStatus]);
