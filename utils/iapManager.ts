@@ -744,6 +744,7 @@ export class IAPManager {
 
   /**
    * 프리미엄 상태 시뮬레이션 (테스트용)
+   * ✅ FIX: AdManager와 동기화하여 광고 표시 상태도 즉시 변경
    */
   static async simulatePremiumStatusChange(isPremium: boolean): Promise<void> {
     try {
@@ -761,6 +762,15 @@ export class IAPManager {
       };
 
       await LocalStorageManager.updatePremiumStatus(mockStatus);
+
+      // ✅ FIX: AdManager와 즉시 동기화
+      try {
+        const AdManager = require('./adManager').default;
+        AdManager.setPremiumStatus(isPremium);
+        console.log(`🔄 AdManager 동기화 완료: ${isPremium ? '프리미엄 활성' : '무료 버전'}`);
+      } catch (error) {
+        console.warn('⚠️ AdManager 동기화 실패:', error);
+      }
 
       // 프리미엄 상태 변경 이벤트 발생
       // 웹 환경
@@ -786,7 +796,7 @@ export class IAPManager {
         }
       }
 
-      console.log('🔄 프리미엄 상태 시뮬레이션:', isPremium ? '활성화' : '비활성화');
+      console.log('✅ 프리미엄 상태 시뮬레이션 완료:', isPremium ? '활성화' : '비활성화');
     } catch (error) {
       console.error('❌ 프리미엄 상태 시뮬레이션 오류:', error);
       throw error;
