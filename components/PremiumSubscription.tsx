@@ -179,9 +179,31 @@ export default function PremiumSubscription({
     );
   };
 
+  /**
+   * 연간 구독 할인율 자동 계산
+   * 월간 가격 × 12 대비 연간 가격 할인율
+   */
+  const calculateDiscount = (): number | null => {
+    const monthlyProduct = products.find(p => p.type === 'monthly');
+    const yearlyProduct = products.find(p => p.type === 'yearly');
+
+    if (!monthlyProduct || !yearlyProduct) return null;
+
+    // price는 숫자형 가격 (예: "9900")
+    const monthlyPrice = parseFloat(monthlyProduct.price);
+    const yearlyPrice = parseFloat(yearlyProduct.price);
+
+    if (isNaN(monthlyPrice) || isNaN(yearlyPrice) || monthlyPrice === 0) return null;
+
+    // 할인율 계산: (1 - 연간가격 / (월간가격 × 12)) × 100
+    const discount = ((1 - (yearlyPrice / (monthlyPrice * 12))) * 100);
+    return Math.round(discount); // 소수점 반올림
+  };
+
   const renderSubscriptionCard = (product: SubscriptionProduct) => {
     const isYearly = product.type === 'yearly';
     const isPurchasing = purchasing === product.productId;
+    const discountRate = calculateDiscount();
 
     return (
       <TouchableOpacity
@@ -215,9 +237,9 @@ export default function PremiumSubscription({
             {isYearly ? '연간' : '월간'}
           </Text>
 
-          {isYearly && (
+          {isYearly && discountRate && discountRate > 0 && (
             <Text style={styles.discountText}>
-              💰 월간 대비 33% 할인!
+              💰 월간 대비 {discountRate}% 할인!
             </Text>
           )}
 
