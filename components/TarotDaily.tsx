@@ -325,37 +325,65 @@ const TarotDaily = () => {
     loadSpreadReadings();
   }, []);
 
-  const loadDailyReadings = async () => {
+  // ✅ PERFORMANCE FIX: 페이지네이션 + 배치 처리로 최적화
+  const loadDailyReadings = async (daysToLoad = 30) => {
     try {
       setIsLoading(true);
       const readings = [];
 
-      // 모든 일일 타로 데이터 로드 (무제한)
-      for (let i = 0; i < 365; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateString = date.toISOString().split('T')[0];
-        const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
+      // ✅ 최대 30일만 초기 로드 (365일 → 30일)
+      const maxDays = Math.min(daysToLoad, 30);
+      const batchSize = 5; // 5일씩 배치 처리
 
-        try {
-          const savedData = await simpleStorage.getItem(storageKey);
-          if (savedData) {
-            const dailySave = JSON.parse(savedData);
-            readings.push({
-              ...dailySave,
-              type: 'daily',
-              dateKey: dateString, // 저장 키 추가
-              displayDate: LanguageUtils.formatDate(date)
-            });
-          }
-        } catch (error) {
-          // 개별 날짜 로드 실패는 무시
+      // ✅ 배치별로 병렬 처리
+      for (let batchStart = 0; batchStart < maxDays; batchStart += batchSize) {
+        const batchEnd = Math.min(batchStart + batchSize, maxDays);
+        const batchPromises = [];
+
+        // 배치 내 병렬 로드
+        for (let i = batchStart; i < batchEnd; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateString = date.toISOString().split('T')[0];
+          const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
+
+          batchPromises.push(
+            simpleStorage.getItem(storageKey)
+              .then(savedData => {
+                if (savedData) {
+                  try {
+                    const dailySave = JSON.parse(savedData);
+                    return {
+                      ...dailySave,
+                      type: 'daily',
+                      dateKey: dateString,
+                      displayDate: LanguageUtils.formatDate(date)
+                    };
+                  } catch (parseError) {
+                    console.warn('Failed to parse daily reading:', parseError);
+                    return null;
+                  }
+                }
+                return null;
+              })
+              .catch(error => {
+                // 개별 로드 실패는 무시
+                return null;
+              })
+          );
         }
+
+        // 배치 결과 수집
+        const batchResults = await Promise.all(batchPromises);
+        const validResults = batchResults.filter(r => r !== null);
+        readings.push(...validResults);
       }
 
       setDailyReadings(readings.sort((a, b) =>
         new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
       ));
+
+      console.log(`✅ Daily readings loaded: ${readings.length} items in ${maxDays} days`);
     } catch (error) {
       console.error('Daily reading load failed:', error);
     } finally {
