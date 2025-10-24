@@ -22,14 +22,6 @@ import {
 import LanguageSelector from '../LanguageSelector';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { usePremium } from '../../contexts/PremiumContext';
-// 조건부 import - 보상형 광고 안전 로딩
-let RewardedAd: any = null;
-try {
-  const rewardedAdModule = require('../ads/RewardedAd');
-  RewardedAd = rewardedAdModule.default || rewardedAdModule;
-} catch (error) {
-  console.warn('⚠️ RewardedAd 컴포넌트 로드 실패 (보상형 광고 비활성화):', error);
-}
 import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager';
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 import PremiumTest from '../PremiumTest';
@@ -950,32 +942,7 @@ const SettingsTab: React.FC = () => {
       {/* Supabase 연결 테스트 (개발용) - 임시 비활성화 */}
       {/* {false && <SupabaseTest />} */}
 
-      {/* 보상형 광고 섹션 - 구독 시스템 업데이트 시까지 숨김 */}
-      {false && RewardedAd && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>추가 기능</Text>
-          <RewardedAd
-            buttonText="보상 광고 시청하기"
-            rewardDescription="광고를 시청하고 추가 타로 세션을 받으세요"
-            onRewardEarned={(rewardType, amount) => {
-              console.log('🎁 보상 받음:', rewardType, amount);
-              Alert.alert(
-                '보상 받기 완료!',
-                `${amount}개의 추가 타로 세션을 받았습니다.`,
-                [{ text: '확인', style: 'default' }]
-              );
-            }}
-            onAdFailed={(error) => {
-              console.log('❌ 보상형 광고 실패:', error);
-              Alert.alert(
-                '광고 시청 실패',
-                '잠시 후 다시 시도해주세요.',
-                [{ text: '확인', style: 'default' }]
-              );
-            }}
-          />
-        </View>
-      )}
+      {/* 보상형 광고 제거: 전면광고만 사용 */}
 
       {/* 프리미엄 기능 통합 테스트 (개발용) */}
       {__DEV__ && (

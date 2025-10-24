@@ -43,12 +43,10 @@ interface DailyAdLimits {
   banner_impressions: number;
 }
 
-// 🔑 핵심: 동적으로 로드될 네이티브 모듈
+// 🔑 핵심: 동적으로 로드될 네이티브 모듈 (전면광고만 사용)
 let mobileAds: any = null;
 let InterstitialAd: any = null;
-let RewardedAd: any = null;
 let AdEventType: any = null;
-let RewardedAdEventType: any = null;
 let InterstitialAdEventType: any = null;
 let TestIds: any = null;
 
@@ -85,13 +83,11 @@ async function loadNativeModules(): Promise<boolean> {
     const adModule = require('react-native-google-mobile-ads');
     mobileAds = adModule.default;
     InterstitialAd = adModule.InterstitialAd;
-    RewardedAd = adModule.RewardedAd;
     AdEventType = adModule.AdEventType;
-    RewardedAdEventType = adModule.RewardedAdEventType || adModule.AdEventType;
     InterstitialAdEventType = adModule.InterstitialAdEventType || adModule.AdEventType;
     TestIds = adModule.TestIds;
 
-    console.log('✅ react-native-google-mobile-ads 네이티브 모듈 로드 성공');
+    console.log('✅ react-native-google-mobile-ads 네이티브 모듈 로드 성공 (전면광고만 사용)');
     return true;
   } catch (error) {
     console.warn('⚠️ react-native-google-mobile-ads 로드 실패 (시뮬레이션 모드):', error);
@@ -104,27 +100,22 @@ export class AdManager {
   private static isPremiumUser = false;
   private static nativeModulesLoaded = false;
 
-  // 광고 인스턴스
+  // 광고 인스턴스 (전면광고만)
   private static interstitialAd: any = null;
-  private static rewardedAd: any = null;
 
-  // 광고 상태 관리
+  // 광고 상태 관리 (전면광고만)
   private static adStates: {
-    banner: AdState;
     interstitial: AdState;
-    rewarded: AdState;
   } = {
-    banner: { isLoaded: false, isLoading: false, lastShown: 0, errorCount: 0, revenue: 0 },
-    interstitial: { isLoaded: false, isLoading: false, lastShown: 0, errorCount: 0, revenue: 0 },
-    rewarded: { isLoaded: false, isLoading: false, lastShown: 0, errorCount: 0, revenue: 0 }
+    interstitial: { isLoaded: false, isLoading: false, lastShown: 0, errorCount: 0, revenue: 0 }
   };
 
-  // 일일 광고 제한 추적
+  // 일일 광고 제한 추적 (전면광고만)
   private static dailyLimits: DailyAdLimits = {
     date: new Date().toDateString(),
     interstitial_count: 0,
-    rewarded_count: 0,
-    banner_impressions: 0
+    rewarded_count: 0, // 호환성 유지
+    banner_impressions: 0 // 호환성 유지
   };
 
   // 액션 카운터 (전면광고 표시 조건)
@@ -171,13 +162,6 @@ export class AdManager {
         await this.preloadInterstitial();
       } catch (error) {
         console.warn('⚠️ 전면광고 프리로드 실패, 계속 진행:', error);
-      }
-
-      try {
-        // 리워드광고 프리로드
-        await this.preloadRewarded();
-      } catch (error) {
-        console.warn('⚠️ 리워드광고 프리로드 실패, 계속 진행:', error);
       }
 
       try {
@@ -333,82 +317,8 @@ export class AdManager {
   }
 
   /**
-   * 리워드광고 프리로드
+   * ⚠️ DEPRECATED: 리워드광고 제거됨 (전면광고만 사용)
    */
-  static async preloadRewarded(): Promise<boolean> {
-    // 네이티브 모듈 없으면 시뮬레이션
-    if (!this.nativeModulesLoaded || !RewardedAd) {
-      console.log('🔄 [시뮬레이션] 리워드광고 프리로드');
-      return true;
-    }
-
-    try {
-      // ✅ CRITICAL FIX: 4단계 폴백으로 unitId 크래시 방지 (베너 광고와 동일한 문제)
-      let adUnitId: string;
-
-      // 1. 개발/테스트 환경
-      if (isDevelopment && TestIds) {
-        adUnitId = TestIds.REWARDED;
-      }
-      // 2. Production: AD_UNITS 사용
-      else if (AD_UNITS?.REWARDED) {
-        adUnitId = AD_UNITS.REWARDED;
-      }
-      // 3. 폴백: adConfig에서 직접 import
-      else {
-        try {
-          const { PRODUCTION_AD_UNITS } = require('./adConfig');
-          const platform = Platform.OS as 'ios' | 'android';
-          adUnitId = PRODUCTION_AD_UNITS[platform]?.rewarded || PRODUCTION_AD_UNITS.ios.rewarded;
-          console.warn('⚠️ AD_UNITS 없음, adConfig에서 직접 로드:', adUnitId);
-        } catch (importError) {
-          // 4. 최종 하드코딩 폴백 (iOS Test ID - 실제 프로덕션은 아직 미생성)
-          adUnitId = 'ca-app-pub-3940256099942544/1712485313';
-          console.error('🚨 모든 폴백 실패, 하드코딩 보상형광고 ID 사용 (TEST):', adUnitId);
-        }
-      }
-
-      console.log(`🎯 리워드광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
-
-      this.adStates.rewarded.isLoading = true;
-
-      this.rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
-        requestNonPersonalizedAdsOnly: false,
-      });
-
-      return new Promise((resolve) => {
-        const timeout = setTimeout(() => {
-          console.warn('⚠️ 리워드광고 로딩 타임아웃');
-          this.adStates.rewarded.isLoading = false;
-          resolve(false);
-        }, AD_TIMEOUTS.REWARDED);
-
-        const EventType = RewardedAdEventType || AdEventType;
-
-        this.rewardedAd.addAdEventListener(EventType.LOADED, () => {
-          clearTimeout(timeout);
-          this.adStates.rewarded.isLoaded = true;
-          this.adStates.rewarded.isLoading = false;
-          console.log('✅ 리워드광고 로드 완료');
-          resolve(true);
-        });
-
-        this.rewardedAd.addAdEventListener(EventType.ERROR, (error: any) => {
-          clearTimeout(timeout);
-          this.adStates.rewarded.isLoading = false;
-          this.adStates.rewarded.errorCount++;
-          console.error('❌ 리워드광고 로드 실패:', error);
-          resolve(false);
-        });
-
-        this.rewardedAd.load();
-      });
-    } catch (error) {
-      console.error('❌ 리워드광고 프리로드 오류:', error);
-      this.adStates.rewarded.isLoading = false;
-      return false;
-    }
-  }
 
   /**
    * 전면광고 표시
@@ -478,82 +388,12 @@ export class AdManager {
   }
 
   /**
-   * 리워드광고 표시
+   * ⚠️ DEPRECATED: 리워드광고 제거됨 (전면광고만 사용)
+   * 호환성 유지를 위해 빈 함수로 남김
    */
   static async showRewarded(placement: string): Promise<AdShowResult> {
-    // 네이티브 모듈 없으면 Mock UI 시뮬레이션
-    if (!this.nativeModulesLoaded) {
-      console.log(`🎁 [시뮬레이션] 리워드광고 표시: ${placement}`);
-      try {
-        const result = await adMockEmitter.showMockAd({
-          type: 'rewarded',
-          placement,
-        });
-        console.log(`✅ [시뮬레이션] 리워드광고 완료:`, result);
-        return {
-          success: true,
-          revenue: 0,
-          rewardEarned: result.completed,
-        };
-      } catch (error) {
-        console.error('❌ [시뮬레이션] 리워드광고 실패:', error);
-        return { success: false, error: String(error) };
-      }
-    }
-
-    // 일일 제한 체크
-    if (this.dailyLimits.rewarded_count >= AD_CONFIG.MAX_DAILY.REWARDED) {
-      console.log('⚠️ 일일 리워드광고 제한 도달');
-      return { success: false, error: 'daily_limit_reached' };
-    }
-
-    try {
-      if (!this.adStates.rewarded.isLoaded) {
-        console.log('⚠️ 리워드광고가 로드되지 않음, 프리로드 시도...');
-        const loaded = await this.preloadRewarded();
-        if (!loaded) {
-          return { success: false, error: 'ad_not_loaded' };
-        }
-      }
-
-      let rewardEarned = false;
-      const EventType = RewardedAdEventType || AdEventType;
-
-      return new Promise((resolve) => {
-        this.rewardedAd.addAdEventListener(EventType.EARNED_REWARD, (reward: any) => {
-          rewardEarned = true;
-          console.log(`🎁 리워드 획득: ${reward.amount} ${reward.type}`);
-        });
-
-        this.rewardedAd.addAdEventListener(EventType.CLOSED, async () => {
-          this.adStates.rewarded.isLoaded = false;
-
-          if (rewardEarned) {
-            this.adStates.rewarded.lastShown = Date.now();
-            this.dailyLimits.rewarded_count++;
-            await this.saveDailyLimits();
-
-            const estimatedRevenue = AD_CONFIG.CPM.REWARDED / 1000;
-            this.adStates.rewarded.revenue += estimatedRevenue;
-
-            console.log(`✅ 리워드광고 완료 (${placement}), 예상 수익: $${estimatedRevenue.toFixed(4)}`);
-            resolve({ success: true, revenue: estimatedRevenue, rewardEarned: true });
-          } else {
-            console.log('⚠️ 사용자가 리워드광고를 완료하지 않음');
-            resolve({ success: false, error: 'reward_not_earned' });
-          }
-
-          this.preloadRewarded();
-        });
-
-        this.rewardedAd.show();
-      });
-    } catch (error) {
-      console.error('❌ 리워드광고 표시 실패:', error);
-      this.adStates.rewarded.isLoaded = false;
-      this.preloadRewarded();
-      return { success: false, error: String(error) };
-    }
+    console.warn('⚠️ showRewarded() 호출됨 - 리워드광고는 제거되었습니다.');
+    return { success: false, error: 'rewarded_ad_removed' };
   }
 
   /**
@@ -591,21 +431,17 @@ export class AdManager {
   }
 
   /**
-   * 오늘 수익 조회
+   * 오늘 수익 조회 (전면광고만)
    */
   static getTodayRevenue(): number {
-    return this.adStates.banner.revenue +
-           this.adStates.interstitial.revenue +
-           this.adStates.rewarded.revenue;
+    return this.adStates.interstitial.revenue;
   }
 
   /**
-   * 오늘 노출 수 조회
+   * 오늘 노출 수 조회 (전면광고만)
    */
   static getTodayImpressions(): number {
-    return this.dailyLimits.banner_impressions +
-           this.dailyLimits.interstitial_count +
-           this.dailyLimits.rewarded_count;
+    return this.dailyLimits.interstitial_count;
   }
 
   /**
@@ -613,13 +449,6 @@ export class AdManager {
    */
   static getInterstitialCount(): number {
     return this.dailyLimits.interstitial_count;
-  }
-
-  /**
-   * 리워드광고 카운터 조회
-   */
-  static getRewardedCount(): number {
-    return this.dailyLimits.rewarded_count;
   }
 
   /**
