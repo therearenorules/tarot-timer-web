@@ -321,13 +321,65 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 구독 상태 새로고침
+   * ✅ FIX: 무료 체험 만료 + IAP 구독 상태 동시 확인
    * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
    */
   const refreshStatus = useCallback(async (): Promise<void> => {
     try {
       setLastError(null);
-      const currentStatus = await LocalStorageManager.getPremiumStatus();
-      setPremiumStatus(currentStatus);
+      console.log('🔄 구독 상태 새로고침 시작...');
+
+      // 1. 무료 체험 상태 확인 (타임아웃 3초)
+      let trialStatus = defaultPremiumStatus;
+      try {
+        trialStatus = await Promise.race([
+          LocalStorageManager.checkTrialStatus(),
+          new Promise<PremiumStatus>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ 체험 상태 조회 타임아웃 - 기본값 사용');
+              resolve(defaultPremiumStatus);
+            }, 3000)
+          )
+        ]);
+        console.log('✅ 무료 체험 상태 확인 완료');
+      } catch (error) {
+        console.error('❌ 무료 체험 상태 조회 오류 (무시):', error);
+        trialStatus = defaultPremiumStatus;
+      }
+
+      // 2. IAP 구독 상태 확인 (타임아웃 3초)
+      let iapStatus = defaultPremiumStatus;
+      try {
+        iapStatus = await Promise.race([
+          IAPManager.getCurrentSubscriptionStatus(),
+          new Promise<PremiumStatus>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ IAP 상태 조회 타임아웃 - 기본값 사용');
+              resolve(defaultPremiumStatus);
+            }, 3000)
+          )
+        ]);
+        console.log('✅ IAP 구독 상태 확인 완료');
+      } catch (error) {
+        console.error('❌ IAP 상태 조회 오류 (무시):', error);
+        iapStatus = defaultPremiumStatus;
+      }
+
+      // 3. 상태 우선순위 결정: IAP > 무료 체험 > 무료 버전
+      if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
+        // 유료 구독자
+        setPremiumStatus(iapStatus);
+        console.log('✅ 유료 구독 활성화');
+      } else if (trialStatus.is_premium && trialStatus.subscription_type === 'trial') {
+        // 무료 체험 중
+        setPremiumStatus(trialStatus);
+        console.log('✅ 무료 체험 활성화');
+      } else {
+        // 무료 버전
+        setPremiumStatus(defaultPremiumStatus);
+        console.log('✅ 무료 버전 활성화');
+      }
+
       console.log('✅ 구독 상태 새로고침 완료');
     } catch (error) {
       console.error('❌ 상태 새로고침 오류:', error);
