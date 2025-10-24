@@ -104,9 +104,11 @@ export interface PremiumStatus {
   premium_spreads: boolean;
   // 영수증 검증 관련 필드 추가
   last_validated?: string;
-  validation_environment?: 'Sandbox' | 'Production' | 'Unknown';
+  validation_environment?: 'Sandbox' | 'Production' | 'Unknown' | 'Simulation';
   receipt_data?: string;
   original_transaction_id?: string;
+  // ✅ FIX: 시뮬레이션 모드 플래그 (테스트용)
+  is_simulation?: boolean;
 }
 
 export interface UsageLimits {

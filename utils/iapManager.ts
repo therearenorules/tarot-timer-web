@@ -758,7 +758,8 @@ export class IAPManager {
         ad_free: isPremium,
         premium_spreads: isPremium,
         last_validated: new Date().toISOString(),
-        validation_environment: 'Simulation'
+        validation_environment: 'Simulation',
+        is_simulation: true // ✅ FIX: 시뮬레이션 플래그 추가
       };
 
       await LocalStorageManager.updatePremiumStatus(mockStatus);
