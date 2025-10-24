@@ -13,15 +13,7 @@ import { MysticalTexture } from './components/MysticalTexture';
 import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
 import { TAROT_CARDS } from './utils/tarotData';
 import { ErrorBoundary } from './components/ErrorBoundary';
-// 광고 시스템 활성화 (웹에서는 조건부 로딩)
-let BannerAd: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    BannerAd = require('./components/ads/BannerAd').default;
-  } catch (error) {
-    console.warn('⚠️ BannerAd 로드 실패:', error);
-  }
-}
+// 광고 시스템: 전면광고만 사용 (베너 광고 제거로 크래시 방지)
 import { TarotProvider } from './contexts/TarotContext';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -608,15 +600,7 @@ function AppContent() {
         {renderContent()}
       </View>
 
-      {/* 배너 광고 */}
-      {BannerAd && (
-        <BannerAd
-          placement="main_screen"
-          onAdLoaded={() => console.log('✅ 배너 광고 로드됨')}
-          onAdFailedToLoad={(error: string) => console.log('❌ 배너 광고 로드 실패:', error)}
-          onAdClicked={() => console.log('🔍 배너 광고 클릭됨')}
-        />
-      )}
+      {/* 베너 광고 제거: 전면광고만 사용으로 unitId 크래시 방지 */}
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
       <StatusBar style="light" backgroundColor="#1a1625" />

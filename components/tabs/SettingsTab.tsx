@@ -33,7 +33,7 @@ try {
 import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager';
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 import PremiumTest from '../PremiumTest';
-import BannerAd from '../ads/BannerAd';
+// BannerAd 제거: 전면광고만 사용으로 unitId 크래시 방지
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // 조건부 import - 모바일 환경에서 안전하게 로드
 let SubscriptionPlans: any = null;
@@ -1054,12 +1054,7 @@ const SettingsTab: React.FC = () => {
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />
 
-      {/* 하단 배너 광고 */}
-      <BannerAd
-        placement="main_screen"
-        onAdLoaded={() => console.log('✅ SettingsTab 배너 광고 로드됨')}
-        onAdFailedToLoad={(error) => console.log('❌ SettingsTab 배너 광고 실패:', error)}
-      />
+      {/* 베너 광고 제거: 전면광고만 사용으로 unitId 크래시 방지 */}
 
       {/* 크래시 로그 모달 */}
       <Modal

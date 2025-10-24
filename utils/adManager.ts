@@ -231,9 +231,13 @@ export class AdManager {
   }
 
   /**
-   * ✅ Android 최적화: 배너광고 Unit ID 반환
+   * ⚠️ DEPRECATED: 배너광고 Unit ID 반환
+   * 베너 광고 제거로 더 이상 사용하지 않음 (전면광고만 사용)
+   * unitId 초기화 크래시 방지를 위해 베너 광고 제거됨
    */
   static getBannerAdUnitId(): string {
+    console.warn('⚠️ getBannerAdUnitId() 호출됨 - 베너 광고는 제거되었습니다.');
+
     // 웹 또는 Expo Go 환경에서는 시뮬레이션
     if (!isNativeSupported) {
       console.log('🌐 시뮬레이션 모드: 배너광고 ID 사용 불가');

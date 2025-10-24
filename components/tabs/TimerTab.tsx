@@ -25,7 +25,7 @@ import { TarotUtils, DailyTarotSave } from '../../utils/tarotData';
 import { TarotCardComponent } from '../TarotCard';
 import { Icon } from '../Icon';
 import InterstitialAd from '../ads/InterstitialAd';
-import BannerAd from '../ads/BannerAd';
+// BannerAd 제거: 전면광고만 사용으로 unitId 크래시 방지
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = screenWidth * 0.35; // 화면 너비의 35% (더 얇게)
@@ -777,12 +777,7 @@ const TimerTab = memo(() => {
         onSave={handleMemoSave}
       />
 
-      {/* 하단 배너 광고 */}
-      <BannerAd
-        placement="main_screen"
-        onAdLoaded={() => console.log('✅ TimerTab 배너 광고 로드됨')}
-        onAdFailedToLoad={(error) => console.log('❌ TimerTab 배너 광고 실패:', error)}
-      />
+      {/* 베너 광고 제거: 전면광고만 사용으로 unitId 크래시 방지 */}
     </KeyboardAvoidingView>
   );
 });
