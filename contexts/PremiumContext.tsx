@@ -140,56 +140,102 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 컨텍스트 초기화
+   * ✅ CRITICAL FIX: 모든 에러를 catch하고 타임아웃 추가하여 앱 크래시 절대 방지
    */
   const initializePremiumContext = async () => {
+    console.log('🔄 PremiumContext 초기화 시작...');
+
     try {
       setIsLoading(true);
       setLastError(null);
 
-      // ✅ CRITICAL FIX: 무료 체험 상태 확인 (안전 모드)
+      // ✅ CRITICAL FIX: 무료 체험 상태 확인 (안전 모드 + 타임아웃)
       let trialStatus = defaultPremiumStatus;
       try {
-        trialStatus = await LocalStorageManager.checkTrialStatus();
+        trialStatus = await Promise.race([
+          LocalStorageManager.checkTrialStatus(),
+          new Promise<PremiumStatus>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ 체험 상태 조회 타임아웃 - 기본값 사용');
+              resolve(defaultPremiumStatus);
+            }, 3000) // 3초 타임아웃
+          )
+        ]);
         console.log('✅ 무료 체험 상태 확인 완료');
       } catch (error) {
-        console.error('❌ LocalStorageManager.checkTrialStatus 오류:', error);
+        console.error('❌ LocalStorageManager.checkTrialStatus 오류 (무시):', error);
         console.log('📌 기본 무료 버전으로 계속 진행');
+        trialStatus = defaultPremiumStatus; // 명시적으로 기본값 재할당
       }
 
-      // ✅ CRITICAL FIX: IAP 시스템 초기화 (안전 모드)
+      // ✅ CRITICAL FIX: IAP 시스템 초기화 (안전 모드 + 타임아웃)
       let iapStatus = defaultPremiumStatus;
       try {
-        await IAPManager.initialize();
+        // IAP 초기화에 5초 타임아웃 추가
+        await Promise.race([
+          IAPManager.initialize(),
+          new Promise((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ IAP 초기화 타임아웃 - 건너뜀');
+              resolve(null);
+            }, 5000) // 5초 타임아웃
+          )
+        ]);
         console.log('✅ IAPManager 초기화 완료');
 
-        // 현재 구독 상태 로드 (IAP에서)
-        iapStatus = await IAPManager.getCurrentSubscriptionStatus();
+        // 현재 구독 상태 로드 (IAP에서) - 타임아웃 적용
+        iapStatus = await Promise.race([
+          IAPManager.getCurrentSubscriptionStatus(),
+          new Promise<PremiumStatus>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ IAP 상태 조회 타임아웃 - 기본값 사용');
+              resolve(defaultPremiumStatus);
+            }, 3000) // 3초 타임아웃
+          )
+        ]);
         console.log('✅ IAP 구독 상태 로드 완료');
       } catch (error) {
-        console.error('❌ IAPManager 초기화 오류:', error);
+        console.error('❌ IAPManager 초기화 오류 (무시):', error);
         console.log('📌 IAP 없이 계속 진행');
+        iapStatus = defaultPremiumStatus; // 명시적으로 기본값 재할당
       }
 
-      // IAP 구독이 있으면 IAP 상태 우선, 없으면 무료 체험 상태 사용
-      if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
-        // 유료 구독자
-        setPremiumStatus(iapStatus);
-        console.log('✅ 유료 구독 활성화');
-      } else {
-        // 무료 체험 또는 무료 사용자
-        setPremiumStatus(trialStatus);
-        console.log(trialStatus.is_premium ? '🎁 무료 체험 활성화' : '📱 무료 버전');
+      // ✅ CRITICAL FIX: 상태 설정도 try-catch로 감싸기
+      try {
+        // IAP 구독이 있으면 IAP 상태 우선, 없으면 무료 체험 상태 사용
+        if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
+          // 유료 구독자
+          setPremiumStatus(iapStatus);
+          console.log('✅ 유료 구독 활성화');
+        } else {
+          // 무료 체험 또는 무료 사용자
+          setPremiumStatus(trialStatus);
+          console.log(trialStatus.is_premium ? '🎁 무료 체험 활성화' : '📱 무료 버전');
+        }
+      } catch (error) {
+        console.error('❌ 상태 설정 오류 (무시):', error);
+        setPremiumStatus(defaultPremiumStatus);
       }
 
       console.log('✅ PremiumContext 초기화 완료');
 
     } catch (error) {
-      console.error('❌ PremiumContext 초기화 오류:', error);
+      // ✅ CRITICAL FIX: 최상위 catch - 절대 에러를 throw하지 않음
+      console.error('❌ PremiumContext 초기화 최상위 오류 (무시하고 계속):', error);
       setLastError(error instanceof Error ? error.message : '초기화 오류');
-      // ✅ CRITICAL FIX: 오류가 발생해도 기본 상태로 앱 계속 실행
-      setPremiumStatus(defaultPremiumStatus);
+      // 무조건 기본 상태로 앱 계속 실행
+      try {
+        setPremiumStatus(defaultPremiumStatus);
+      } catch (setStateError) {
+        console.error('❌ setPremiumStatus 실패 (치명적):', setStateError);
+      }
     } finally {
-      setIsLoading(false);
+      // ✅ CRITICAL FIX: finally에서도 try-catch
+      try {
+        setIsLoading(false);
+      } catch (error) {
+        console.error('❌ setIsLoading(false) 실패 (무시):', error);
+      }
     }
   };
 
