@@ -154,10 +154,24 @@ const BannerAd: React.FC<BannerAdProps> = ({
     return null;
   }
 
-  // ✅ Android 최적화: 실제 AdMob 배너 광고 ID 선택
-  const adUnitId = testMode || isDevelopment
-    ? TestIds.BANNER
-    : AdManager.getBannerAdUnitId();
+  // ✅ CRITICAL FIX: Production에서 AD_UNITS 직접 사용
+  const adUnitId = (() => {
+    // 테스트 모드 또는 개발 환경
+    if ((testMode || isDevelopment) && TestIds) {
+      return TestIds.BANNER;
+    }
+
+    // Production: AdManager에서 가져오되, 빈 문자열이면 직접 import
+    const managerId = AdManager.getBannerAdUnitId();
+    if (managerId) {
+      return managerId;
+    }
+
+    // Fallback: adConfig에서 직접 import
+    const { AD_UNITS } = require('../../utils/adConfig');
+    console.warn('⚠️ AdManager ID 없음, adConfig에서 직접 로드:', AD_UNITS.BANNER);
+    return AD_UNITS.BANNER;
+  })();
 
   // ✅ FIX: 광고 컴포넌트 렌더링 에러 방지
   try {
