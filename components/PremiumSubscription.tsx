@@ -200,10 +200,33 @@ export default function PremiumSubscription({
     return Math.round(discount); // 소수점 반올림
   };
 
+  /**
+   * 연간 구독의 월 환산 가격 계산
+   * 연간 가격 / 12개월 = 월 상당 가격
+   */
+  const calculateMonthlyEquivalent = (product: SubscriptionProduct): string | null => {
+    if (product.type !== 'yearly') return null;
+
+    const yearlyPrice = parseFloat(product.price);
+    if (isNaN(yearlyPrice)) return null;
+
+    const monthlyEquivalent = yearlyPrice / 12;
+
+    // 통화 기호 추출 (localizedPrice에서)
+    const currencyMatch = product.localizedPrice.match(/[^\d.,\s]+/);
+    const currencySymbol = currencyMatch ? currencyMatch[0] : '';
+
+    // 숫자 포맷팅 (천 단위 콤마)
+    const formattedPrice = Math.round(monthlyEquivalent).toLocaleString();
+
+    return `${currencySymbol}${formattedPrice}`;
+  };
+
   const renderSubscriptionCard = (product: SubscriptionProduct) => {
     const isYearly = product.type === 'yearly';
     const isPurchasing = purchasing === product.productId;
     const discountRate = calculateDiscount();
+    const monthlyEquivalent = calculateMonthlyEquivalent(product);
 
     return (
       <TouchableOpacity
@@ -232,6 +255,12 @@ export default function PremiumSubscription({
           <Text style={[styles.cardPrice, isYearly && styles.popularCardPrice]}>
             {product.localizedPrice}
           </Text>
+
+          {isYearly && monthlyEquivalent && (
+            <Text style={styles.monthlyEquivalentText}>
+              월 {monthlyEquivalent} 상당
+            </Text>
+          )}
 
           <Text style={[styles.cardPeriod, isYearly && styles.popularCardPeriod]}>
             {isYearly ? '연간' : '월간'}
@@ -452,6 +481,13 @@ const styles = StyleSheet.create({
   },
   popularCardPrice: {
     color: '#8e44ad',
+  },
+  monthlyEquivalentText: {
+    fontSize: 12,
+    color: '#8e44ad',
+    fontWeight: '600',
+    marginBottom: 6,
+    opacity: 0.9,
   },
   cardPeriod: {
     fontSize: 14,
