@@ -265,8 +265,31 @@ export class AdManager {
     }
 
     try {
-      // ✅ CRITICAL FIX: Production에서는 AD_UNITS 직접 사용
-      const adUnitId = (isDevelopment && TestIds) ? TestIds.INTERSTITIAL : AD_UNITS.INTERSTITIAL;
+      // ✅ CRITICAL FIX: 4단계 폴백으로 unitId 크래시 방지 (베너 광고와 동일한 문제)
+      let adUnitId: string;
+
+      // 1. 개발/테스트 환경
+      if (isDevelopment && TestIds) {
+        adUnitId = TestIds.INTERSTITIAL;
+      }
+      // 2. Production: AD_UNITS 사용
+      else if (AD_UNITS?.INTERSTITIAL) {
+        adUnitId = AD_UNITS.INTERSTITIAL;
+      }
+      // 3. 폴백: adConfig에서 직접 import
+      else {
+        try {
+          const { PRODUCTION_AD_UNITS } = require('./adConfig');
+          const platform = Platform.OS as 'ios' | 'android';
+          adUnitId = PRODUCTION_AD_UNITS[platform]?.interstitial || PRODUCTION_AD_UNITS.ios.interstitial;
+          console.warn('⚠️ AD_UNITS 없음, adConfig에서 직접 로드:', adUnitId);
+        } catch (importError) {
+          // 4. 최종 하드코딩 폴백 (iOS Production)
+          adUnitId = 'ca-app-pub-4284542208210945/5479246942';
+          console.error('🚨 모든 폴백 실패, 하드코딩 전면광고 ID 사용:', adUnitId);
+        }
+      }
+
       console.log(`🎯 전면광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
 
       this.adStates.interstitial.isLoading = true;
@@ -320,8 +343,31 @@ export class AdManager {
     }
 
     try {
-      // ✅ CRITICAL FIX: Production에서는 AD_UNITS 직접 사용
-      const adUnitId = (isDevelopment && TestIds) ? TestIds.REWARDED : AD_UNITS.REWARDED;
+      // ✅ CRITICAL FIX: 4단계 폴백으로 unitId 크래시 방지 (베너 광고와 동일한 문제)
+      let adUnitId: string;
+
+      // 1. 개발/테스트 환경
+      if (isDevelopment && TestIds) {
+        adUnitId = TestIds.REWARDED;
+      }
+      // 2. Production: AD_UNITS 사용
+      else if (AD_UNITS?.REWARDED) {
+        adUnitId = AD_UNITS.REWARDED;
+      }
+      // 3. 폴백: adConfig에서 직접 import
+      else {
+        try {
+          const { PRODUCTION_AD_UNITS } = require('./adConfig');
+          const platform = Platform.OS as 'ios' | 'android';
+          adUnitId = PRODUCTION_AD_UNITS[platform]?.rewarded || PRODUCTION_AD_UNITS.ios.rewarded;
+          console.warn('⚠️ AD_UNITS 없음, adConfig에서 직접 로드:', adUnitId);
+        } catch (importError) {
+          // 4. 최종 하드코딩 폴백 (iOS Test ID - 실제 프로덕션은 아직 미생성)
+          adUnitId = 'ca-app-pub-3940256099942544/1712485313';
+          console.error('🚨 모든 폴백 실패, 하드코딩 보상형광고 ID 사용 (TEST):', adUnitId);
+        }
+      }
+
       console.log(`🎯 리워드광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
 
       this.adStates.rewarded.isLoading = true;
