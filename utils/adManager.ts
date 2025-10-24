@@ -234,12 +234,20 @@ export class AdManager {
    * ✅ Android 최적화: 배너광고 Unit ID 반환
    */
   static getBannerAdUnitId(): string {
-    // Expo Go 환경에서는 TestIds가 null일 수 있음
-    if (!isNativeSupported || !TestIds) {
+    // 웹 또는 Expo Go 환경에서는 시뮬레이션
+    if (!isNativeSupported) {
       console.log('🌐 시뮬레이션 모드: 배너광고 ID 사용 불가');
       return '';
     }
-    return isDevelopment ? TestIds.BANNER : AD_UNITS.BANNER;
+
+    // ✅ CRITICAL FIX: Production에서는 AD_UNITS 직접 사용
+    if (isDevelopment && TestIds) {
+      return TestIds.BANNER;
+    }
+
+    // Production: adConfig.ts에서 정의된 실제 광고 ID 사용
+    console.log(`🎯 배너광고 ID: PRODUCTION (${AD_UNITS.BANNER})`);
+    return AD_UNITS.BANNER;
   }
 
   /**
@@ -253,8 +261,8 @@ export class AdManager {
     }
 
     try {
-      // ✅ Android 최적화: 안전한 광고 ID 선택
-      const adUnitId = isDevelopment ? TestIds.INTERSTITIAL : AD_UNITS.INTERSTITIAL;
+      // ✅ CRITICAL FIX: Production에서는 AD_UNITS 직접 사용
+      const adUnitId = (isDevelopment && TestIds) ? TestIds.INTERSTITIAL : AD_UNITS.INTERSTITIAL;
       console.log(`🎯 전면광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
 
       this.adStates.interstitial.isLoading = true;
@@ -308,8 +316,8 @@ export class AdManager {
     }
 
     try {
-      // ✅ Android 최적화: 안전한 광고 ID 선택
-      const adUnitId = isDevelopment ? TestIds.REWARDED : AD_UNITS.REWARDED;
+      // ✅ CRITICAL FIX: Production에서는 AD_UNITS 직접 사용
+      const adUnitId = (isDevelopment && TestIds) ? TestIds.REWARDED : AD_UNITS.REWARDED;
       console.log(`🎯 리워드광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
 
       this.adStates.rewarded.isLoading = true;

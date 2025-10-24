@@ -29,7 +29,12 @@
       "Bash(/Users/threebooks/.gem/ruby/2.6.0/bin/pod install:*)",
       "Bash(awk:*)",
       "Read(//dev/**)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(eas build:*)",
+      "Bash(eas submit:*)",
+      "Bash(start cmd /k \"npx expo start --port 8090\")",
+      "Bash(eas build:list:*)",
+      "Bash(eas submission:list:*)"
     ],
     "deny": [],
     "ask": []

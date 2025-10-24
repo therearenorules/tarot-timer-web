@@ -44,6 +44,18 @@ if (__DEV__) {
   }).catch(() => {
     // 테스트 파일이 없어도 앱은 정상 동작
   });
+
+  // 크래시 로그 뷰어 유틸리티 로드 (개발 모드)
+  import('./utils/crashLogViewer').then(module => {
+    console.log('🔍 크래시 로그 뷰어 로드 완료');
+    console.log('📌 사용 방법:');
+    console.log('   - viewCrashLogs() : 모든 크래시 로그 조회');
+    console.log('   - viewLatestCrash() : 최신 크래시 로그 조회');
+    console.log('   - getCrashStats() : 크래시 통계 조회');
+    console.log('   - clearCrashLogs() : 모든 크래시 로그 삭제');
+  }).catch(() => {
+    // 테스트 파일이 없어도 앱은 정상 동작
+  });
 }
 
 // 웹에서는 웹 전용 NotificationProvider 사용
@@ -165,6 +177,48 @@ class TabErrorBoundary extends React.Component<
     }
   }
 
+  handleReset = () => {
+    // ✅ CRITICAL FIX: 단순 state 초기화가 아닌 앱 전체 리로드
+    console.log(`🔄 ${this.props.tabName} 탭 에러 - 앱 전체 리로드 시도...`);
+
+    if (Platform.OS === 'web') {
+      // 웹 환경: 페이지 새로고침
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    } else {
+      // 모바일 환경: Expo Updates 또는 Dev Reload 사용
+      try {
+        const isExpoGo = Constants.appOwnership === 'expo';
+
+        if (isExpoGo) {
+          // Expo Go: DevSettings를 통한 리로드
+          console.log('🎯 Expo Go 환경 - DevSettings 리로드 시도');
+          const DevSettings = require('react-native').DevSettings;
+          if (DevSettings && DevSettings.reload) {
+            DevSettings.reload();
+          } else {
+            console.warn('⚠️ DevSettings.reload 없음 - state 초기화');
+            this.setState({ hasError: false, error: undefined });
+          }
+        } else {
+          // Development Build 또는 Production: expo-updates 사용
+          console.log('🎯 Standalone 앱 - expo-updates 리로드 시도');
+          const Updates = require('expo-updates');
+          Updates.reloadAsync().catch((error: any) => {
+            console.error('❌ 앱 리로드 실패:', error);
+            // Fallback: state만 초기화
+            this.setState({ hasError: false, error: undefined });
+          });
+        }
+      } catch (error) {
+        console.error('❌ 리로드 실패:', error);
+        // Fallback: state만 초기화
+        this.setState({ hasError: false, error: undefined });
+      }
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -175,7 +229,7 @@ class TabErrorBoundary extends React.Component<
           </Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={() => this.setState({ hasError: false, error: undefined })}
+            onPress={this.handleReset}
           >
             <Text style={styles.retryButtonText}>{i18next.t('errors.retry')}</Text>
           </TouchableOpacity>

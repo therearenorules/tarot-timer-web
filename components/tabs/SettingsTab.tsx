@@ -34,6 +34,7 @@ import LocalDataManager, { LocalDataStatus } from '../../utils/localDataManager'
 import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 import PremiumTest from '../PremiumTest';
 import BannerAd from '../ads/BannerAd';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // 조건부 import - 모바일 환경에서 안전하게 로드
 let SubscriptionPlans: any = null;
 let SubscriptionManagement: any = null;
@@ -139,6 +140,8 @@ const SettingsTab: React.FC = () => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useSafeState(false);
   const [showManagementModal, setShowManagementModal] = useSafeState(false);
   const [adminClickCount, setAdminClickCount] = useSafeState(0);
+  const [showCrashLogs, setShowCrashLogs] = useSafeState(false);
+  const [crashLogs, setCrashLogs] = useSafeState<any[]>([]);
 
   // Context에서 가져온 값들을 로컬 상태 대신 사용
   const notificationsEnabled = hasPermission;
@@ -171,6 +174,28 @@ const SettingsTab: React.FC = () => {
       setCloudBackupEnabled(false); // 로컬 전용으로 변경
     } catch (error) {
       console.error('로컬 데이터 상태 로드 오류:', error);
+    }
+  };
+
+  const loadCrashLogs = async () => {
+    try {
+      const logsJson = await AsyncStorage.getItem('CRASH_LOGS');
+      const logs = logsJson ? JSON.parse(logsJson) : [];
+      setCrashLogs(logs);
+    } catch (error) {
+      console.error('크래시 로그 로드 실패:', error);
+      setCrashLogs([]);
+    }
+  };
+
+  const clearCrashLogs = async () => {
+    try {
+      await AsyncStorage.removeItem('CRASH_LOGS');
+      setCrashLogs([]);
+      Alert.alert('완료', '크래시 로그가 삭제되었습니다.');
+    } catch (error) {
+      console.error('크래시 로그 삭제 실패:', error);
+      Alert.alert('오류', '크래시 로그 삭제에 실패했습니다.');
     }
   };
 
@@ -976,9 +1001,9 @@ const SettingsTab: React.FC = () => {
               setAdminClickCount(prev => {
                 const newCount = prev + 1;
                 if (newCount >= 7) {
-                  Alert.alert('개발자 모드', '관리자 기능이 별도 앱으로 분리되었습니다.', [
-                    { text: '확인', onPress: () => setAdminClickCount(0) }
-                  ]);
+                  loadCrashLogs();
+                  setShowCrashLogs(true);
+                  setAdminClickCount(0);
                 }
                 return newCount;
               });
@@ -1035,6 +1060,61 @@ const SettingsTab: React.FC = () => {
         onAdLoaded={() => console.log('✅ SettingsTab 배너 광고 로드됨')}
         onAdFailedToLoad={(error) => console.log('❌ SettingsTab 배너 광고 실패:', error)}
       />
+
+      {/* 크래시 로그 모달 */}
+      <Modal
+        visible={showCrashLogs}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCrashLogs(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>🔧 크래시 로그</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={clearCrashLogs}
+                style={[styles.modalButton, { backgroundColor: '#ff6b6b' }]}
+              >
+                <Text style={styles.modalButtonText}>삭제</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowCrashLogs(false)}
+                style={styles.modalButton}
+              >
+                <Text style={styles.modalButtonText}>닫기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            {crashLogs.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>크래시 로그가 없습니다.</Text>
+              </View>
+            ) : (
+              crashLogs.map((log, index) => (
+                <View key={index} style={styles.crashLogItem}>
+                  <Text style={styles.crashLogTimestamp}>
+                    {new Date(log.timestamp).toLocaleString()}
+                  </Text>
+                  <Text style={styles.crashLogTab}>
+                    탭: {log.tabName || '알 수 없음'}
+                  </Text>
+                  <Text style={styles.crashLogError}>
+                    에러: {log.error}
+                  </Text>
+                  <Text style={styles.crashLogMessage}>
+                    {log.errorInfo?.componentStack?.split('\n').slice(0, 3).join('\n') || '상세 정보 없음'}
+                  </Text>
+                  <Text style={styles.crashLogBuildType}>
+                    빌드: {log.buildType || '알 수 없음'}
+                  </Text>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -1654,6 +1734,69 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontFamily: 'NotoSansKR_600SemiBold',
+  },
+
+  // 크래시 로그 모달 스타일
+  modalButton: {
+    backgroundColor: Colors.brand.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.md,
+  },
+  modalButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: 'NotoSansKR_700Bold',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.xl * 2,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    fontFamily: 'NotoSansKR_400Regular',
+  },
+  crashLogItem: {
+    backgroundColor: 'rgba(74, 68, 88, 0.3)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff6b6b',
+  },
+  crashLogTimestamp: {
+    fontSize: 12,
+    color: Colors.brand.accent,
+    marginBottom: 4,
+    fontFamily: 'NotoSansKR_400Regular',
+  },
+  crashLogTab: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    fontFamily: 'NotoSansKR_700Bold',
+  },
+  crashLogError: {
+    fontSize: 14,
+    color: '#ff6b6b',
+    marginBottom: 8,
+    fontFamily: 'NotoSansKR_600SemiBold',
+  },
+  crashLogMessage: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    fontFamily: 'Courier New',
+    marginBottom: 8,
+  },
+  crashLogBuildType: {
+    fontSize: 11,
+    color: Colors.text.muted,
+    fontFamily: 'NotoSansKR_400Regular',
   },
 });
 

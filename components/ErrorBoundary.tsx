@@ -172,9 +172,58 @@ ${log.componentStack || '없음'}
   };
 
   handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
-    if (this.props.onReset) {
-      this.props.onReset();
+    // ✅ CRITICAL FIX: 단순 state 초기화가 아닌 앱 전체 리로드
+    // React Native에서는 Updates.reloadAsync() 사용
+    // 웹에서는 window.location.reload() 사용
+    // Expo Go에서는 RCTDeviceEventEmitter를 통한 리로드
+
+    console.log('🔄 앱 전체 리로드 시도...');
+
+    if (Platform.OS === 'web') {
+      // 웹 환경: 페이지 새로고침
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    } else {
+      // 모바일 환경: Expo Updates 또는 Dev Reload 사용
+      try {
+        const Constants = require('expo-constants');
+        const isExpoGo = Constants.default?.appOwnership === 'expo';
+
+        if (isExpoGo) {
+          // Expo Go: DevSettings를 통한 리로드
+          console.log('🎯 Expo Go 환경 - DevSettings 리로드 시도');
+          const DevSettings = require('react-native').DevSettings;
+          if (DevSettings && DevSettings.reload) {
+            DevSettings.reload();
+          } else {
+            console.warn('⚠️ DevSettings.reload 없음 - state 초기화');
+            this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+            if (this.props.onReset) {
+              this.props.onReset();
+            }
+          }
+        } else {
+          // Development Build 또는 Production: expo-updates 사용
+          console.log('🎯 Standalone 앱 - expo-updates 리로드 시도');
+          const Updates = require('expo-updates');
+          Updates.reloadAsync().catch((error: any) => {
+            console.error('❌ 앱 리로드 실패:', error);
+            // Fallback: state만 초기화
+            this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+            if (this.props.onReset) {
+              this.props.onReset();
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ 리로드 실패:', error);
+        // Fallback: state만 초기화
+        this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+        if (this.props.onReset) {
+          this.props.onReset();
+        }
+      }
     }
   };
 
