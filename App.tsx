@@ -14,7 +14,7 @@ import { preloadTarotImages, preloadCriticalImages } from './utils/imageCache';
 import { TAROT_CARDS } from './utils/tarotData';
 import { ErrorBoundary } from './components/ErrorBoundary';
 // 광고 시스템: 전면광고만 사용 (베너 광고 제거로 크래시 방지)
-import { TarotProvider } from './contexts/TarotContext';
+// ✅ TarotProvider 제거: useTarotCards Hook이 실제 로직 수행 (중복 제거)
 import { AuthProvider } from './contexts/AuthContext';
 
 // 자정 초기화 테스트 유틸리티 로드 (개발 모드)
@@ -642,15 +642,13 @@ export default function App() {
     >
       <SafeAreaProvider>
         <AuthProvider>
-          <TarotProvider>
-            <NotificationProvider>
-              <PremiumProvider>
-                <TabErrorBoundary tabName="Tarot Timer">
-                  <AppContent />
-                </TabErrorBoundary>
-              </PremiumProvider>
-            </NotificationProvider>
-          </TarotProvider>
+          <NotificationProvider>
+            <PremiumProvider>
+              <TabErrorBoundary tabName="Tarot Timer">
+                <AppContent />
+              </TabErrorBoundary>
+            </PremiumProvider>
+          </NotificationProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

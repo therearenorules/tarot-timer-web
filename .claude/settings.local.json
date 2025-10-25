@@ -37,7 +37,8 @@
       "Bash(eas submission:list:*)",
       "Bash(start http://localhost:8090)",
       "Bash(npm run test:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
