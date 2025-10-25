@@ -1,23 +1,24 @@
 /**
  * 최적화된 이미지 컴포넌트
- * 캐싱, 프리로딩, 레이지 로딩, 플레이스홀더 지원
+ * ✅ expo-image로 업그레이드: 자동 캐싱, 메모리 관리, 성능 향상
+ * - 자동 메모리 캐싱
+ * - 디스크 캐싱 지원
+ * - 스무스한 트랜지션
+ * - 메모리 압력 자동 관리
  */
 
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useEffect, memo } from 'react';
 import { useSafeState } from '../hooks/useSafeState';
 import {
   View,
-  Image,
   ActivityIndicator,
-  Animated,
   StyleSheet,
-  Platform,
   ImageStyle,
   ViewStyle,
   ImageResizeMode,
   ImageSourcePropType
 } from 'react-native';
-import { isImageCached, imageCacheUtils } from '../utils/imageCache';
+import { Image } from 'expo-image';
 
 interface OptimizedImageProps {
   source: ImageSourcePropType;
@@ -59,39 +60,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   const [loading, setLoading] = useSafeState(true);
   const [error, setError] = useSafeState(false);
   const [shouldLoad, setShouldLoad] = useSafeState(!lazy);
-  const [retryCount, setRetryCount] = useSafeState(0);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const imageRef = useRef<Image>(null);
-  const maxRetries = 2; // 최대 재시도 횟수
 
-  // 캐시 확인
-  const isCached = isImageCached(source);
-
-  useEffect(() => {
-    if (isCached) {
-      setLoading(false);
-      fadeAnim.setValue(1); // 캐시된 이미지는 즉시 표시
-    }
-  }, [isCached, fadeAnim]);
-
-  // 즉시 프리로딩 시작 (우선순위 반영)
-  useEffect(() => {
-    if (!isCached) {
-      // 모든 이미지 즉시 프리로딩 (우선순위 전달)
-      imageCacheUtils.preloadImage(source, priority);
-    }
-  }, [source, priority, isCached]);
-
-
-  // 레이지 로딩 (필요한 경우)
-  // ✅ 컴포넌트 언마운트 시 애니메이션 정리 (메모리 누수 방지)
-  useEffect(() => {
-    return () => {
-      // 애니메이션 정리
-      fadeAnim.stopAnimation();
-      fadeAnim.setValue(0);
-    };
-  }, [fadeAnim]);
+  // ✅ expo-image는 자동 캐싱, 프리로딩 불필요
 
   // 레이지 로딩 (필요한 경우)
   useEffect(() => {
@@ -114,45 +84,15 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   const handleLoad = () => {
     setLoading(false);
     setError(false);
-
-    // ✅ 캐시된 이미지는 애니메이션 스킵 (메모리 절약)
-    if (isCached) {
-      fadeAnim.setValue(1);
-      onLoad?.();
-      return;
-    }
-
-    // 새 이미지만 페이드 인 애니메이션
-    const animation = Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: fadeDuration,
-      useNativeDriver: true,
-    });
-
-    animation.start(() => {
-      onLoad?.();
-    });
+    // expo-image는 자동으로 페이드 효과 제공
+    onLoad?.();
   };
 
-  const handleError = () => {
-    // 재시도 로직
-    if (retryCount < maxRetries) {
-      console.log(`Image load failed, retrying... (${retryCount + 1}/${maxRetries})`);
-      setRetryCount(prev => prev + 1);
-      setLoading(true);
-      setError(false);
-
-      // 잠시 대기 후 재시도
-      setTimeout(() => {
-        if (imageRef.current) {
-          setLoading(true);
-        }
-      }, 500 * (retryCount + 1)); // 점진적 백오프
-    } else {
-      setLoading(false);
-      setError(true);
-      onError?.();
-    }
+  const handleError = (error: any) => {
+    // expo-image는 자동 재시도 기능 내장
+    setLoading(false);
+    setError(true);
+    onError?.();
   };
 
   // 로딩 중 플레이스홀더
@@ -193,33 +133,25 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
     <View style={containerStyle}>
       {loading && renderPlaceholder()}
 
-      <Animated.View
-        style={[
-          loading ? styles.hiddenImage : styles.visibleImage,
-          { opacity: fadeAnim }
-        ]}
-      >
-        <Image
-          ref={imageRef}
-          source={source}
-          style={style}
-          resizeMode={resizeMode}
-          onLoadStart={handleLoadStart}
-          onLoad={handleLoad}
-          onError={handleError}
-          blurRadius={blurRadius}
-          fadeDuration={0} // 커스텀 페이드 애니메이션 사용
-          progressiveRenderingEnabled={Platform.OS === 'android'}
-          tintColor={tintColor}
-          // 성능 최적화 속성
-          {...(Platform.OS === 'android' && {
-            renderToHardwareTextureAndroid: true
-          })}
-          {...(Platform.OS === 'ios' && {
-            shouldRasterizeIOS: true
-          })}
-        />
-      </Animated.View>
+      <Image
+        source={source}
+        style={style}
+        contentFit={resizeMode}
+        transition={fadeDuration}
+        onLoadStart={handleLoadStart}
+        onLoad={handleLoad}
+        onError={handleError}
+        // ✅ expo-image 자동 캐싱 설정
+        cachePolicy="memory-disk"
+        // 우선순위 기반 로딩
+        priority={priority}
+        // 블러 효과 (선택)
+        blurRadius={blurRadius}
+        // 틴트 컬러 (선택)
+        tintColor={tintColor}
+        // placeholder 블러 효과
+        placeholderContentFit="cover"
+      />
     </View>
   );
 });
@@ -254,13 +186,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#f44336',
   },
-  hiddenImage: {
-    position: 'absolute',
-    opacity: 0,
-  },
-  visibleImage: {
-    opacity: 1,
-  },
+  // ✅ expo-image가 자동으로 페이드 효과 처리
 });
 
 OptimizedImage.displayName = 'OptimizedImage';

@@ -38,7 +38,8 @@
       "Bash(start http://localhost:8090)",
       "Bash(npm run test:*)",
       "Bash(npx tsc:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
