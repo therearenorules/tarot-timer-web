@@ -265,7 +265,8 @@
     "deleteSpreadsError": "스프레드 기록 삭제 중 오류가 발생했습니다.",
     "deleteButton": "삭제하기",
     "deleteCancel": "삭제 취소",
-    "deleteSelected": "선택 삭제하기 ({{count}})"
+    "deleteSelected": "선택 삭제하기 ({{count}})",
+    "loadingMore": "더 불러오는 중..."
   },
   "settings": {
     "title": "Settings",

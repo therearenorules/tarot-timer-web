@@ -320,6 +320,11 @@ const TarotDaily = () => {
   const [isSpreadDeleteMode, setIsSpreadDeleteMode] = useSafeState(false);
   const [selectedSpreadItems, setSelectedSpreadItems] = useSafeState(new Set());
 
+  // ✅ 무한 스크롤 상태
+  const [daysLoaded, setDaysLoaded] = useSafeState(30); // 현재 로드된 일수
+  const [hasMore, setHasMore] = useSafeState(true); // 더 불러올 데이터 있는지
+  const [isLoadingMore, setIsLoadingMore] = useSafeState(false); // 추가 로딩 중
+
   useEffect(() => {
     loadDailyReadings();
     loadSpreadReadings();
@@ -383,6 +388,11 @@ const TarotDaily = () => {
         new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
       ));
 
+      // ✅ 무한 스크롤: 로드된 일수 업데이트
+      setDaysLoaded(maxDays);
+      // 365일 제한 (1년치)
+      setHasMore(maxDays < 365);
+
       console.log(`✅ Daily readings loaded: ${readings.length} items in ${maxDays} days`);
     } catch (error) {
       console.error('Daily reading load failed:', error);
@@ -390,6 +400,74 @@ const TarotDaily = () => {
       setIsLoading(false);
     }
   };
+
+  // ✅ 무한 스크롤: 더 많은 데이터 로드
+  const loadMoreDailyReadings = useCallback(async () => {
+    // 이미 로딩 중이거나 더 이상 데이터 없으면 리턴
+    if (isLoadingMore || !hasMore || isLoading) return;
+
+    try {
+      setIsLoadingMore(true);
+      const newDaysToLoad = daysLoaded + 30; // 30일씩 추가 로드
+      const maxDays = Math.min(newDaysToLoad, 365); // 최대 1년
+      const batchSize = 5;
+
+      const newReadings = [];
+
+      // 기존에 로드한 일수 다음부터 로드
+      for (let batchStart = daysLoaded; batchStart < maxDays; batchStart += batchSize) {
+        const batchEnd = Math.min(batchStart + batchSize, maxDays);
+        const batchPromises = [];
+
+        for (let i = batchStart; i < batchEnd; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateString = date.toISOString().split('T')[0];
+          const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
+
+          batchPromises.push(
+            simpleStorage.getItem(storageKey)
+              .then(savedData => {
+                if (savedData) {
+                  try {
+                    const dailySave = JSON.parse(savedData);
+                    return {
+                      ...dailySave,
+                      type: 'daily',
+                      dateKey: dateString,
+                      displayDate: LanguageUtils.formatDate(date)
+                    };
+                  } catch (parseError) {
+                    return null;
+                  }
+                }
+                return null;
+              })
+              .catch(() => null)
+          );
+        }
+
+        const batchResults = await Promise.all(batchPromises);
+        const validResults = batchResults.filter(r => r !== null);
+        newReadings.push(...validResults);
+      }
+
+      // 기존 데이터와 합치기
+      const allReadings = [...dailyReadings, ...newReadings].sort((a, b) =>
+        new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
+      );
+
+      setDailyReadings(allReadings);
+      setDaysLoaded(maxDays);
+      setHasMore(maxDays < 365);
+
+      console.log(`✅ Loaded more: ${newReadings.length} items (total days: ${maxDays})`);
+    } catch (error) {
+      console.error('Load more failed:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore, isLoading, daysLoaded, dailyReadings]);
 
   const loadSpreadReadings = async () => {
     try {
@@ -672,6 +750,16 @@ const TarotDaily = () => {
         windowSize={5}
         updateCellsBatchingPeriod={50}
         getItemLayout={getItemLayout}
+        // ✅ 무한 스크롤: 스크롤 끝에 도달하면 자동 로드
+        onEndReached={loadMoreDailyReadings}
+        onEndReachedThreshold={0.5} // 50% 남았을 때 로드 시작
+        ListFooterComponent={
+          isLoadingMore && hasMore ? (
+            <View style={styles.loadingMoreContainer}>
+              <Text style={styles.loadingMoreText}>{t('journal.loadingMore')}</Text>
+            </View>
+          ) : null
+        }
         ListHeaderComponent={() => (
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('journal.sections.dailyReadings')}</Text>
@@ -1430,6 +1518,16 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  // ✅ 무한 스크롤: 로딩 표시
+  loadingMoreContainer: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    opacity: 0.7,
   },
 });
 

@@ -265,7 +265,8 @@
     "deleteSpreadsError": "An error occurred while deleting spread records.",
     "deleteButton": "Delete",
     "deleteCancel": "Cancel Delete",
-    "deleteSelected": "Delete Selected ({{count}})"
+    "deleteSelected": "Delete Selected ({{count}})",
+    "loadingMore": "Loading more..."
   },
   "settings": {
     "title": "Settings",
