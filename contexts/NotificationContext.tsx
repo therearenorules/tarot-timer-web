@@ -459,16 +459,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (savedSettings) {
           const parsedSettings = JSON.parse(savedSettings);
           setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
-          console.log('✅ 저장된 알림 설정 로드 성공:', parsedSettings);
+          console.log('✅ 저장된 알림 설정 로드 성공 (localStorage):', parsedSettings);
         } else {
-          console.log('📱 기본 알림 설정 사용:', DEFAULT_SETTINGS);
+          console.log('📱 기본 알림 설정 사용 (localStorage):', DEFAULT_SETTINGS);
+        }
+      } else if (isMobileEnvironment) {
+        // ✅ FIX: 모바일에서는 AsyncStorage 사용
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const savedSettings = await AsyncStorage.getItem('notificationSettings');
+        if (savedSettings) {
+          const parsedSettings = JSON.parse(savedSettings);
+          setSettings({ ...DEFAULT_SETTINGS, ...parsedSettings });
+          console.log('✅ 저장된 알림 설정 로드 성공 (AsyncStorage):', parsedSettings);
+        } else {
+          console.log('📱 기본 알림 설정 사용 (AsyncStorage):', DEFAULT_SETTINGS);
         }
       }
-      // TODO: 모바일에서는 AsyncStorage 사용
-      // const savedSettings = await AsyncStorage.getItem('notificationSettings');
-      // if (savedSettings) {
-      //   setSettings(JSON.parse(savedSettings));
-      // }
     } catch (error) {
       console.error('❌ 알림 설정 로드 오류:', error);
     }
@@ -484,12 +490,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
           const parsedSettings = JSON.parse(savedSettings);
           return { ...DEFAULT_SETTINGS, ...parsedSettings };
         }
+      } else if (isMobileEnvironment) {
+        // ✅ FIX: 모바일에서는 AsyncStorage 사용
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const savedSettings = await AsyncStorage.getItem('notificationSettings');
+        if (savedSettings) {
+          const parsedSettings = JSON.parse(savedSettings);
+          return { ...DEFAULT_SETTINGS, ...parsedSettings };
+        }
       }
-      // TODO: 모바일에서는 AsyncStorage 사용
-      // const savedSettings = await AsyncStorage.getItem('notificationSettings');
-      // if (savedSettings) {
-      //   return JSON.parse(savedSettings);
-      // }
       return DEFAULT_SETTINGS;
     } catch (error) {
       console.error('❌ 알림 설정 동기 로드 오류:', error);
@@ -530,14 +539,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     console.log('상태 업데이트 완료:', updatedSettings);
 
-    // 웹 환경에서는 localStorage에 설정 저장
+    // 웹/모바일 환경에 따라 설정 저장
     try {
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        // 웹 환경에서는 localStorage에 설정 저장
         localStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
         console.log('✅ localStorage에 알림 설정 저장 완료');
+      } else if (isMobileEnvironment) {
+        // ✅ FIX: 모바일에서는 AsyncStorage에 설정 저장
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        await AsyncStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
+        console.log('✅ AsyncStorage에 알림 설정 저장 완료');
       }
-      // TODO: 모바일에서는 AsyncStorage에 설정 저장
-      // await AsyncStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
     } catch (error) {
       console.error('❌ 알림 설정 저장 오류:', error);
     }
