@@ -5,6 +5,7 @@ import { preloadTarotImages } from '../utils/imageCache';
 import i18next from 'i18next';
 import { useTarotI18n } from './useTarotI18n';
 import { useNotifications } from '../contexts/NotificationContext';
+import AdManager from '../utils/adManager';
 
 export interface UseTarotCardsReturn {
   dailyCards: TarotCard[];
@@ -172,6 +173,14 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
         }
       }
 
+      // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+      try {
+        await AdManager.incrementActionCounter();
+        console.log('📺 광고 카운터 증가 완료 (24시간 카드 뽑기)');
+      } catch (adError) {
+        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+      }
+
       Alert.alert(
         i18next.t('cards.completeTitle'),
         i18next.t('cards.completeMessage', {
@@ -211,6 +220,14 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
         } catch (notifError) {
           console.warn('⚠️ 알림 재스케줄링 실패 (무시 가능):', notifError);
         }
+      }
+
+      // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+      try {
+        await AdManager.incrementActionCounter();
+        console.log('📺 광고 카운터 증가 완료 (카드 다시 뽑기)');
+      } catch (adError) {
+        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
       }
 
       console.log('24시간 카드가 새로 뽑혔습니다!');
@@ -264,7 +281,15 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
               setDailyCards(updatedCards);
               
               await saveDailyCards(updatedCards);
-              
+
+              // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+              try {
+                await AdManager.incrementActionCounter();
+                console.log('📺 광고 카운터 증가 완료 (개별 카드 다시 뽑기)');
+              } catch (adError) {
+                console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+              }
+
               Alert.alert(
                 i18next.t('cards.newCardTitle'),
                 i18next.t('cards.newCardMessage', {

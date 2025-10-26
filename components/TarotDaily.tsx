@@ -29,6 +29,7 @@ import {
   BorderRadius
 } from './DesignSystem';
 import BannerAd from './ads/BannerAd';
+import AdManager from '../utils/adManager';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -82,6 +83,14 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
       // 부모 컴포넌트에 저장 완료 알림
       if (onMemoSaved) {
         onMemoSaved(updatedReading);
+      }
+
+      // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+      try {
+        await AdManager.incrementActionCounter();
+        console.log('📺 광고 카운터 증가 완료 (메모 저장)');
+      } catch (adError) {
+        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
       }
 
       Alert.alert(t('journal.memoSaved'), t('journal.memoSavedMessage', { hour: selectedHour }));
