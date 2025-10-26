@@ -435,7 +435,9 @@
         "perYear": "/ year",
         "perMonth": "/ month",
         "monthlyEquivalent": "Equivalent to {{price}} per month",
-        "nextRenewal": "Next renewal: {{date}}"
+        "nextRenewal": "Next renewal: {{date}}",
+        "cannotOpenUrl": "Cannot open {{title}} page.",
+        "urlOpenError": "An error occurred while opening {{title}} page."
       }
     },
     "display": {

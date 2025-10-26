@@ -117,7 +117,10 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
     } catch (error) {
       console.error('❌ 구독 구매 오류:', error);
-      Alert.alert('구매 오류', error instanceof Error ? error.message : '구매 처리 중 오류가 발생했습니다.');
+      Alert.alert(
+        t('settings.premium.plans.purchaseFailed'),
+        error instanceof Error ? error.message : t('settings.premium.plans.purchaseFailedMessage')
+      );
     } finally {
       setPurchasing(false);
     }
@@ -183,11 +186,11 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert(t('common.error'), `${title} 페이지를 열 수 없습니다.`);
+        Alert.alert(t('common.error'), t('settings.premium.plans.cannotOpenUrl', { title }));
       }
     } catch (error) {
       console.error('❌ URL 열기 오류:', error);
-      Alert.alert(t('common.error'), `${title} 페이지를 여는 중 오류가 발생했습니다.`);
+      Alert.alert(t('common.error'), t('settings.premium.plans.urlOpenError', { title }));
     }
   };
 

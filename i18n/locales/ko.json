@@ -435,7 +435,9 @@
         "perYear": "/ 년",
         "perMonth": "/ 월",
         "monthlyEquivalent": "월 {{price}}원 상당",
-        "nextRenewal": "다음 갱신일: {{date}}"
+        "nextRenewal": "다음 갱신일: {{date}}",
+        "cannotOpenUrl": "{{title}} 페이지를 열 수 없습니다.",
+        "urlOpenError": "{{title}} 페이지를 여는 중 오류가 발생했습니다."
       }
     },
     "display": {

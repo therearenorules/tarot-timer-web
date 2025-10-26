@@ -434,7 +434,9 @@
         "perYear": "/ 年",
         "perMonth": "/ 月",
         "monthlyEquivalent": "月額{{price}}円相当",
-        "nextRenewal": "次回更新日: {{date}}"
+        "nextRenewal": "次回更新日: {{date}}",
+        "cannotOpenUrl": "{{title}}ページを開けません。",
+        "urlOpenError": "{{title}}ページを開く際にエラーが発生しました。"
       }
     },
     "display": {
