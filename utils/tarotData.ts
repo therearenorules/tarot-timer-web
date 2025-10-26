@@ -1531,9 +1531,8 @@ export const TarotUtils = {
       const storageKey = STORAGE_KEYS.DAILY_TAROT + dailyTarot.date;
       await simpleStorage.setItem(storageKey, JSON.stringify(dailyTarot));
 
-      // ✅ FIX: 저장 성공 후 카운트 업데이트
-      await LocalStorageManager.updateUsageCount('daily');
-      console.log(`✅ DailyTarot 저장 성공: ${dailyTarot.date} (${limitCheck.currentCount + 1}/${limitCheck.maxCount})`);
+      // ✅ checkUsageLimit가 실시간으로 파일 개수를 세므로 별도 카운트 업데이트 불필요
+      console.log(`✅ DailyTarot 저장 성공: ${dailyTarot.date}`);
     } catch (error) {
       console.error('❌ 일일 타로 저장 실패:', error);
       throw error;
