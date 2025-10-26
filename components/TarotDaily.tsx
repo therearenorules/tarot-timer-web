@@ -328,10 +328,34 @@ const TarotDaily = () => {
   const [hasMore, setHasMore] = useSafeState(true); // 더 불러올 데이터 있는지
   const [isLoadingMore, setIsLoadingMore] = useSafeState(false); // 추가 로딩 중
 
+  // ✅ 전체 저장된 기록 개수 추적
+  const [totalDailyCount, setTotalDailyCount] = useSafeState(0);
+  const [totalSpreadCount, setTotalSpreadCount] = useSafeState(0);
+
+  // 전체 기록 개수 업데이트
+  const updateTotalCounts = useCallback(async () => {
+    try {
+      // LocalStorageManager를 동적 import
+      const LocalStorageManager = (await import('../utils/localStorage')).default;
+
+      // 실시간으로 저장된 파일 개수 카운트
+      const dailyLimit = await LocalStorageManager.checkUsageLimit('daily');
+      const spreadLimit = await LocalStorageManager.checkUsageLimit('spread');
+
+      setTotalDailyCount(dailyLimit.currentCount);
+      setTotalSpreadCount(spreadLimit.currentCount);
+
+      console.log(`📊 전체 기록 개수 - 데일리: ${dailyLimit.currentCount}, 스프레드: ${spreadLimit.currentCount}`);
+    } catch (error) {
+      console.warn('⚠️ 전체 기록 개수 업데이트 실패:', error);
+    }
+  }, [setTotalDailyCount, setTotalSpreadCount]);
+
   useEffect(() => {
     loadDailyReadings();
     loadSpreadReadings();
-  }, []);
+    updateTotalCounts();
+  }, [updateTotalCounts]);
 
   // ✅ PERFORMANCE FIX: 페이지네이션 + 배치 처리로 최적화
   const loadDailyReadings = async (daysToLoad = 30) => {
@@ -521,8 +545,8 @@ const TarotDaily = () => {
               setSelectedItems(new Set());
               setIsDeleteMode(false);
 
-              // ✅ 삭제 후 별도 카운트 업데이트 불필요
-              // 다음 저장 시 checkUsageLimit가 실시간으로 파일 개수를 확인함
+              // ✅ 삭제 후 전체 개수 업데이트
+              await updateTotalCounts();
               console.log(`✅ 데일리 타로 ${selectedItems.size}개 삭제 완료`);
 
               Alert.alert(t('journal.deleteComplete'), t('journal.deleteRecordsSuccess', { count: selectedItems.size }));
@@ -565,6 +589,9 @@ const TarotDaily = () => {
               setSpreadReadings(updatedSpreadReadings);
               setSelectedSpreadItems(new Set());
               setIsSpreadDeleteMode(false);
+
+              // ✅ 삭제 후 전체 개수 업데이트
+              await updateTotalCounts();
 
               Alert.alert(t('journal.deleteComplete'), t('journal.deleteSpreadsSuccess', { count: selectedSpreadItems.size }));
             } catch (error) {
@@ -782,7 +809,7 @@ const TarotDaily = () => {
             <Text style={styles.sectionTitle}>{t('journal.sections.dailyReadings')}</Text>
             <View style={styles.headerRight}>
               <View style={styles.countBadge}>
-                <Text style={styles.countText}>{t('journal.recordCount', { count: dailyReadings.length })}</Text>
+                <Text style={styles.countText}>{t('journal.recordCount', { count: totalDailyCount })}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.deleteButton, isDeleteMode && styles.deleteButtonActive]}
@@ -828,7 +855,7 @@ const TarotDaily = () => {
           </View>
           <View style={styles.headerRight}>
             <View style={styles.countBadge}>
-              <Text style={styles.countText}>{t('journal.recordCount', { count: spreadReadings.length })}</Text>
+              <Text style={styles.countText}>{t('journal.recordCount', { count: totalSpreadCount })}</Text>
             </View>
             <TouchableOpacity
               style={[styles.deleteButton, isSpreadDeleteMode && styles.deleteButtonActive]}

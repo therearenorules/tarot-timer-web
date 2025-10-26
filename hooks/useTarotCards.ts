@@ -173,12 +173,12 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
         }
       }
 
-      // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+      // ✅ 24시간 타로 뽑기 시 즉시 광고 표시
       try {
-        await AdManager.incrementActionCounter();
-        console.log('📺 광고 카운터 증가 완료 (24시간 카드 뽑기)');
+        await AdManager.showDailyTarotAd();
+        console.log('📺 24시간 타로 광고 표시 완료');
       } catch (adError) {
-        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+        console.warn('⚠️ 24시간 타로 광고 표시 실패 (무시):', adError);
       }
 
       Alert.alert(
@@ -222,12 +222,12 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
         }
       }
 
-      // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+      // ✅ 24시간 타로 뽑기 시 즉시 광고 표시
       try {
-        await AdManager.incrementActionCounter();
-        console.log('📺 광고 카운터 증가 완료 (카드 다시 뽑기)');
+        await AdManager.showDailyTarotAd();
+        console.log('📺 24시간 타로 광고 표시 완료 (카드 다시 뽑기)');
       } catch (adError) {
-        console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+        console.warn('⚠️ 24시간 타로 광고 표시 실패 (무시):', adError);
       }
 
       console.log('24시간 카드가 새로 뽑혔습니다!');
@@ -282,12 +282,12 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
               
               await saveDailyCards(updatedCards);
 
-              // ✅ 액션 카운터 증가 (전면광고 표시 로직)
+              // ✅ 24시간 타로 뽑기 시 즉시 광고 표시
               try {
-                await AdManager.incrementActionCounter();
-                console.log('📺 광고 카운터 증가 완료 (개별 카드 다시 뽑기)');
+                await AdManager.showDailyTarotAd();
+                console.log('📺 24시간 타로 광고 표시 완료 (개별 카드 다시 뽑기)');
               } catch (adError) {
-                console.warn('⚠️ 광고 카운터 증가 실패 (무시):', adError);
+                console.warn('⚠️ 24시간 타로 광고 표시 실패 (무시):', adError);
               }
 
               Alert.alert(

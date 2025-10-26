@@ -17,6 +17,7 @@ import {
 } from './adConfig';
 import LocalStorageManager from './localStorage';
 import { adMockEmitter } from './adMockEvents';
+import { TarotUtils } from './tarotData';
 
 // 광고 상태 인터페이스
 interface AdState {
@@ -122,6 +123,10 @@ export class AdManager {
   private static actionCounter = 0;
   private static readonly ACTION_THRESHOLD = 3; // 3번의 액션마다 전면광고
 
+  // 타이머 탭 시간 기반 광고 추적
+  private static timerTabLastAdTime = 0;
+  private static readonly TIMER_TAB_AD_INTERVAL = 10 * 60 * 1000; // 10분 (밀리초)
+
   /**
    * AdManager 초기화
    */
@@ -190,10 +195,24 @@ export class AdManager {
 
   /**
    * 프리미엄 사용자 상태 설정
+   * ✅ FIX: 동기화 검증 로직 추가
    */
   static setPremiumStatus(isPremium: boolean): void {
+    const previousStatus = this.isPremiumUser;
     this.isPremiumUser = isPremium;
-    console.log(`💎 프리미엄 상태 변경: ${isPremium ? '활성화' : '비활성화'}`);
+
+    // ✅ 동기화 검증
+    if (this.isPremiumUser !== isPremium) {
+      console.error('❌ 프리미엄 상태 동기화 실패: 설정값과 실제값 불일치');
+      return;
+    }
+
+    // 상태 변경 로그
+    if (previousStatus !== isPremium) {
+      console.log(`💎 프리미엄 상태 변경: ${previousStatus ? '활성화' : '비활성화'} → ${isPremium ? '활성화' : '비활성화'}`);
+    } else {
+      console.log(`💎 프리미엄 상태 재확인: ${isPremium ? '활성화' : '비활성화'} (변경 없음)`);
+    }
   }
 
   /**
@@ -415,13 +434,21 @@ export class AdManager {
       const stored = await LocalStorageManager.getItem<DailyAdLimits>('daily_ad_limits');
 
       if (stored) {
-        const today = new Date().toDateString();
+        // ✅ FIX: toDateString() 대신 getTodayDateString() 사용 (로케일/타임존 일관성)
+        const today = TarotUtils.getTodayDateString();
 
         if (stored.date === today) {
           this.dailyLimits = stored;
           console.log('📊 일일 광고 제한 복원:', this.dailyLimits);
         } else {
           console.log('🗓️ 새로운 날, 일일 제한 초기화');
+          // ✅ FIX: 새로운 날짜로 dailyLimits 리셋
+          this.dailyLimits = {
+            date: today,
+            interstitial_count: 0,
+            rewarded_count: 0,
+            banner_impressions: 0
+          };
           await this.saveDailyLimits();
         }
       }
@@ -460,13 +487,75 @@ export class AdManager {
 
     if (this.actionCounter >= this.ACTION_THRESHOLD) {
       console.log('📺 전면광고 표시 조건 충족');
-      this.actionCounter = 0; // 카운터 리셋
 
       try {
-        await this.showInterstitial('action_triggered');
+        const result = await this.showInterstitial('action_triggered');
+        // ✅ 광고 표시 성공 시에만 카운터 리셋 (사용자 경험 개선)
+        if (result.success) {
+          this.actionCounter = 0;
+          console.log('✅ 전면광고 표시 성공, 카운터 리셋');
+        } else {
+          console.warn('⚠️ 전면광고 표시 실패, 카운터 유지 (다음 액션에서 재시도)');
+        }
       } catch (error) {
-        console.warn('⚠️ 전면광고 표시 실패 (무시):', error);
+        console.warn('⚠️ 전면광고 표시 오류 (카운터 유지):', error);
       }
+    }
+  }
+
+  /**
+   * 타이머 탭 시간 기반 광고 체크 (10분마다)
+   * @returns 광고 표시 여부
+   */
+  static async checkTimerTabAd(): Promise<boolean> {
+    const now = Date.now();
+    const timeSinceLastAd = now - this.timerTabLastAdTime;
+
+    // 10분이 지났는지 확인
+    if (timeSinceLastAd >= this.TIMER_TAB_AD_INTERVAL) {
+      console.log(`⏰ 타이머 탭 광고 시간 도달 (${Math.floor(timeSinceLastAd / 60000)}분 경과)`);
+
+      try {
+        const result = await this.showInterstitial('timer_tab_interval');
+
+        if (result.success) {
+          this.timerTabLastAdTime = now;
+          console.log('✅ 타이머 탭 광고 표시 성공, 타이머 리셋');
+          return true;
+        } else {
+          console.warn('⚠️ 타이머 탭 광고 표시 실패');
+          return false;
+        }
+      } catch (error) {
+        console.warn('⚠️ 타이머 탭 광고 표시 오류:', error);
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * 24시간 타로 뽑기 시 즉시 광고 표시
+   */
+  static async showDailyTarotAd(): Promise<boolean> {
+    console.log('🎴 24시간 타로 뽑기 - 즉시 광고 표시');
+
+    try {
+      const result = await this.showInterstitial('daily_tarot_draw');
+
+      if (result.success) {
+        // 타이머도 함께 리셋하여 광고 중복 방지
+        this.timerTabLastAdTime = Date.now();
+        console.log('✅ 24시간 타로 광고 표시 성공');
+        return true;
+      } else {
+        console.warn('⚠️ 24시간 타로 광고 표시 실패');
+        return false;
+      }
+    } catch (error) {
+      console.warn('⚠️ 24시간 타로 광고 표시 오류:', error);
+      return false;
     }
   }
 
@@ -492,7 +581,7 @@ export class AdManager {
   static dispose(): void {
     try {
       this.interstitialAd = null;
-      this.rewardedAd = null;
+      // ✅ REMOVED: rewardedAd는 제거됨 (전면광고만 사용)
       this.initialized = false;
       console.log('🧹 AdManager 정리 완료');
     } catch (error) {

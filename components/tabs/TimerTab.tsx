@@ -504,6 +504,28 @@ const TimerTab = memo(() => {
     };
   }, [onSessionComplete, removeSessionCompleteCallback]);
 
+  // ✅ 타이머 탭 10분 간격 광고 체크
+  useEffect(() => {
+    // 10분(600초)마다 광고 체크
+    const adCheckInterval = setInterval(async () => {
+      try {
+        const adShown = await AdManager.checkTimerTabAd();
+        if (adShown) {
+          console.log('✅ 타이머 탭 10분 간격 광고 표시 완료');
+        }
+      } catch (error) {
+        console.warn('⚠️ 타이머 탭 광고 체크 오류:', error);
+      }
+    }, 60000); // 1분마다 체크 (실제로는 10분 경과 시에만 표시)
+
+    console.log('⏰ 타이머 탭 광고 체크 인터벌 시작');
+
+    return () => {
+      clearInterval(adCheckInterval);
+      console.log('⏰ 타이머 탭 광고 체크 인터벌 종료');
+    };
+  }, []);
+
   // 랜덤 헤드라인과 서브타이틀 선택
   const getRandomWelcomeText = () => {
     const titles = t('timer.welcomeTitles', { returnObjects: true }) as string[];

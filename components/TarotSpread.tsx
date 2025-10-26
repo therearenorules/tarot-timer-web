@@ -1,5 +1,5 @@
 // components/TarotSpread.tsx - 타로 스프레드 컴포넌트
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeState } from '../hooks/useSafeState';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -155,10 +155,10 @@ export const TarotSpread: React.FC = () => {
   const { t } = useTranslation();
   const { getCardName, getCardMeaning, isEnglish } = useTarotI18n();
   const { isPremium, canAccessFeature } = usePremium();
-  
-  // 동적으로 생성된 스프레드 레이아웃
-  const SPREAD_LAYOUTS = getSpreadLayouts(t);
-  
+
+  // ✅ FIX: useMemo로 SPREAD_LAYOUTS 메모이제이션 (프로덕션 크래시 방지)
+  const SPREAD_LAYOUTS = useMemo(() => getSpreadLayouts(t), [t]);
+
   const [selectedSpread, setSelectedSpread] = useSafeState<SpreadLayout | null>(null);
   const [question, setQuestion] = useSafeState('');
   const [spreadCards, setSpreadCards] = useSafeState<SpreadPosition[]>([]);
@@ -167,7 +167,7 @@ export const TarotSpread: React.FC = () => {
   const [readingTitle, setReadingTitle] = useSafeState('');
   const [insights, setInsights] = useSafeState('');
   const [currentSpreadType, setCurrentSpreadType] = useSafeState<SpreadType>('three-card');
-  
+
   // 저장 관련 상태
   const [isSaveModalVisible, setIsSaveModalVisible] = useSafeState(false);
   const [saveTitle, setSaveTitle] = useSafeState('');
@@ -179,10 +179,24 @@ export const TarotSpread: React.FC = () => {
   // 애니메이션 훅들
   const { animatedStyle: headerFadeIn } = useFadeIn({ delay: 100 });
   const { animatedStyle: cardEntranceAnimation } = useCardEntrance(200);
-  
-  // 스프레드 리스트를 위한 훅들을 미리 준비
-  const touchFeedbackHooks = SPREAD_LAYOUTS.map(() => useTouchFeedback());
-  const cardEntranceHooks = SPREAD_LAYOUTS.map((_, index) => useCardEntrance(index * 100 + 300));
+
+  // ✅ FIX: 고정된 크기로 애니메이션 훅 배열 생성 (React Hooks 규칙 준수)
+  // 최대 스프레드 개수(6개)만큼 미리 생성 - Hook은 최상위에서만 호출
+  const touchFeedback0 = useTouchFeedback();
+  const touchFeedback1 = useTouchFeedback();
+  const touchFeedback2 = useTouchFeedback();
+  const touchFeedback3 = useTouchFeedback();
+  const touchFeedback4 = useTouchFeedback();
+  const touchFeedback5 = useTouchFeedback();
+  const touchFeedbackHooks = [touchFeedback0, touchFeedback1, touchFeedback2, touchFeedback3, touchFeedback4, touchFeedback5];
+
+  const cardEntrance0 = useCardEntrance(300);
+  const cardEntrance1 = useCardEntrance(400);
+  const cardEntrance2 = useCardEntrance(500);
+  const cardEntrance3 = useCardEntrance(600);
+  const cardEntrance4 = useCardEntrance(700);
+  const cardEntrance5 = useCardEntrance(800);
+  const cardEntranceHooks = [cardEntrance0, cardEntrance1, cardEntrance2, cardEntrance3, cardEntrance4, cardEntrance5];
 
   // 컴포넌트 마운트 시 데이터 불러오기
   useEffect(() => {
@@ -555,18 +569,23 @@ export const TarotSpread: React.FC = () => {
                     isLocked && styles.spreadCardPremium
                   ]}
                   onPress={() => {
-                  if (isLocked) {
-                    Alert.alert(
-                      '💎 ' + t('spread.premium.title'),
-                      t('spread.premium.message'),
-                      [
-                        { text: t('common.ok'), style: 'default' },
-                      ]
-                    );
-                  } else {
-                    setSelectedSpread(layout);
-                    setSpreadCards([...layout.positions]);
-                    setCurrentSpreadType(layout.id);
+                  try {
+                    if (isLocked) {
+                      Alert.alert(
+                        '💎 ' + t('spread.premium.title'),
+                        t('spread.premium.message'),
+                        [
+                          { text: t('common.ok'), style: 'default' },
+                        ]
+                      );
+                    } else {
+                      setSelectedSpread(layout);
+                      setSpreadCards([...layout.positions]);
+                      setCurrentSpreadType(layout.id);
+                    }
+                  } catch (error) {
+                    console.error('❌ 스프레드 선택 실패:', error);
+                    Alert.alert(t('common.error'), t('spread.errors.drawFailed'));
                   }
                 }}
                 onPressIn={onPressIn}
@@ -605,16 +624,21 @@ export const TarotSpread: React.FC = () => {
                     title={t('spread.actions.start')}
                     size="medium"
                     onPress={() => {
-                      if (isLocked) {
-                        Alert.alert(
-                          '💎 ' + t('spread.premium.title'),
-                          t('spread.premium.message'),
-                          [{ text: t('common.ok'), style: 'default' }]
-                        );
-                      } else {
-                        setSelectedSpread(layout);
-                        setSpreadCards([...layout.positions]);
-                        setCurrentSpreadType(layout.id);
+                      try {
+                        if (isLocked) {
+                          Alert.alert(
+                            '💎 ' + t('spread.premium.title'),
+                            t('spread.premium.message'),
+                            [{ text: t('common.ok'), style: 'default' }]
+                          );
+                        } else {
+                          setSelectedSpread(layout);
+                          setSpreadCards([...layout.positions]);
+                          setCurrentSpreadType(layout.id);
+                        }
+                      } catch (error) {
+                        console.error('❌ 스프레드 선택 실패:', error);
+                        Alert.alert(t('common.error'), t('spread.errors.drawFailed'));
                       }
                     }}
                     disabled={isLocked}
