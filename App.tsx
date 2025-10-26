@@ -339,6 +339,7 @@ const PWAStatus = memo(() => {
 // 메인 앱 컴포넌트
 function AppContent() {
   const [activeTab, setActiveTab] = useState('timer');
+  const [dailyTabRefreshKey, setDailyTabRefreshKey] = useState(0);
   const pwa = usePWA();
   const insets = useSafeAreaInsets(); // ✅ Android SafeArea 지원
 
@@ -572,7 +573,7 @@ function AppContent() {
 
         <View style={[styles.tabContainer, activeTab === 'journal' && styles.tabVisible]}>
           <TabErrorBoundary tabName={i18next.t('navigation.journal')}>
-            <DailyTab />
+            <DailyTab key={`daily-tab-${dailyTabRefreshKey}`} />
           </TabErrorBoundary>
         </View>
 
@@ -586,6 +587,13 @@ function AppContent() {
         </View>
       </>
     );
+  }, [activeTab, dailyTabRefreshKey]);
+
+  // 다이어리 탭 활성화 시 새로고침
+  useEffect(() => {
+    if (activeTab === 'journal') {
+      setDailyTabRefreshKey(prev => prev + 1);
+    }
   }, [activeTab]);
 
   // 폰트가 로딩중일 때
