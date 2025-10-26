@@ -499,9 +499,11 @@ const TarotDaily = () => {
                 const itemId = reading.id || `daily-${index}`;
                 if (selectedItems.has(itemId)) {
                   // 로컬 스토리지에서도 삭제
-                  const dateString = new Date(reading.savedAt).toISOString().split('T')[0];
-                  const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
-                  simpleStorage.removeItem(storageKey).catch(console.error);
+                  const dateString = reading.dateKey || (reading.savedAt ? new Date(reading.savedAt).toISOString().split('T')[0] : null);
+                  if (dateString) {
+                    const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
+                    simpleStorage.removeItem(storageKey).catch(console.error);
+                  }
                   return false;
                 }
                 return true;
