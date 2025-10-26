@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
 import { useTarotI18n } from '../hooks/useTarotI18n';
-import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
+import { simpleStorage, STORAGE_KEYS, TarotUtils, DailyTarotSave, SavedSpread } from '../utils/tarotData';
 import {
   Colors,
   GlassStyles,
@@ -313,15 +313,15 @@ const TarotDaily = () => {
   const { getSpreadName } = useTarotI18n();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useSafeState('daily');
-  const [dailyReadings, setDailyReadings] = useSafeState([]);
-  const [spreadReadings, setSpreadReadings] = useSafeState([]);
-  const [selectedReading, setSelectedReading] = useSafeState(null);
-  const [selectedSpread, setSelectedSpread] = useSafeState(null);
+  const [dailyReadings, setDailyReadings] = useSafeState<any[]>([]);
+  const [spreadReadings, setSpreadReadings] = useSafeState<SavedSpread[]>([]);
+  const [selectedReading, setSelectedReading] = useSafeState<any>(null);
+  const [selectedSpread, setSelectedSpread] = useSafeState<SavedSpread | null>(null);
   const [isLoading, setIsLoading] = useSafeState(false);
   const [isDeleteMode, setIsDeleteMode] = useSafeState(false);
-  const [selectedItems, setSelectedItems] = useSafeState(new Set());
+  const [selectedItems, setSelectedItems] = useSafeState<Set<string>>(new Set());
   const [isSpreadDeleteMode, setIsSpreadDeleteMode] = useSafeState(false);
-  const [selectedSpreadItems, setSelectedSpreadItems] = useSafeState(new Set());
+  const [selectedSpreadItems, setSelectedSpreadItems] = useSafeState<Set<string>>(new Set());
 
   // ✅ 무한 스크롤 상태
   const [daysLoaded, setDaysLoaded] = useSafeState(30); // 현재 로드된 일수
@@ -355,7 +355,8 @@ const TarotDaily = () => {
     loadDailyReadings();
     loadSpreadReadings();
     updateTotalCounts();
-  }, [updateTotalCounts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // ✅ PERFORMANCE FIX: 페이지네이션 + 배치 처리로 최적화
   const loadDailyReadings = async (daysToLoad = 30) => {
@@ -579,7 +580,7 @@ const TarotDaily = () => {
                 if (selectedSpreadItems.has(itemId)) {
                   // 로컬 스토리지에서도 삭제
                   if (spread.id) {
-                    TarotUtils.deleteSavedSpread(spread.id).catch(console.error);
+                    TarotUtils.deleteSpread(spread.id).catch(console.error);
                   }
                   return false;
                 }

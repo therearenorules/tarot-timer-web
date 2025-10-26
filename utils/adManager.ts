@@ -294,6 +294,7 @@ export class AdManager {
       }
 
       console.log(`🎯 전면광고 ID: ${isDevelopment ? 'TEST' : 'PRODUCTION'} (${adUnitId})`);
+      console.log(`📱 플랫폼: ${Platform.OS}, __DEV__: ${__DEV__}, isDevelopment: ${isDevelopment}`);
 
       this.adStates.interstitial.isLoading = true;
 
@@ -323,6 +324,8 @@ export class AdManager {
           this.adStates.interstitial.isLoading = false;
           this.adStates.interstitial.errorCount++;
           console.error('❌ 전면광고 로드 실패:', error);
+          console.error('❌ 전면광고 오류 상세:', JSON.stringify(error, null, 2));
+          console.error('⚠️ AdMob 앱 승인 상태를 확인하세요: https://apps.admob.com');
           resolve(false);
         });
 
@@ -343,11 +346,17 @@ export class AdManager {
    * 전면광고 표시
    */
   static async showInterstitial(placement: string): Promise<AdShowResult> {
+    console.log(`🎬 전면광고 표시 요청 - Placement: ${placement}`);
+
     // 프리미엄 사용자는 광고 건너뛰기
     if (this.isPremiumUser) {
       console.log('💎 프리미엄 사용자: 전면광고 건너뛰기');
       return { success: true, revenue: 0 };
     }
+
+    console.log(`🔍 네이티브 모듈 로드 상태: ${this.nativeModulesLoaded}`);
+    console.log(`🔍 광고 로드 상태: ${this.adStates.interstitial.isLoaded}`);
+    console.log(`🔍 일일 광고 카운트: ${this.dailyLimits.interstitial_count}/${AD_CONFIG.MAX_DAILY.INTERSTITIAL}`);
 
     // 네이티브 모듈 없으면 Mock UI 시뮬레이션
     if (!this.nativeModulesLoaded) {
@@ -380,8 +389,10 @@ export class AdManager {
         }
       }
 
+      console.log('🎬 전면광고 show() 호출...');
       await this.interstitialAd.show();
 
+      console.log('✅ 전면광고 show() 성공');
       // 광고 표시 성공
       this.adStates.interstitial.isLoaded = false;
       this.adStates.interstitial.lastShown = Date.now();

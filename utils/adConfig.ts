@@ -114,7 +114,23 @@ export const AD_CONFIG = {
   premium: {
     remove_all_ads: true,
     show_premium_upgrade: true // 무료 사용자에게 프리미엄 업그레이드 유도
-  }
+  },
+
+  // 일일 광고 제한 (호환성)
+  MAX_DAILY: {
+    INTERSTITIAL: 10,
+    REWARDED: 5
+  },
+
+  // 예상 수익 (CPM - Cost Per Mille, 1000회 노출당 수익)
+  CPM: {
+    INTERSTITIAL: 5.0, // $5 CPM
+    REWARDED: 10.0, // $10 CPM
+    BANNER: 1.0 // $1 CPM
+  },
+
+  // 타임아웃 설정 (호환성)
+  INTERSTITIAL_TIMEOUT: 15000 // 15초
 };
 
 // 광고 로드 타임아웃 설정
