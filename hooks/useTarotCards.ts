@@ -302,6 +302,14 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     }
   }, [dailyCards, selectedCardIndex, currentHour]);
 
+  // ✅ FIX: 시간이 변경될 때마다 현재 시간 카드로 자동 업데이트
+  useEffect(() => {
+    if (dailyCards.length > 0) {
+      console.log(`⏰ 시간 변경 감지: ${currentHour}시 - 현재 시간 카드로 자동 업데이트`);
+      setSelectedCardIndex(currentHour);
+    }
+  }, [currentHour, dailyCards.length]);
+
   // 선택된 카드가 변경되면 인접 카드 이미지 추가 프리로딩
   useEffect(() => {
     if (dailyCards.length > 0 && selectedCardIndex !== null) {
