@@ -20,6 +20,7 @@ import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
 import { useTarotI18n } from '../hooks/useTarotI18n';
 import { simpleStorage, STORAGE_KEYS, TarotUtils } from '../utils/tarotData';
+import { LocalStorageManager } from '../utils/localStorage';
 import {
   Colors,
   GlassStyles,
@@ -512,6 +513,10 @@ const TarotDaily = () => {
               setDailyReadings(updatedDailyReadings);
               setSelectedItems(new Set());
               setIsDeleteMode(false);
+
+              // ✅ 삭제 후 사용량 카운트 업데이트 (무료 사용자 제한 반영)
+              await LocalStorageManager.updateUsageCount('daily');
+              console.log(`✅ 데일리 타로 ${selectedItems.size}개 삭제 완료, 사용량 카운트 업데이트됨`);
 
               Alert.alert(t('journal.deleteComplete'), t('journal.deleteRecordsSuccess', { count: selectedItems.size }));
             } catch (error) {
