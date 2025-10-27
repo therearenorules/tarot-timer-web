@@ -1,0 +1,78 @@
+name: EAS Production Build & Submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build and submit'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+      auto_submit:
+        description: 'Auto submit to stores after build'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  build-and-submit:
+    name: Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔧 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🍎 Build iOS (Production)
+        if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all'
+        run: |
+          echo "🚀 Building iOS production..."
+          eas build --platform ios --profile production --non-interactive
+
+      - name: 🤖 Build Android (Production)
+        if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all'
+        run: |
+          echo "🚀 Building Android production..."
+          eas build --platform android --profile production --non-interactive
+
+      - name: 📤 Submit iOS to App Store
+        if: |
+          github.event.inputs.auto_submit == 'true' &&
+          (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all')
+        run: |
+          echo "📤 Submitting iOS to App Store..."
+          eas submit --platform ios --latest --non-interactive
+
+      - name: 📤 Submit Android to Google Play
+        if: |
+          github.event.inputs.auto_submit == 'true' &&
+          (github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all')
+        run: |
+          echo "📤 Submitting Android to Google Play..."
+          eas submit --platform android --latest --non-interactive
+
+      - name: ✅ Build & Submit Complete
+        run: |
+          echo "✅ Production build completed!"
+          echo "🔗 Check build status: https://expo.dev/accounts/${{ secrets.EXPO_ACCOUNT_NAME }}/projects/tarot-timer-web/builds"
+          if [ "${{ github.event.inputs.auto_submit }}" == "true" ]; then
+            echo "📤 Auto-submit enabled - Check submission status"
+          fi

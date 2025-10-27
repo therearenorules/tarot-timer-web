@@ -1,0 +1,199 @@
+name: Android Free Build (무료 빌드)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: '빌드 타입'
+        required: true
+        default: 'apk'
+        type: choice
+        options:
+          - apk
+          - aab
+      version_bump:
+        description: '버전 자동 증가'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  build-android:
+    name: Android APK/AAB 빌드
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔢 Version Bump (자동 버전 증가)
+        if: github.event.inputs.version_bump == 'true'
+        run: |
+          # app.json에서 현재 버전 읽기
+          VERSION=$(node -p "require('./app.json').expo.version")
+          BUILD_NUMBER=$(node -p "require('./app.json').expo.android.versionCode")
+
+          # 빌드 번호 증가
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+
+          # app.json 업데이트
+          node -e "
+            const fs = require('fs');
+            const appJson = require('./app.json');
+            appJson.expo.android.versionCode = $NEW_BUILD_NUMBER;
+            fs.writeFileSync('./app.json', JSON.stringify(appJson, null, 2));
+          "
+
+          echo "✅ Version: $VERSION (Build $NEW_BUILD_NUMBER)"
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> $GITHUB_ENV
+
+      - name: 🔧 Expo Prebuild
+        run: |
+          npx expo prebuild --platform android --clean
+
+      - name: 🔐 Setup Keystore (Release 서명)
+        if: github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'apk'
+        run: |
+          # Keystore 생성 (프로덕션용)
+          # 실제 배포 시에는 GitHub Secrets에 keystore 파일 저장 권장
+          cd android/app
+
+          # GitHub Secrets에서 keystore 가져오기 (있는 경우)
+          if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+            echo "✅ Using existing keystore from secrets"
+          else
+            # Keystore가 없으면 새로 생성 (테스트용)
+            keytool -genkeypair -v \
+              -storetype PKCS12 \
+              -keystore release.keystore \
+              -alias tarot-timer-key \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass android \
+              -keypass android \
+              -dname "CN=Tarot Timer, OU=Development, O=Tarot Timer Team, L=Seoul, ST=Seoul, C=KR"
+            echo "⚠️ Generated new keystore for testing"
+            echo "🔴 PRODUCTION: Replace with your actual keystore!"
+          fi
+
+      - name: 📝 Configure Gradle for Release
+        run: |
+          cd android
+
+          # gradle.properties에 서명 설정 추가
+          cat >> gradle.properties <<EOF
+          MYAPP_RELEASE_STORE_FILE=release.keystore
+          MYAPP_RELEASE_KEY_ALIAS=tarot-timer-key
+          MYAPP_RELEASE_STORE_PASSWORD=android
+          MYAPP_RELEASE_KEY_PASSWORD=android
+          EOF
+
+          # build.gradle 서명 설정 확인
+          if ! grep -q "signingConfigs" app/build.gradle; then
+            echo "⚠️ Warning: build.gradle에 signingConfigs 설정이 없을 수 있습니다"
+          fi
+
+      - name: 🏗️ Build APK
+        if: github.event.inputs.build_type == 'apk'
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+          echo "✅ APK 빌드 완료"
+          ls -lh app/build/outputs/apk/release/
+
+      - name: 🏗️ Build AAB (App Bundle)
+        if: github.event.inputs.build_type == 'aab'
+        run: |
+          cd android
+          ./gradlew bundleRelease --no-daemon
+
+          echo "✅ AAB 빌드 완료"
+          ls -lh app/build/outputs/bundle/release/
+
+      - name: 📦 Rename Build Files
+        run: |
+          cd android/app/build/outputs
+
+          if [ -f "apk/release/app-release.apk" ]; then
+            BUILD_NUM="${{ env.NEW_BUILD_NUMBER }}"
+            if [ -z "$BUILD_NUM" ]; then
+              BUILD_NUM=$(date +%Y%m%d-%H%M)
+            fi
+            mv apk/release/app-release.apk apk/release/tarot-timer-v${BUILD_NUM}.apk
+            echo "✅ Renamed APK: tarot-timer-v${BUILD_NUM}.apk"
+          fi
+
+          if [ -f "bundle/release/app-release.aab" ]; then
+            BUILD_NUM="${{ env.NEW_BUILD_NUMBER }}"
+            if [ -z "$BUILD_NUM" ]; then
+              BUILD_NUM=$(date +%Y%m%d-%H%M)
+            fi
+            mv bundle/release/app-release.aab bundle/release/tarot-timer-v${BUILD_NUM}.aab
+            echo "✅ Renamed AAB: tarot-timer-v${BUILD_NUM}.aab"
+          fi
+
+      - name: 📤 Upload APK
+        if: github.event.inputs.build_type == 'apk'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarot-timer-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: 📤 Upload AAB
+        if: github.event.inputs.build_type == 'aab'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarot-timer-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: 📊 Build Summary
+        run: |
+          echo "## 🎉 Android 빌드 성공!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 빌드 정보" >> $GITHUB_STEP_SUMMARY
+          echo "- **빌드 타입**: ${{ github.event.inputs.build_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **버전**: $(node -p "require('./app.json').expo.version")" >> $GITHUB_STEP_SUMMARY
+          echo "- **빌드 번호**: $(node -p "require('./app.json').expo.android.versionCode")" >> $GITHUB_STEP_SUMMARY
+          echo "- **날짜**: $(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 다운로드" >> $GITHUB_STEP_SUMMARY
+          echo "Actions 탭 → Artifacts에서 빌드 파일 다운로드" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.build_type }}" == "apk" ]; then
+            APK_SIZE=$(du -h android/app/build/outputs/apk/release/*.apk | cut -f1)
+            echo "- **APK 크기**: $APK_SIZE" >> $GITHUB_STEP_SUMMARY
+          else
+            AAB_SIZE=$(du -h android/app/build/outputs/bundle/release/*.aab | cut -f1)
+            echo "- **AAB 크기**: $AAB_SIZE" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 💾 Commit Version Bump
+        if: github.event.inputs.version_bump == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app.json
+          git commit -m "chore: Android 빌드 번호 자동 증가 → ${{ env.NEW_BUILD_NUMBER }}" || echo "No changes to commit"
+          git push || echo "Push failed - check permissions"

@@ -45,7 +45,14 @@
     "app-store:full": "npm run app-store:build && npm run app-store:submit",
     "deploy:manual": "node scripts/deploy.js",
     "deploy:quick": "npm run prod:env && eas build --platform all --profile production",
-    "deploy:emergency": "npm run deploy:quick && npm run submit:all"
+    "deploy:emergency": "npm run deploy:quick && npm run submit:all",
+    "build:android:local": "expo prebuild --platform android --clean && cd android && ./gradlew assembleRelease",
+    "build:android:aab": "expo prebuild --platform android --clean && cd android && ./gradlew bundleRelease",
+    "build:ios:local": "expo prebuild --platform ios --clean && cd ios && pod install && xcodebuild -workspace tarottimerweb.xcworkspace -scheme tarottimerweb -configuration Release archive",
+    "build:all:local": "npm run build:android:local && npm run build:ios:local",
+    "prebuild:android": "expo prebuild --platform android --clean",
+    "prebuild:ios": "expo prebuild --platform ios --clean",
+    "prebuild:all": "expo prebuild --clean"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "^0.4.2",

@@ -39,7 +39,19 @@
       "Bash(npm run test:*)",
       "Bash(npx tsc:*)",
       "Bash(git log:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(powershell:*)",
+      "Bash(copy analysis00-comprehensive-analysis-summary.md backup-analysis-2025-01-24 )",
+      "Bash(copy analysis01-development-progress-report.md backup-analysis-2025-01-24 )",
+      "Bash(copy analysis02-gaps-analysis-report.md backup-analysis-2025-01-24 )",
+      "Bash(copy analysis03-future-development-plan.md backup-analysis-2025-01-24 )",
+      "Bash(copy analysis04-technical-recommendations-report.md backup-analysis-2025-01-24 )",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)",
+      "Bash(npm --version)"
     ],
     "deny": [],
     "ask": []
