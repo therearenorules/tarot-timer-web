@@ -140,9 +140,8 @@ export const PremiumTest: React.FC = () => {
       addTestResult('광고 표시 조건', 'pending', '테스트 중...');
       try {
         if (AdManager) {
-          const shouldShowBanner = AdManager.shouldShowBanner();
-          const bannerUnitId = AdManager.getBannerAdUnitId();
-          addTestResult('광고 표시 조건', 'success', `배너 표시: ${shouldShowBanner}, Unit ID: ${bannerUnitId}`);
+          // ✅ 배너 광고 deprecated - 전면 광고만 사용
+          addTestResult('광고 표시 조건', 'success', '전면 광고만 사용 (배너 광고 제거됨)');
         } else {
           addTestResult('광고 표시 조건', 'error', 'AdManager를 사용할 수 없습니다');
         }

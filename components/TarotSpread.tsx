@@ -12,15 +12,14 @@ import AdManager from '../utils/adManager';
 import { Icon } from './Icon';
 import { GradientButton } from './GradientButton';
 import { TarotCardComponent } from './TarotCard';
-import AdBanner from './AdBanner';
-import { 
-  Colors, 
-  GlassStyles, 
-  ShadowStyles, 
-  TextStyles, 
+import {
+  Colors,
+  GlassStyles,
+  ShadowStyles,
+  TextStyles,
   CompositeStyles,
   Spacing,
-  BorderRadius 
+  BorderRadius
 } from './DesignSystem';
 import { useFadeIn, useCardEntrance, useTouchFeedback } from './AnimationUtils';
 
@@ -651,13 +650,6 @@ export const TarotSpread: React.FC = () => {
           })}
         </View>
 
-        {/* 무료 사용자 배너 광고 */}
-        {!hasPremiumAccess() && (
-          <View style={styles.adBannerContainer}>
-            <AdBanner size="banner" style={styles.adBanner} />
-          </View>
-        )}
-
         {/* 프리미엄 안내 카드 */}
         <Animated.View style={[styles.premiumInfoCard, cardEntranceAnimation]}>
           <Text style={styles.premiumInfoTitle}>💎 {t('spread.premium.title')}</Text>
@@ -749,13 +741,6 @@ export const TarotSpread: React.FC = () => {
               <Text style={styles.cardNameEn}>({selectedCard.card.name})</Text>
             )}
             <Text style={styles.cardMeaning}>{getCardMeaning(selectedCard.card)}</Text>
-          </View>
-        )}
-
-        {/* 무료 사용자 배너 광고 (스프레드 상세 화면) */}
-        {!hasPremiumAccess() && (
-          <View style={styles.adBannerContainer}>
-            <AdBanner size="banner" style={styles.adBanner} />
           </View>
         )}
 
