@@ -136,8 +136,72 @@ export class LocalStorageManager {
   private static keysCacheTimestamp: number = 0;
   private static readonly CACHE_DURATION = 5000; // 5초 캐시
 
+  // ✅ FIX: AsyncStorage 초기화 상태 관리 (프로덕션 빌드 타이밍 문제 해결)
+  private static isInitialized: boolean = false;
+  private static initPromise: Promise<void> | null = null;
+
+  // AsyncStorage 초기화 보장
+  private static async ensureInitialized(): Promise<void> {
+    // 이미 초기화된 경우 즉시 반환
+    if (this.isInitialized) {
+      return;
+    }
+
+    // 초기화 중인 경우 기존 Promise 대기
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    // 새로운 초기화 시작
+    this.initPromise = (async () => {
+      try {
+        console.log('🔄 AsyncStorage 초기화 시작...');
+        // AsyncStorage 초기화 테스트 (더미 읽기)
+        await AsyncStorage.getItem('__init_test__');
+        this.isInitialized = true;
+        console.log('✅ AsyncStorage 초기화 완료');
+      } catch (error) {
+        console.error('❌ AsyncStorage 초기화 실패:', error);
+        // 초기화 실패 시에도 계속 진행 (다음 호출 시 재시도)
+        this.initPromise = null;
+      }
+    })();
+
+    return this.initPromise;
+  }
+
+  // getAllKeys() Retry 로직
+  private static async getAllKeysWithRetry(maxRetries = 3, delayMs = 300): Promise<string[]> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        if (attempt > 1) {
+          console.log(`✅ AsyncStorage.getAllKeys() 성공 (${attempt}번째 시도)`);
+        }
+        return keys;
+      } catch (error) {
+        console.warn(`⚠️  AsyncStorage.getAllKeys() 실패 (${attempt}/${maxRetries})`, error);
+
+        if (attempt < maxRetries) {
+          // 지수 백오프: 300ms, 600ms, 1200ms
+          const delay = delayMs * attempt;
+          console.log(`⏳ ${delay}ms 대기 후 재시도...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          // 최종 실패
+          console.error('❌ AsyncStorage.getAllKeys() 최대 재시도 횟수 초과');
+          throw error;
+        }
+      }
+    }
+    return []; // TypeScript 만족용 (실제로는 throw에서 끝남)
+  }
+
   // 캐시된 키 목록 가져오기
   private static async getCachedKeys(): Promise<string[]> {
+    // ✅ FIX: AsyncStorage 초기화 대기
+    await this.ensureInitialized();
+
     const now = Date.now();
 
     // 캐시가 유효한 경우 바로 반환
@@ -145,16 +209,22 @@ export class LocalStorageManager {
       return this.keysCache;
     }
 
-    // 캐시 만료 또는 없음 - 새로 가져오기
+    // 캐시 만료 또는 없음 - 새로 가져오기 (Retry 포함)
     try {
-      const keys = await AsyncStorage.getAllKeys();
+      const keys = await this.getAllKeysWithRetry(3, 300);
       this.keysCache = keys;
       this.keysCacheTimestamp = now;
+      console.log(`📊 AsyncStorage 키 목록 캐시 갱신: ${keys.length}개`);
       return keys;
     } catch (error) {
-      console.error('❌ AsyncStorage.getAllKeys() 실패:', error);
+      console.error('❌ AsyncStorage.getAllKeys() 완전 실패:', error);
       // 에러 시 이전 캐시 반환 (있으면)
-      return this.keysCache || [];
+      if (this.keysCache && this.keysCache.length > 0) {
+        console.warn('⚠️  이전 캐시 데이터 사용');
+        return this.keysCache;
+      }
+      // 캐시도 없으면 빈 배열 (안전한 fallback)
+      return [];
     }
   }
 

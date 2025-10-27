@@ -333,24 +333,36 @@ const TarotDaily = () => {
   const [totalDailyCount, setTotalDailyCount] = useSafeState(0);
   const [totalSpreadCount, setTotalSpreadCount] = useSafeState(0);
 
-  // 전체 기록 개수 업데이트
-  const updateTotalCounts = useCallback(async () => {
+  // 전체 기록 개수 업데이트 (Retry 로직 포함)
+  const updateTotalCounts = useCallback(async (retryCount = 0) => {
     try {
       // ✅ FIX: 동적 import 제거 - 정적 import 사용 (프로덕션 빌드 호환)
-      // 실시간으로 저장된 파일 개수 카운트
+      // ✅ FIX: Retry 로직 추가 (프로덕션 빌드 AsyncStorage 타이밍 문제 해결)
+      console.log(`📊 전체 기록 개수 업데이트 시작 (시도 ${retryCount + 1}/3)...`);
+
       const dailyLimit = await LocalStorageManager.checkUsageLimit('daily');
       const spreadLimit = await LocalStorageManager.checkUsageLimit('spread');
 
       setTotalDailyCount(dailyLimit.currentCount);
       setTotalSpreadCount(spreadLimit.currentCount);
 
-      console.log(`📊 전체 기록 개수 - 데일리: ${dailyLimit.currentCount}, 스프레드: ${spreadLimit.currentCount}`);
+      console.log(`✅ 전체 기록 개수 - 데일리: ${dailyLimit.currentCount}, 스프레드: ${spreadLimit.currentCount}`);
     } catch (error) {
-      console.error('❌ 전체 기록 개수 업데이트 실패:', error);
-      console.error('❌ Error details:', error);
-      // 오류 발생 시 기본값 설정 (크래시 방지)
-      setTotalDailyCount(0);
-      setTotalSpreadCount(0);
+      console.error(`❌ 전체 기록 개수 업데이트 실패 (시도 ${retryCount + 1}/3):`, error);
+
+      // 최대 3번 재시도
+      if (retryCount < 2) {
+        const delay = 500 * (retryCount + 1); // 500ms, 1000ms
+        console.log(`⏳ ${delay}ms 후 재시도...`);
+        setTimeout(() => {
+          updateTotalCounts(retryCount + 1);
+        }, delay);
+      } else {
+        // 최종 실패 시 안전한 fallback (빈 화면 대신 0 표시)
+        console.warn('⚠️  최종 실패 - 기본값(0) 설정');
+        setTotalDailyCount(0);
+        setTotalSpreadCount(0);
+      }
     }
   }, [setTotalDailyCount, setTotalSpreadCount]);
 
