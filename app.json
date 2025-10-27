@@ -28,7 +28,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "99",
+      "buildNumber": "102",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
