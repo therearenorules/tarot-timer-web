@@ -129,6 +129,12 @@ const SettingsTab: React.FC = () => {
     storageUsed: 0
   });
   const [cloudBackupEnabled, setCloudBackupEnabled] = useSafeState(false);
+  const [syncStatus, setSyncStatus] = useSafeState({
+    lastSyncTime: null as number | null,
+    pendingChanges: 0,
+    syncInProgress: false,
+    lastError: null as string | null
+  });
   const [showSubscriptionModal, setShowSubscriptionModal] = useSafeState(false);
   const [showManagementModal, setShowManagementModal] = useSafeState(false);
   const [adminClickCount, setAdminClickCount] = useSafeState(0);

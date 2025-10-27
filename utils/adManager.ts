@@ -253,8 +253,8 @@ export class AdManager {
     }
 
     // Production: adConfig.ts에서 정의된 실제 광고 ID 사용
-    console.log(`🎯 배너광고 ID: PRODUCTION (${AD_UNITS.BANNER})`);
-    return AD_UNITS.BANNER;
+    console.log(`🎯 배너광고 ID: PRODUCTION (${AD_UNITS.banner})`);
+    return AD_UNITS.banner;
   }
 
   /**
@@ -276,8 +276,8 @@ export class AdManager {
         adUnitId = TestIds.INTERSTITIAL;
       }
       // 2. Production: AD_UNITS 사용
-      else if (AD_UNITS?.INTERSTITIAL) {
-        adUnitId = AD_UNITS.INTERSTITIAL;
+      else if (AD_UNITS?.interstitial) {
+        adUnitId = AD_UNITS.interstitial;
       }
       // 3. 폴백: adConfig에서 직접 import
       else {
