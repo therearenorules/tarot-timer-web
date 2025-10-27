@@ -213,15 +213,41 @@ console.log('🔍 DEBUG: RNIap available:', !!RNIap);
 
 ## 🎯 **가장 가능성 높은 원인**
 
-TestFlight 환경에서 IAP 구매 실패의 **가장 흔한 원인 Top 3**:
+TestFlight 환경에서 IAP 구매 실패의 **가장 흔한 원인 Top 4**:
 
-### **1. App Store Connect에 Product ID가 생성되지 않음** (90%)
+### **1. ⚠️ BUILD 102: react-native-iap API 사용 불가 에러** (현재 확인됨)
+**증상**:
+```
+❌ 구매 오류: react-native-iap API 사용 불가
+```
+
+**원인**:
+- Build 102가 react-native-iap 네이티브 링크가 완료되기 전에 빌드됨
+- 또는 EAS Build 캐시 문제로 네이티브 모듈이 제대로 포함되지 않음
+
+**해결**:
+```bash
+# Build 103 생성 (네이티브 모듈 재링크)
+npx pod-install ios  # 로컬에서 먼저 확인
+npm run build:prod:ios
+```
+
+**확인 사항**:
+- ✅ `ios/Podfile.lock`에 `NitroIap` 포함 확인됨
+- ✅ `android/` 폴더 존재 확인됨
+- ✅ 코드는 정상 구현됨
+
+→ **새 빌드 생성 필요!**
+
+---
+
+### **2. App Store Connect에 Product ID가 생성되지 않음** (90%)
 → App Store Connect → Subscriptions에서 `tarot_timer_monthly`, `tarot_timer_yearly` 생성 필요
 
-### **2. Sandbox Tester 계정 미설정** (5%)
+### **3. Sandbox Tester 계정 미설정** (5%)
 → Sandbox Tester 계정 생성 후 iPhone 설정에서 로그인 필요
 
-### **3. Paid Applications Agreement 미서명** (5%)
+### **4. Paid Applications Agreement 미서명** (5%)
 → App Store Connect → Agreements, Tax, and Banking 섹션 완료 필요
 
 ---

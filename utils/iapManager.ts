@@ -216,7 +216,16 @@ export class IAPManager {
 
       // ✅ CRITICAL FIX: RNIap.requestSubscription 메서드 존재 확인
       if (typeof RNIap.requestSubscription !== 'function') {
-        throw new Error('react-native-iap API 사용 불가');
+        console.error('❌ react-native-iap API 사용 불가');
+        console.error('📌 해결 방법:');
+        console.error('   1. Expo 앱을 사용 중이라면: npx expo prebuild 실행 후 네이티브 빌드 필요');
+        console.error('   2. TestFlight 빌드라면: EAS Build로 재빌드 필요');
+        console.error('   3. 자세한 내용: IAP_TROUBLESHOOTING.md 참고');
+
+        return {
+          success: false,
+          error: '인앱 구매 기능을 사용할 수 없습니다. 앱을 업데이트해주세요.'
+        };
       }
 
       // 실제 구매 처리 (네트워크 재시도 적용)
