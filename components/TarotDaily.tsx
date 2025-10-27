@@ -20,6 +20,7 @@ import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
 import { useTarotI18n } from '../hooks/useTarotI18n';
 import { simpleStorage, STORAGE_KEYS, TarotUtils, DailyTarotSave, SavedSpread } from '../utils/tarotData';
+import LocalStorageManager from '../utils/localStorage';
 import {
   Colors,
   GlassStyles,
@@ -335,9 +336,7 @@ const TarotDaily = () => {
   // 전체 기록 개수 업데이트
   const updateTotalCounts = useCallback(async () => {
     try {
-      // LocalStorageManager를 동적 import
-      const LocalStorageManager = (await import('../utils/localStorage')).default;
-
+      // ✅ FIX: 동적 import 제거 - 정적 import 사용 (프로덕션 빌드 호환)
       // 실시간으로 저장된 파일 개수 카운트
       const dailyLimit = await LocalStorageManager.checkUsageLimit('daily');
       const spreadLimit = await LocalStorageManager.checkUsageLimit('spread');
@@ -347,14 +346,32 @@ const TarotDaily = () => {
 
       console.log(`📊 전체 기록 개수 - 데일리: ${dailyLimit.currentCount}, 스프레드: ${spreadLimit.currentCount}`);
     } catch (error) {
-      console.warn('⚠️ 전체 기록 개수 업데이트 실패:', error);
+      console.error('❌ 전체 기록 개수 업데이트 실패:', error);
+      console.error('❌ Error details:', error);
+      // 오류 발생 시 기본값 설정 (크래시 방지)
+      setTotalDailyCount(0);
+      setTotalSpreadCount(0);
     }
   }, [setTotalDailyCount, setTotalSpreadCount]);
 
   useEffect(() => {
-    loadDailyReadings();
-    loadSpreadReadings();
-    updateTotalCounts();
+    // ✅ FIX: 비동기 함수들을 안전하게 실행
+    const initializeData = async () => {
+      try {
+        // 데이터 로딩과 카운트 업데이트를 병렬로 실행
+        await Promise.all([
+          loadDailyReadings(),
+          loadSpreadReadings(),
+          updateTotalCounts()
+        ]);
+        console.log('✅ 다이어리 탭 데이터 초기화 완료');
+      } catch (error) {
+        console.error('❌ 다이어리 탭 초기화 실패:', error);
+        // 오류가 발생해도 컴포넌트는 마운트 상태 유지 (빈 화면 표시)
+      }
+    };
+
+    initializeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 

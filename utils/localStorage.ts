@@ -131,11 +131,46 @@ export class LocalStorageManager {
     max_journal_entries: 20
   };
 
+  // ✅ PERFORMANCE FIX: AsyncStorage.getAllKeys() 캐싱 (프로덕션 빌드 성능 개선)
+  private static keysCache: string[] | null = null;
+  private static keysCacheTimestamp: number = 0;
+  private static readonly CACHE_DURATION = 5000; // 5초 캐시
+
+  // 캐시된 키 목록 가져오기
+  private static async getCachedKeys(): Promise<string[]> {
+    const now = Date.now();
+
+    // 캐시가 유효한 경우 바로 반환
+    if (this.keysCache && (now - this.keysCacheTimestamp < this.CACHE_DURATION)) {
+      return this.keysCache;
+    }
+
+    // 캐시 만료 또는 없음 - 새로 가져오기
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      this.keysCache = keys;
+      this.keysCacheTimestamp = now;
+      return keys;
+    } catch (error) {
+      console.error('❌ AsyncStorage.getAllKeys() 실패:', error);
+      // 에러 시 이전 캐시 반환 (있으면)
+      return this.keysCache || [];
+    }
+  }
+
+  // 캐시 무효화 (데이터 변경 시 호출)
+  private static invalidateCache(): void {
+    this.keysCache = null;
+    this.keysCacheTimestamp = 0;
+  }
+
   // 제네릭 데이터 저장/로드
   static async setItem<T>(key: string, value: T): Promise<void> {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
+      // ✅ 데이터 변경 시 캐시 무효화
+      this.invalidateCache();
     } catch (error) {
       console.error(`Error saving ${key}:`, error);
       throw error;
@@ -155,6 +190,8 @@ export class LocalStorageManager {
   static async removeItem(key: string): Promise<void> {
     try {
       await AsyncStorage.removeItem(key);
+      // ✅ 데이터 삭제 시 캐시 무효화
+      this.invalidateCache();
     } catch (error) {
       console.error(`Error removing ${key}:`, error);
       throw error;
@@ -454,11 +491,10 @@ export class LocalStorageManager {
     const limits = await this.getUsageLimits();
 
     if (type === 'daily') {
-      // ✅ FIX: 실제 DailyTarot 저장 개수 카운트
-      // STORAGE_KEYS.DAILY_TAROT + date 형식으로 저장된 모든 키를 확인
+      // ✅ PERFORMANCE FIX: 캐시된 키 목록 사용
       let dailyCount = 0;
       try {
-        const allKeys = await AsyncStorage.getAllKeys();
+        const allKeys = await this.getCachedKeys();
         const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
         dailyCount = dailyTarotKeys.length;
         console.log(`📊 실제 DailyTarot 저장 개수: ${dailyCount}개`);
@@ -494,10 +530,10 @@ export class LocalStorageManager {
     const limits = await this.getUsageLimits();
 
     if (type === 'daily') {
-      // ✅ FIX: 실시간으로 실제 DailyTarot 저장 개수 확인
+      // ✅ PERFORMANCE FIX: 캐시된 키 목록으로 실시간 개수 확인
       let actualDailyCount = limits.current_daily_sessions;
       try {
-        const allKeys = await AsyncStorage.getAllKeys();
+        const allKeys = await this.getCachedKeys();
         const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
         actualDailyCount = dailyTarotKeys.length;
         console.log(`🔍 DailyTarot 저장 제한 확인: ${actualDailyCount}/${limits.max_daily_sessions}`);
