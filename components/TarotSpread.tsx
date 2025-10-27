@@ -1027,19 +1027,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // 광고 배너 스타일
-  adBannerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  adBanner: {
-    backgroundColor: 'transparent',
-    borderRadius: BorderRadius.medium,
-    overflow: 'hidden',
-  },
-
   // 스프레드 상세 화면 스타일
   spreadHeader: {
     flexDirection: 'row',
