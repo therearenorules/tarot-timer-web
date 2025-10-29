@@ -28,8 +28,8 @@ import {
 import { Icon } from '../Icon';
 
 // 법률 문서 URL
-const PRIVACY_POLICY_URL = 'https://therearenorules.github.io/tarot-timer-landing/privacy.html';
-const TERMS_OF_SERVICE_URL = 'https://therearenorules.github.io/tarot-timer-landing/terms.html';
+const PRIVACY_POLICY_URL = 'https://therearenorules.github.io/tarot-timer-web/privacy-policy.html';
+const TERMS_OF_SERVICE_URL = 'https://therearenorules.github.io/tarot-timer-web/terms.html';
 
 interface SubscriptionPlansProps {
   onClose?: () => void;

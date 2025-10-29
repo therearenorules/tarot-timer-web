@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>타로 타이머 - 고객 지원</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #7b2cbf;
+            border-bottom: 3px solid #f4d03f;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #5a1d8b;
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .hero {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .hero-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .contact-card {
+            background: #f8f5ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #7b2cbf;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+        .contact-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            min-width: 40px;
+            text-align: center;
+        }
+        .contact-info {
+            flex: 1;
+        }
+        .contact-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .contact-value {
+            font-size: 16px;
+            color: #333;
+            margin-top: 5px;
+        }
+        .contact-value a {
+            color: #7b2cbf;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .contact-value a:hover {
+            text-decoration: underline;
+        }
+        .faq-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 3px solid #f4d03f;
+        }
+        .faq-question {
+            font-weight: bold;
+            color: #5a1d8b;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .faq-answer {
+            color: #555;
+            line-height: 1.6;
+        }
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .quick-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .quick-link:hover {
+            transform: translateY(-5px);
+        }
+        .quick-link-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .quick-link-text {
+            font-weight: bold;
+        }
+        .response-time {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f4d03f;
+            margin: 20px 0;
+        }
+        .english {
+            margin-top: 50px;
+            border-top: 2px solid #eee;
+            padding-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <div class="hero-icon">🔮</div>
+            <h1>타로 타이머 고객 지원</h1>
+            <p style="color: #666;">Tarot Timer Customer Support</p>
+        </div>
+
+        <h2>📧 문의하기 / Contact Us</h2>
+        <div class="contact-card">
+            <div class="contact-item">
+                <div class="contact-icon">📧</div>
+                <div class="contact-info">
+                    <div class="contact-label">이메일 지원 / Email Support</div>
+                    <div class="contact-value">
+                        <a href="mailto:support@tarottimer.app">support@tarottimer.app</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-icon">🔒</div>
+                <div class="contact-info">
+                    <div class="contact-label">개인정보 문의 / Privacy Inquiries</div>
+                    <div class="contact-value">
+                        <a href="mailto:privacy@tarottimer.app">privacy@tarottimer.app</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-icon">🌐</div>
+                <div class="contact-info">
+                    <div class="contact-label">웹사이트 / Website</div>
+                    <div class="contact-value">
+                        <a href="https://tarottimer.app" target="_blank">https://tarottimer.app</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="response-time">
+            <strong>⏱️ 응답 시간 / Response Time:</strong><br>
+            • 일반 사용자: 영업일 기준 48시간 이내 / Regular users: Within 48 hours<br>
+            • 프리미엄 사용자: 24시간 이내 우선 응답 / Premium users: Priority response within 24 hours
+        </div>
+
+        <h2>🔗 빠른 링크 / Quick Links</h2>
+        <div class="quick-links">
+            <a href="./privacy-policy.html" class="quick-link">
+                <div class="quick-link-icon">🔒</div>
+                <div class="quick-link-text">개인정보 처리방침<br>Privacy Policy</div>
+            </a>
+            <a href="./terms.html" class="quick-link">
+                <div class="quick-link-icon">📄</div>
+                <div class="quick-link-text">이용약관<br>Terms of Service</div>
+            </a>
+            <a href="https://apps.apple.com/app/tarot-timer" class="quick-link">
+                <div class="quick-link-icon">📱</div>
+                <div class="quick-link-text">iOS 앱<br>iOS App</div>
+            </a>
+        </div>
+
+        <h2>❓ 자주 묻는 질문 / FAQ</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">Q1. 구독을 취소하려면 어떻게 해야 하나요?</div>
+            <div class="faq-answer">
+                <strong>iOS:</strong> 설정 → Apple ID → 구독 → 타로 타이머 → 구독 취소<br>
+                <strong>Android:</strong> Google Play Store → 계정 → 결제 및 정기 결제 → 타로 타이머 → 취소
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Q2. 환불은 어떻게 받나요?</div>
+            <div class="faq-answer">
+                <strong>iOS:</strong> <a href="https://reportaproblem.apple.com" target="_blank">reportaproblem.apple.com</a>에서 신청<br>
+                <strong>Android:</strong> Google Play 지원 센터에서 환불 요청<br>
+                구독 후 7일 이내에는 플랫폼 정책에 따라 환불이 가능합니다.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Q3. 구매 내역을 다른 기기에서도 사용할 수 있나요?</div>
+            <div class="faq-answer">
+                네! 같은 Apple ID 또는 Google 계정을 사용하는 모든 기기에서 프리미엄 기능을 이용하실 수 있습니다.
+                앱 설정에서 "구매 복원" 버튼을 눌러주세요.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Q4. 알림이 오지 않아요.</div>
+            <div class="faq-answer">
+                다음 사항을 확인해주세요:<br>
+                1. 기기 설정 → 알림 → 타로 타이머 → 알림 허용 확인<br>
+                2. 앱 설정 → 알림 설정 → 시간별 알림 활성화 확인<br>
+                3. "조용한 시간" 설정이 켜져있지 않은지 확인
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Q5. 데이터를 백업하고 싶어요.</div>
+            <div class="faq-answer">
+                프리미엄 사용자는 설정 → 클라우드 백업에서 자동 백업을 활성화할 수 있습니다.
+                무료 사용자는 기기 내부에만 데이터가 저장되며, 앱 삭제 시 데이터도 함께 삭제됩니다.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Q6. 언어를 변경하려면?</div>
+            <div class="faq-answer">
+                앱 설정 → 언어 설정에서 한국어, 영어, 일본어 중 선택할 수 있습니다.
+            </div>
+        </div>
+
+        <!-- English Section -->
+        <div class="english">
+            <h2>❓ Frequently Asked Questions (English)</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">Q1. How do I cancel my subscription?</div>
+                <div class="faq-answer">
+                    <strong>iOS:</strong> Settings → Apple ID → Subscriptions → Tarot Timer → Cancel<br>
+                    <strong>Android:</strong> Google Play Store → Account → Payments & subscriptions → Cancel
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q2. How do I request a refund?</div>
+                <div class="faq-answer">
+                    <strong>iOS:</strong> Visit <a href="https://reportaproblem.apple.com" target="_blank">reportaproblem.apple.com</a><br>
+                    <strong>Android:</strong> Request refund through Google Play Support<br>
+                    Refunds are available within 7 days according to platform policies.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q3. Can I use my purchase on multiple devices?</div>
+                <div class="faq-answer">
+                    Yes! You can use premium features on all devices with the same Apple ID or Google account.
+                    Just tap "Restore Purchases" in app settings.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q4. I'm not receiving notifications.</div>
+                <div class="faq-answer">
+                    Please check:<br>
+                    1. Device Settings → Notifications → Tarot Timer → Allow Notifications<br>
+                    2. App Settings → Notifications → Enable Hourly Notifications<br>
+                    3. Make sure "Quiet Hours" is not enabled
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q5. How do I backup my data?</div>
+                <div class="faq-answer">
+                    Premium users can enable automatic cloud backup in Settings → Cloud Backup.
+                    Free users' data is stored locally and will be deleted if the app is uninstalled.
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #f8f5ff; border-radius: 8px; text-align: center;">
+            <p style="margin: 0; color: #666;">
+                💜 <strong>추가 도움이 필요하신가요?</strong><br>
+                Need more help?<br><br>
+                <a href="mailto:support@tarottimer.app" style="color: #7b2cbf; font-weight: bold;">support@tarottimer.app</a>로 문의해주세요!<br>
+                Contact us at <a href="mailto:support@tarottimer.app" style="color: #7b2cbf; font-weight: bold;">support@tarottimer.app</a>!
+            </p>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center; color: #999; font-size: 12px;">
+            <p>Last Updated: October 29, 2025 • Version 1.0.9</p>
+        </div>
+    </div>
+</body>
+</html>
