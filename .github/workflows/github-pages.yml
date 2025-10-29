@@ -1,0 +1,52 @@
+name: 📄 GitHub Pages 배포 (Legal Documents)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/privacy-policy.html'
+      - 'public/terms.html'
+      - 'public/support.html'
+      - '.github/workflows/github-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 📋 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: 📁 Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'public'
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: ✅ Deployment Complete
+        run: |
+          echo "✅ GitHub Pages 배포 완료!"
+          echo "📄 Privacy Policy: ${{ steps.deployment.outputs.page_url }}privacy-policy.html"
+          echo "📄 Terms of Service: ${{ steps.deployment.outputs.page_url }}terms.html"
+          echo "📄 Support: ${{ steps.deployment.outputs.page_url }}support.html"
