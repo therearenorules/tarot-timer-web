@@ -88,9 +88,9 @@ const TERMS_OF_SERVICE_URL = 'https://therearenorules.github.io/tarot-timer-web/
 
 5. 배포 완료 후 다음 URL이 접근 가능한지 테스트:
    ```
-   ✅ https://therearenorules.github.io/tarot-timer-web/privacy-policy.html
-   ✅ https://therearenorules.github.io/tarot-timer-web/terms.html
-   ✅ https://therearenorules.github.io/tarot-timer-web/support.html
+   ✅ https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+   ✅ https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/terms.html
+   ✅ https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
    ```
 
 ---
@@ -109,7 +109,7 @@ https://appstoreconnect.apple.com
 3. **Privacy Policy URL** 필드 찾기
 4. 다음 URL 입력:
    ```
-   https://therearenorules.github.io/tarot-timer-web/privacy-policy.html
+   https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
    ```
 5. **Save** 클릭
 
@@ -121,8 +121,8 @@ https://appstoreconnect.apple.com
 2. **App Description** 편집
 3. 설명 하단에 다음 추가:
    ```
-   📄 Terms of Service: https://therearenorules.github.io/tarot-timer-web/terms.html
-   📄 Privacy Policy: https://therearenorules.github.io/tarot-timer-web/privacy-policy.html
+   📄 Terms of Service: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/terms.html
+   📄 Privacy Policy: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
    ```
 
 **방법 2 - EULA 필드 사용:**
@@ -131,7 +131,7 @@ https://appstoreconnect.apple.com
 2. **License Agreement** 또는 **EULA** 필드
 3. 다음 URL 입력:
    ```
-   https://therearenorules.github.io/tarot-timer-web/terms.html
+   https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/terms.html
    ```
 
 #### 2.3 Support URL 수정
@@ -144,7 +144,7 @@ https://appstoreconnect.apple.com
    ```
 4. 다음 URL로 변경:
    ```
-   ✅ https://therearenorules.github.io/tarot-timer-web/support.html
+   ✅ https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
    ```
 5. **Save** 클릭
 
@@ -225,11 +225,11 @@ npm run build:prod:ios
 
 ## 🔗 중요 URL 모음
 
-### 배포된 문서 (GitHub Pages)
+### 배포된 문서 (HTMLPreview via GitHub)
 ```
-Privacy Policy:   https://therearenorules.github.io/tarot-timer-web/privacy-policy.html
-Terms of Service: https://therearenorules.github.io/tarot-timer-web/terms.html
-Support:          https://therearenorules.github.io/tarot-timer-web/support.html
+Privacy Policy:   https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+Terms of Service: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/terms.html
+Support:          https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
 ```
 
 ### 관리 대시보드
@@ -256,13 +256,14 @@ Thank you for your feedback. We have addressed all the issues mentioned in your 
    - ✅ Added functional Terms of Use (EULA) link in the app
    - ✅ Updated App Store Connect metadata with both links
    - URLs are now accessible at:
-     - Privacy Policy: https://therearenorules.github.io/tarot-timer-web/privacy-policy.html
-     - Terms of Service: https://therearenorules.github.io/tarot-timer-web/terms.html
+     - Privacy Policy: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+     - Terms of Service: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/terms.html
 
 2. **Guideline 1.5 - Support URL**:
-   - ✅ Updated Support URL to: https://therearenorules.github.io/tarot-timer-web/support.html
+   - ✅ Updated Support URL to: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
    - This page now provides comprehensive customer support information including:
-     - Contact email addresses
+     - Contact email: changsekwon@gmail.com
+     - Instagram DM: @deanosajutaro
      - FAQ section
      - Links to legal documents
      - Response time information
@@ -276,9 +277,9 @@ Thank you!
 
 ## 📞 문의
 
-이슈가 발생하면 다음 이메일로 문의:
-- **개발자 지원**: support@tarottimer.app
-- **개인정보 문의**: privacy@tarottimer.app
+이슈가 발생하면 다음으로 문의:
+- **이메일**: changsekwon@gmail.com
+- **Instagram DM**: @deanosajutaro
 
 ---
 

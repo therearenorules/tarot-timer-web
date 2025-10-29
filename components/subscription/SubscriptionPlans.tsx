@@ -27,9 +27,9 @@ import {
 } from '../DesignSystem';
 import { Icon } from '../Icon';
 
-// 법률 문서 URL
-const PRIVACY_POLICY_URL = 'https://therearenorules.github.io/tarot-timer-web/privacy-policy.html';
-const TERMS_OF_SERVICE_URL = 'https://therearenorules.github.io/tarot-timer-web/terms.html';
+// 법률 문서 URL (htmlpreview를 사용하여 GitHub에서 직접 렌더링)
+const PRIVACY_POLICY_URL = 'https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html';
+const TERMS_OF_SERVICE_URL = 'https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/terms.html';
 
 interface SubscriptionPlansProps {
   onClose?: () => void;
