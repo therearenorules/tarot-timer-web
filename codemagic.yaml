@@ -58,12 +58,40 @@ workflows:
           echo "WORKSPACE_FILE=$WORKSPACE_FILE" >> $CM_ENV
           echo "SCHEME_NAME=$SCHEME_NAME" >> $CM_ENV
 
+      - name: 📝 Create export options plist
+        script: |
+          cat > $CM_BUILD_DIR/export_options.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>ad-hoc</string>
+              <key>teamID</key>
+              <string>YOUR_TEAM_ID</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          echo "✅ Created export_options.plist"
+          cat $CM_BUILD_DIR/export_options.plist
+
       - name: 🏗️ Build iOS app
         script: |
           xcode-project build-ipa \
             --workspace "$WORKSPACE_FILE" \
             --scheme "$SCHEME_NAME" \
-            --config "Release"
+            --config "Release" \
+            --export-options-plist "$CM_BUILD_DIR/export_options.plist"
 
     artifacts:
       - build/ios/ipa/*.ipa
