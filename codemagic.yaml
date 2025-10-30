@@ -41,11 +41,28 @@ workflows:
         script: |
           cd ios && pod install
 
+      - name: 🔍 Find iOS workspace
+        script: |
+          echo "📂 Checking iOS directory structure..."
+          ls -la ios/
+
+          # Find the actual workspace file
+          WORKSPACE_FILE=$(find ios -name "*.xcworkspace" -type d | head -n 1)
+          echo "✅ Found workspace: $WORKSPACE_FILE"
+
+          # Find the scheme name
+          SCHEME_NAME=$(xcodebuild -workspace "$WORKSPACE_FILE" -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)
+          echo "✅ Found scheme: $SCHEME_NAME"
+
+          # Export for next step
+          echo "WORKSPACE_FILE=$WORKSPACE_FILE" >> $CM_ENV
+          echo "SCHEME_NAME=$SCHEME_NAME" >> $CM_ENV
+
       - name: 🏗️ Build iOS app
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME" \
+            --workspace "$WORKSPACE_FILE" \
+            --scheme "$SCHEME_NAME" \
             --config "Release"
 
     artifacts:
