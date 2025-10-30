@@ -1,0 +1,814 @@
+타로 타이머 - 최종 사용자 사용권 계약 (EULA)
+TAROT TIMER - END USER LICENSE AGREEMENT (EULA)
+
+최종 업데이트: 2025년 10월 15일
+버전: 1.0.9
+시행일: 2025년 10월 15일
+
+Last Updated: October 15, 2025
+Version: 1.0.9
+Effective Date: October 15, 2025
+
+══════════════════════════════════════════════════════════════
+【 한국어 버전 / KOREAN VERSION 】
+══════════════════════════════════════════════════════════════
+
+1. 라이선스 승인 및 적용
+
+타로 타이머(이하 "라이선스 앱")를 다운로드하고 사용함으로써, 최종 사용자인 귀하("귀하" 또는 "최종 사용자")는 타로 타이머 개발팀("라이선서")과의 구속력 있는 라이선스 계약에 동의하게 됩니다. 본 라이선스 계약은 Apple Inc.("Apple") 또는 Google LLC("Google")와의 계약이 아닙니다.
+
+본 계약 조건에 동의하지 않는 경우, 라이선스 앱을 설치하거나 사용하지 마십시오.
+
+══════════════════════════════════════════════════════════════
+
+2. 라이선스 범위
+
+2.1 제한적 라이선스
+라이선서는 귀하에게 다음과 같은 제한적이고, 비독점적이며, 양도 불가능한 라이선스를 부여합니다:
+
+• 귀하가 소유하거나 통제하는 iOS 또는 Android 기기에 라이선스 앱의 단일 사본을 다운로드, 설치 및 사용
+• 라이선스 앱을 본 계약에 따라 개인적이고 비상업적인 용도로만 사용
+
+2.2 라이선스 제한
+귀하는 다음을 수행할 수 없습니다:
+
+❌ 라이선스 앱을 임대, 리스, 대여, 판매, 재배포 또는 재라이선스
+❌ 라이선스 앱의 소스 코드를 역설계, 디컴파일 또는 디스어셈블 (법률로 명시적으로 허용되지 않는 한)
+❌ 라이선스 앱의 파생 작품을 생성
+❌ 라이선스 앱의 일부를 복사 (백업 목적 제외)
+❌ 라이선스 앱의 저작권 또는 기타 지적재산권 고지를 제거, 변경 또는 은폐
+❌ 자동화된 시스템 또는 소프트웨어를 사용하여 라이선스 앱에서 데이터를 추출
+
+══════════════════════════════════════════════════════════════
+
+3. 서비스 설명
+
+3.1 무료 기능
+• 24시간 타로 카드 타이머 서비스
+• 78장 타로 카드 (메이저 22장 + 마이너 56장) 및 의미 제공
+• 시간별 알림 (사용자 설정 가능)
+• 기본 다이어리 및 스프레드 기능
+• 다국어 지원 (한국어, 영어, 일본어)
+
+3.2 프리미엄 기능 (유료 구독)
+• 광고 제거
+• 무제한 다이어리 저장
+• 프리미엄 미스틱 테마
+• 우선 고객 지원 (24시간 내 응답)
+• 클라우드 백업 (선택사항)
+
+══════════════════════════════════════════════════════════════
+
+4. 자동 갱신 구독
+
+4.1 구독 상품
+
+월간 프리미엄: $4.99 USD (₩6,600 KRW)
+- 전체 프리미엄 기능 이용
+
+연간 프리미엄: $34.99 USD (₩46,000 KRW)
+- 월간 대비 42% 할인
+- 전체 프리미엄 기능 이용
+
+참고: 가격은 국가별로 다를 수 있으며, 현지 통화로 표시됩니다.
+
+4.2 자동 갱신 조건
+
+⚠️ 중요 - 자동 갱신:
+• 모든 구독은 귀하가 취소할 때까지 자동으로 갱신됩니다
+• 현재 구독 기간 종료 24시간 전에 결제가 진행됩니다
+• 요금 청구를 피하려면 갱신 최소 24시간 전에 취소하십시오
+• 기기 설정에서 언제든지 구독을 관리하고 취소할 수 있습니다
+
+4.3 구독 관리 방법
+
+iOS: 설정 → [귀하의 이름] → 구독 → 타로 타이머 → 구독 취소
+Android: Google Play 스토어 → 계정 → 결제 및 정기 결제 → 타로 타이머 → 정기 결제 취소
+
+4.4 구독 갱신 및 취소
+• 취소는 현재 구독 기간 종료 시점부터 유효합니다
+• 취소 후에도 현재 결제한 기간 동안은 프리미엄 기능을 계속 사용할 수 있습니다
+• 취소 후 재구독 시, 이전 사용자 데이터가 유지될 수 있습니다 (백업된 경우)
+
+══════════════════════════════════════════════════════════════
+
+5. 환불 정책
+
+5.1 플랫폼 기반 환불
+• iOS: Apple App Store 환불 정책 적용 (reportaproblem.apple.com)
+• Android: Google Play 스토어 환불 정책 적용 (Google Play 지원 센터)
+• 라이선서는 직접 환불을 처리하지 않으며, 각 플랫폼의 환불 절차를 따라야 합니다
+
+5.2 환불 가능 사유
+• 서비스 이용을 방해하는 기술적 오류
+• 청구 오류 또는 중복 결제
+• 구독 후 플랫폼 정책에 따른 기간 내 (일반적으로 7일)
+
+5.3 환불 신청 방법
+iOS: reportaproblem.apple.com 방문
+Android: Google Play 지원 센터 문의
+이메일: changsekwon@gmail.com (플랫폼 환불 실패 시)
+Instagram DM: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+6. 보증 부인
+
+6.1 "있는 그대로" 제공
+
+라이선스 앱은 "있는 그대로" 및 "이용 가능한 대로" 제공되며, 명시적이든 묵시적이든 어떠한 종류의 보증도 없습니다. 법률이 허용하는 최대한도 내에서, 라이선서는 다음을 포함하되 이에 국한되지 않는 모든 보증을 부인합니다:
+
+• 상품성에 대한 묵시적 보증
+• 특정 목적에의 적합성에 대한 묵시적 보증
+• 비침해에 대한 묵시적 보증
+• 거래 또는 거래 관행 과정에서 발생하는 보증
+
+6.2 보증 제외 사항
+
+라이선서는 다음을 보증하지 않습니다:
+
+• 라이선스 앱이 귀하의 요구사항을 충족할 것
+• 라이선스 앱의 작동이 중단되지 않거나 오류가 없을 것
+• 라이선스 앱의 결함이 수정될 것
+• 라이선스 앱이 다른 소프트웨어나 하드웨어와 호환될 것
+• 라이선스 앱을 통해 얻은 결과가 정확하거나 신뢰할 수 있을 것
+
+6.3 90일 제한적 보증 (Apple 표준)
+
+법률이 허용하는 범위 내에서, 라이선스 앱은 최초 다운로드 날짜로부터 90일 동안 실질적으로 공개된 사양을 따른다는 제한적 보증을 제공합니다. 이 90일 기간 동안 라이선스 앱이 이 보증을 충족하지 못하는 경우, 라이선서의 유일한 책임과 귀하의 독점적 구제책은 라이선서의 선택에 따라 다음 중 하나입니다:
+
+• 라이선스 앱을 수리 또는 교체
+• 라이선스 앱에 대해 지불한 금액 환불
+
+══════════════════════════════════════════════════════════════
+
+7. 책임의 제한
+
+7.1 간접 손해에 대한 책임 제한
+
+법률이 허용하는 최대한도 내에서, 라이선서는 어떠한 경우에도 다음에 대해 책임을 지지 않습니다:
+
+• 간접적, 우발적, 특별, 결과적 또는 징벌적 손해
+• 이익, 수익, 데이터, 사용 또는 영업권의 손실
+• 대체 제품이나 서비스 조달 비용
+• 라이선스 앱의 사용 또는 사용 불가능으로 인한 손해
+
+이는 라이선서가 그러한 손해의 가능성을 알고 있었더라도, 계약, 불법행위(과실 포함), 무과실 책임 또는 기타 이론에 근거한 경우에도 적용됩니다.
+
+7.2 책임 한도 상한
+
+법률이 허용하는 최대한도 내에서, 본 계약에서 발생하는 모든 청구에 대한 라이선서의 총 책임은 청구 발생 전 12개월 동안 귀하가 라이선스 앱에 대해 지불한 금액을 초과하지 않습니다. 무료로 제공된 기능에 대한 청구의 경우 최대 책임은 $50 USD입니다.
+
+7.3 법적 제외 사항
+
+일부 국가 또는 관할권에서는 특정 보증의 배제 또는 우발적 또는 결과적 손해에 대한 책임 제한을 허용하지 않습니다. 따라서 위의 제한 사항 중 일부는 귀하에게 적용되지 않을 수 있습니다. 이 경우, 라이선서의 책임은 해당 법률이 허용하는 최대한도로 제한됩니다.
+
+══════════════════════════════════════════════════════════════
+
+8. 면책
+
+8.1 이용자 책임
+
+귀하는 다음에 동의합니다:
+
+• 라이선스 앱에 대한 귀하의 접근 및 사용
+• 본 계약 조건 위반
+• 타인의 지적재산권 또는 기타 권리 침해
+• 다른 사용자에 대한 피해
+
+으로 인해 발생하는 모든 청구, 손해, 의무, 손실, 책임, 비용, 부채 및 비용(변호사 비용 포함)으로부터 라이선서 및 그 임원, 이사, 직원, 대리인, 라이선서, 공급자 및 서비스 제공자를 면책하고 보호합니다.
+
+══════════════════════════════════════════════════════════════
+
+9. 지적재산권
+
+9.1 소유권
+
+라이선스 앱 및 그 모든 권리, 권원 및 이익 (모든 지적재산권 포함)은 라이선서가 독점적으로 소유하며 앞으로도 소유할 것입니다. 본 계약은 라이선스 앱의 판매가 아니며, 귀하는 본 계약에 명시적으로 부여된 제한적 라이선스 권리 외에는 라이선스 앱에 대한 어떠한 소유권도 취득하지 않습니다.
+
+9.2 상표
+
+"타로 타이머", 로고 및 관련 상표는 라이선서의 상표입니다. 귀하는 라이선서의 사전 서면 동의 없이 이러한 상표를 사용할 수 없습니다.
+
+9.3 콘텐츠 소유권
+
+• 앱 내 모든 타로 카드 이미지, 해석, 텍스트, UI/UX 디자인은 라이선서의 저작물입니다
+• 이용자는 서면 동의 없이 콘텐츠를 복제, 전송, 배포, 판매할 수 없습니다
+• 이용자가 생성한 다이어리 및 메모는 이용자의 소유이지만, 클라우드 백업 시 라이선서가 저장 서비스를 제공합니다
+
+══════════════════════════════════════════════════════════════
+
+10. 금지된 행위
+
+귀하는 다음을 수행하지 않기로 동의합니다:
+
+❌ 타인의 개인정보를 도용하거나 사칭하는 행위
+❌ 라이선스 앱의 운영을 방해하는 행위
+❌ 바이러스, 맬웨어, 웜 또는 기타 악의적 코드를 업로드하거나 전송하는 행위
+❌ 자동화된 시스템(봇, 스크래퍼, 로봇)을 사용하여 라이선스 앱에 액세스하는 행위
+❌ 라이선스 앱의 보안 기능을 우회하거나 무력화하려는 행위
+❌ 불법적, 사기적, 유해하거나 차별적인 목적으로 라이선스 앱을 사용하는 행위
+❌ 라이선스 앱을 통해 스팸, 체인 레터 또는 피라미드 사기를 배포하는 행위
+❌ 타인의 지적재산권을 침해하는 콘텐츠를 업로드하는 행위
+
+══════════════════════════════════════════════════════════════
+
+11. 개인정보 보호
+
+귀하의 개인정보 보호는 매우 중요합니다. 개인정보 수집, 사용, 보호 방법에 대한 자세한 내용은 다음 링크의 개인정보 처리방침을 참조하십시오:
+
+https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+
+개인정보 처리방침은 본 계약의 일부를 구성하며, 라이선스 앱을 사용함으로써 개인정보 처리방침에도 동의하게 됩니다.
+
+══════════════════════════════════════════════════════════════
+
+12. 계약 종료
+
+12.1 이용자의 해지
+
+귀하는 다음 방법으로 언제든지 본 계약을 종료할 수 있습니다:
+
+• 라이선스 앱을 기기에서 삭제
+• 플랫폼 설정에서 구독 취소
+• changsekwon@gmail.com으로 이메일 문의
+
+12.2 라이선서의 해지
+
+라이선서는 다음의 경우 통지 여부와 관계없이 귀하의 액세스를 즉시 종료하거나 일시 중단할 수 있습니다:
+
+• 본 계약 조건 위반
+• 사기, 불법 또는 해로운 활동
+• 법원 명령 또는 법 집행 기관의 요청
+• 기술적 또는 보안상의 이유
+
+12.3 종료 후 효력
+
+계약 종료 시:
+• 라이선스 앱을 사용할 수 있는 귀하의 권리는 즉시 종료됩니다
+• 귀하는 모든 기기에서 라이선스 앱을 삭제해야 합니다
+• 이미 지불한 구독료는 환불되지 않습니다 (플랫폼 정책에 따름)
+• 클라우드에 저장된 데이터는 30일 후 삭제될 수 있습니다
+
+══════════════════════════════════════════════════════════════
+
+13. Apple 관련 조항 (iOS 사용자)
+
+13.1 라이선스 당사자 인정
+
+귀하는 다음을 인정하고 동의합니다:
+
+• 본 라이선스 계약은 귀하와 라이선서 간에 체결된 것이며, Apple Inc. 또는 그 자회사("Apple")와 체결된 것이 아닙니다
+• 라이선서(Apple이 아님)가 라이선스 앱 및 그 콘텐츠에 대해 단독으로 책임을 집니다
+• Apple은 라이선스 앱에 대한 유지보수 및 지원 서비스를 제공할 의무가 없습니다
+
+13.2 제3자 수혜자
+
+Apple 및 그 자회사는 본 라이선스 계약의 제3자 수혜자이며, 귀하가 본 라이선스 계약 조건에 동의하면 Apple은 제3자 수혜자로서 본 라이선스 계약을 귀하에게 집행할 권리를 갖게 됩니다.
+
+13.3 Apple의 책임 부인
+
+• Apple은 라이선스 앱 또는 귀하의 소유 또는 사용에 대해 어떠한 보증 의무도 부담하지 않습니다
+• 라이선스 앱이 적용 가능한 보증을 준수하지 못하는 경우, 귀하는 Apple에 이를 알릴 수 있으며 Apple은 귀하에게 라이선스 앱 구매 가격(있는 경우)을 환불할 것입니다
+• 법률이 허용하는 최대한도 내에서, Apple은 라이선스 앱과 관련하여 다른 보증 의무를 부담하지 않으며, 보증 준수 실패로 인한 다른 청구, 손실, 책임, 손해, 비용 또는 경비는 오로지 라이선서의 책임입니다
+
+13.4 제품 청구
+
+• 라이선서(Apple이 아님)는 라이선스 앱 또는 귀하의 소유 및/또는 사용과 관련된 귀하 또는 제3자의 청구를 처리할 책임이 있습니다. 여기에는 다음이 포함됩니다:
+  - 제조물 책임 청구
+  - 라이선스 앱이 적용 가능한 법적 또는 규제 요구사항을 준수하지 못한다는 청구
+  - 소비자 보호, 개인정보 보호 또는 유사한 법률에 따라 발생하는 청구
+
+13.5 지적재산권 침해
+
+• 제3자가 라이선스 앱 또는 귀하의 소유 및 사용이 해당 제3자의 지적재산권을 침해한다고 주장하는 경우, 라이선서(Apple이 아님)는 그러한 지적재산권 침해 청구의 조사, 방어, 해결 및 면책에 대해 단독으로 책임을 집니다.
+
+13.6 법적 준수
+
+• 귀하는 다음을 진술하고 보증합니다:
+  - (i) 미국 정부의 금수 조치 대상 국가 또는 미국 정부가 "테러 지원" 국가로 지정한 국가에 위치하지 않으며
+  - (ii) 미국 정부의 금지 또는 제한 당사자 목록에 등재되어 있지 않습니다
+
+• 귀하는 라이선스 앱을 사용할 때 모든 적용 가능한 제3자 계약 조건을 준수해야 합니다
+
+13.7 연락처 정보
+
+라이선스 앱과 관련된 질문, 불만사항 또는 청구는 다음으로 연락하십시오:
+
+타로 타이머 개발팀
+이메일: changsekwon@gmail.com
+Instagram: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+14. Google 관련 조항 (Android 사용자)
+
+14.1 라이선스 당사자 인정
+
+귀하는 다음을 인정하고 동의합니다:
+
+• 본 라이선스 계약은 귀하와 라이선서 간에 체결된 것이며, Google LLC("Google")와 체결된 것이 아닙니다
+• 라이선서(Google이 아님)가 라이선스 앱, 콘텐츠 및 서비스에 대해 단독으로 책임을 집니다
+• Google은 라이선스 앱에 대해 어떠한 의무나 책임도 부담하지 않습니다
+
+14.2 Google의 책임 부인
+
+• Google은 라이선스 앱 또는 본 계약에 대해 어떠한 보증이나 책임도 부담하지 않습니다
+• Google은 라이선스 앱의 유지보수 및 지원 서비스에 대한 책임이 없습니다
+
+14.3 정책 준수
+
+본 라이선스 앱은 Google Play 개발자 프로그램 정책 및 Google Play 서비스 약관을 준수합니다.
+
+══════════════════════════════════════════════════════════════
+
+15. 수출 규제 준수
+
+귀하는 다음을 진술하고 보증합니다:
+
+• 미국 정부의 금수 조치 대상 국가 또는 미국 정부가 "테러 지원" 국가로 지정한 국가에 위치하지 않습니다
+• 미국 재무부의 특별 지정 국민 목록(Specially Designated Nationals List) 또는 미국 상무부의 거부 당사자 목록(Denied Persons List)에 등재되어 있지 않습니다
+
+귀하는 다음에 동의합니다:
+
+• 미국 수출법 및 해당 국가의 수출입법을 준수합니다
+• 금지된 국가 또는 개인에게 라이선스 앱을 수출, 재수출 또는 이전하지 않습니다
+• 핵무기, 화학무기 또는 생물학적 무기의 설계, 개발 또는 생산을 포함한 금지된 최종 용도로 라이선스 앱을 사용하지 않습니다
+
+══════════════════════════════════════════════════════════════
+
+16. 일반 조항
+
+16.1 완전한 합의
+
+본 계약은 개인정보 처리방침과 함께 라이선스 앱의 사용에 관한 귀하와 라이선서 간의 완전한 합의를 구성하며, 라이선스 앱에 관한 이전의 모든 구두 또는 서면 이해 또는 합의를 대체합니다.
+
+16.2 분리 가능성
+
+본 계약의 어느 조항이 관할 법원에 의해 불법, 무효 또는 집행 불가능하다고 판단되는 경우, 해당 조항은 본 계약에서 분리되며 나머지 조항의 유효성 및 집행 가능성에는 영향을 미치지 않습니다.
+
+16.3 권리 포기 금지
+
+라이선서가 본 계약의 어떠한 권리나 조항을 집행하지 않더라도 해당 권리나 조항의 포기로 간주되지 않습니다.
+
+16.4 양도
+
+귀하는 라이선서의 사전 서면 동의 없이 본 계약을 양도하거나 이전할 수 없습니다. 라이선서는 통지 여부와 관계없이 본 계약을 자유롭게 양도할 수 있습니다.
+
+16.5 생존 조항
+
+본 계약의 종료 후에도 다음 조항은 유효합니다: 지적재산권, 면책, 책임의 제한, 분쟁 해결, 일반 조항.
+
+16.6 준거법
+
+본 계약은 법률 충돌 원칙에 관계없이 대한민국 법률에 따라 해석되고 규율됩니다.
+
+16.7 분쟁 해결
+
+본 계약과 관련하여 발생하는 모든 분쟁은 라이선서 소재지의 관할 법원에서 해결됩니다. 귀하는 이러한 법원의 전속 관할권에 취소 불가능하게 동의합니다.
+
+16.8 언어
+
+본 계약은 한국어와 영어로 작성되었습니다. 해석상 불일치가 있는 경우 한국어 버전이 우선합니다.
+
+══════════════════════════════════════════════════════════════
+
+17. 약관 변경
+
+라이선서는 언제든지 본 계약을 수정할 권리를 보유합니다. 변경사항은 다음 방법으로 통지됩니다:
+
+• 앱 내 알림
+• 등록된 사용자에게 이메일
+• 업데이트된 약관을 앱 내에 게시
+
+중요한 변경사항이 있는 경우, 변경 내용이 발효되기 최소 30일 전에 통지합니다. 변경 후 라이선스 앱을 계속 사용하면 새로운 조건에 동의한 것으로 간주됩니다. 새로운 조건에 동의하지 않는 경우, 라이선스 앱 사용을 중단하고 삭제해야 합니다.
+
+══════════════════════════════════════════════════════════════
+
+18. 고객 지원
+
+이메일: changsekwon@gmail.com
+Instagram DM: @deanosajutaro
+지원 페이지: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
+
+응답 시간:
+• 일반 사용자: 영업일 기준 48시간 이내
+• 프리미엄 사용자: 24시간 내 우선 응답
+
+══════════════════════════════════════════════════════════════
+
+19. 연락처 정보
+
+회사명: 타로 타이머 개발팀
+이메일: changsekwon@gmail.com
+Instagram: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+라이선스 앱을 다운로드, 설치 또는 사용함으로써, 귀하는 본 최종 사용자 사용권 계약을 읽고 이해하였으며 그 조건에 구속되는 것에 동의함을 인정합니다.
+
+타로 타이머를 이용해 주셔서 감사합니다! 💜
+
+══════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════
+【 ENGLISH VERSION / 영어 버전 】
+══════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════
+
+1. LICENSE AGREEMENT AND SCOPE
+
+By downloading and using Tarot Timer (the "Licensed Application"), you, the end user ("You" or "End User"), agree to be bound by this binding license agreement with Tarot Timer Development Team (the "Licensor"). This license agreement is NOT an agreement with Apple Inc. ("Apple") or Google LLC ("Google").
+
+If you do not agree to these terms, do not install or use the Licensed Application.
+
+══════════════════════════════════════════════════════════════
+
+2. SCOPE OF LICENSE
+
+2.1 Limited License Grant
+
+Licensor grants You a limited, non-exclusive, non-transferable license to:
+
+• Download, install, and use a single copy of the Licensed Application on any iOS or Android device that You own or control
+• Use the Licensed Application for personal, non-commercial purposes only in accordance with this Agreement
+
+2.2 License Restrictions
+
+You may NOT:
+
+❌ Rent, lease, lend, sell, redistribute, or sublicense the Licensed Application
+❌ Reverse engineer, decompile, or disassemble the Licensed Application's source code (unless expressly permitted by applicable law)
+❌ Create derivative works of the Licensed Application
+❌ Copy any part of the Licensed Application (except for backup purposes)
+❌ Remove, alter, or obscure any copyright or other intellectual property notices in the Licensed Application
+❌ Use automated systems or software to extract data from the Licensed Application
+
+══════════════════════════════════════════════════════════════
+
+3. SERVICE DESCRIPTION
+
+3.1 Free Features
+• 24-hour tarot card timer service
+• 78 tarot cards (22 Major Arcana + 56 Minor Arcana) with meanings
+• Hourly notifications (user configurable)
+• Basic diary and spread features
+• Multi-language support (Korean, English, Japanese)
+
+3.2 Premium Features (Paid Subscription)
+• Ad-free experience
+• Unlimited diary storage
+• Premium mystical themes
+• Priority customer support (24-hour response)
+• Cloud backup (optional)
+
+══════════════════════════════════════════════════════════════
+
+4. AUTO-RENEWABLE SUBSCRIPTIONS
+
+4.1 Subscription Plans
+
+Monthly Premium: $4.99 USD (₩6,600 KRW)
+- Full premium features
+
+Annual Premium: $34.99 USD (₩46,000 KRW)
+- 42% savings vs monthly
+- Full premium features
+
+Note: Prices may vary by country and will be displayed in your local currency.
+
+4.2 Auto-Renewal Terms
+
+⚠️ IMPORTANT - Auto-Renewal:
+• All subscriptions automatically renew until canceled by You
+• You will be charged 24 hours before the end of the current subscription period
+• Cancel at least 24 hours before renewal to avoid charges
+• Manage and cancel subscriptions anytime in your device settings
+
+4.3 Subscription Management
+
+iOS: Settings → [Your Name] → Subscriptions → Tarot Timer → Cancel Subscription
+Android: Google Play Store → Account → Payments & subscriptions → Tarot Timer → Cancel subscription
+
+4.4 Subscription Renewal and Cancellation
+• Cancellation is effective at the end of the current subscription period
+• After cancellation, premium features remain available for the remainder of the paid period
+• Upon re-subscription, previous user data may be retained (if backed up)
+
+══════════════════════════════════════════════════════════════
+
+5. REFUND POLICY
+
+5.1 Platform-Based Refunds
+• iOS: Subject to Apple App Store refund policy (reportaproblem.apple.com)
+• Android: Subject to Google Play Store refund policy (Google Play Support)
+• Licensor does not process refunds directly; please follow platform procedures
+
+5.2 Refund Eligibility
+• Technical errors preventing service use
+• Billing errors or duplicate charges
+• Within the period allowed by platform policies (typically 7 days after subscription)
+
+5.3 Refund Request Process
+iOS: Visit reportaproblem.apple.com
+Android: Contact Google Play Support
+Email: changsekwon@gmail.com (if platform refund fails)
+Instagram DM: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+6. WARRANTY DISCLAIMER
+
+6.1 "AS IS" and "AS AVAILABLE"
+
+THE LICENSED APPLICATION IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, LICENSOR DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO:
+
+• Implied warranties of merchantability
+• Implied warranties of fitness for a particular purpose
+• Implied warranties of non-infringement
+• Warranties arising from course of dealing or usage of trade
+
+6.2 No Warranty for:
+
+Licensor does NOT warrant that:
+
+• The Licensed Application will meet Your requirements
+• The Licensed Application will be uninterrupted or error-free
+• Defects in the Licensed Application will be corrected
+• The Licensed Application is compatible with other software or hardware
+• Results obtained from using the Licensed Application will be accurate or reliable
+
+6.3 Limited Warranty (Apple Standard 90-Day)
+
+To the extent permitted by applicable law, the Licensed Application is warranted to substantially conform to published specifications for ninety (90) days from the date of initial download. If during this 90-day period, the Licensed Application fails to conform to this warranty, Licensor's sole liability and Your exclusive remedy shall be, at Licensor's option, either:
+
+• To repair or replace the Licensed Application
+• To refund the amount paid for the Licensed Application
+
+══════════════════════════════════════════════════════════════
+
+7. LIMITATION OF LIABILITY
+
+7.1 No Liability for Indirect Damages
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR BE LIABLE FOR:
+
+• Indirect, incidental, special, consequential, or punitive damages
+• Loss of profits, revenue, data, use, or goodwill
+• Cost of procurement of substitute products or services
+• Damages resulting from use or inability to use the Licensed Application
+
+This applies whether based on contract, tort (including negligence), strict liability, or any other legal theory, even if Licensor has been advised of the possibility of such damages.
+
+7.2 Cap on Total Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, LICENSOR'S TOTAL LIABILITY FOR ALL CLAIMS ARISING UNDER THIS AGREEMENT SHALL NOT EXCEED THE AMOUNT PAID BY YOU FOR THE LICENSED APPLICATION IN THE TWELVE (12) MONTHS PRIOR TO THE CLAIM ARISING. For claims related to free features, maximum liability is capped at $50 USD.
+
+7.3 Legal Exceptions
+
+Some countries or jurisdictions do not allow the exclusion of certain warranties or the limitation of liability for incidental or consequential damages. Accordingly, some of the above limitations may not apply to You. In such cases, Licensor's liability will be limited to the greatest extent permitted by applicable law.
+
+══════════════════════════════════════════════════════════════
+
+8. INDEMNIFICATION
+
+8.1 User Responsibility
+
+You agree to indemnify, defend, and hold harmless Licensor and its officers, directors, employees, agents, licensors, suppliers, and service providers from and against all claims, damages, obligations, losses, liabilities, costs, debt, and expenses (including attorney's fees) arising from:
+
+• Your access to and use of the Licensed Application
+• Your violation of any term of this Agreement
+• Your violation of any intellectual property or other right of any third party
+• Your harm caused to any other user
+
+══════════════════════════════════════════════════════════════
+
+9. INTELLECTUAL PROPERTY RIGHTS
+
+9.1 Ownership
+
+The Licensed Application and all rights, title, and interest in and to it (including all intellectual property rights) are and will remain the exclusive property of Licensor. This Agreement is not a sale and does not convey to You any rights of ownership in or related to the Licensed Application, except for the limited license rights expressly granted in this Agreement.
+
+9.2 Trademarks
+
+"Tarot Timer", logos, and related marks are trademarks of Licensor. You may not use these trademarks without Licensor's prior written consent.
+
+9.3 Content Ownership
+
+• All tarot card images, interpretations, text, and UI/UX design within the app are copyrighted works of Licensor
+• Users may not reproduce, transmit, distribute, or sell content without written consent
+• User-generated diary entries and notes remain the property of users, but Licensor provides storage services for cloud backup
+
+══════════════════════════════════════════════════════════════
+
+10. PROHIBITED CONDUCT
+
+You agree NOT to:
+
+❌ Impersonate others or steal personal information
+❌ Disrupt the operation of the Licensed Application
+❌ Upload or transmit viruses, malware, worms, or other malicious code
+❌ Use automated systems (bots, scrapers, robots) to access the Licensed Application
+❌ Circumvent or disable any security features of the Licensed Application
+❌ Use the Licensed Application for any illegal, fraudulent, harmful, or discriminatory purpose
+❌ Distribute spam, chain letters, or pyramid schemes through the Licensed Application
+❌ Upload content that infringes others' intellectual property rights
+
+══════════════════════════════════════════════════════════════
+
+11. PRIVACY
+
+Your privacy is very important to us. For details on how we collect, use, and protect your personal information, please read our Privacy Policy at:
+
+https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+
+The Privacy Policy is incorporated into this Agreement, and by using the Licensed Application, you also agree to the Privacy Policy.
+
+══════════════════════════════════════════════════════════════
+
+12. TERMINATION
+
+12.1 Termination by User
+
+You may terminate this Agreement at any time by:
+
+• Deleting the Licensed Application from your device
+• Canceling your subscription through platform settings
+• Emailing changsekwon@gmail.com
+
+12.2 Termination by Licensor
+
+Licensor may immediately terminate or suspend your access, with or without notice, if you:
+
+• Violate any term of this Agreement
+• Engage in fraudulent, illegal, or harmful activity
+• Are subject to a court order or law enforcement request
+• For technical or security reasons
+
+12.3 Effect of Termination
+
+Upon termination:
+• Your right to use the Licensed Application immediately ceases
+• You must delete the Licensed Application from all devices
+• Already-paid subscription fees are non-refundable (subject to platform policies)
+• Cloud-stored data may be deleted after 30 days
+
+══════════════════════════════════════════════════════════════
+
+13. APPLE-SPECIFIC TERMS (iOS Users)
+
+13.1 Acknowledgment of License Parties
+
+You acknowledge and agree that:
+
+• This license agreement is concluded between You and Licensor, NOT with Apple Inc. or its subsidiaries ("Apple")
+• Licensor, NOT Apple, is solely responsible for the Licensed Application and its content
+• Apple has no obligation to provide maintenance and support services for the Licensed Application
+
+13.2 Third-Party Beneficiary
+
+Apple and its subsidiaries are third-party beneficiaries of this license agreement, and upon Your acceptance of this license agreement, Apple will have the right (and will be deemed to have accepted the right) to enforce this license agreement against You as a third-party beneficiary.
+
+13.3 Apple's Disclaimer of Warranty
+
+• Apple has no warranty obligation whatsoever with respect to the Licensed Application or Your possession or use of it
+• In the event of any failure of the Licensed Application to conform to any applicable warranty, You may notify Apple, and Apple will refund the purchase price (if any) for the Licensed Application to You
+• To the maximum extent permitted by applicable law, Apple will have no other warranty obligation whatsoever with respect to the Licensed Application, and any other claims, losses, liabilities, damages, costs, or expenses attributable to any failure to conform to any warranty will be Licensor's sole responsibility
+
+13.4 Product Claims
+
+• Licensor, NOT Apple, is responsible for addressing any claims by You or any third party relating to the Licensed Application or Your possession and/or use of it, including:
+  - Product liability claims
+  - Claims that the Licensed Application fails to conform to applicable legal or regulatory requirements
+  - Claims arising under consumer protection, privacy, or similar legislation
+
+13.5 Intellectual Property Infringement
+
+• In the event of any third-party claim that the Licensed Application or Your possession and use of it infringes that third party's intellectual property rights, Licensor, NOT Apple, will be solely responsible for the investigation, defense, settlement, and discharge of any such intellectual property infringement claim.
+
+13.6 Legal Compliance
+
+• You represent and warrant that:
+  - (i) You are not located in a country that is subject to a U.S. Government embargo, or that has been designated by the U.S. Government as a "terrorist supporting" country; and
+  - (ii) You are not listed on any U.S. Government list of prohibited or restricted parties
+
+• You must comply with all applicable third-party terms of agreement when using the Licensed Application
+
+13.7 Contact Information
+
+Questions, complaints, or claims with respect to the Licensed Application should be directed to:
+
+Tarot Timer Development Team
+Email: changsekwon@gmail.com
+Instagram: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+14. GOOGLE-SPECIFIC TERMS (Android Users)
+
+14.1 Acknowledgment of License Parties
+
+You acknowledge and agree that:
+
+• This license agreement is concluded between You and Licensor, NOT with Google LLC ("Google")
+• Licensor, NOT Google, is solely responsible for the Licensed Application, content, and services
+• Google has no obligation or liability with respect to the Licensed Application
+
+14.2 Google's Disclaimer
+
+• Google assumes no warranty or liability with respect to the Licensed Application or this Agreement
+• Google is not responsible for maintenance and support services for the Licensed Application
+
+14.3 Policy Compliance
+
+The Licensed Application complies with Google Play Developer Program Policies and Google Play Terms of Service.
+
+══════════════════════════════════════════════════════════════
+
+15. EXPORT COMPLIANCE
+
+You represent and warrant that:
+
+• You are not located in a country that is subject to a U.S. Government embargo, or that has been designated by the U.S. Government as a "terrorist supporting" country
+• You are not listed on any U.S. Government list of prohibited or restricted parties, including the Treasury Department's Specially Designated Nationals List or the Commerce Department's Denied Persons List
+
+You agree to:
+
+• Comply with all U.S. export laws and the export and import laws of the country in which You reside
+• Not export, re-export, or transfer the Licensed Application to any prohibited country or individual
+• Not use the Licensed Application for any prohibited end-use, including design, development, or production of nuclear, chemical, or biological weapons
+
+══════════════════════════════════════════════════════════════
+
+16. GENERAL PROVISIONS
+
+16.1 Entire Agreement
+
+This Agreement, together with the Privacy Policy, constitutes the entire agreement between You and Licensor regarding the use of the Licensed Application and supersedes all prior or contemporaneous understandings or agreements, written or oral, regarding the Licensed Application.
+
+16.2 Severability
+
+If any provision of this Agreement is held to be unlawful, void, or for any reason unenforceable by a court of competent jurisdiction, then that provision shall be deemed severable from this Agreement and shall not affect the validity and enforceability of any remaining provisions.
+
+16.3 No Waiver
+
+Licensor's failure to enforce any right or provision of this Agreement shall not be deemed a waiver of such right or provision.
+
+16.4 Assignment
+
+You may not assign or transfer this Agreement without Licensor's prior written consent. Licensor may freely assign this Agreement with or without notice.
+
+16.5 Survival
+
+The following provisions shall survive termination of this Agreement: Intellectual Property Rights, Indemnification, Limitation of Liability, Dispute Resolution, and General Provisions.
+
+16.6 Governing Law
+
+This Agreement shall be interpreted and governed by the laws of South Korea, without regard to conflict of law principles.
+
+16.7 Dispute Resolution
+
+All disputes arising out of or in connection with this Agreement shall be resolved in the courts of the jurisdiction where Licensor is located. You irrevocably consent to the exclusive jurisdiction of such courts.
+
+16.8 Language
+
+This Agreement is written in Korean and English. In case of any discrepancy in interpretation, the Korean version shall prevail.
+
+══════════════════════════════════════════════════════════════
+
+17. CHANGES TO TERMS
+
+Licensor reserves the right to modify this Agreement at any time. Changes will be notified by:
+
+• In-app notification
+• Email to registered users
+• Posting updated terms in the app
+
+For significant changes, we will provide at least 30 days' notice before the change takes effect. Continued use of the Licensed Application after changes constitutes acceptance of the new terms. If you do not agree to the new terms, you must stop using and delete the Licensed Application.
+
+══════════════════════════════════════════════════════════════
+
+18. CUSTOMER SUPPORT
+
+Email: changsekwon@gmail.com
+Instagram DM: @deanosajutaro
+Support Page: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
+
+Response Time:
+• Regular users: Within 48 hours (business days)
+• Premium users: Priority response within 24 hours
+
+══════════════════════════════════════════════════════════════
+
+19. CONTACT INFORMATION
+
+Company: Tarot Timer Development Team
+Email: changsekwon@gmail.com
+Instagram: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+BY DOWNLOADING, INSTALLING, OR USING THE LICENSED APPLICATION, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THIS END USER LICENSE AGREEMENT AND AGREE TO BE BOUND BY ITS TERMS.
+
+Thank you for using Tarot Timer! 💜
+
+══════════════════════════════════════════════════════════════
