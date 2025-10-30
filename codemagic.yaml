@@ -3,12 +3,11 @@
 
 workflows:
   ios-production:
-    name: iOS Production Build (Free)
+    name: iOS Production Build
     max_build_duration: 60
     instance_type: mac_mini_m1
+
     environment:
-      groups:
-        - app_store_credentials
       vars:
         BUNDLE_ID: "com.tarottimer.app"
         XCODE_WORKSPACE: "ios/TarotTimer.xcworkspace"
@@ -44,93 +43,16 @@ workflows:
 
       - name: 🏗️ Build iOS app
         script: |
-          cd ios
-          xcodebuild -workspace TarotTimer.xcworkspace \
-            -scheme TarotTimer \
-            -configuration Release \
-            -archivePath $CM_BUILD_DIR/build/TarotTimer.xcarchive \
-            archive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: 📦 Export IPA
-        script: |
-          cd ios
-          xcodebuild -exportArchive \
-            -archivePath $CM_BUILD_DIR/build/TarotTimer.xcarchive \
-            -exportPath $CM_BUILD_DIR/build \
-            -exportOptionsPlist $CM_BUILD_DIR/ios/exportOptions.plist
-
-    artifacts:
-      - build/*.ipa
-      - build/TarotTimer.xcarchive
-
-    publishing:
-      email:
-        recipients:
-          - changsekwon@gmail.com
-        notify:
-          success: true
-          failure: true
-
-  ios-app-store:
-    name: iOS App Store Build (With Code Signing)
-    max_build_duration: 60
-    instance_type: mac_mini_m1
-    environment:
-      groups:
-        - app_store_credentials
-      vars:
-        BUNDLE_ID: "com.tarottimer.app"
-        XCODE_WORKSPACE: "ios/TarotTimer.xcworkspace"
-        XCODE_SCHEME: "TarotTimer"
-        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
-      node: 20.11.0
-      xcode: 15.2
-      cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.tarottimer.app
-
-    scripts:
-      - name: 📦 Install npm dependencies
-        script: |
-          npm ci
-
-      - name: 🔧 Install Expo CLI
-        script: |
-          npm install -g expo-cli eas-cli
-
-      - name: 📱 Prebuild iOS project
-        script: |
-          npx expo prebuild --platform ios --clean
-
-      - name: 📦 Install CocoaPods dependencies
-        script: |
-          cd ios && pod install
-
-      - name: 🔑 Set up code signing
-        script: |
-          keychain initialize
-
-      - name: 🏗️ Build iOS app for App Store
-        script: |
           xcode-project build-ipa \
             --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME"
+            --scheme "$XCODE_SCHEME" \
+            --config "Release"
 
     artifacts:
       - build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-
       email:
         recipients:
           - changsekwon@gmail.com
