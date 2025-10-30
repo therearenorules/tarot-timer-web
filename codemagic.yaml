@@ -13,7 +13,7 @@ workflows:
         XCODE_WORKSPACE: "ios/TarotTimer.xcworkspace"
         XCODE_SCHEME: "TarotTimer"
       node: 20.11.0
-      xcode: 15.2
+      xcode: latest
       cocoapods: default
 
     triggering:
