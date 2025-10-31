@@ -60,113 +60,127 @@ export class IAPManager {
 
   /**
    * IAP 초기화
+   * ✅ 완전 재작성: 실패 시 명확히 false 반환, 모바일에서 시뮬레이션 모드 차단
    */
   static async initialize(): Promise<boolean> {
     try {
-      // 웹 환경에서는 IAP 비활성화
-      if (!isMobile) {
-        console.log('🌐 웹 환경: IAP 기능을 시뮬레이션 모드로 실행');
+      // 🌐 웹 환경에서만 시뮬레이션 허용
+      if (Platform.OS === 'web') {
+        console.log('🌐 웹 환경: IAP 기능 비활성화 (정상)');
         this.initialized = true;
         return true;
       }
 
-      // RNIap 모듈이 로드되지 않은 경우 처리
+      // 📱 모바일 환경에서는 반드시 RNIap 모듈 필요
       if (!RNIap) {
-        console.log('⚠️ react-native-iap 모듈을 사용할 수 없습니다. 시뮬레이션 모드로 전환합니다.');
-        this.initialized = true;
-        return true;
+        console.error('❌ CRITICAL: react-native-iap 모듈을 로드할 수 없습니다.');
+        console.error('📌 원인: 네이티브 모듈이 빌드에 포함되지 않음');
+        console.error('📌 해결: npx expo prebuild --clean 후 재빌드 필요');
+        throw new Error('IAP_MODULE_NOT_LOADED');
+      }
+
+      // ✅ RNIap API 메서드 존재 확인
+      if (typeof RNIap.initConnection !== 'function') {
+        console.error('❌ CRITICAL: react-native-iap API를 사용할 수 없습니다.');
+        console.error('📌 원인: Expo Go 또는 개발 빌드 사용 중');
+        console.error('📌 해결: Production 빌드 필요');
+        throw new Error('IAP_API_NOT_AVAILABLE');
       }
 
       console.log('💳 IAP 매니저 초기화 시작...');
 
-      // ✅ CRITICAL FIX: RNIap 메서드 존재 확인
-      if (typeof RNIap.initConnection !== 'function') {
-        console.log('⚠️ react-native-iap API 사용 불가. 시뮬레이션 모드로 전환합니다.');
-        this.initialized = true;
-        return true;
-      }
-
       // RNIap 초기화
       const isReady = await RNIap.initConnection();
       if (!isReady) {
-        console.log('⚠️ IAP 연결 초기화 실패. 시뮬레이션 모드로 전환합니다.');
-        this.initialized = true;
-        return true;
+        console.error('❌ IAP 연결 초기화 실패');
+        console.error('📌 네트워크 연결을 확인하고 다시 시도해주세요.');
+        throw new Error('IAP_CONNECTION_FAILED');
       }
 
-      // ✅ CRITICAL FIX: 각 단계를 try-catch로 감싸서 한 단계 실패해도 계속 진행
-      try {
-        // 구독 상품 정보 로드
-        await this.loadProducts();
-      } catch (error) {
-        console.warn('⚠️ 구독 상품 로드 실패, 계속 진행:', error);
+      console.log('✅ IAP 연결 초기화 성공');
+
+      // 구독 상품 로드 (필수)
+      const products = await this.loadProducts();
+      if (products.length === 0) {
+        console.error('❌ 구독 상품을 로드할 수 없습니다.');
+        console.error('📌 App Store Connect에서 상품 설정 확인 필요');
+        throw new Error('NO_PRODUCTS_AVAILABLE');
       }
 
+      console.log(`✅ 구독 상품 ${products.length}개 로드 완료`);
+
+      // 구매 복원 시도 (선택적 - 실패해도 계속 진행)
       try {
-        // 구매 복원 처리 (앱 시작 시 자동 호출)
         await this.restorePurchases();
       } catch (error) {
-        console.warn('⚠️ 구매 복원 실패, 계속 진행:', error);
+        console.warn('⚠️ 구매 복원 실패 (무시하고 계속):', error);
       }
 
-      try {
-        // 구독 갱신 자동 처리 시작
-        await this.processSubscriptionRenewal();
-      } catch (error) {
-        console.warn('⚠️ 구독 갱신 처리 실패, 계속 진행:', error);
-      }
-
-      try {
-        // 주기적 갱신 모니터링 시작
-        this.startPeriodicRenewalCheck();
-      } catch (error) {
-        console.warn('⚠️ 주기적 갱신 모니터링 시작 실패, 계속 진행:', error);
-      }
+      // 주기적 갱신 모니터링 시작
+      this.startPeriodicRenewalCheck();
 
       this.initialized = true;
       console.log('✅ IAP 매니저 초기화 완료');
       return true;
 
-    } catch (error) {
-      console.error('❌ IAP 초기화 오류:', error);
-      return false;
+    } catch (error: any) {
+      console.error('❌ IAP 초기화 실패:', error);
+      this.initialized = false;
+      return false; // ✅ 명확히 실패 반환
     }
   }
 
   /**
    * 구독 상품 정보 로드
+   * ✅ 완전 재작성: 실제 상품만 로드, 시뮬레이션 데이터 제거
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     try {
-      // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션 데이터 사용
-      if (!isMobile || !RNIap || typeof RNIap.getSubscriptions !== 'function') {
-        console.log('🌐 시뮬레이션 모드: 구독 상품 시뮬레이션 데이터 로드');
-        this.products = [
-          {
-            productId: SUBSCRIPTION_SKUS.monthly,
-            title: '타로 타이머 월간 프리미엄',
-            description: '무제한 세션 저장, 광고 제거, 프리미엄 테마',
-            price: '6600',
-            localizedPrice: '₩6,600',
-            currency: 'KRW',
-            type: 'monthly'
-          },
-          {
-            productId: SUBSCRIPTION_SKUS.yearly,
-            title: '타로 타이머 연간 프리미엄',
-            description: '무제한 세션 저장, 광고 제거, 프리미엄 테마 (42% 할인)',
-            price: '46000',
-            localizedPrice: '₩46,000',
-            currency: 'KRW',
-            type: 'yearly'
-          }
-        ];
-        return this.products;
+      // 웹 환경에서는 빈 배열 반환
+      if (Platform.OS === 'web') {
+        console.log('🌐 웹 환경: 구독 상품 로드 불가');
+        this.products = [];
+        return [];
+      }
+
+      // RNIap 모듈 필수 확인
+      if (!RNIap || typeof RNIap.getSubscriptions !== 'function') {
+        console.error('❌ 구독 상품 API를 사용할 수 없습니다.');
+        throw new Error('SUBSCRIPTIONS_API_NOT_AVAILABLE');
       }
 
       const skus = Object.values(SUBSCRIPTION_SKUS);
-      const subscriptions = await RNIap.getSubscriptions({ skus });
+      console.log('📦 구독 상품 로드 시도:', skus);
+      console.log('📱 플랫폼:', Platform.OS);
+      console.log('🔧 RNIap 버전:', RNIap.constructor.name);
 
+      // 실제 App Store/Play Store에서 상품 정보 가져오기
+      let subscriptions;
+      try {
+        subscriptions = await RNIap.getSubscriptions({ skus });
+        console.log('📦 getSubscriptions 응답:', subscriptions);
+      } catch (getSubError: any) {
+        console.error('❌ getSubscriptions 호출 실패:', getSubError);
+        console.error('📌 에러 메시지:', getSubError.message);
+        console.error('📌 에러 코드:', getSubError.code);
+        throw getSubError;
+      }
+
+      if (!subscriptions || subscriptions.length === 0) {
+        console.error('❌ 구독 상품을 찾을 수 없습니다.');
+        console.error('📌 확인된 SKUs:', skus);
+        console.error('📌 App Store Connect 상태: 승인됨');
+        console.error('📌 Product IDs:');
+        console.error('   - tarot_timer_monthly');
+        console.error('   - tarot_timer_yearly');
+        console.error('📌 가능한 원인:');
+        console.error('   1. Sandbox 계정으로 로그인되지 않음');
+        console.error('   2. App Store Connect 동기화 대기 중 (최대 24시간)');
+        console.error('   3. 구독 그룹이 활성화되지 않음');
+        throw new Error('NO_SUBSCRIPTIONS_FOUND');
+      }
+
+      // 상품 데이터 매핑
       this.products = subscriptions.map(sub => ({
         productId: sub.productId,
         title: sub.title || sub.productId,
@@ -177,12 +191,13 @@ export class IAPManager {
         type: sub.productId.includes('yearly') ? 'yearly' : 'monthly'
       }));
 
-      console.log('📦 구독 상품 로드 완료:', this.products.length);
+      console.log('✅ 구독 상품 로드 완료:', this.products);
       return this.products;
 
     } catch (error) {
       console.error('❌ 구독 상품 로드 오류:', error);
-      return [];
+      this.products = [];
+      throw error; // ✅ 오류를 상위로 전파
     }
   }
 
@@ -195,42 +210,44 @@ export class IAPManager {
 
   /**
    * 구독 구매 처리
+   * ✅ 완전 재작성: 실제 구매만 처리, 시뮬레이션 제거
    */
   static async purchaseSubscription(productId: string): Promise<PurchaseResult> {
     try {
+      // 초기화 확인
       if (!this.initialized) {
-        throw new Error('IAP 매니저가 초기화되지 않았습니다.');
+        throw new Error('IAP_NOT_INITIALIZED');
+      }
+
+      // 웹 환경에서는 구매 불가
+      if (Platform.OS === 'web') {
+        return {
+          success: false,
+          error: '웹 환경에서는 구독을 구매할 수 없습니다.\n앱을 다운로드해주세요.'
+        };
+      }
+
+      // RNIap 모듈 필수 확인
+      if (!RNIap || typeof RNIap.requestSubscription !== 'function') {
+        console.error('❌ CRITICAL: 구매 API를 사용할 수 없습니다.');
+        throw new Error('PURCHASE_API_NOT_AVAILABLE');
       }
 
       console.log('💳 구독 구매 시작:', productId);
 
-      // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션
-      if (!isMobile || !RNIap) {
-        console.log('🌐 시뮬레이션 모드: 구매 시뮬레이션');
-        const result = await this.simulateWebPurchase(productId);
-        if (result.success) {
-          await this.processPurchaseSuccess(productId, 'web_simulation_' + Date.now());
-        }
-        return result;
-      }
-
-      // ✅ CRITICAL FIX: RNIap.requestSubscription 메서드 존재 확인
-      if (typeof RNIap.requestSubscription !== 'function') {
-        console.error('❌ react-native-iap API 사용 불가');
-        console.error('📌 해결 방법:');
-        console.error('   1. Expo 앱을 사용 중이라면: npx expo prebuild 실행 후 네이티브 빌드 필요');
-        console.error('   2. TestFlight 빌드라면: EAS Build로 재빌드 필요');
-        console.error('   3. 자세한 내용: IAP_TROUBLESHOOTING.md 참고');
-
+      // 중복 구매 방지
+      if (this.activePurchases.has(productId)) {
         return {
           success: false,
-          error: '인앱 구매 기능을 사용할 수 없습니다. 앱을 업데이트해주세요.'
+          error: '이미 해당 상품의 결제가 진행 중입니다.'
         };
       }
 
-      // 실제 구매 처리 (네트워크 재시도 적용)
-      const purchase = await this.retryWithExponentialBackoff(async () => {
-        return await RNIap.requestSubscription({
+      this.activePurchases.add(productId);
+
+      try {
+        // ✅ 실제 Apple/Google 결제 처리
+        const purchase = await RNIap.requestSubscription({
           sku: productId,
           ...(Platform.OS === 'android' && {
             subscriptionOffers: [
@@ -241,59 +258,100 @@ export class IAPManager {
             ]
           })
         });
-      });
 
-      if (purchase && purchase.transactionId) {
-        await this.processPurchaseSuccess(productId, purchase.transactionId);
+        console.log('✅ 구매 완료:', purchase);
 
-        // 구매 확인 (중요: 앱스토어에 구매 완료 알림)
-        await RNIap.finishTransaction({
-          purchase,
-          isConsumable: false
-        });
+        if (purchase && purchase.transactionId) {
+          // 영수증 검증 및 프리미엄 상태 업데이트
+          const receiptData = purchase.transactionReceipt ||
+                              JSON.stringify(purchase);
 
-        return {
-          success: true,
-          productId,
-          transactionId: purchase.transactionId,
-          purchaseDate: purchase.transactionDate.toString()
-        };
+          await this.processPurchaseSuccess(
+            productId,
+            purchase.transactionId,
+            receiptData
+          );
+
+          // 구매 확인 (중요!)
+          await RNIap.finishTransaction({
+            purchase,
+            isConsumable: false
+          });
+
+          console.log('✅ 구매 처리 완료');
+
+          return {
+            success: true,
+            productId,
+            transactionId: purchase.transactionId,
+            purchaseDate: purchase.transactionDate?.toString()
+          };
+        }
+
+        throw new Error('INVALID_PURCHASE_RESPONSE');
+
+      } finally {
+        this.activePurchases.delete(productId);
       }
-
-      throw new Error('구매 처리에 실패했습니다.');
 
     } catch (error: any) {
       console.error('❌ 구매 오류:', error);
 
-      // 사용자가 취소한 경우
+      // 사용자 취소
       if (error.code === 'E_USER_CANCELLED') {
         return {
           success: false,
-          error: '사용자가 구매를 취소했습니다.'
+          error: '구매를 취소했습니다.'
         };
+      }
+
+      // 네트워크 오류
+      if (error.code === 'E_NETWORK_ERROR') {
+        return {
+          success: false,
+          error: '네트워크 연결을 확인하고 다시 시도해주세요.'
+        };
+      }
+
+      // 기타 오류
+      let errorMessage = '구매 처리 중 오류가 발생했습니다.';
+
+      if (error.message === 'IAP_NOT_INITIALIZED') {
+        errorMessage = '구독 시스템이 초기화되지 않았습니다.\n앱을 재시작해주세요.';
+      } else if (error.message === 'PURCHASE_API_NOT_AVAILABLE') {
+        errorMessage = '앱 내 구매 기능을 사용할 수 없습니다.\n앱을 최신 버전으로 업데이트해주세요.';
+      } else if (error.code === 'E_SERVICE_ERROR') {
+        errorMessage = '앱스토어 서비스에 일시적인 문제가 있습니다.\n잠시 후 다시 시도해주세요.';
+      } else if (error.code === 'E_RECEIPT_FAILED') {
+        errorMessage = '영수증 검증에 실패했습니다.\n고객센터로 문의해주세요.';
       }
 
       return {
         success: false,
-        error: error.message || '구매 처리 중 오류가 발생했습니다.'
+        error: errorMessage
       };
     }
   }
 
   /**
    * 구매 복원 처리
+   * ✅ FIX: 실제 복원된 항목 수를 기반으로 정확한 결과 반환
    */
   static async restorePurchases(): Promise<boolean> {
     try {
-      // 웹 환경 또는 RNIap 모듈이 없는 경우 시뮬레이션
+      // 웹 환경 또는 RNIap 모듈이 없는 경우
       if (!isMobile || !RNIap || typeof RNIap.getAvailablePurchases !== 'function') {
-        console.log('🌐 시뮬레이션 모드: 구매 복원 시뮬레이션');
-        return true;
+        console.log('🌐 시뮬레이션 모드: 구매 복원 불가');
+        console.log('📌 실제 기기에서만 구매 복원이 가능합니다.');
+        return false; // ✅ 수정: 시뮬레이션에서는 false 반환
       }
 
       console.log('🔄 구매 복원 시작...');
 
       const purchases = await RNIap.getAvailablePurchases();
+      console.log(`📦 앱스토어 구매 내역: ${purchases.length}개`);
+
+      let restoredCount = 0;
 
       for (const purchase of purchases) {
         if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
@@ -307,11 +365,12 @@ export class IAPManager {
 
           await this.processPurchaseSuccess(purchase.productId, purchase.transactionId, receiptData);
           console.log('✅ 구독 복원 및 검증 완료:', purchase.productId);
+          restoredCount++;
         }
       }
 
-      console.log('✅ 구매 복원 완료');
-      return true;
+      console.log(`✅ 구매 복원 완료: ${restoredCount}개 복원됨`);
+      return restoredCount > 0; // ✅ 수정: 실제 복원된 항목이 있을 때만 true
 
     } catch (error) {
       console.error('❌ 구매 복원 오류:', error);
@@ -321,10 +380,17 @@ export class IAPManager {
 
   /**
    * 구매 성공 처리 (프리미엄 상태 업데이트)
+   * ✅ 보안 강화: 모바일에서 영수증 필수
    */
   private static async processPurchaseSuccess(productId: string, transactionId: string, receiptData?: string): Promise<void> {
     try {
       console.log('🔍 구매 성공 처리 및 영수증 검증 시작...');
+
+      // 📱 모바일 환경에서는 영수증 필수
+      if (Platform.OS !== 'web' && !receiptData) {
+        console.error('❌ CRITICAL: 모바일에서 영수증 데이터 누락');
+        throw new Error('영수증 데이터가 필요합니다');
+      }
 
       // 영수증 검증 수행
       if (receiptData) {
@@ -346,7 +412,7 @@ export class IAPManager {
         return;
       }
 
-      // 영수증 데이터가 없는 경우 기본 처리 (웹 환경 등)
+      // 🌐 웹 환경에서만 영수증 없이 처리 허용 (시뮬레이션)
       const isYearly = productId.includes('yearly');
       const currentDate = new Date();
       const expiryDate = new Date(currentDate);

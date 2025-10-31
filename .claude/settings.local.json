@@ -65,7 +65,10 @@
       "Bash(brew list:*)",
       "Bash(echo:*)",
       "Bash(xcrun xcode-select:*)",
-      "Bash(osascript:*)"
+      "Bash(osascript:*)",
+      "Bash(npx expo config:*)",
+      "Bash(where android)",
+      "Bash(where adb)"
     ],
     "deny": [],
     "ask": []

@@ -46,10 +46,19 @@ export interface GooglePlayReceiptData {
 
 export class ReceiptValidator {
   // App Store Connect 공유 비밀키 (실제 배포시 환경변수로 관리)
-  private static readonly APP_STORE_SHARED_SECRET =
-    process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || // 로컬 개발 (.env 파일)
-    process.env.APPLE_SHARED_SECRET ||                 // EAS Build (EAS Secret)
-    'your-shared-secret';                              // Fallback (절대 사용되지 않음)
+  private static readonly APP_STORE_SHARED_SECRET = (() => {
+    const secret =
+      process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || // 로컬 개발 (.env 파일)
+      process.env.APPLE_SHARED_SECRET;                   // EAS Build (EAS Secret)
+
+    if (!secret) {
+      console.error('❌ CRITICAL: APPLE_SHARED_SECRET is not configured!');
+      console.error('📌 영수증 검증이 실패합니다.');
+      console.error('📌 EAS Secret 확인: eas secret:list');
+    }
+
+    return secret || '';  // 빈 문자열 반환 (Apple이 명확히 거부)
+  })();
 
   // Google Play Service Account (실제 배포시 환경변수로 관리)
   private static readonly GOOGLE_PLAY_SERVICE_ACCOUNT = process.env.EXPO_PUBLIC_GOOGLE_PLAY_SERVICE_ACCOUNT;

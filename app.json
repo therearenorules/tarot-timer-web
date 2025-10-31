@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tarot Timer - Learn Card Meanings",
     "slug": "tarot-timer",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -28,7 +28,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "107",
+      "buildNumber": "111",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -37,11 +37,14 @@
       "config": {
         "usesNonExemptEncryption": false,
         "googleMobileAdsAppId": "ca-app-pub-4284542208210945~6525956491"
-      }
+      },
+      "associatedDomains": [
+        "applinks:tarottimer.app"
+      ]
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 102,
+      "versionCode": 103,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",

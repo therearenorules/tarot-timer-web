@@ -46,21 +46,59 @@ export default function PremiumSubscription({
       // IAP 초기화
       const initialized = await IAPManager.initialize();
       if (!initialized) {
-        Alert.alert('오류', 'IAP 시스템을 초기화할 수 없습니다.');
+        // ✅ 초기화 실패 시 명확한 안내
+        Alert.alert(
+          '구독 기능을 사용할 수 없습니다',
+          '앱 내 구매 기능을 초기화할 수 없습니다.\n\n가능한 원인:\n• 앱 버전이 오래되었습니다\n• 네트워크 연결 문제\n• 앱스토어 서비스 장애\n\n해결 방법:\n1. 앱을 최신 버전으로 업데이트\n2. 네트워크 연결 확인\n3. 앱 재시작\n4. 문제가 지속되면 고객센터 문의',
+          [
+            {
+              text: '앱 재시작 안내',
+              onPress: () => {
+                Alert.alert('안내', '앱을 종료한 후 다시 실행해주세요.');
+              }
+            },
+            { text: '닫기', style: 'cancel' }
+          ]
+        );
         return;
       }
 
       // 구독 상품 로드
       const availableProducts = await IAPManager.loadProducts();
+
+      if (availableProducts.length === 0) {
+        Alert.alert(
+          '구독 상품을 불러올 수 없습니다',
+          '앱스토어에서 구독 상품 정보를 가져올 수 없습니다.\n\n잠시 후 다시 시도해주세요.',
+          [{ text: '확인' }]
+        );
+        return;
+      }
+
       setProducts(availableProducts);
 
       // 현재 구독 상태 확인
       const currentStatus = await IAPManager.getCurrentSubscriptionStatus();
       setPremiumStatus(currentStatus);
 
-    } catch (error) {
-      console.error('IAP 초기화 오류:', error);
-      Alert.alert('오류', 'IAP 시스템 초기화 중 오류가 발생했습니다.');
+      console.log('✅ IAP 초기화 완료');
+
+    } catch (error: any) {
+      console.error('❌ IAP 초기화 오류:', error);
+
+      let errorMessage = 'IAP 시스템 초기화 중 오류가 발생했습니다.';
+
+      if (error.message === 'IAP_MODULE_NOT_LOADED') {
+        errorMessage = '앱 내 구매 모듈을 로드할 수 없습니다.\n앱을 재설치하거나 최신 버전으로 업데이트해주세요.';
+      } else if (error.message === 'IAP_API_NOT_AVAILABLE') {
+        errorMessage = '현재 사용 중인 앱 버전에서는 구독 기능을 사용할 수 없습니다.\n정식 버전을 다운로드해주세요.';
+      } else if (error.message === 'NO_PRODUCTS_AVAILABLE' || error.message === 'NO_SUBSCRIPTIONS_FOUND') {
+        errorMessage = '구독 상품을 찾을 수 없습니다.\n잠시 후 다시 시도해주세요.';
+      } else if (error.message === 'IAP_CONNECTION_FAILED') {
+        errorMessage = '앱스토어 연결에 실패했습니다.\n네트워크 연결을 확인하고 다시 시도해주세요.';
+      }
+
+      Alert.alert('초기화 오류', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -106,13 +144,35 @@ export default function PremiumSubscription({
       const restored = await IAPManager.restorePurchases();
 
       if (restored) {
-        Alert.alert('복원 완료', '구매가 복원되었습니다.');
-        await initializeIAP(); // 상태 새로고침
+        Alert.alert(
+          '복원 완료',
+          '이전 구매가 성공적으로 복원되었습니다! 🎉',
+          [
+            {
+              text: '확인',
+              onPress: async () => {
+                await initializeIAP(); // 상태 새로고침
+              }
+            }
+          ]
+        );
       } else {
-        Alert.alert('복원 실패', '복원할 구매 내역이 없습니다.');
+        Alert.alert(
+          '복원할 구매 내역이 없습니다',
+          '이미 구독 중이시라면 App Store 또는 Play Store에서 구독 상태를 확인해주세요.\n\n구독 관리:\n• iOS: 설정 → [사용자 이름] → 구독\n• Android: Play Store → 프로필 → 결제 및 정기 결제',
+          [{ text: '확인' }]
+        );
       }
-    } catch (error) {
-      Alert.alert('오류', '구매 복원 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      console.error('구매 복원 오류:', error);
+
+      let errorMessage = '구매 복원 중 오류가 발생했습니다.';
+
+      if (error.message === 'IAP_MODULE_NOT_AVAILABLE' || error.message === 'IAP_API_NOT_AVAILABLE') {
+        errorMessage = '앱 내 구매 기능을 사용할 수 없습니다.\n\n해결 방법:\n• 앱을 최신 버전으로 업데이트해주세요\n• 앱을 재설치해주세요\n• 문제가 지속되면 고객센터로 문의해주세요';
+      }
+
+      Alert.alert('오류', errorMessage);
     } finally {
       setLoading(false);
     }
