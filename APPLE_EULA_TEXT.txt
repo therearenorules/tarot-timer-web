@@ -1,0 +1,229 @@
+TAROT TIMER - TERMS OF SERVICE (EULA)
+
+Last Updated: October 15, 2025
+Version: 1.0.9
+Effective Date: October 15, 2025
+
+══════════════════════════════════════════════════════════════
+
+1. AGREEMENT TO TERMS
+
+By downloading and using Tarot Timer (the "App"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the App.
+
+══════════════════════════════════════════════════════════════
+
+2. SERVICE DESCRIPTION
+
+2.1 Free Features
+• 24-hour tarot card timer service
+• 78 tarot cards (22 Major Arcana + 56 Minor Arcana) with meanings
+• Hourly notifications (user configurable)
+• Basic diary and spread features
+• Multi-language support (Korean, English, Japanese)
+
+2.2 Premium Features (Paid Subscription)
+• Ad-free experience
+• Unlimited diary storage
+• Premium mystical themes
+• Priority customer support (24-hour response)
+• Cloud backup (optional)
+
+══════════════════════════════════════════════════════════════
+
+3. SUBSCRIPTION AND PAYMENT
+
+3.1 Subscription Plans
+
+Monthly Premium: $4.99 USD (₩6,600 KRW)
+- Full premium features
+
+Annual Premium: $34.99 USD (₩46,000 KRW)
+- 42% savings vs monthly
+- Full premium features
+
+Note: Prices may vary by country and will be displayed in your local currency.
+
+3.2 Auto-Renewal
+
+⚠️ IMPORTANT:
+• All subscriptions automatically renew
+• You will be charged 24 hours before the end of the current period
+• Cancel at least 24 hours before renewal to avoid charges
+• Manage subscriptions in your device settings
+
+3.3 Subscription Management
+
+iOS: Settings → Apple ID → Subscriptions
+Android: Google Play Store → Account → Payments & subscriptions
+
+══════════════════════════════════════════════════════════════
+
+4. REFUND POLICY
+
+4.1 Refund Principles
+• iOS: Subject to Apple App Store refund policy
+• Android: Subject to Google Play Store refund policy
+• We do not process refunds directly; please follow platform procedures
+
+4.2 Refund Eligibility
+• Technical errors preventing service use
+• Billing errors or duplicate charges
+• Within 7 days of subscription (subject to platform policies)
+
+4.3 Refund Request Process
+
+iOS: Visit reportaproblem.apple.com
+Android: Contact Google Play Support
+Email: changsekwon@gmail.com (if platform refund fails)
+Instagram DM: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+5. USER RIGHTS AND OBLIGATIONS
+
+5.1 User Rights
+• Freedom to use the service
+• Right to access, modify, and delete personal information
+• Right to terminate service agreement
+• Right to prompt resolution of complaints
+
+5.2 Prohibited Conduct
+
+Users must NOT:
+❌ Impersonate others or steal personal information
+❌ Disrupt service operations
+❌ Reverse engineer, decompile, or disassemble the App
+❌ Use automated tools (bots, macros, scripts)
+❌ Defame or harm others
+❌ Infringe intellectual property rights
+
+══════════════════════════════════════════════════════════════
+
+6. INTELLECTUAL PROPERTY
+
+6.1 Copyright
+• All content in the App is owned by Tarot Timer Development Team
+• Includes tarot card images, text, UI/UX design, and all materials
+• Users may not reproduce, transmit, or distribute content without written consent
+
+6.2 Trademarks
+• "Tarot Timer", logos, and related marks are our trademarks
+• Unauthorized use of our trademarks is prohibited
+
+══════════════════════════════════════════════════════════════
+
+7. PRIVACY
+
+We are committed to protecting your privacy. For details on how we collect, use, and protect your personal information, please read our Privacy Policy at:
+
+https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+
+══════════════════════════════════════════════════════════════
+
+8. LIMITATION OF LIABILITY
+
+We are NOT liable for:
+• Service interruptions due to force majeure (natural disasters, war, emergencies)
+• Service issues caused by user error
+• Accuracy or reliability of user-generated content
+• Changes in third-party platform policies (Apple, Google)
+
+══════════════════════════════════════════════════════════════
+
+9. DISPUTE RESOLUTION
+
+9.1 Governing Law
+These Terms are governed by the laws of South Korea.
+
+9.2 Jurisdiction
+Disputes shall be resolved in the courts of the jurisdiction where the company is located.
+
+══════════════════════════════════════════════════════════════
+
+10. CUSTOMER SUPPORT
+
+Email: changsekwon@gmail.com
+Instagram DM: @deanosajutaro
+
+Response Time:
+• Regular users: Within 48 hours (business days)
+• Premium users: Priority response within 24 hours
+
+══════════════════════════════════════════════════════════════
+
+11. CHANGES TO TERMS
+
+We may update these Terms of Service from time to time. We will notify you of any changes by:
+• In-app notification
+• Email to registered users
+• Posting updated terms in the App
+
+Continued use of the App after changes constitutes acceptance of the new terms.
+
+══════════════════════════════════════════════════════════════
+
+12. TERMINATION
+
+12.1 User Termination
+Users may terminate their account at any time by:
+• Uninstalling the App
+• Canceling subscription through platform settings
+• Contacting customer support
+
+12.2 Company Termination
+We may suspend or terminate your account if you:
+• Violate these Terms of Service
+• Engage in fraudulent activity
+• Harm other users or the service
+
+══════════════════════════════════════════════════════════════
+
+13. APPLE-SPECIFIC TERMS (iOS)
+
+13.1 Acknowledgment
+You acknowledge that:
+• These Terms are between you and Tarot Timer Development Team, not Apple
+• Apple has no obligation to provide maintenance or support
+• Apple is not responsible for the App or its content
+
+13.2 Third-Party Beneficiary
+Apple and its subsidiaries are third-party beneficiaries of these Terms and may enforce them.
+
+13.3 Compliance
+The App complies with Apple's App Store Review Guidelines and policies.
+
+══════════════════════════════════════════════════════════════
+
+14. GOOGLE-SPECIFIC TERMS (Android)
+
+14.1 Acknowledgment
+You acknowledge that:
+• These Terms are between you and Tarot Timer Development Team, not Google
+• Google has no obligation regarding the App
+• Google is not responsible for the App or its content
+
+14.2 Compliance
+The App complies with Google Play Developer Program Policies.
+
+══════════════════════════════════════════════════════════════
+
+15. ENTIRE AGREEMENT
+
+These Terms, together with our Privacy Policy, constitute the entire agreement between you and Tarot Timer Development Team regarding the use of the App.
+
+══════════════════════════════════════════════════════════════
+
+16. CONTACT INFORMATION
+
+Company: Tarot Timer Development Team
+Email: changsekwon@gmail.com
+Instagram: @deanosajutaro
+Support: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
+
+══════════════════════════════════════════════════════════════
+
+By using Tarot Timer, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+
+Thank you for using Tarot Timer! 💜
+
+══════════════════════════════════════════════════════════════

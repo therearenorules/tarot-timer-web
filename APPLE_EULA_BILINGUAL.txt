@@ -1,0 +1,462 @@
+타로 타이머 - 이용약관 (EULA)
+TAROT TIMER - TERMS OF SERVICE (EULA)
+
+최종 업데이트: 2025년 10월 15일
+버전: 1.0.9
+시행일: 2025년 10월 15일
+
+Last Updated: October 15, 2025
+Version: 1.0.9
+Effective Date: October 15, 2025
+
+══════════════════════════════════════════════════════════════
+【 한국어 버전 / KOREAN VERSION 】
+══════════════════════════════════════════════════════════════
+
+1. 약관의 목적 및 적용
+
+타로 타이머(이하 "앱")를 다운로드하고 사용함으로써 귀하는 본 이용약관에 동의하는 것으로 간주됩니다. 본 약관에 동의하지 않으시면 앱을 사용하지 마십시오.
+
+══════════════════════════════════════════════════════════════
+
+2. 서비스 설명
+
+2.1 무료 기능
+• 24시간 타로 카드 타이머 서비스
+• 78장 타로 카드 (메이저 22장 + 마이너 56장) 및 의미 제공
+• 시간별 알림 (사용자 설정 가능)
+• 기본 다이어리 및 스프레드 기능
+• 다국어 지원 (한국어, 영어, 일본어)
+
+2.2 프리미엄 기능 (유료 구독)
+• 광고 제거
+• 무제한 다이어리 저장
+• 프리미엄 미스틱 테마
+• 우선 고객 지원 (24시간 내 응답)
+• 클라우드 백업 (선택사항)
+
+══════════════════════════════════════════════════════════════
+
+3. 구독 및 결제
+
+3.1 구독 상품
+
+월간 프리미엄: $4.99 USD (₩6,600 KRW)
+- 전체 프리미엄 기능 이용
+
+연간 프리미엄: $34.99 USD (₩46,000 KRW)
+- 월간 대비 42% 할인
+- 전체 프리미엄 기능 이용
+
+참고: 가격은 국가별로 다를 수 있으며, 현지 통화로 표시됩니다.
+
+3.2 자동 갱신
+
+⚠️ 중요:
+• 모든 구독은 자동으로 갱신됩니다
+• 현재 구독 기간 종료 24시간 전에 결제가 진행됩니다
+• 요금 청구를 피하려면 갱신 최소 24시간 전에 취소하십시오
+• 기기 설정에서 구독을 관리할 수 있습니다
+
+3.3 구독 관리
+
+iOS: 설정 → Apple ID → 구독
+Android: Google Play 스토어 → 계정 → 결제 및 정기 결제
+
+══════════════════════════════════════════════════════════════
+
+4. 환불 정책
+
+4.1 환불 원칙
+• iOS: Apple App Store 환불 정책 적용
+• Android: Google Play 스토어 환불 정책 적용
+• 회사는 직접 환불을 처리하지 않으며, 각 플랫폼의 환불 절차를 따라야 합니다
+
+4.2 환불 가능 사유
+• 서비스 이용을 방해하는 기술적 오류
+• 청구 오류 또는 중복 결제
+• 구독 후 7일 이내 (플랫폼 정책에 따름)
+
+4.3 환불 신청 방법
+
+iOS: reportaproblem.apple.com 방문
+Android: Google Play 지원 센터 문의
+이메일: changsekwon@gmail.com (플랫폼 환불 실패 시)
+Instagram DM: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+5. 이용자의 권리와 의무
+
+5.1 이용자의 권리
+• 서비스를 자유롭게 이용할 권리
+• 개인정보 열람, 수정, 삭제를 요구할 권리
+• 서비스 이용 계약을 해지할 권리
+• 불만사항에 대한 신속한 처리를 요구할 권리
+
+5.2 금지 행위
+
+이용자는 다음 행위를 해서는 안 됩니다:
+❌ 타인의 개인정보를 도용하거나 사칭하는 행위
+❌ 서비스 운영을 방해하는 행위
+❌ 앱을 역설계, 디컴파일, 디스어셈블하는 행위
+❌ 자동화된 도구 사용 (봇, 매크로, 스크립트)
+❌ 타인을 비방하거나 해를 끼치는 행위
+❌ 지적재산권을 침해하는 행위
+
+══════════════════════════════════════════════════════════════
+
+6. 지적재산권
+
+6.1 저작권
+• 앱 내 모든 콘텐츠는 타로 타이머 개발팀이 소유합니다
+• 타로 카드 이미지, 텍스트, UI/UX 디자인 등 모든 자료 포함
+• 이용자는 서면 동의 없이 콘텐츠를 복제, 전송, 배포할 수 없습니다
+
+6.2 상표권
+• "타로 타이머", 로고 및 관련 상표는 당사의 상표입니다
+• 무단으로 당사 상표를 사용할 수 없습니다
+
+══════════════════════════════════════════════════════════════
+
+7. 개인정보 보호
+
+귀하의 개인정보 보호는 매우 중요합니다. 개인정보 수집, 사용, 보호 방법에 대한 자세한 내용은 다음 링크의 개인정보 처리방침을 참조하십시오:
+
+https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+
+══════════════════════════════════════════════════════════════
+
+8. 면책 사항
+
+회사는 다음의 경우 책임을 지지 않습니다:
+• 불가항력(천재지변, 전쟁, 비상사태)으로 인한 서비스 중단
+• 이용자의 과실로 인한 서비스 이용 장애
+• 이용자가 생성한 콘텐츠의 정확성 또는 신뢰성
+• 제3자 플랫폼(Apple, Google) 정책 변경
+
+══════════════════════════════════════════════════════════════
+
+9. 분쟁 해결
+
+9.1 준거법
+본 약관은 대한민국 법률에 따라 규율되고 해석됩니다.
+
+9.2 관할 법원
+분쟁은 회사 소재지 관할 법원에서 해결됩니다.
+
+══════════════════════════════════════════════════════════════
+
+10. 고객 지원
+
+이메일: changsekwon@gmail.com
+Instagram DM: @deanosajutaro
+
+응답 시간:
+• 일반 사용자: 영업일 기준 48시간 이내
+• 프리미엄 사용자: 24시간 내 우선 응답
+
+══════════════════════════════════════════════════════════════
+
+11. 약관 변경
+
+본 이용약관은 수시로 업데이트될 수 있습니다. 변경사항은 다음 방법으로 알려드립니다:
+• 앱 내 알림
+• 등록된 사용자에게 이메일
+• 앱 내 업데이트된 약관 게시
+
+변경 후 앱을 계속 사용하면 새로운 약관에 동의한 것으로 간주됩니다.
+
+══════════════════════════════════════════════════════════════
+
+12. 계약 해지
+
+12.1 이용자의 해지
+이용자는 언제든지 다음 방법으로 계정을 해지할 수 있습니다:
+• 앱 삭제
+• 플랫폼 설정에서 구독 취소
+• 고객 지원 문의
+
+12.2 회사의 해지
+다음의 경우 회사는 계정을 정지 또는 해지할 수 있습니다:
+• 본 이용약관 위반
+• 사기 행위
+• 다른 이용자나 서비스에 해를 끼치는 행위
+
+══════════════════════════════════════════════════════════════
+
+13. Apple 관련 조항 (iOS)
+
+13.1 확인 사항
+귀하는 다음을 인정합니다:
+• 본 약관은 귀하와 타로 타이머 개발팀 간의 계약이며, Apple과의 계약이 아닙니다
+• Apple은 유지보수 또는 지원 의무가 없습니다
+• Apple은 앱 또는 그 콘텐츠에 대해 책임이 없습니다
+
+13.2 제3자 수혜자
+Apple 및 그 자회사는 본 약관의 제3자 수혜자이며 이를 집행할 수 있습니다.
+
+13.3 준수
+본 앱은 Apple의 App Store 심사 가이드라인 및 정책을 준수합니다.
+
+══════════════════════════════════════════════════════════════
+
+14. Google 관련 조항 (Android)
+
+14.1 확인 사항
+귀하는 다음을 인정합니다:
+• 본 약관은 귀하와 타로 타이머 개발팀 간의 계약이며, Google과의 계약이 아닙니다
+• Google은 앱에 대한 의무가 없습니다
+• Google은 앱 또는 그 콘텐츠에 대해 책임이 없습니다
+
+14.2 준수
+본 앱은 Google Play 개발자 프로그램 정책을 준수합니다.
+
+══════════════════════════════════════════════════════════════
+
+15. 완전한 합의
+
+본 약관은 개인정보 처리방침과 함께 귀하와 타로 타이머 개발팀 간의 앱 사용에 관한 전체 합의를 구성합니다.
+
+══════════════════════════════════════════════════════════════
+
+16. 연락처 정보
+
+회사: 타로 타이머 개발팀
+이메일: changsekwon@gmail.com
+Instagram: @deanosajutaro
+지원: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
+
+══════════════════════════════════════════════════════════════
+
+타로 타이머를 사용함으로써 귀하는 본 이용약관을 읽고 이해하였으며 이에 구속되는 것에 동의함을 확인합니다.
+
+타로 타이머를 이용해 주셔서 감사합니다! 💜
+
+══════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════
+【 ENGLISH VERSION / 영어 버전 】
+══════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════
+
+1. AGREEMENT TO TERMS
+
+By downloading and using Tarot Timer (the "App"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the App.
+
+══════════════════════════════════════════════════════════════
+
+2. SERVICE DESCRIPTION
+
+2.1 Free Features
+• 24-hour tarot card timer service
+• 78 tarot cards (22 Major Arcana + 56 Minor Arcana) with meanings
+• Hourly notifications (user configurable)
+• Basic diary and spread features
+• Multi-language support (Korean, English, Japanese)
+
+2.2 Premium Features (Paid Subscription)
+• Ad-free experience
+• Unlimited diary storage
+• Premium mystical themes
+• Priority customer support (24-hour response)
+• Cloud backup (optional)
+
+══════════════════════════════════════════════════════════════
+
+3. SUBSCRIPTION AND PAYMENT
+
+3.1 Subscription Plans
+
+Monthly Premium: $4.99 USD (₩6,600 KRW)
+- Full premium features
+
+Annual Premium: $34.99 USD (₩46,000 KRW)
+- 42% savings vs monthly
+- Full premium features
+
+Note: Prices may vary by country and will be displayed in your local currency.
+
+3.2 Auto-Renewal
+
+⚠️ IMPORTANT:
+• All subscriptions automatically renew
+• You will be charged 24 hours before the end of the current period
+• Cancel at least 24 hours before renewal to avoid charges
+• Manage subscriptions in your device settings
+
+3.3 Subscription Management
+
+iOS: Settings → Apple ID → Subscriptions
+Android: Google Play Store → Account → Payments & subscriptions
+
+══════════════════════════════════════════════════════════════
+
+4. REFUND POLICY
+
+4.1 Refund Principles
+• iOS: Subject to Apple App Store refund policy
+• Android: Subject to Google Play Store refund policy
+• We do not process refunds directly; please follow platform procedures
+
+4.2 Refund Eligibility
+• Technical errors preventing service use
+• Billing errors or duplicate charges
+• Within 7 days of subscription (subject to platform policies)
+
+4.3 Refund Request Process
+
+iOS: Visit reportaproblem.apple.com
+Android: Contact Google Play Support
+Email: changsekwon@gmail.com (if platform refund fails)
+Instagram DM: @deanosajutaro
+
+══════════════════════════════════════════════════════════════
+
+5. USER RIGHTS AND OBLIGATIONS
+
+5.1 User Rights
+• Freedom to use the service
+• Right to access, modify, and delete personal information
+• Right to terminate service agreement
+• Right to prompt resolution of complaints
+
+5.2 Prohibited Conduct
+
+Users must NOT:
+❌ Impersonate others or steal personal information
+❌ Disrupt service operations
+❌ Reverse engineer, decompile, or disassemble the App
+❌ Use automated tools (bots, macros, scripts)
+❌ Defame or harm others
+❌ Infringe intellectual property rights
+
+══════════════════════════════════════════════════════════════
+
+6. INTELLECTUAL PROPERTY
+
+6.1 Copyright
+• All content in the App is owned by Tarot Timer Development Team
+• Includes tarot card images, text, UI/UX design, and all materials
+• Users may not reproduce, transmit, or distribute content without written consent
+
+6.2 Trademarks
+• "Tarot Timer", logos, and related marks are our trademarks
+• Unauthorized use of our trademarks is prohibited
+
+══════════════════════════════════════════════════════════════
+
+7. PRIVACY
+
+We are committed to protecting your privacy. For details on how we collect, use, and protect your personal information, please read our Privacy Policy at:
+
+https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/privacy-policy.html
+
+══════════════════════════════════════════════════════════════
+
+8. LIMITATION OF LIABILITY
+
+We are NOT liable for:
+• Service interruptions due to force majeure (natural disasters, war, emergencies)
+• Service issues caused by user error
+• Accuracy or reliability of user-generated content
+• Changes in third-party platform policies (Apple, Google)
+
+══════════════════════════════════════════════════════════════
+
+9. DISPUTE RESOLUTION
+
+9.1 Governing Law
+These Terms are governed by the laws of South Korea.
+
+9.2 Jurisdiction
+Disputes shall be resolved in the courts of the jurisdiction where the company is located.
+
+══════════════════════════════════════════════════════════════
+
+10. CUSTOMER SUPPORT
+
+Email: changsekwon@gmail.com
+Instagram DM: @deanosajutaro
+
+Response Time:
+• Regular users: Within 48 hours (business days)
+• Premium users: Priority response within 24 hours
+
+══════════════════════════════════════════════════════════════
+
+11. CHANGES TO TERMS
+
+We may update these Terms of Service from time to time. We will notify you of any changes by:
+• In-app notification
+• Email to registered users
+• Posting updated terms in the App
+
+Continued use of the App after changes constitutes acceptance of the new terms.
+
+══════════════════════════════════════════════════════════════
+
+12. TERMINATION
+
+12.1 User Termination
+Users may terminate their account at any time by:
+• Uninstalling the App
+• Canceling subscription through platform settings
+• Contacting customer support
+
+12.2 Company Termination
+We may suspend or terminate your account if you:
+• Violate these Terms of Service
+• Engage in fraudulent activity
+• Harm other users or the service
+
+══════════════════════════════════════════════════════════════
+
+13. APPLE-SPECIFIC TERMS (iOS)
+
+13.1 Acknowledgment
+You acknowledge that:
+• These Terms are between you and Tarot Timer Development Team, not Apple
+• Apple has no obligation to provide maintenance or support
+• Apple is not responsible for the App or its content
+
+13.2 Third-Party Beneficiary
+Apple and its subsidiaries are third-party beneficiaries of these Terms and may enforce them.
+
+13.3 Compliance
+The App complies with Apple's App Store Review Guidelines and policies.
+
+══════════════════════════════════════════════════════════════
+
+14. GOOGLE-SPECIFIC TERMS (Android)
+
+14.1 Acknowledgment
+You acknowledge that:
+• These Terms are between you and Tarot Timer Development Team, not Google
+• Google has no obligation regarding the App
+• Google is not responsible for the App or its content
+
+14.2 Compliance
+The App complies with Google Play Developer Program Policies.
+
+══════════════════════════════════════════════════════════════
+
+15. ENTIRE AGREEMENT
+
+These Terms, together with our Privacy Policy, constitute the entire agreement between you and Tarot Timer Development Team regarding the use of the App.
+
+══════════════════════════════════════════════════════════════
+
+16. CONTACT INFORMATION
+
+Company: Tarot Timer Development Team
+Email: changsekwon@gmail.com
+Instagram: @deanosajutaro
+Support: https://htmlpreview.github.io/?https://github.com/therearenorules/tarot-timer-web/blob/main/public/support.html
+
+══════════════════════════════════════════════════════════════
+
+By using Tarot Timer, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+
+Thank you for using Tarot Timer! 💜
+
+══════════════════════════════════════════════════════════════
