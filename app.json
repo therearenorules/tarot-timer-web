@@ -110,6 +110,14 @@
           "delayAppMeasurementInit": false
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
       "expo-font"
     ],
     "runtimeVersion": {
