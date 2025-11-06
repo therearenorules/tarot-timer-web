@@ -28,7 +28,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "112",
+      "buildNumber": "113",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -37,10 +37,7 @@
       "config": {
         "usesNonExemptEncryption": false,
         "googleMobileAdsAppId": "ca-app-pub-4284542208210945~6525956491"
-      },
-      "associatedDomains": [
-        "applinks:tarottimer.app"
-      ]
+      }
     },
     "android": {
       "package": "com.tarottimer.app",
