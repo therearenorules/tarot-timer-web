@@ -90,12 +90,15 @@ export class IAPManager {
       console.log('💳 IAP 매니저 초기화 시작...');
 
       // StoreKit2 모드 설정 (iOS 15+ Production 환경 호환성 개선)
+      // Production 환경에서 getSubscriptions() 빈 배열 문제 해결
       if (Platform.OS === 'ios') {
         try {
           RNIap.setup({ storekitMode: 'STOREKIT2_MODE' });
           console.log('✅ StoreKit2 모드 활성화 (iOS 15+ 최적화)');
+          console.log('📱 iOS 버전:', Platform.Version);
         } catch (error) {
-          console.warn('⚠️ StoreKit2 설정 실패, 기본 모드 사용:', error);
+          console.warn('⚠️ StoreKit2 설정 실패, StoreKit 1 폴백:', error);
+          console.warn('📌 iOS 14 이하 또는 StoreKit2 미지원 환경');
         }
       }
 
