@@ -89,6 +89,16 @@ export class IAPManager {
 
       console.log('💳 IAP 매니저 초기화 시작...');
 
+      // StoreKit2 모드 설정 (iOS 15+ Production 환경 호환성 개선)
+      if (Platform.OS === 'ios') {
+        try {
+          RNIap.setup({ storekitMode: 'STOREKIT2_MODE' });
+          console.log('✅ StoreKit2 모드 활성화 (iOS 15+ 최적화)');
+        } catch (error) {
+          console.warn('⚠️ StoreKit2 설정 실패, 기본 모드 사용:', error);
+        }
+      }
+
       // RNIap 초기화
       const isReady = await RNIap.initConnection();
       if (!isReady) {
