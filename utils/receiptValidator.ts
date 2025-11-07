@@ -643,14 +643,14 @@ export class ReceiptValidator {
       // 영수증 재검증 (실제 구현에서는 저장된 영수증 데이터 사용)
       const mockReceiptData = JSON.stringify({
         transactionId: currentStatus.store_transaction_id,
-        productId: currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly' : 'tarot_timer_monthly',
+        productId: currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly_v2' : 'tarot_timer_monthly_v2',
         purchaseDate: currentStatus.purchase_date
       });
 
       const validationResult = await this.validateReceipt(mockReceiptData, currentStatus.store_transaction_id);
 
       // 검증 결과에 따라 구독 상태 업데이트
-      await this.syncSubscriptionStatus(validationResult, currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly' : 'tarot_timer_monthly');
+      await this.syncSubscriptionStatus(validationResult, currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly_v2' : 'tarot_timer_monthly_v2');
 
       if (!validationResult.isActive) {
         console.log('⚠️ 구독이 만료되었습니다.');

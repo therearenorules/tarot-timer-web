@@ -63,11 +63,11 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "21809126",
+      "id" : "21820675",
       "localizations" : [
 
       ],
-      "name" : "Tarot Timer Premium",
+      "name" : "Tarot Timer Premium V2",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -79,7 +79,7 @@
           "displayPrice" : "4.99",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "6738248438",
+          "internalID" : "6754749911",
           "introductoryOffer" : null,
           "localizations" : [
             {
@@ -88,10 +88,10 @@
               "locale" : "ko_KR"
             }
           ],
-          "productID" : "tarot_timer_monthly",
+          "productID" : "tarot_timer_monthly_v2",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Monthly Premium",
-          "subscriptionGroupID" : "21809126",
+          "subscriptionGroupID" : "21820675",
           "type" : "RecurringSubscription"
         },
         {
@@ -104,7 +104,7 @@
           "displayPrice" : "34.99",
           "familyShareable" : false,
           "groupNumber" : 2,
-          "internalID" : "6738248622",
+          "internalID" : "6755033513",
           "introductoryOffer" : null,
           "localizations" : [
             {
@@ -113,10 +113,10 @@
               "locale" : "ko_KR"
             }
           ],
-          "productID" : "tarot_timer_yearly",
+          "productID" : "tarot_timer_yearly_v2",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Yearly Premium",
-          "subscriptionGroupID" : "21809126",
+          "subscriptionGroupID" : "21820675",
           "type" : "RecurringSubscription"
         }
       ]

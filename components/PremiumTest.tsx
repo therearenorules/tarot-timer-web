@@ -155,7 +155,7 @@ export const PremiumTest: React.FC = () => {
         if (ReceiptValidator) {
           const mockReceipt = JSON.stringify({
             transactionId: 'test-transaction-123',
-            productId: 'tarot_timer_monthly',
+            productId: 'tarot_timer_monthly_v2',
             purchaseDate: Date.now()
           });
           const validation = await ReceiptValidator.validateReceipt(mockReceipt, 'test-transaction-123');

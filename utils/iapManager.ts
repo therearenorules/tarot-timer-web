@@ -23,16 +23,17 @@ import LocalStorageManager, { PremiumStatus } from './localStorage';
 import ReceiptValidator from './receiptValidator';
 
 // 구독 상품 ID 정의
+// Subscription Group: Tarot Timer Premium V2 (ID: 21820675)
 export const SUBSCRIPTION_SKUS = {
   monthly: Platform.select({
-    ios: 'tarot_timer_monthly',
-    android: 'tarot_timer_monthly',
-    default: 'tarot_timer_monthly'
+    ios: 'tarot_timer_monthly_v2', // Apple ID: 6754749911
+    android: 'tarot_timer_monthly_v2',
+    default: 'tarot_timer_monthly_v2'
   }),
   yearly: Platform.select({
-    ios: 'tarot_timer_yearly',
-    android: 'tarot_timer_yearly',
-    default: 'tarot_timer_yearly'
+    ios: 'tarot_timer_yearly_v2', // Apple ID: 6755033513
+    android: 'tarot_timer_yearly_v2',
+    default: 'tarot_timer_yearly_v2'
   })
 } as const;
 
