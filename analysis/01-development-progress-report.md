@@ -1,34 +1,37 @@
 # 📈 타로 타이머 웹앱 개발 진행 현황 보고서
 
-**보고서 날짜**: 2025-10-30 (Apple EULA 준수 완료 + Android v1.1.1 Build 102)
-**프로젝트 전체 완성도**: 94% - Apple 심사 대응 + Android 로컬 빌드 + 법적 문서 완비
+**보고서 날짜**: 2025-10-31 (iOS 구독 기능 프로덕션 오류 해결 중)
+**프로젝트 전체 완성도**: 92% - iOS 구독 기능 프로덕션 이슈로 일시적 감소
 **현재 버전**:
-- iOS v1.1.1 Build 107 (Apple 재심사 대기)
-- Android v1.1.1 Build 102 (Google Play 업로드 대기)
-**아키텍처**: 완전한 크로스 플랫폼 + Apple 표준 EULA 준수 + 로컬 Android 빌드 시스템
+- iOS v1.1.3 Build 117 (구독 로딩 실패 - 원인 분석 중)
+- Android v1.1.2 Build 104 (로컬 AAB 빌드 완료)
+**아키텍처**: 완전한 크로스 플랫폼 + react-native-iap v14.4.23 Nitro Modules + Apple 표준 EULA 준수
 
 ---
 
-## 🔥 **2025-10-30 주요 업데이트 - Apple EULA 준수 + Android 로컬 빌드**
+## 🔥 **2025-10-31 주요 업데이트 - iOS 구독 기능 프로덕션 오류 대응**
 
-### 1. **Apple 표준 EULA 완벽 준수** ✅
-- Apple Standard EULA 모든 조항 포함한 Custom EULA 작성 (45KB)
-- Apple Third-Party Beneficiary 명시 (Section 13.2)
-- 90일 제한적 보증 + 책임의 제한 + 면책 조항
-- 수출 규제 준수 (U.S. embargo countries)
-- App Store 심사 회신 작성 완료 (3,655자)
+### 1. **iOS 구독 로딩 실패 문제 발생** ❌
+- **증상**: TestFlight에서는 정상 작동, 프로덕션에서 "구독 상품을 불러올 수 없습니다" 오류
+- **영향**: Build 114, 115, 116, 117 모두 동일 증상
+- **사용자 피드백**: 실제 사용자가 구독 불가능 상태
 
-### 2. **Android 로컬 빌드 시스템 확립** ✅
-- Google Play 키스토어 문제 완전 해결
-- SHA1 지문 검증 완료 (일치 확인)
-- 프로덕션 키스토어 직접 관리 (보안 강화)
-- Android v1.1.1 Build 102 AAB 빌드 성공 (122MB)
+### 2. **시도한 해결 방법들**
+- ❌ **Build 117**: StoreKit2 모드 명시적 활성화 → 실패
+- 🔄 **현재 접근**: 라이브러리 기본 설정 사용 + 상세 디버그 로깅 (코드 준비 완료, 빌드 대기)
 
-### 3. **법적 문서 정리** ✅
-- 고객 지원 페이지 GitHub 링크 제거
-- 모든 법적 문서 링크 검증 완료
+### 3. **Android 빌드 업데이트 완료** ✅
+- Android versionCode: 103 → 104
+- 로컬 AAB 빌드 성공 (122MB)
+- 최근 iOS 수정사항 모두 포함
 
-**완성도 증가**: 92.5% → 94% (+1.5%)
+### 4. **Apple Developer Forums 원인 분석 완료** ✅
+- 8가지 주요 원인 카테고리 식별
+- 24-48시간 전파 지연이 가장 흔한 원인
+- App Store Connect 설정 문제 (Cleared for Sale, 계약 서명)
+- 앱 릴리스 상태 문제 (Approved vs Released)
+
+**완성도 변화**: 94% → 92% (-2%, 크리티컬 버그로 일시적 감소)
 
 ---
 
@@ -36,23 +39,56 @@
 
 | 플랫폼 | 버전 | 상태 |
 |--------|------|------|
-| iOS | v1.1.1 (107) | ⏳ Apple EULA 업로드 + 재심사 대기 |
-| Android | v1.1.1 (102) | ⏳ Google Play AAB 업로드 대기 |
+| iOS | v1.1.3 (117) | 🚨 프로덕션 구독 로딩 실패 - 원인 분석 중 |
+| Android | v1.1.2 (104) | ✅ 로컬 AAB 빌드 완료 - 업로드 대기 |
 
 ---
 
-## 🎯 **다음 단계 (사용자 액션 필요)**
+## 🎯 **다음 단계 (우선순위 순)**
 
-### iOS
-1. App Store Connect → 앱 정보 → 사용권 계약 → APPLE_EULA_COMPLETE.txt 업로드
-2. 해상도 센터 → APP_STORE_REVIEW_RESPONSE_FINAL.md 제출
-3. 재심사 요청
+### 최우선: iOS 구독 문제 해결 🚨
+1. **App Store Connect 설정 확인** (사용자 액션 필요)
+   - [ ] 앱 릴리스 상태: "Ready for Sale" 확인
+   - [ ] IAP "Cleared for Sale" 체크 확인
+   - [ ] 계약 서명 완료 확인 (Agreements, Tax, Banking)
+   - [ ] 타이밍: 앱 릴리스 후 48시간 경과 확인
+   - [ ] 연락처 정보 입력 확인
 
-### Android  
-1. Google Play Console → android/app/build/outputs/bundle/release/app-release.aab 업로드
-2. 버전 1.1.1 (versionCode 102) 제출
+2. **코드 레벨 디버깅**
+   - [ ] 상세 로그가 포함된 새 빌드 테스트
+   - [ ] Apple Developer Support 문의 고려
+
+### Android
+- [x] 로컬 AAB 빌드 완료 (app-release.aab, 122MB)
+- [ ] Google Play Console 업로드 (사용자 액션 필요)
 
 ---
 
-**마지막 업데이트**: 2025-10-30 17:00 KST
-**완성도**: 94% (심사 통과 시 100%)
+## 📋 **Apple Developer Forums 발견 사항 요약**
+
+### 구독 상품 로딩 실패 8가지 주요 원인
+
+1. **타이밍 문제** (가장 흔함)
+   - 24-48시간 전파 지연 (승인 후)
+   - 계약 서명 동기화 지연
+
+2. **App Store Connect 설정**
+   - "Cleared for Sale" 미체크
+   - 계약 미서명 (Paid Apps, Banking, Tax)
+   - 구독 상태 문제
+
+3. **앱 릴리스 상태**
+   - 승인 ≠ 릴리스 (Release 버튼 클릭 필요)
+   - 새 IAP는 앱 업데이트와 함께 릴리스 필요
+
+4. **Bundle ID / Product ID 불일치**
+5. **연락처 정보 누락**
+6. **Subscription Group 문제**
+7. **서버 동기화 버그** (Apple 측)
+8. **StoreKit Configuration 문제**
+
+---
+
+**마지막 업데이트**: 2025-10-31 16:00 KST
+**완성도**: 92% (구독 문제 해결 시 95%로 복귀 예상)
+**크리티컬 이슈**: iOS 프로덕션 구독 기능 장애
