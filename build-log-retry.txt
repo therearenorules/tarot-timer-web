@@ -1,0 +1,874 @@
+=== Java Version Check ===
+openjdk version "17.0.16" 2025-07-15
+OpenJDK Runtime Environment Temurin-17.0.16+8 (build 17.0.16+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.16+8 (build 17.0.16+8, mixed mode, sharing)
+
+=== Starting AAB Build ===
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if "Windows_NT" == "Windows_NT" setlocal
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set DIRNAME=C:\Users\cntus\Desktop\tarot-timer-web\android\ 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if "C:\Users\cntus\Desktop\tarot-timer-web\android\" == "" set DIRNAME=. 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set APP_BASE_NAME=gradlew 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set APP_HOME=C:\Users\cntus\Desktop\tarot-timer-web\android\ 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>for %i in ("C:\Users\cntus\Desktop\tarot-timer-web\android\") do set APP_HOME=%~fi 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set APP_HOME=C:\Users\cntus\Desktop\tarot-timer-web\android\ 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m" 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if defined JAVA_HOME goto findJavaFromJavaHome 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set JAVA_EXE=C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot/bin/java.exe 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if exist "C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot/bin/java.exe" goto execute 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set CLASSPATH= 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>"C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot/bin/java.exe" "-Xmx64m" "-Xms64m"   "-Dorg.gradle.appname=gradlew" -classpath "" -jar "C:\Users\cntus\Desktop\tarot-timer-web\android\\gradle\wrapper\gradle-wrapper.jar" bundleRelease 
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-updates-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-updates-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-updates-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-module-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+> Task :expo-updates-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-updates-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-updates-gradle-plugin:classes UP-TO-DATE
+> Task :expo-updates-gradle-plugin:jar UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-module-gradle-plugin:classes UP-TO-DATE
+> Task :expo-module-gradle-plugin:jar UP-TO-DATE
+
+> Configure project :
+[32m[ExpoRootProject][0m Using the following versions:
+  - buildTools:  [32m36.0.0[0m
+  - minSdk:      [32m24[0m
+  - compileSdk:  [32m36[0m
+  - targetSdk:   [32m36[0m
+  - ndk:         [32m27.1.12297006[0m
+  - kotlin:      [32m2.1.20[0m
+  - ksp:         [32m2.1.20-2.0.1[0m
+
+> Configure project :app
+ ??  [33mApplying gradle plugin[0m '[32mexpo-updates-gradle-plugin[0m'
+Checking the license for package NDK (Side by side) 27.1.12297006 in C:\Users\cntus\AppData\Local\Android\Sdk\licenses
+License for package NDK (Side by side) 27.1.12297006 accepted.
+Preparing "Install NDK (Side by side) 27.1.12297006 v.27.1.12297006".
+"Install NDK (Side by side) 27.1.12297006 v.27.1.12297006" ready.
+Installing NDK (Side by side) 27.1.12297006 in C:\Users\cntus\AppData\Local\Android\Sdk\ndk\27.1.12297006
+"Install NDK (Side by side) 27.1.12297006 v.27.1.12297006" complete.
+"Install NDK (Side by side) 27.1.12297006 v.27.1.12297006" finished.
+
+> Configure project :expo
+
+Using expo modules
+  - [32mexpo-constants[0m (18.0.9)
+  - [32mexpo-eas-client[0m (1.0.7)
+  - [32mexpo-json-utils[0m (0.15.0)
+  - [32mexpo-manifests[0m (1.0.8)
+  - [32mexpo-modules-core[0m (3.0.22)
+  - [32mexpo-structured-headers[0m (5.0.0)
+  - [32mexpo-updates[0m (29.0.12)
+  - [32mexpo-updates-interface[0m (2.0.0)
+  - [33m[?][0m [32mexpo-application[0m (7.0.7)
+  - [33m[?][0m [32mexpo-asset[0m (12.0.9)
+  - [33m[?][0m [32mexpo-device[0m (8.0.9)
+  - [33m[?][0m [32mexpo-file-system[0m (19.0.17)
+  - [33m[?][0m [32mexpo-font[0m (14.0.9)
+  - [33m[?][0m [32mexpo-haptics[0m (15.0.7)
+  - [33m[?][0m [32mexpo-keep-awake[0m (15.0.7)
+  - [33m[?][0m [32mexpo-linear-gradient[0m (15.0.7)
+  - [33m[?][0m [32mexpo-notifications[0m (0.32.12)
+
+
+> Configure project :react-native-google-mobile-ads
+:react-native-google-mobile-ads package.json found at C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-google-mobile-ads\package.json
+
+
+
+
+**************************************************************************************************************
+
+
+
+
+WARNING: react-native-google-mobile-ads requires an 'android_app_id' property inside a 'react-native-google-mobile-ads' key in your app.json.
+         No android_app_id property was found in this location. The native Google Mobile Ads SDK will crash on startup without it.
+         You can safely ignore this warning if you are using our Expo config plugin.
+
+
+
+
+**************************************************************************************************************
+
+
+
+
+:react-native-google-mobile-ads package.json found at C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-google-mobile-ads\package.json
+:react-native-google-mobile-ads:version set from package.json: 15.8.1 (15,8,1 - 15008001)
+:react-native-google-mobile-ads:android.compileSdk using custom value: 36
+:react-native-google-mobile-ads:android.targetSdk using custom value: 36
+:react-native-google-mobile-ads:android.minSdk using custom value: 24
+:react-native-google-mobile-ads:reactNativeAndroidDir C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native
+
+> Configure project :react-native-iap
+[NitroModules] ? NitroIap is boosted by nitro!
+
+> Configure project :react-native-nitro-modules
+[NitroModules] ? Your app is boosted by nitro modules!
+Checking the license for package Android SDK Build-Tools 36 in C:\Users\cntus\AppData\Local\Android\Sdk\licenses
+License for package Android SDK Build-Tools 36 accepted.
+Preparing "Install Android SDK Build-Tools 36 v.36.0.0".
+"Install Android SDK Build-Tools 36 v.36.0.0" ready.
+Installing Android SDK Build-Tools 36 in C:\Users\cntus\AppData\Local\Android\Sdk\build-tools\36.0.0
+"Install Android SDK Build-Tools 36 v.36.0.0" complete.
+"Install Android SDK Build-Tools 36 v.36.0.0" finished.
+[=========                              ] 25%                                   [=========                              ] 25% Fetch remote repository...        [=======================================] 100% Fetch remote repository...       
+Checking the license for package Android SDK Build-Tools 35 in C:\Users\cntus\AppData\Local\Android\Sdk\licenses
+License for package Android SDK Build-Tools 35 accepted.
+Preparing "Install Android SDK Build-Tools 35 v.35.0.0".
+"Install Android SDK Build-Tools 35 v.35.0.0" ready.
+Installing Android SDK Build-Tools 35 in C:\Users\cntus\AppData\Local\Android\Sdk\build-tools\35.0.0
+"Install Android SDK Build-Tools 35 v.35.0.0" complete.
+"Install Android SDK Build-Tools 35 v.35.0.0" finished.
+[=========                              ] 25%                                   [=========                              ] 25% Fetch remote repository...        [=======================================] 100% Fetch remote repository...       
+
+> Task :expo-updates-interface:preBuild UP-TO-DATE
+> Task :expo-manifests:preBuild UP-TO-DATE
+> Task :expo-json-utils:preBuild UP-TO-DATE
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :react-native-iap:preBuild UP-TO-DATE
+> Task :expo-updates:preBuild UP-TO-DATE
+> Task :expo-eas-client:preBuild UP-TO-DATE
+> Task :expo-structured-headers:preBuild UP-TO-DATE
+> Task :expo-eas-client:preReleaseBuild UP-TO-DATE
+> Task :expo-json-utils:preReleaseBuild UP-TO-DATE
+> Task :expo-eas-client:generateReleaseResValues
+> Task :expo-json-utils:generateReleaseResValues
+> Task :expo-json-utils:generateReleaseResources
+> Task :expo-eas-client:generateReleaseResources
+> Task :react-native-worklets:assertMinimalReactNativeVersionTask
+> Task :react-native-worklets:assertNewArchitectureEnabledTask SKIPPED
+> Task :expo-json-utils:packageReleaseResources
+> Task :expo-manifests:preReleaseBuild UP-TO-DATE
+> Task :expo-eas-client:packageReleaseResources
+> Task :expo-modules-core:preReleaseBuild UP-TO-DATE
+> Task :expo-manifests:generateReleaseResValues
+> Task :expo-modules-core:generateReleaseResValues
+> Task :expo-modules-core:generateReleaseResources
+> Task :react-native-reanimated:assertMinimalReactNativeVersionTask
+> Task :react-native-reanimated:assertNewArchitectureEnabledTask SKIPPED
+> Task :expo-modules-core:packageReleaseResources
+> Task :expo-structured-headers:preReleaseBuild UP-TO-DATE
+> Task :expo-structured-headers:generateReleaseResValues
+> Task :react-native-reanimated:assertWorkletsVersionTask
+> Task :expo:generatePackagesList
+> Task :expo:preBuild
+> Task :expo:preReleaseBuild
+> Task :expo:generateReleaseResValues
+> Task :expo:generateReleaseResources
+> Task :expo:packageReleaseResources
+> Task :expo-updates:preReleaseBuild UP-TO-DATE
+> Task :expo-updates:generateReleaseResValues
+> Task :expo-updates:generateReleaseResources
+> Task :expo-updates:packageReleaseResources
+> Task :expo-updates-interface:preReleaseBuild UP-TO-DATE
+> Task :expo-updates-interface:generateReleaseResValues
+> Task :expo-updates-interface:generateReleaseResources
+> Task :expo-updates-interface:packageReleaseResources
+> Task :react-native-iap:preReleaseBuild UP-TO-DATE
+> Task :react-native-iap:generateReleaseResValues
+> Task :react-native-iap:generateReleaseResources
+> Task :react-native-iap:packageReleaseResources
+> Task :expo:extractDeepLinksRelease
+> Task :react-native-nitro-modules:generateCodegenSchemaFromJavaScript
+> Task :expo:processReleaseManifest
+> Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript
+> Task :react-native-worklets:generateCodegenSchemaFromJavaScript
+> Task :expo-eas-client:extractDeepLinksRelease
+> Task :react-native-reanimated:generateCodegenSchemaFromJavaScript
+> Task :react-native-async-storage_async-storage:generateCodegenSchemaFromJavaScript
+> Task :react-native-google-mobile-ads:generateCodegenSchemaFromJavaScript
+> Task :expo-eas-client:processReleaseManifest
+> Task :expo-json-utils:extractDeepLinksRelease
+> Task :expo-json-utils:processReleaseManifest
+> Task :expo-modules-core:extractDeepLinksRelease
+> Task :react-native-svg:generateCodegenSchemaFromJavaScript
+
+> Task :expo-modules-core:processReleaseManifest
+C:\Users\cntus\Desktop\tarot-timer-web\node_modules\expo-modules-core\android\src\main\AndroidManifest.xml:8:9-11:45 Warning:
+	meta-data#com.facebook.soloader.enabled@android:value was tagged at AndroidManifest.xml:8 to replace other declarations but no other declaration present
+
+> Task :expo-updates:extractDeepLinksRelease
+> Task :expo-updates:processReleaseManifest
+> Task :expo-updates-interface:extractDeepLinksRelease
+> Task :expo-updates-interface:processReleaseManifest
+> Task :react-native-iap:extractDeepLinksRelease
+> Task :react-native-iap:processReleaseManifest
+> Task :expo:writeReleaseAarMetadata
+> Task :expo-eas-client:writeReleaseAarMetadata
+> Task :expo-json-utils:writeReleaseAarMetadata
+> Task :expo-modules-core:writeReleaseAarMetadata
+> Task :expo-updates:writeReleaseAarMetadata
+> Task :expo-updates-interface:writeReleaseAarMetadata
+> Task :react-native-iap:writeReleaseAarMetadata
+
+> Task :expo-constants:createExpoConfig
+The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
+env: load .env.local .env
+env: export APP_VERSION APP_NAME EXPO_PUBLIC_APP_ENV EXPO_PUBLIC_API_URL EXPO_PUBLIC_WS_URL EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY JWT_SECRET JWT_EXPIRES_IN BCRYPT_ROUNDS ENABLE_PWA ENABLE_OFFLINE_MODE ENABLE_REAL_TIME_SYNC ENABLE_BACKGROUND_SYNC ENABLE_MULTILINGUAL ENABLE_REQUEST_LOGGING LOG_LEVEL DEBUG_MODE ENABLE_PERFORMANCE_MONITORING ENABLE_ERROR_TRACKING ENABLE_ANALYTICS EXPO_PUBLIC_ADMIN_KEY APPLE_SHARED_SECRET EXPO_PUBLIC_APP_STORE_SHARED_SECRET EXPO_PUBLIC_APP_STORE_BUILD EXPO_PUBLIC_ENABLE_DEV_TOOLS REACT_APP_API_URL
+
+> Task :expo-constants:preBuild
+> Task :expo-constants:preReleaseBuild
+> Task :expo-constants:generateReleaseResValues
+> Task :expo-constants:generateReleaseResources
+> Task :react-native-nitro-modules:generateCodegenArtifactsFromSchema
+> Task :react-native-reanimated:generateCodegenArtifactsFromSchema
+> Task :react-native-worklets:generateCodegenArtifactsFromSchema
+> Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema
+> Task :react-native-safe-area-context:preBuild
+> Task :react-native-safe-area-context:preReleaseBuild
+> Task :react-native-safe-area-context:generateReleaseResValues
+> Task :react-native-safe-area-context:generateReleaseResources
+> Task :react-native-google-mobile-ads:generateCodegenArtifactsFromSchema
+> Task :react-native-google-mobile-ads:preBuild
+> Task :react-native-google-mobile-ads:preReleaseBuild
+> Task :react-native-google-mobile-ads:generateReleaseResValues
+> Task :react-native-google-mobile-ads:generateReleaseResources
+> Task :react-native-google-mobile-ads:packageReleaseResources
+> Task :react-native-google-mobile-ads:extractDeepLinksRelease
+
+> Task :react-native-google-mobile-ads:processReleaseManifest
+package="io.invertase.googlemobileads" found in source AndroidManifest.xml: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-google-mobile-ads\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.invertase.googlemobileads" from the source AndroidManifest.xml: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-google-mobile-ads\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-google-mobile-ads:writeReleaseAarMetadata
+> Task :react-native-safe-area-context:packageReleaseResources
+> Task :react-native-worklets:prepareWorkletsHeadersForPrefabs
+> Task :react-native-worklets:preBuild
+> Task :react-native-worklets:preReleaseBuild
+> Task :react-native-worklets:generateReleaseResValues
+> Task :react-native-safe-area-context:extractDeepLinksRelease
+> Task :react-native-worklets:generateReleaseResources
+> Task :react-native-svg:generateCodegenArtifactsFromSchema
+> Task :react-native-svg:preBuild
+
+> Task :react-native-safe-area-context:processReleaseManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-safe-area-context\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-safe-area-context\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-svg:preReleaseBuild
+> Task :react-native-svg:generateReleaseResValues
+> Task :react-native-safe-area-context:writeReleaseAarMetadata
+> Task :react-native-worklets:packageReleaseResources
+> Task :react-native-svg:generateReleaseResources
+> Task :react-native-worklets:extractDeepLinksRelease
+> Task :react-native-svg:packageReleaseResources
+> Task :react-native-svg:extractDeepLinksRelease
+> Task :react-native-worklets:processReleaseManifest
+> Task :react-native-worklets:writeReleaseAarMetadata
+> Task :react-native-svg:writeReleaseAarMetadata
+> Task :react-native-svg:processReleaseManifest
+> Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs
+> Task :react-native-reanimated:preBuild
+> Task :react-native-reanimated:preReleaseBuild
+> Task :react-native-reanimated:generateReleaseResValues
+> Task :react-native-reanimated:generateReleaseResources
+> Task :react-native-reanimated:packageReleaseResources
+> Task :react-native-reanimated:extractDeepLinksRelease
+> Task :react-native-reanimated:processReleaseManifest
+> Task :react-native-reanimated:writeReleaseAarMetadata
+> Task :react-native-nitro-modules:prepareHeaders
+> Task :react-native-nitro-modules:preBuild
+> Task :react-native-nitro-modules:preReleaseBuild
+> Task :react-native-nitro-modules:generateReleaseResValues
+> Task :react-native-nitro-modules:generateReleaseResources
+> Task :react-native-nitro-modules:packageReleaseResources
+> Task :react-native-nitro-modules:extractDeepLinksRelease
+> Task :react-native-nitro-modules:processReleaseManifest
+> Task :react-native-nitro-modules:writeReleaseAarMetadata
+> Task :expo:compileReleaseLibraryResources
+> Task :expo-eas-client:compileReleaseLibraryResources
+> Task :expo-modules-core:compileReleaseLibraryResources
+> Task :expo-json-utils:compileReleaseLibraryResources
+> Task :expo-updates-interface:compileReleaseLibraryResources
+> Task :react-native-google-mobile-ads:compileReleaseLibraryResources
+> Task :expo-updates:compileReleaseLibraryResources
+> Task :expo-manifests:generateReleaseResources
+> Task :expo-structured-headers:generateReleaseResources
+> Task :expo-constants:packageReleaseResources
+> Task :expo-constants:extractDeepLinksRelease
+> Task :expo-manifests:packageReleaseResources
+> Task :expo-structured-headers:packageReleaseResources
+> Task :expo-manifests:extractDeepLinksRelease
+> Task :expo-structured-headers:extractDeepLinksRelease
+> Task :expo-constants:processReleaseManifest
+> Task :expo-constants:writeReleaseAarMetadata
+> Task :expo-manifests:writeReleaseAarMetadata
+> Task :expo-structured-headers:writeReleaseAarMetadata
+> Task :expo-constants:compileReleaseLibraryResources
+> Task :expo-manifests:processReleaseManifest
+> Task :expo-structured-headers:processReleaseManifest
+> Task :expo-structured-headers:compileReleaseLibraryResources
+> Task :expo-manifests:compileReleaseLibraryResources
+> Task :expo-updates-interface:parseReleaseLocalResources
+> Task :react-native-google-mobile-ads:parseReleaseLocalResources
+> Task :expo-updates:parseReleaseLocalResources
+> Task :expo-structured-headers:parseReleaseLocalResources
+> Task :expo-manifests:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:generateCodegenArtifactsFromSchema
+> Task :expo:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:preBuild
+> Task :react-native-async-storage_async-storage:preReleaseBuild
+> Task :expo-constants:parseReleaseLocalResources
+> Task :expo-eas-client:parseReleaseLocalResources
+> Task :expo-json-utils:parseReleaseLocalResources
+> Task :expo-modules-core:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:generateReleaseResValues
+> Task :react-native-async-storage_async-storage:generateReleaseResources
+> Task :react-native-async-storage_async-storage:packageReleaseResources
+> Task :react-native-async-storage_async-storage:extractDeepLinksRelease
+> Task :expo-json-utils:generateReleaseRFile
+> Task :expo-constants:generateReleaseRFile
+> Task :react-native-google-mobile-ads:generateReleaseRFile
+> Task :expo-eas-client:generateReleaseRFile
+> Task :expo-updates:generateReleaseRFile
+> Task :expo-manifests:generateReleaseRFile
+> Task :expo-structured-headers:generateReleaseRFile
+> Task :expo-modules-core:generateReleaseRFile
+> Task :react-native-google-mobile-ads:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-updates-interface:generateReleaseRFile
+> Task :expo-constants:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo:generateReleaseRFile
+> Task :react-native-iap:compileReleaseLibraryResources
+> Task :react-native-reanimated:compileReleaseLibraryResources
+> Task :react-native-svg:compileReleaseLibraryResources
+> Task :react-native-nitro-modules:compileReleaseLibraryResources
+> Task :react-native-worklets:compileReleaseLibraryResources
+> Task :react-native-safe-area-context:compileReleaseLibraryResources
+> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata
+> Task :react-native-async-storage_async-storage:compileReleaseLibraryResources
+> Task :react-native-iap:parseReleaseLocalResources
+> Task :react-native-reanimated:parseReleaseLocalResources
+> Task :expo-constants:generateReleaseBuildConfig
+> Task :react-native-nitro-modules:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-nitro-modules:parseReleaseLocalResources
+> Task :react-native-google-mobile-ads:generateReleaseBuildConfig
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-svg:parseReleaseLocalResources
+> Task :react-native-async-storage_async-storage:parseReleaseLocalResources
+
+> Task :react-native-async-storage_async-storage:processReleaseManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\@react-native-async-storage\async-storage\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\@react-native-async-storage\async-storage\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-iap:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-nitro-modules:generateReleaseBuildConfig
+> Task :react-native-safe-area-context:generateReleaseBuildConfig
+> Task :expo:generateReleaseBuildConfig
+> Task :react-native-reanimated:generateReleaseRFile
+> Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-iap:generateReleaseRFile
+> Task :react-native-safe-area-context:parseReleaseLocalResources
+> Task :react-native-svg:generateReleaseRFile
+> Task :react-native-worklets:parseReleaseLocalResources
+> Task :expo-modules-core:generateReleaseBuildConfig
+> Task :react-native-nitro-modules:javaPreCompileRelease
+> Task :expo-constants:javaPreCompileRelease
+> Task :expo-eas-client:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-json-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-iap:generateReleaseBuildConfig
+> Task :react-native-nitro-modules:generateReleaseRFile
+> Task :react-native-async-storage_async-storage:generateReleaseRFile
+> Task :expo-manifests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-json-utils:generateReleaseBuildConfig
+> Task :react-native-safe-area-context:generateReleaseRFile
+> Task :react-native-iap:javaPreCompileRelease
+> Task :react-native-safe-area-context:javaPreCompileRelease
+> Task :expo-structured-headers:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-updates:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-manifests:generateReleaseBuildConfig
+> Task :expo-json-utils:javaPreCompileRelease
+> Task :expo-updates-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-worklets:generateReleaseRFile
+> Task :expo-manifests:javaPreCompileRelease
+> Task :expo-updates:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig
+> Task :expo-updates-interface:generateReleaseBuildConfig
+> Task :expo-eas-client:generateReleaseBuildConfig
+> Task :react-native-reanimated:generateReleaseBuildConfig
+> Task :expo:javaPreCompileRelease
+> Task :react-native-worklets:generateReleaseBuildConfig
+> Task :react-native-worklets:javaPreCompileRelease
+> Task :expo-structured-headers:generateReleaseBuildConfig
+> Task :expo-structured-headers:javaPreCompileRelease
+> Task :react-native-svg:generateReleaseBuildConfig
+> Task :react-native-reanimated:javaPreCompileRelease
+> Task :expo:mergeReleaseShaders
+> Task :expo:compileReleaseShaders NO-SOURCE
+> Task :expo:generateReleaseAssets UP-TO-DATE
+> Task :expo:mergeReleaseAssets
+> Task :expo-eas-client:javaPreCompileRelease
+
+> Task :app:createBundleReleaseJsAndAssets
+env: load .env.local .env.production .env
+env: export APP_VERSION APP_NAME EXPO_PUBLIC_APP_ENV EXPO_PUBLIC_API_URL EXPO_PUBLIC_WS_URL EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY JWT_SECRET JWT_EXPIRES_IN BCRYPT_ROUNDS ENABLE_PWA ENABLE_OFFLINE_MODE ENABLE_REAL_TIME_SYNC ENABLE_BACKGROUND_SYNC ENABLE_MULTILINGUAL ENABLE_REQUEST_LOGGING LOG_LEVEL DEBUG_MODE ENABLE_PERFORMANCE_MONITORING ENABLE_ERROR_TRACKING ENABLE_ANALYTICS EXPO_PUBLIC_ADMIN_KEY APPLE_SHARED_SECRET EXPO_PUBLIC_APP_STORE_SHARED_SECRET EXPO_PUBLIC_APP_STORE_BUILD EXPO_PUBLIC_ENABLE_DEV_TOOLS REACT_APP_API_URL
+
+> Task :expo-eas-client:mergeReleaseShaders
+> Task :expo-eas-client:compileReleaseShaders NO-SOURCE
+> Task :expo-eas-client:generateReleaseAssets UP-TO-DATE
+> Task :expo-updates-interface:javaPreCompileRelease
+> Task :react-native-svg:javaPreCompileRelease
+> Task :expo-constants:mergeReleaseShaders
+> Task :expo-constants:compileReleaseShaders NO-SOURCE
+> Task :expo-constants:generateReleaseAssets UP-TO-DATE
+> Task :expo-constants:mergeReleaseAssets
+> Task :expo-manifests:mergeReleaseShaders
+> Task :expo-manifests:compileReleaseShaders NO-SOURCE
+> Task :expo-manifests:generateReleaseAssets UP-TO-DATE
+> Task :expo-manifests:mergeReleaseAssets
+> Task :expo-structured-headers:mergeReleaseShaders
+> Task :expo-structured-headers:compileReleaseShaders NO-SOURCE
+> Task :expo-structured-headers:generateReleaseAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:javaPreCompileRelease
+> Task :expo-json-utils:mergeReleaseShaders
+> Task :expo-json-utils:compileReleaseShaders NO-SOURCE
+> Task :expo-json-utils:generateReleaseAssets UP-TO-DATE
+> Task :expo-structured-headers:mergeReleaseAssets
+> Task :expo-eas-client:mergeReleaseAssets
+> Task :expo-updates-interface:mergeReleaseShaders
+> Task :expo-updates-interface:compileReleaseShaders NO-SOURCE
+> Task :expo-updates-interface:generateReleaseAssets UP-TO-DATE
+> Task :react-native-iap:mergeReleaseShaders
+> Task :react-native-iap:compileReleaseShaders NO-SOURCE
+> Task :react-native-iap:generateReleaseAssets UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseAssets
+> Task :expo-json-utils:mergeReleaseAssets
+> Task :react-native-iap:mergeReleaseAssets
+> Task :react-native-reanimated:mergeReleaseShaders
+> Task :react-native-reanimated:compileReleaseShaders NO-SOURCE
+> Task :react-native-reanimated:generateReleaseAssets UP-TO-DATE
+> Task :expo-constants:mergeReleaseJniLibFolders
+> Task :expo-constants:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-reanimated:mergeReleaseAssets
+> Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
+> Task :expo-eas-client:mergeReleaseJniLibFolders
+> Task :expo:mergeReleaseJniLibFolders
+> Task :expo-eas-client:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-eas-client:copyReleaseJniLibsProjectOnly
+> Task :expo:copyReleaseJniLibsProjectOnly
+> Task :expo-constants:copyReleaseJniLibsProjectOnly
+> Task :expo-manifests:mergeReleaseJniLibFolders
+> Task :expo-structured-headers:mergeReleaseJniLibFolders
+> Task :expo-json-utils:mergeReleaseJniLibFolders
+> Task :expo-json-utils:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-manifests:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-structured-headers:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-json-utils:copyReleaseJniLibsProjectOnly
+> Task :expo-structured-headers:copyReleaseJniLibsProjectOnly
+> Task :expo-manifests:copyReleaseJniLibsProjectOnly
+> Task :react-native-iap:mergeReleaseJniLibFolders
+> Task :expo-updates-interface:mergeReleaseJniLibFolders
+> Task :react-native-reanimated:mergeReleaseJniLibFolders
+> Task :expo-updates-interface:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo:prepareReleaseArtProfile
+> Task :expo-constants:prepareReleaseArtProfile
+> Task :expo-updates-interface:copyReleaseJniLibsProjectOnly
+> Task :expo-eas-client:prepareReleaseArtProfile
+> Task :expo-json-utils:prepareReleaseArtProfile
+> Task :expo-manifests:prepareReleaseArtProfile
+> Task :expo-structured-headers:prepareReleaseArtProfile
+> Task :expo-updates-interface:prepareReleaseArtProfile
+> Task :react-native-iap:prepareReleaseArtProfile
+> Task :react-native-reanimated:prepareReleaseArtProfile
+> Task :expo:extractProguardFiles
+> Task :expo-eas-client:extractProguardFiles
+> Task :expo-constants:extractProguardFiles
+> Task :expo-eas-client:prepareLintJarForPublish
+> Task :expo-constants:prepareLintJarForPublish
+> Task :expo-json-utils:extractProguardFiles
+> Task :expo-structured-headers:extractProguardFiles
+> Task :expo-manifests:extractProguardFiles
+> Task :expo-structured-headers:prepareLintJarForPublish
+> Task :expo-json-utils:prepareLintJarForPublish
+> Task :expo-manifests:prepareLintJarForPublish
+> Task :expo:prepareLintJarForPublish
+> Task :expo-updates-interface:extractProguardFiles
+> Task :react-native-iap:extractProguardFiles
+> Task :react-native-reanimated:extractProguardFiles
+> Task :react-native-iap:prepareLintJarForPublish
+> Task :expo-updates-interface:prepareLintJarForPublish
+> Task :react-native-reanimated:prepareLintJarForPublish
+> Task :expo:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-iap:extractDeepLinksForAarRelease
+> Task :react-native-reanimated:extractDeepLinksForAarRelease
+> Task :expo-constants:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo:extractDeepLinksForAarRelease
+> Task :expo-eas-client:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-constants:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-constants:extractDeepLinksForAarRelease
+> Task :expo-manifests:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-eas-client:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-eas-client:extractDeepLinksForAarRelease
+> Task :expo-manifests:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-json-utils:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-manifests:extractDeepLinksForAarRelease
+> Task :expo-structured-headers:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-json-utils:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-json-utils:extractDeepLinksForAarRelease
+> Task :expo-structured-headers:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-updates-interface:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-structured-headers:extractDeepLinksForAarRelease
+> Task :expo-updates-interface:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-updates-interface:extractDeepLinksForAarRelease
+> Task :expo-constants:writeReleaseLintModelMetadata
+> Task :expo-eas-client:writeReleaseLintModelMetadata
+> Task :expo-json-utils:writeReleaseLintModelMetadata
+> Task :expo-structured-headers:writeReleaseLintModelMetadata
+> Task :expo-manifests:writeReleaseLintModelMetadata
+> Task :expo-updates-interface:writeReleaseLintModelMetadata
+> Task :expo:writeReleaseLintModelMetadata
+> Task :react-native-iap:writeReleaseLintModelMetadata
+> Task :react-native-reanimated:writeReleaseLintModelMetadata
+> Task :react-native-reanimated:mergeReleaseJavaResource
+> Task :expo-updates:mergeReleaseShaders
+> Task :expo-updates:compileReleaseShaders NO-SOURCE
+> Task :expo-updates:generateReleaseAssets UP-TO-DATE
+> Task :expo-updates:javaPreCompileRelease
+> Task :expo-updates:mergeReleaseAssets
+> Task :expo-updates:mergeReleaseJniLibFolders
+> Task :expo-updates:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-updates:copyReleaseJniLibsProjectOnly
+> Task :expo-updates:prepareReleaseArtProfile
+> Task :expo-updates:extractProguardFiles
+> Task :expo-updates:prepareLintJarForPublish
+> Task :expo-updates:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-updates:copyReleaseJniLibsProjectAndLocalJars
+> Task :expo-updates:extractDeepLinksForAarRelease
+> Task :expo-updates:writeReleaseLintModelMetadata
+> Task :react-native-nitro-modules:mergeReleaseShaders
+> Task :react-native-safe-area-context:mergeReleaseShaders
+> Task :react-native-nitro-modules:compileReleaseShaders NO-SOURCE
+> Task :react-native-nitro-modules:generateReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
+> Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
+> Task :react-native-nitro-modules:mergeReleaseAssets
+> Task :react-native-safe-area-context:mergeReleaseAssets
+> Task :react-native-safe-area-context:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
+> Task :react-native-safe-area-context:prepareReleaseArtProfile
+> Task :react-native-safe-area-context:extractProguardFiles
+> Task :react-native-safe-area-context:prepareLintJarForPublish
+> Task :react-native-safe-area-context:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-safe-area-context:extractDeepLinksForAarRelease
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
+> Task :react-native-google-mobile-ads:javaPreCompileRelease
+> Task :react-native-google-mobile-ads:mergeReleaseShaders
+> Task :react-native-google-mobile-ads:compileReleaseShaders NO-SOURCE
+> Task :react-native-google-mobile-ads:generateReleaseAssets UP-TO-DATE
+> Task :react-native-google-mobile-ads:mergeReleaseAssets
+> Task :react-native-google-mobile-ads:mergeReleaseJniLibFolders
+> Task :react-native-google-mobile-ads:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-google-mobile-ads:copyReleaseJniLibsProjectOnly
+> Task :react-native-google-mobile-ads:prepareReleaseArtProfile
+> Task :react-native-google-mobile-ads:extractProguardFiles
+> Task :react-native-google-mobile-ads:prepareLintJarForPublish
+> Task :react-native-google-mobile-ads:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-google-mobile-ads:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-google-mobile-ads:extractDeepLinksForAarRelease
+> Task :react-native-google-mobile-ads:writeReleaseLintModelMetadata
+> Task :expo-modules-core:javaPreCompileRelease
+> Task :expo-modules-core:mergeReleaseShaders
+> Task :expo-modules-core:compileReleaseShaders NO-SOURCE
+> Task :expo-modules-core:generateReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseAssets
+
+> Task :react-native-nitro-modules:configureCMakeRelWithDebInfo[arm64-v8a]
+Checking the license for package CMake 3.22.1 in C:\Users\cntus\AppData\Local\Android\Sdk\licenses
+License for package CMake 3.22.1 accepted.
+Preparing "Install CMake 3.22.1 v.3.22.1".
+
+> Task :react-native-nitro-modules:compileReleaseKotlin
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-nitro-modules/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt:3:8 'class TurboReactPackage : BaseReactPackage' is deprecated. Use BaseReactPackage instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-nitro-modules/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt:9:29 'class TurboReactPackage : BaseReactPackage' is deprecated. Use BaseReactPackage instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-nitro-modules/android/src/main/java/com/margelo/nitro/NitroModulesPackage.kt:22:46 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
+
+> Task :app:createBundleReleaseJsAndAssets
+Starting Metro Bundler
+
+> Task :react-native-google-mobile-ads:compileReleaseKotlin
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/OnNativeEvent.kt:6:68 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/ReactNativeGoogleMobileAdsFullScreenAdModule.kt:72:20 'val currentActivity: Activity?' is deprecated. Deprecated in 0.80.0. Use getReactApplicationContext.getCurrentActivity() instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/ReactNativeGoogleMobileAdsFullScreenAdModule.kt:72:20 This synthetic property is based on the getter function 'fun getCurrentActivity(): Activity?' from Kotlin. In the future, synthetic properties will be available only if the base getter function came from Java. Consider replacing this property access with a 'getCurrentActivity()' function call.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/ReactNativeGoogleMobileAdsFullScreenAdModule.kt:108:20 'val currentActivity: Activity?' is deprecated. Deprecated in 0.80.0. Use getReactApplicationContext.getCurrentActivity() instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/ReactNativeGoogleMobileAdsFullScreenAdModule.kt:108:20 This synthetic property is based on the getter function 'fun getCurrentActivity(): Activity?' from Kotlin. In the future, synthetic properties will be available only if the base getter function came from Java. Consider replacing this property access with a 'getCurrentActivity()' function call.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/ReactNativeGoogleMobileAdsPackage.kt:20:8 'class TurboReactPackage : BaseReactPackage' is deprecated. Use BaseReactPackage instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-google-mobile-ads/android/src/main/java/io/invertase/googlemobileads/ReactNativeGoogleMobileAdsPackage.kt:28:43 'class TurboReactPackage : BaseReactPackage' is deprecated. Use BaseReactPackage instead.
+
+> Task :react-native-safe-area-context:compileReleaseKotlin
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+
+> Task :react-native-worklets:compileReleaseJavaWithJavac
+Note: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-worklets\android\src\main\java\com\swmansion\worklets\WorkletsPackage.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-svg:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\@react-native-async-storage\async-storage\android\src\javaPackage\java\com\reactnativecommunity\asyncstorage\AsyncStoragePackage.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-svg:mergeReleaseShaders
+> Task :react-native-svg:compileReleaseShaders NO-SOURCE
+> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+> Task :react-native-svg:mergeReleaseAssets
+> Task :react-native-svg:processReleaseJavaRes NO-SOURCE
+> Task :react-native-svg:mergeReleaseJniLibFolders
+> Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectOnly
+> Task :react-native-svg:prepareReleaseArtProfile
+> Task :react-native-svg:extractProguardFiles
+> Task :react-native-svg:bundleLibRuntimeToJarRelease
+> Task :react-native-async-storage_async-storage:mergeReleaseShaders
+> Task :react-native-async-storage_async-storage:compileReleaseShaders NO-SOURCE
+> Task :react-native-async-storage_async-storage:generateReleaseAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseAssets
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
+> Task :react-native-svg:bundleLibCompileToJarRelease
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
+> Task :react-native-worklets:mergeReleaseShaders
+> Task :react-native-worklets:compileReleaseShaders NO-SOURCE
+> Task :react-native-worklets:generateReleaseAssets UP-TO-DATE
+> Task :react-native-worklets:mergeReleaseAssets
+> Task :react-native-worklets:bundleLibCompileToJarRelease
+
+> Task :react-native-nitro-modules:configureCMakeRelWithDebInfo[arm64-v8a]
+"Install CMake 3.22.1 v.3.22.1" ready.
+Installing CMake 3.22.1 in C:\Users\cntus\AppData\Local\Android\Sdk\cmake\3.22.1
+"Install CMake 3.22.1 v.3.22.1" complete.
+"Install CMake 3.22.1 v.3.22.1" finished.
+
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToDirRelease
+> Task :react-native-worklets:bundleLibRuntimeToDirRelease
+
+> Task :app:createBundleReleaseJsAndAssets
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+
+> Task :react-native-svg:bundleLibRuntimeToDirRelease
+
+> Task :react-native-google-mobile-ads:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: C:\Users\cntus\Desktop\tarot-timer-web\node_modules\react-native-google-mobile-ads\android\src\main\java\io\invertase\googlemobileads\ReactNativeGoogleMobileAdsCommon.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
+> Task :react-native-worklets:processReleaseJavaRes NO-SOURCE
+
+> Task :react-native-reanimated:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-async-storage_async-storage:mergeReleaseJniLibFolders
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo\AppEntry.js ?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘  0.0% (0/1)
+
+> Task :react-native-async-storage_async-storage:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-svg:createFullJarRelease
+> Task :react-native-async-storage_async-storage:prepareReleaseArtProfile
+> Task :react-native-async-storage_async-storage:createFullJarRelease
+> Task :react-native-async-storage_async-storage:extractProguardFiles
+> Task :react-native-worklets:bundleLibRuntimeToJarRelease
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo\AppEntry.js ?–“?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘?–‘  8.2% ( 4/14)
+
+> Task :react-native-google-mobile-ads:bundleLibRuntimeToDirRelease
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo\AppEntry.js ?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–‘?–‘?–‘?–‘?–‘?–‘ 63.5% (123/261)
+
+> Task :expo-modules-core:compileReleaseKotlin
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly
+> Task :react-native-safe-area-context:compileReleaseJavaWithJavac
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
+> Task :react-native-google-mobile-ads:bundleLibCompileToJarRelease
+> Task :react-native-google-mobile-ads:bundleLibRuntimeToJarRelease
+> Task :react-native-safe-area-context:bundleLibCompileToJarRelease
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo\AppEntry.js ?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–‘?–‘?–‘?–‘?–‘?–‘ 64.6% (590/743)
+
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
+> Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+> Task :react-native-google-mobile-ads:processReleaseJavaRes
+> Task :react-native-safe-area-context:processReleaseJavaRes
+> Task :react-native-safe-area-context:bundleLibRuntimeToDirRelease
+> Task :react-native-google-mobile-ads:createFullJarRelease
+> Task :react-native-reanimated:createFullJarRelease
+> Task :react-native-safe-area-context:createFullJarRelease
+> Task :react-native-reanimated:bundleLibRuntimeToDirRelease
+
+> Task :expo-modules-core:compileReleaseKotlin
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:48:87 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:91:85 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:120:83 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/apploader/AppLoaderProvider.kt:34:52 Unchecked cast of 'Class<*>!' to 'Class<out HeadlessAppLoader>'.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:30:8 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:253:21 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:343:21 'val DEFAULT: Int' is deprecated. UIManagerType.DEFAULT will be deleted in the next release of React Native. Use [LEGACY] instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/defaultmodules/NativeModulesProxyModule.kt:16:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:65:51 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:69:22 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
+w: file:///C:/Users/cntus/Desktop/tarot-timer-web/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
+
+> Task :app:createBundleReleaseJsAndAssets
+Android node_modules\expo\AppEntry.js ?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–“?–‘ 96.9% (1119/1179)
+Android Bundling failed 14295ms node_modules\expo\AppEntry.js (1221 modules)
+Error: Unable to resolve module expo-image from C:\Users\cntus\Desktop\tarot-timer-web\components\OptimizedImage.tsx: expo-image could not be found within the project or in these directories:
+  node_modules
+[0m [90m 19 |[39m   [33mImageSourcePropType[39m
+ [90m 20 |[39m } [36mfrom[39m [32m'react-native'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 21 |[39m [36mimport[39m { [33mImage[39m } [36mfrom[39m [32m'expo-image'[39m[33m;[39m
+ [90m    |[39m                        [31m[1m^[22m[39m
+ [90m 22 |[39m
+ [90m 23 |[39m [36minterface[39m [33mOptimizedImageProps[39m {
+ [90m 24 |[39m   source[33m:[39m [33mImageSourcePropType[39m[33m;[39m[0m
+
+Import stack:
+
+ components\OptimizedImage.tsx
+ | import "expo-image"
+
+ components\TarotCard.tsx
+ | import "./OptimizedImage"
+
+ components\tabs\TimerTab.tsx
+ | import "../TarotCard"
+
+ App.tsx
+ | import "./components/tabs/TimerTab"
+
+ node_modules\expo\AppEntry.js
+ | import "../../App"
+
+ 
+ | import "./node_modules/expo/AppEntry.js"
+
+
+> Task :app:createBundleReleaseJsAndAssets FAILED
+> Task :expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-reanimated:extractReleaseAnnotations
+> Task :react-native-safe-area-context:generateReleaseLintModel
+> Task :react-native-async-storage_async-storage:generateReleaseLintModel
+> Task :react-native-svg:generateReleaseLintModel
+> Task :react-native-google-mobile-ads:generateReleaseLintModel
+> Task :react-native-worklets:configureCMakeRelWithDebInfo[arm64-v8a]
+
+[Incubating] Problems report is available at: file:///C:/Users/cntus/Desktop/tarot-timer-web/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:createBundleReleaseJsAndAssets'.
+> Process 'command 'cmd'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 53s
+416 actionable tasks: 388 executed, 28 up-to-date
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if 1 EQU 0 goto mainEnd 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>rem the _cmd.exe /c_ return code! 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>set EXIT_CODE=1 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if 1 EQU 0 set EXIT_CODE=1 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>if not "" == "" exit 1 
+
+C:\Users\cntus\Desktop\tarot-timer-web\android>exit /b 1 
+
+=== Build Complete ===
+AAB Location: android\app\build\outputs\bundle\release\app-release.aab

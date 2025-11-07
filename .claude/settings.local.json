@@ -68,7 +68,12 @@
       "Bash(osascript:*)",
       "Bash(npx expo config:*)",
       "Bash(where android)",
-      "Bash(where adb)"
+      "Bash(where adb)",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(expo prebuild:*)",
+      "Bash(./gradlew:*)",
+      "Bash(npx react-native:*)"
     ],
     "deny": [],
     "ask": []

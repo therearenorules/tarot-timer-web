@@ -88,21 +88,12 @@ export class IAPManager {
       }
 
       console.log('💳 IAP 매니저 초기화 시작...');
+      console.log('📱 플랫폼:', Platform.OS);
+      console.log('📱 iOS 버전:', Platform.Version);
+      console.log('🔧 react-native-iap 버전: 14.4.23');
 
-      // StoreKit2 모드 설정 (iOS 15+ Production 환경 호환성 개선)
-      // Production 환경에서 getSubscriptions() 빈 배열 문제 해결
-      if (Platform.OS === 'ios') {
-        try {
-          RNIap.setup({ storekitMode: 'STOREKIT2_MODE' });
-          console.log('✅ StoreKit2 모드 활성화 (iOS 15+ 최적화)');
-          console.log('📱 iOS 버전:', Platform.Version);
-        } catch (error) {
-          console.warn('⚠️ StoreKit2 설정 실패, StoreKit 1 폴백:', error);
-          console.warn('📌 iOS 14 이하 또는 StoreKit2 미지원 환경');
-        }
-      }
-
-      // RNIap 초기화
+      // RNIap 초기화 (라이브러리 기본 설정 사용)
+      // v14.x는 자동으로 최적의 StoreKit 버전 선택
       const isReady = await RNIap.initConnection();
       if (!isReady) {
         console.error('❌ IAP 연결 초기화 실패');
@@ -165,17 +156,26 @@ export class IAPManager {
       const skus = Object.values(SUBSCRIPTION_SKUS);
       console.log('📦 구독 상품 로드 시도:', skus);
       console.log('📱 플랫폼:', Platform.OS);
-      console.log('🔧 RNIap 버전:', RNIap.constructor.name);
+      console.log('📱 iOS 버전:', Platform.Version);
+      console.log('🔧 Bundle ID: com.tarottimer.app');
+      console.log('🔧 App ID: 6752687014');
 
       // 실제 App Store/Play Store에서 상품 정보 가져오기
       let subscriptions;
       try {
+        console.log('🔄 RNIap.getSubscriptions() 호출 중...');
         subscriptions = await RNIap.getSubscriptions({ skus });
-        console.log('📦 getSubscriptions 응답:', subscriptions);
+        console.log('✅ getSubscriptions 응답 받음');
+        console.log('📦 응답 타입:', typeof subscriptions);
+        console.log('📦 응답 길이:', subscriptions?.length);
+        console.log('📦 응답 내용:', JSON.stringify(subscriptions, null, 2));
       } catch (getSubError: any) {
         console.error('❌ getSubscriptions 호출 실패:', getSubError);
-        console.error('📌 에러 메시지:', getSubError.message);
-        console.error('📌 에러 코드:', getSubError.code);
+        console.error('📌 에러 타입:', typeof getSubError);
+        console.error('📌 에러 메시지:', getSubError?.message);
+        console.error('📌 에러 코드:', getSubError?.code);
+        console.error('📌 에러 스택:', getSubError?.stack);
+        console.error('📌 전체 에러 객체:', JSON.stringify(getSubError, null, 2));
         throw getSubError;
       }
 
