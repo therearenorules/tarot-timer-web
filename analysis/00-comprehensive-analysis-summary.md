@@ -1,15 +1,45 @@
 # 📊 타로 타이머 웹앱 종합 분석 요약 보고서
 
-**보고서 버전**: v14.0.0 (2025-10-31) - 🚨 iOS 프로덕션 구독 기능 크리티컬 이슈 대응 중
-**프로젝트 완성도**: 92% ⚠️ - iOS 구독 로딩 실패로 일시적 감소 (프로덕션 환경 전용)
-**아키텍처**: 완전한 크로스 플랫폼 + react-native-iap v14.4.23 Nitro Modules + Apple 표준 EULA 준수
-**마지막 주요 업데이트**: 2025-10-31 - iOS 구독 프로덕션 오류 원인 분석 + Android v1.1.2 빌드 완료
+**보고서 버전**: v15.0.0 (2025-11-07) - 🚀 iOS 구독 시스템 V2 마이그레이션 완료 + TestFlight 배포
+**프로젝트 완성도**: 93% ✅ - V2 구독 시스템 적용 완료, TestFlight 테스트 대기 중
+**아키텍처**: 완전한 크로스 플랫폼 + react-native-iap v14.4.23 + V2 구독 시스템 (새 Product IDs)
+**마지막 주요 업데이트**: 2025-11-07 - V2 구독 시스템 적용 + Build 119 TestFlight 배포 완료
 
 ---
 
-## 🎯 **핵심 성과 요약 (2025-10-31 최신)**
+## 🎯 **핵심 성과 요약 (2025-11-07 최신)**
 
-### 🚨 **2025-10-31 크리티컬 이슈 - iOS 프로덕션 구독 기능 장애**
+### 🚀 **2025-11-07 주요 업데이트 - iOS 구독 시스템 V2 마이그레이션 완료**
+
+#### **V2 구독 시스템 전환 성공** ✅
+- **새 Subscription Group**: Tarot Timer Premium V2 (ID: 21820675)
+- **새 Product IDs**:
+  - 월간: `tarot_timer_monthly_v2` (Apple ID: 6754749911)
+  - 연간: `tarot_timer_yearly_v2` (Apple ID: 6755033513)
+- **마이그레이션 전략**: 기존 구독자 영향 없음, V1/V2 공존
+
+#### **Build 119 TestFlight 배포 완료** ✅
+- Version: 1.1.3, Build: 119
+- 빌드 소요 시간: 10분
+- TestFlight 업로드: ✅ 완료
+- Apple 처리: ⏳ 5-10분 대기 중
+- 포함 내용: V2 구독 시스템 + 상세 디버그 로깅
+
+#### **코드 전면 업데이트 완료** ✅
+- `utils/iapManager.ts`: V2 Product IDs
+- `TarotTimer.storekit`: StoreKit V2 Configuration
+- `utils/receiptValidator.ts`: V2 영수증 검증
+- `components/PremiumTest.tsx`: V2 테스트 코드
+
+#### **마이그레이션 문서 작성** ✅
+- `SUBSCRIPTION_V2_MIGRATION.md` (15KB 가이드)
+- Before/After 코드 비교
+- 테스트 계획 및 롤백 전략
+- App Store Connect 설정 체크리스트
+
+---
+
+### 🚨 **2025-10-31 크리티컬 이슈 - iOS 프로덕션 구독 기능 장애** (해결 진행 중)
 
 #### **문제 현황**
 - **증상**: iOS 프로덕션 환경에서 "구독 상품을 불러올 수 없습니다" 오류
@@ -48,10 +78,11 @@
 7. **서버 동기화 버그** (Apple 측)
 8. **StoreKit Configuration 문제**
 
-#### **다음 단계**
-- [ ] App Store Connect 설정 전체 점검 (사용자 액션)
-- [ ] 상세 로그 빌드 테스트
-- [ ] Apple Developer Support 문의 고려
+#### **해결 접근 방법**
+- ✅ V2 구독 그룹 및 Product IDs로 전환
+- ✅ Build 119 TestFlight 배포 완료
+- ⏳ App Store Connect V2 설정 확인 대기
+- ⏳ TestFlight 테스트 및 검증 대기
 
 ---
 
