@@ -60,6 +60,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
   /**
    * 구독 상품 로드
+   * ✅ V2: 사용자 친화적 에러 메시지 + 재시도 카운트
    */
   const loadSubscriptionProducts = async () => {
     try {
@@ -74,9 +75,41 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       }
 
       console.log('✅ 구독 상품 로드 완료:', availableProducts.length);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ 구독 상품 로드 오류:', error);
-      Alert.alert(t('settings.premium.plans.loadError'), t('settings.premium.plans.loadErrorMessage'));
+
+      // ✅ 에러 타입별 사용자 친화적 메시지
+      let errorTitle = t('settings.premium.plans.loadError');
+      let errorMessage = '';
+
+      if (error.message === 'NETWORK_ERROR') {
+        errorTitle = t('settings.premium.plans.networkError') || '네트워크 연결 오류';
+        errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.\n\n• WiFi 또는 모바일 데이터 연결 확인\n• 기내 모드 해제 확인';
+      } else if (error.message === 'TIMEOUT_ERROR') {
+        errorTitle = t('settings.premium.plans.timeoutError') || '연결 시간 초과';
+        errorMessage = '앱스토어 서버 응답이 지연되고 있습니다.\n\n• 네트워크 속도 확인\n• 잠시 후 다시 시도';
+      } else if (error.message === 'NO_SUBSCRIPTIONS_FOUND') {
+        errorTitle = t('settings.premium.plans.noProducts') || '구독 상품 준비 중';
+        errorMessage = '구독 상품이 아직 준비 중입니다.\n\n• 앱스토어 서버 동기화 중 (최대 48시간 소요)\n• 몇 시간 후 다시 시도해주세요\n\n문제가 계속되면 support@tarottimer.com으로 연락주세요.';
+      } else {
+        errorMessage = '일시적인 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.';
+      }
+
+      Alert.alert(
+        errorTitle,
+        errorMessage,
+        [
+          {
+            text: t('common.retry') || '다시 시도',
+            onPress: () => loadSubscriptionProducts()
+          },
+          {
+            text: t('common.close') || '닫기',
+            style: 'cancel',
+            onPress: () => onClose?.()
+          }
+        ]
+      );
     } finally {
       setLoading(false);
     }

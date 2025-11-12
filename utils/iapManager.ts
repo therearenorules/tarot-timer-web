@@ -93,11 +93,28 @@ export class IAPManager {
       console.log('📱 iOS 버전:', Platform.Version);
       console.log('🔧 react-native-iap 버전: 14.4.23');
 
-      // RNIap 초기화 (라이브러리 기본 설정 사용)
+      // ✅ 네트워크 헬퍼 동적 임포트
+      const { fetchWithTimeoutAndRetry } = await import('./networkHelpers');
+
+      // ✅ RNIap 초기화 (타임아웃 + 재시도)
       // v14.x는 자동으로 최적의 StoreKit 버전 선택
-      const isReady = await RNIap.initConnection();
+      console.log('🔄 IAP 연결 초기화 중 (타임아웃: 30초, 최대 3회 재시도)...');
+
+      const isReady = await fetchWithTimeoutAndRetry(
+        () => RNIap.initConnection(),
+        {
+          timeoutMs: 30000, // 30초 타임아웃
+          maxRetries: 3,    // 최대 3회 재시도
+          baseDelay: 2000,  // 2초 초기 지연
+          onRetry: (attempt, delay, error) => {
+            console.log(`⏳ IAP 초기화 재시도 ${attempt}/3: ${delay}ms 대기 중...`);
+            console.log(`📌 이전 에러: ${error.message}`);
+          }
+        }
+      );
+
       if (!isReady) {
-        console.error('❌ IAP 연결 초기화 실패');
+        console.error('❌ IAP 연결 초기화 실패 (3회 재시도 후)');
         console.error('📌 네트워크 연결을 확인하고 다시 시도해주세요.');
         throw new Error('IAP_CONNECTION_FAILED');
       }
@@ -137,7 +154,7 @@ export class IAPManager {
 
   /**
    * 구독 상품 정보 로드
-   * ✅ 완전 재작성: 실제 상품만 로드, 시뮬레이션 데이터 제거
+   * ✅ V2: 타임아웃 + 재시도 + 네트워크 상태 체크 추가
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     try {
@@ -161,23 +178,45 @@ export class IAPManager {
       console.log('🔧 Bundle ID: com.tarottimer.app');
       console.log('🔧 App ID: 6752687014');
 
-      // 실제 App Store/Play Store에서 상품 정보 가져오기
+      // ✅ 네트워크 헬퍼 동적 임포트
+      const { fetchWithTimeoutAndRetry, isNetworkError } = await import('./networkHelpers');
+
+      // ✅ 타임아웃 + 재시도로 상품 정보 가져오기
       let subscriptions;
       try {
-        console.log('🔄 RNIap.getSubscriptions() 호출 중...');
-        subscriptions = await RNIap.getSubscriptions({ skus });
+        console.log('🔄 RNIap.getSubscriptions() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
+
+        subscriptions = await fetchWithTimeoutAndRetry(
+          () => RNIap.getSubscriptions({ skus }),
+          {
+            timeoutMs: 30000, // 30초 타임아웃
+            maxRetries: 3,    // 최대 3회 재시도
+            baseDelay: 2000,  // 2초 초기 지연
+            onRetry: (attempt, delay, error) => {
+              console.log(`⏳ 재시도 ${attempt}/3: ${delay}ms 대기 중...`);
+              console.log(`📌 이전 에러: ${error.message}`);
+            }
+          }
+        );
+
         console.log('✅ getSubscriptions 응답 받음');
         console.log('📦 응답 타입:', typeof subscriptions);
         console.log('📦 응답 길이:', subscriptions?.length);
         console.log('📦 응답 내용:', JSON.stringify(subscriptions, null, 2));
       } catch (getSubError: any) {
-        console.error('❌ getSubscriptions 호출 실패:', getSubError);
+        console.error('❌ getSubscriptions 호출 최종 실패 (3회 재시도 후):', getSubError);
         console.error('📌 에러 타입:', typeof getSubError);
         console.error('📌 에러 메시지:', getSubError?.message);
         console.error('📌 에러 코드:', getSubError?.code);
-        console.error('📌 에러 스택:', getSubError?.stack);
-        console.error('📌 전체 에러 객체:', JSON.stringify(getSubError, null, 2));
-        throw getSubError;
+
+        // ✅ 에러 타입별 처리
+        if (isNetworkError(getSubError)) {
+          throw new Error('NETWORK_ERROR');
+        } else if (getSubError.message === 'REQUEST_TIMEOUT') {
+          throw new Error('TIMEOUT_ERROR');
+        } else {
+          throw getSubError;
+        }
       }
 
       if (!subscriptions || subscriptions.length === 0) {
@@ -185,12 +224,13 @@ export class IAPManager {
         console.error('📌 확인된 SKUs:', skus);
         console.error('📌 App Store Connect 상태: 승인됨');
         console.error('📌 Product IDs:');
-        console.error('   - tarot_timer_monthly');
-        console.error('   - tarot_timer_yearly');
+        console.error('   - tarot_timer_monthly_v2');
+        console.error('   - tarot_timer_yearly_v2');
         console.error('📌 가능한 원인:');
         console.error('   1. Sandbox 계정으로 로그인되지 않음');
-        console.error('   2. App Store Connect 동기화 대기 중 (최대 24시간)');
-        console.error('   3. 구독 그룹이 활성화되지 않음');
+        console.error('   2. App Store Connect 동기화 대기 중 (최대 48시간)');
+        console.error('   3. 구독 그룹(V2)이 활성화되지 않음');
+        console.error('   4. 네트워크 연결 불안정');
         throw new Error('NO_SUBSCRIPTIONS_FOUND');
       }
 
@@ -508,9 +548,10 @@ export class IAPManager {
       console.log('🔄 강제 구독 검증 시작...');
 
       // 영수증 데이터 준비
+      // ✅ V2 Product IDs 사용 (SUBSCRIPTION_SKUS 상수에서 가져옴)
       const receiptData = currentStatus.receipt_data || JSON.stringify({
         transactionId: currentStatus.store_transaction_id,
-        productId: currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly' : 'tarot_timer_monthly',
+        productId: currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly,
         purchaseDate: currentStatus.purchase_date
       });
 
@@ -518,7 +559,8 @@ export class IAPManager {
       const validationResult = await ReceiptValidator.validateReceipt(receiptData, currentStatus.store_transaction_id);
 
       // 검증 결과에 따라 구독 상태 업데이트
-      const productId = currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly' : 'tarot_timer_monthly';
+      // ✅ V2 Product IDs 사용 (SUBSCRIPTION_SKUS 상수에서 가져옴)
+      const productId = currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly;
       await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
 
       console.log('✅ 강제 구독 검증 완료:', validationResult.isActive ? '활성' : '비활성');

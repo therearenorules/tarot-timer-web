@@ -63,14 +63,21 @@ export default function PremiumSubscription({
         return;
       }
 
-      // 구독 상품 로드
+      // ✅ 구독 상품 로드 (타임아웃 + 재시도 적용됨)
       const availableProducts = await IAPManager.loadProducts();
 
       if (availableProducts.length === 0) {
+        // ✅ 간결하고 사용자 친화적인 메시지
         Alert.alert(
-          '구독 상품을 불러올 수 없습니다',
-          '앱스토어에서 구독 상품 정보를 가져올 수 없습니다.\n\n잠시 후 다시 시도해주세요.',
-          [{ text: '확인' }]
+          '구독 상품 준비 중',
+          '구독 상품이 아직 준비되지 않았습니다.\n\n앱스토어 서버 동기화 중일 수 있습니다.\n(최대 48시간 소요)\n\n잠시 후 다시 시도해주세요.',
+          [
+            {
+              text: '다시 시도',
+              onPress: () => initializeIAP()
+            },
+            { text: '닫기', style: 'cancel' }
+          ]
         );
         return;
       }
@@ -85,20 +92,43 @@ export default function PremiumSubscription({
 
     } catch (error: any) {
       console.error('❌ IAP 초기화 오류:', error);
+      console.error('📌 에러 상세:', JSON.stringify(error, null, 2));
 
-      let errorMessage = 'IAP 시스템 초기화 중 오류가 발생했습니다.';
+      // ✅ 간결하고 사용자 친화적인 에러 메시지
+      let errorTitle = '잠시 후 다시 시도해주세요';
+      let errorMessage = '';
 
-      if (error.message === 'IAP_MODULE_NOT_LOADED') {
-        errorMessage = '앱 내 구매 모듈을 로드할 수 없습니다.\n앱을 재설치하거나 최신 버전으로 업데이트해주세요.';
-      } else if (error.message === 'IAP_API_NOT_AVAILABLE') {
-        errorMessage = '현재 사용 중인 앱 버전에서는 구독 기능을 사용할 수 없습니다.\n정식 버전을 다운로드해주세요.';
-      } else if (error.message === 'NO_PRODUCTS_AVAILABLE' || error.message === 'NO_SUBSCRIPTIONS_FOUND') {
-        errorMessage = '구독 상품을 찾을 수 없습니다.\n잠시 후 다시 시도해주세요.';
+      if (error.message === 'NETWORK_ERROR') {
+        errorTitle = '네트워크 연결 오류';
+        errorMessage = '네트워크 연결을 확인하고\n다시 시도해주세요.';
+      } else if (error.message === 'TIMEOUT_ERROR') {
+        errorTitle = '연결 시간 초과';
+        errorMessage = '앱스토어 서버 응답이 지연되고 있습니다.\n잠시 후 다시 시도해주세요.';
+      } else if (error.message === 'NO_SUBSCRIPTIONS_FOUND') {
+        errorTitle = '구독 상품 준비 중';
+        errorMessage = '구독 상품이 아직 준비되지 않았습니다.\n\n앱스토어 서버 동기화 중일 수 있습니다.\n(최대 48시간 소요)';
       } else if (error.message === 'IAP_CONNECTION_FAILED') {
-        errorMessage = '앱스토어 연결에 실패했습니다.\n네트워크 연결을 확인하고 다시 시도해주세요.';
+        errorTitle = '앱스토어 연결 실패';
+        errorMessage = '앱스토어에 연결할 수 없습니다.\n네트워크 연결을 확인해주세요.';
+      } else if (error.message === 'IAP_MODULE_NOT_LOADED') {
+        errorTitle = '앱 업데이트 필요';
+        errorMessage = '앱을 최신 버전으로 업데이트해주세요.';
+      } else {
+        errorTitle = '일시적인 문제 발생';
+        errorMessage = '잠시 후 다시 시도해주세요.\n\n문제가 계속되면\nsupport@tarottimer.com으로 연락주세요.';
       }
 
-      Alert.alert('초기화 오류', errorMessage);
+      Alert.alert(
+        errorTitle,
+        errorMessage,
+        [
+          {
+            text: '다시 시도',
+            onPress: () => initializeIAP()
+          },
+          { text: '닫기', style: 'cancel' }
+        ]
+      );
     } finally {
       setLoading(false);
     }
