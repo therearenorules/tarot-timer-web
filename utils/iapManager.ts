@@ -165,8 +165,8 @@ export class IAPManager {
         return [];
       }
 
-      // RNIap 모듈 필수 확인
-      if (!RNIap || typeof RNIap.getSubscriptions !== 'function') {
+      // RNIap 모듈 필수 확인 (v14.x는 getProducts 사용)
+      if (!RNIap || typeof RNIap.getProducts !== 'function') {
         console.error('❌ 구독 상품 API를 사용할 수 없습니다.');
         throw new Error('SUBSCRIPTIONS_API_NOT_AVAILABLE');
       }
@@ -182,12 +182,12 @@ export class IAPManager {
       const { fetchWithTimeoutAndRetry, isNetworkError } = await import('./networkHelpers');
 
       // ✅ 타임아웃 + 재시도로 상품 정보 가져오기
-      let subscriptions;
+      let subscriptions: any[];
       try {
-        console.log('🔄 RNIap.getSubscriptions() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
+        console.log('🔄 RNIap.getProducts() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
 
         subscriptions = await fetchWithTimeoutAndRetry(
-          () => RNIap.getSubscriptions({ skus }),
+          () => RNIap.getProducts({ skus }),
           {
             timeoutMs: 30000, // 30초 타임아웃
             maxRetries: 3,    // 최대 3회 재시도
@@ -199,12 +199,12 @@ export class IAPManager {
           }
         );
 
-        console.log('✅ getSubscriptions 응답 받음');
+        console.log('✅ getProducts 응답 받음');
         console.log('📦 응답 타입:', typeof subscriptions);
         console.log('📦 응답 길이:', subscriptions?.length);
         console.log('📦 응답 내용:', JSON.stringify(subscriptions, null, 2));
       } catch (getSubError: any) {
-        console.error('❌ getSubscriptions 호출 최종 실패 (3회 재시도 후):', getSubError);
+        console.error('❌ getProducts 호출 최종 실패 (3회 재시도 후):', getSubError);
         console.error('📌 에러 타입:', typeof getSubError);
         console.error('📌 에러 메시지:', getSubError?.message);
         console.error('📌 에러 코드:', getSubError?.code);
