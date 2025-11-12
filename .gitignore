@@ -70,6 +70,12 @@ temp/
 backups/
 backup-analysis-*/
 backup-*/
+docs-backup/
+
+# Screenshots and temporary images
+스크린샷/
+screenshots/
+*.screenshot.png
 
 # Test files
 test-*.js
