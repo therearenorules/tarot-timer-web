@@ -71,6 +71,7 @@ backups/
 backup-analysis-*/
 backup-*/
 docs-backup/
+docs-archive/
 
 # Screenshots and temporary images
 스크린샷/

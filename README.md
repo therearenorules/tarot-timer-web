@@ -2,15 +2,15 @@
 
 React Native + Expo 기반의 24시간 타로 카드 학습 애플리케이션
 
-[![Status](https://img.shields.io/badge/Status-87%25%20Complete-brightgreen.svg)](https://github.com/therearenorules/tarot-timer-web)
+[![Status](https://img.shields.io/badge/Status-90%25%20Complete-brightgreen.svg)](https://github.com/therearenorules/tarot-timer-web)
 [![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20iOS%20%7C%20Android-blue.svg)](https://expo.dev)
-[![Build](https://img.shields.io/badge/Build-29%20%7C%20v1.0.2-success.svg)](https://expo.dev)
-[![iOS](https://img.shields.io/badge/iOS-App%20Store%20Live-success.svg)](#ios-app-store-출시)
+[![Build](https://img.shields.io/badge/Build-121%20%7C%20v1.1.3-success.svg)](https://expo.dev)
+[![iOS](https://img.shields.io/badge/iOS-TestFlight%20Review-blue.svg)](#ios-app-store-출시)
 [![Android](https://img.shields.io/badge/Android-Phase%201%20Complete-orange.svg)](#android-개발-현황)
 
 ## ✨ 주요 기능
 
-### 🎯 완성된 기능들 (v1.0.2, Build 29)
+### 🎯 완성된 기능들 (v1.1.3, Build 121)
 - **⏰ 24시간 타로 타이머**: 매 시간마다 다른 타로카드 with AsyncStorage 지속성
 - **🎨 미스틱 UI 디자인**: 보라/골드 테마의 고품질 디자인 시스템
 - **🔮 SVG 아이콘 시스템**: 25개+ 벡터 아이콘 (완전 크로스 플랫폼)
@@ -21,8 +21,9 @@ React Native + Expo 기반의 24시간 타로 카드 학습 애플리케이션
 - **📱 반응형 디자인**: 99% 안드로이드 기기 대응 (Phase 1 완료)
 - **🌍 다국어 지원**: 한국어, 영어, 일본어 (i18next)
 - **🔔 알림 시스템**: iOS 알림 8개 버그 수정 완료
-- **💰 구독 시스템**: $4.99/월, $34.99/년 (react-native-iap)
-- **🍎 iOS App Store**: v1.0.2 출시 완료 (2025-10-15)
+- **💰 구독 시스템 V2**: $4.99/월, $34.99/년 (Product ID V2 마이그레이션 완료)
+- **🛡️ 네트워크 복원력**: 30초 타임아웃 + 3회 재시도 메커니즘
+- **🍎 iOS TestFlight**: Build 121 제출 완료 (Apple 심사 준비 중)
 - **🤖 Android 개발**: Phase 1 완료 (반응형 개선, 99점 호환성)
 
 ### 🚧 개발 중인 기능들
@@ -102,8 +103,9 @@ tarot-timer-web/
 ├── docs/                      # 문서
 ├── public/                    # 공개 파일
 │   └── privacy-policy.html    # 개인정보 처리방침
+├── utils/networkHelpers.ts    # 네트워크 타임아웃/재시도 헬퍼 (NEW)
 ├── App.tsx                    # 메인 앱 컴포넌트
-├── app.json                   # Expo 설정 (Build 29, versionCode 29)
+├── app.json                   # Expo 설정 (Build 121, v1.1.3)
 └── metro.config.js            # Metro 번들러 설정
 ```
 
@@ -145,16 +147,17 @@ tarot-timer-web/
 - **CI/CD**: GitHub Actions ready
 - **Monitoring**: 실시간 시스템 헬스 체크
 
-## 📊 현재 프로젝트 현황 (2025-10-15)
+## 📊 현재 프로젝트 현황 (2025-11-12)
 
-**전체 진행률**: 87% ⭐
+**전체 진행률**: 90% ⭐
 
 | 영역 | 완성도 | 상태 | 비고 |
 |------|--------|------|------|
 | **Frontend** | 95% | 🟢 | React Native + Expo, AsyncStorage 완성 |
-| **iOS App Store** | 100% | ✅ | v1.0.2 출시 완료 (Build 29) |
+| **iOS TestFlight** | 95% | 🔵 | Build 121 제출, Apple 심사 준비 중 |
+| **구독 시스템 V2** | 95% | 🟢 | Product ID V2 마이그레이션 완료 |
+| **네트워크 복원력** | 100% | ✅ | 30초 타임아웃 + 3회 재시도 완성 |
 | **Android 개발** | 75% | 🟡 | Phase 1 완료 (반응형 99점), Phase 2-7 진행 예정 |
-| **구독 시스템** | 90% | 🟢 | $4.99/월, react-native-iap 완성 |
 | **알림 시스템** | 100% | 🟢 | iOS 8개 버그 수정 완료 |
 | **카드 데이터 지속성** | 100% | 🟢 | AsyncStorage 기반 완전 해결 |
 | **관리자 대시보드** | 90% | 🟢 | Next.js 14, 실시간 데이터 연동 |
@@ -162,18 +165,21 @@ tarot-timer-web/
 
 ## 🍎 iOS App Store 출시
 
-### ✅ 출시 완료 (2025-10-15)
-- **버전**: v1.0.2 (Build 29)
-- **상태**: App Store Live ✅
-- **개인정보 처리방침**: 완료
-- **구독 시스템**: $4.99/월, $34.99/년
-- **알림 시스템**: 8개 버그 수정 완료
-- **다국어**: 한국어, 영어, 일본어
+### 🔵 Build 121 - TestFlight 심사 준비 중 (2025-11-12)
+- **버전**: v1.1.3 (Build 121)
+- **상태**: TestFlight 제출 완료, Apple 처리 중 (5-10분 예상)
+- **주요 수정사항**:
+  - ✅ **네트워크 복원력**: 30초 타임아웃 + 3회 재시도 (Apple 심사 요구사항 충족)
+  - ✅ **V2 구독 시스템**: Product ID V2 마이그레이션 (tarot_timer_yearly_v2, tarot_timer_monthly_v2)
+  - ✅ **V1 Product ID 버그 수정**: 모든 구독 기능에서 V2 ID 일관성 확보
+  - ✅ **사용자 친화적 에러 메시지**: 7줄 → 3줄로 간결화
+- **이전 버전**: v1.0.2 (Build 29) - App Store Live ✅
 
 ### 📄 관련 문서
+- [Apple Review Bug Resolution](./APPLE_REVIEW_BUG_RESOLUTION_SUMMARY.md) - Build 121 수정 사항
+- [App Store Connect V2 Checklist](./APP_STORE_CONNECT_V2_CHECKLIST.md) - V2 마이그레이션 체크리스트
 - [App Store Connect 제출 가이드](./App-Store-Connect-Submission-Complete-Guide.md)
 - [개인정보 처리방침](./public/privacy-policy.html)
-- [심사 전략](./AppStore-Review-Strategy.md)
 
 ---
 
@@ -242,12 +248,13 @@ tarot-timer-web/
 
 ---
 
-**마지막 업데이트**: 2025-10-15
-**현재 버전**: v1.0.2 (Build 29)
-**iOS 상태**: ✅ App Store Live
+**마지막 업데이트**: 2025-11-12
+**현재 버전**: v1.1.3 (Build 121)
+**iOS 상태**: 🔵 TestFlight 제출 완료 (Apple 처리 중)
 **Android 상태**: 🔄 Phase 1 완료 (7단계 중 1단계)
 **현재 서버**: http://localhost:8083
 
 📊 **프로젝트 분석**: [analysis/](./analysis/) - 5개 종합 분석 보고서
 📱 **Android 개발**: [ANDROID_MASTER_PLAN.md](./ANDROID_MASTER_PLAN.md) - 7단계 마스터 플랜
-💰 **구독 시스템**: $4.99/월, $34.99/년 (react-native-iap)
+💰 **구독 시스템 V2**: $4.99/월, $34.99/년 (Product ID V2 마이그레이션 완료)
+🛡️ **네트워크 복원력**: 30초 타임아웃 + 3회 재시도 (Apple 심사 대응)
