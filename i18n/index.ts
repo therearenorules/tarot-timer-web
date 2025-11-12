@@ -5,6 +5,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import translation resources
 import ko from './locales/ko.json';
@@ -30,6 +31,31 @@ export const LANGUAGES = {
     nativeName: '日語',
     flag: '🇯🇵',
     code: 'ja'
+  }
+};
+
+// 앱 시작 시 저장된 언어 불러오기
+const initializeLanguage = async () => {
+  try {
+    let savedLanguage: string | null = null;
+
+    // React Native: AsyncStorage에서 불러오기
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      savedLanguage = await AsyncStorage.getItem('i18nextLng');
+      console.log(`📱 저장된 언어 (AsyncStorage): ${savedLanguage}`);
+    }
+    // 웹: localStorage에서 불러오기
+    else if (typeof localStorage !== 'undefined') {
+      savedLanguage = localStorage.getItem('i18nextLng');
+      console.log(`🌐 저장된 언어 (localStorage): ${savedLanguage}`);
+    }
+
+    if (savedLanguage && ['ko', 'en', 'ja'].includes(savedLanguage)) {
+      await i18n.changeLanguage(savedLanguage);
+      console.log(`✅ 언어 복원 완료: ${savedLanguage}`);
+    }
+  } catch (error) {
+    console.error('언어 초기화 오류:', error);
   }
 };
 
@@ -60,6 +86,10 @@ i18n
     react: {
       useSuspense: false
     }
+  })
+  .then(() => {
+    // i18n 초기화 후 저장된 언어 복원
+    initializeLanguage();
   });
 
 // Language utilities
@@ -75,9 +105,18 @@ export const LanguageUtils = {
   changeLanguage: async (languageCode: string) => {
     try {
       await i18n.changeLanguage(languageCode);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('i18nextLng', languageCode);
+
+      // React Native 환경: AsyncStorage 사용
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        await AsyncStorage.setItem('i18nextLng', languageCode);
+        console.log(`✅ 언어 저장 (AsyncStorage): ${languageCode}`);
       }
+      // 웹 환경: localStorage 사용
+      else if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('i18nextLng', languageCode);
+        console.log(`✅ 언어 저장 (localStorage): ${languageCode}`);
+      }
+
       return true;
     } catch (error) {
       console.error('Failed to change language:', error);

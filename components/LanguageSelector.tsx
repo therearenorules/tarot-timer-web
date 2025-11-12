@@ -3,8 +3,9 @@
 
 import React, { useState, memo } from 'react';
 import { useSafeState } from '../hooks/useSafeState';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Icon } from './Icon';
 import { LANGUAGES, LanguageUtils } from '../i18n/index';
 import {
@@ -50,13 +51,17 @@ export const LanguageSelector = memo(({
     try {
       // i18n 언어 직접 변경 (실시간 텍스트 변경)
       await i18n.changeLanguage(languageCode);
-      
-      // 로컬 스토리지에 저장 (웹 환경)
-      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        localStorage.setItem('i18nextLng', languageCode);
+
+      // React Native 환경: AsyncStorage 사용
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        await AsyncStorage.setItem('i18nextLng', languageCode);
+        console.log(`✅ 언어 변경 및 저장 (AsyncStorage): ${languageCode}`);
       }
-      
-      console.log(`Language changed to: ${languageCode}`);
+      // 웹 환경: localStorage 사용
+      else if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('i18nextLng', languageCode);
+        console.log(`✅ 언어 변경 및 저장 (localStorage): ${languageCode}`);
+      }
     } catch (error) {
       console.error('Failed to change language:', error);
     } finally {
