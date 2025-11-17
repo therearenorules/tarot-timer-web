@@ -62,6 +62,12 @@ export interface PurchaseResult {
 export class IAPManager {
   private static initialized = false;
   private static products: SubscriptionProduct[] = [];
+  private static purchaseUpdateSubscription: any = null;
+  private static purchaseErrorSubscription: any = null;
+  private static pendingPurchaseResolvers: Map<string, {
+    resolve: (value: PurchaseResult) => void;
+    reject: (reason?: any) => void;
+  }> = new Map();
 
   /**
    * IAP 초기화
@@ -135,6 +141,10 @@ export class IAPManager {
 
       console.log(`✅ 구독 상품 ${products.length}개 로드 완료`);
 
+      // ✅ Purchase Event Listeners 등록 (v14.x 필수!)
+      console.log('🎧 Purchase Event Listeners 등록 중...');
+      this.setupPurchaseListeners();
+
       // 구매 복원 시도 (선택적 - 실패해도 계속 진행)
       try {
         await this.restorePurchases();
@@ -154,6 +164,90 @@ export class IAPManager {
       this.initialized = false;
       return false; // ✅ 명확히 실패 반환
     }
+  }
+
+  /**
+   * Purchase Event Listeners 설정 (v14.x 필수!)
+   * purchaseUpdatedListener: 구매 성공 처리
+   * purchaseErrorListener: 구매 실패 처리
+   */
+  private static setupPurchaseListeners() {
+    if (!RNIap) {
+      console.error('❌ RNIap이 없어 이벤트 리스너를 등록할 수 없습니다.');
+      return;
+    }
+
+    // 기존 리스너 제거 (중복 등록 방지)
+    if (this.purchaseUpdateSubscription) {
+      this.purchaseUpdateSubscription.remove();
+    }
+    if (this.purchaseErrorSubscription) {
+      this.purchaseErrorSubscription.remove();
+    }
+
+    // ✅ 구매 업데이트 리스너 (구매 성공 시 호출됨)
+    this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase: any) => {
+      console.log('🎉 purchaseUpdatedListener 호출됨:', purchase);
+      console.log('📦 Purchase 상세:', JSON.stringify(purchase, null, 2));
+
+      try {
+        const productId = purchase.productId;
+        const transactionId = purchase.transactionId;
+
+        // 영수증 데이터 생성 (v14.x에서는 transactionReceipt 없음)
+        const receiptData = JSON.stringify({
+          transactionId: purchase.transactionId,
+          productId: purchase.productId,
+          purchaseDate: purchase.transactionDate,
+          originalTransactionId: purchase.originalTransactionId,
+          originalTransactionDate: purchase.originalTransactionDateIOS
+        });
+
+        // 구매 성공 처리
+        await this.processPurchaseSuccess(productId, transactionId || '', receiptData);
+
+        // 거래 완료 처리 (중요!)
+        await RNIap.finishTransaction({ purchase, isConsumable: false });
+        console.log('✅ 거래 완료 처리됨:', transactionId);
+
+        // Pending 중인 Promise 해결
+        const resolver = this.pendingPurchaseResolvers.get(productId);
+        if (resolver) {
+          resolver.resolve({
+            success: true,
+            productId,
+            transactionId,
+            purchaseDate: purchase.transactionDate?.toString()
+          });
+          this.pendingPurchaseResolvers.delete(productId);
+        }
+
+      } catch (error) {
+        console.error('❌ 구매 업데이트 처리 오류:', error);
+
+        // Pending 중인 Promise 거부
+        const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+        if (resolver) {
+          resolver.reject(error);
+          this.pendingPurchaseResolvers.delete(purchase.productId);
+        }
+      }
+    });
+
+    // ✅ 구매 에러 리스너 (구매 실패 시 호출됨)
+    this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error: any) => {
+      console.error('❌ purchaseErrorListener 호출됨:', error);
+      console.error('📌 에러 코드:', error.code);
+      console.error('📌 에러 메시지:', error.message);
+
+      // Pending 중인 모든 Promise 거부
+      for (const [productId, resolver] of this.pendingPurchaseResolvers.entries()) {
+        resolver.reject(error);
+        this.pendingPurchaseResolvers.delete(productId);
+      }
+    });
+
+    console.log('✅ Purchase Event Listeners 등록 완료');
   }
 
   /**
@@ -325,8 +419,23 @@ export class IAPManager {
       this.activePurchases.add(productId);
 
       try {
-        // ✅ v14.x: requestPurchase는 이벤트 기반, 플랫폼별 객체 사용
-        // purchaseUpdatedListener를 통해 결과 수신
+        // ✅ v14.x: requestPurchase는 이벤트 기반, Promise로 래핑
+        console.log('💳 구매 요청 전송 중...');
+
+        // Promise를 생성하고 이벤트 리스너가 resolve/reject 할 수 있도록 저장
+        const purchasePromise = new Promise<PurchaseResult>((resolve, reject) => {
+          this.pendingPurchaseResolvers.set(productId, { resolve, reject });
+
+          // 30초 타임아웃 설정
+          setTimeout(() => {
+            if (this.pendingPurchaseResolvers.has(productId)) {
+              this.pendingPurchaseResolvers.delete(productId);
+              reject(new Error('PURCHASE_TIMEOUT'));
+            }
+          }, 30000);
+        });
+
+        // requestPurchase 호출 (이벤트 리스너가 결과 처리)
         await RNIap.requestPurchase(
           Platform.OS === 'ios'
             ? {
@@ -347,40 +456,13 @@ export class IAPManager {
               }
         );
 
-        // ⚠️ requestPurchase는 void를 반환하므로 이벤트 리스너에서 처리해야 함
-        console.log('✅ 구매 요청 전송 완료 (이벤트 대기 중)');
-        const purchase: any = null; // 실제 purchase는 purchaseUpdatedListener에서 처리
+        console.log('✅ 구매 요청 전송 완료 (이벤트 대기 중...)');
 
-        console.log('✅ 구매 완료:', purchase);
+        // 이벤트 리스너가 Promise를 resolve/reject 할 때까지 대기
+        const result = await purchasePromise;
+        console.log('✅ 구매 완료:', result);
 
-        if (purchase && purchase.transactionId) {
-          // 영수증 검증 및 프리미엄 상태 업데이트
-          // v14.x: transactionReceipt 제거됨, transaction 데이터를 JSON으로 사용
-          const receiptData = JSON.stringify(purchase);
-
-          await this.processPurchaseSuccess(
-            productId,
-            purchase.transactionId,
-            receiptData
-          );
-
-          // 구매 확인 (중요!)
-          await RNIap.finishTransaction({
-            purchase,
-            isConsumable: false
-          });
-
-          console.log('✅ 구매 처리 완료');
-
-          return {
-            success: true,
-            productId,
-            transactionId: purchase.transactionId,
-            purchaseDate: purchase.transactionDate?.toString()
-          };
-        }
-
-        throw new Error('INVALID_PURCHASE_RESPONSE');
+        return result;
 
       } finally {
         this.activePurchases.delete(productId);
