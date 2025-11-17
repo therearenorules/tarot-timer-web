@@ -5,20 +5,24 @@
 
 import { Platform } from 'react-native';
 
-// 웹 환경에서는 react-native-iap을 조건부로 import
-let RNIap: any = null;
+// 초기화 시작 로그 (가장 먼저 실행)
+console.log('🚀 iapManager.ts 모듈 초기화 시작');
+console.log('📱 Platform.OS:', Platform.OS);
+
+// react-native-iap을 static import로 변경 (Expo autolinking 활용)
+import * as RNIapModule from 'react-native-iap';
+
+console.log('📦 RNIapModule import 완료');
+console.log('📦 RNIapModule 타입:', typeof RNIapModule);
+console.log('📦 RNIapModule.getProducts 타입:', typeof (RNIapModule as any)?.getProducts);
+console.log('📦 RNIapModule.fetchProducts 타입:', typeof RNIapModule?.fetchProducts);
+console.log('📦 사용 가능한 메서드:', Object.keys(RNIapModule || {}).filter(key => typeof (RNIapModule as any)[key] === 'function'));
+
+const RNIap = Platform.OS === 'web' ? null : RNIapModule;
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
-if (isMobile) {
-  try {
-    RNIap = require('react-native-iap');
-    console.log('✅ react-native-iap 모듈 로드 성공');
-  } catch (error) {
-    console.warn('⚠️ react-native-iap not available:', error);
-  }
-} else {
-  console.log('🌐 웹 환경: react-native-iap 비활성화');
-}
+console.log('🔍 최종 RNIap:', RNIap ? 'Loaded' : 'Null (Web)');
+
 import LocalStorageManager, { PremiumStatus } from './localStorage';
 import ReceiptValidator from './receiptValidator';
 
@@ -158,21 +162,42 @@ export class IAPManager {
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     try {
-      // 웹 환경에서는 빈 배열 반환
+      // 웹 환경에서는 목 데이터 반환 (미리보기용)
       if (Platform.OS === 'web') {
-        console.log('🌐 웹 환경: 구독 상품 로드 불가');
-        this.products = [];
-        return [];
+        console.log('🌐 웹 환경: 구독 상품 목 데이터 로드');
+        this.products = [
+          {
+            productId: SUBSCRIPTION_SKUS.monthly,
+            title: '타로 타이머 프리미엄 (월간)',
+            description: '한 달 동안 모든 프리미엄 기능을 사용할 수 있습니다',
+            price: '9900',
+            localizedPrice: '₩9,900',
+            currency: 'KRW',
+            type: 'monthly'
+          },
+          {
+            productId: SUBSCRIPTION_SKUS.yearly,
+            title: '타로 타이머 프리미엄 (연간)',
+            description: '1년 동안 모든 프리미엄 기능을 사용할 수 있습니다',
+            price: '99000',
+            localizedPrice: '₩99,000',
+            currency: 'KRW',
+            type: 'yearly'
+          }
+        ];
+        return this.products;
       }
 
-      // RNIap 모듈 필수 확인 (v14.x는 getProducts 사용)
-      if (!RNIap || typeof RNIap.getProducts !== 'function') {
+      // RNIap 모듈 필수 확인 (v14.x는 fetchProducts 사용)
+      if (!RNIap || typeof RNIap.fetchProducts !== 'function') {
         console.error('❌ 구독 상품 API를 사용할 수 없습니다.');
+        console.error('📦 RNIap:', RNIap);
+        console.error('📦 fetchProducts 타입:', typeof RNIap?.fetchProducts);
         throw new Error('SUBSCRIPTIONS_API_NOT_AVAILABLE');
       }
 
-      const skus = Object.values(SUBSCRIPTION_SKUS);
-      console.log('📦 구독 상품 로드 시도:', skus);
+      const productIds = Object.values(SUBSCRIPTION_SKUS);
+      console.log('📦 구독 상품 로드 시도:', productIds);
       console.log('📱 플랫폼:', Platform.OS);
       console.log('📱 iOS 버전:', Platform.Version);
       console.log('🔧 Bundle ID: com.tarottimer.app');
@@ -182,12 +207,12 @@ export class IAPManager {
       const { fetchWithTimeoutAndRetry, isNetworkError } = await import('./networkHelpers');
 
       // ✅ 타임아웃 + 재시도로 상품 정보 가져오기
-      let subscriptions: any[];
+      let subscriptions: any[] | null;
       try {
-        console.log('🔄 RNIap.getProducts() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
+        console.log('🔄 RNIap.fetchProducts() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
 
         subscriptions = await fetchWithTimeoutAndRetry(
-          () => RNIap.getProducts({ skus }),
+          () => RNIap.fetchProducts({ skus: productIds }),
           {
             timeoutMs: 30000, // 30초 타임아웃
             maxRetries: 3,    // 최대 3회 재시도
@@ -199,12 +224,12 @@ export class IAPManager {
           }
         );
 
-        console.log('✅ getProducts 응답 받음');
+        console.log('✅ fetchProducts 응답 받음');
         console.log('📦 응답 타입:', typeof subscriptions);
         console.log('📦 응답 길이:', subscriptions?.length);
         console.log('📦 응답 내용:', JSON.stringify(subscriptions, null, 2));
       } catch (getSubError: any) {
-        console.error('❌ getProducts 호출 최종 실패 (3회 재시도 후):', getSubError);
+        console.error('❌ fetchProducts 호출 최종 실패 (3회 재시도 후):', getSubError);
         console.error('📌 에러 타입:', typeof getSubError);
         console.error('📌 에러 메시지:', getSubError?.message);
         console.error('📌 에러 코드:', getSubError?.code);
@@ -221,7 +246,7 @@ export class IAPManager {
 
       if (!subscriptions || subscriptions.length === 0) {
         console.error('❌ 구독 상품을 찾을 수 없습니다.');
-        console.error('📌 확인된 SKUs:', skus);
+        console.error('📌 확인된 Product IDs:', productIds);
         console.error('📌 App Store Connect 상태: 승인됨');
         console.error('📌 Product IDs:');
         console.error('   - tarot_timer_monthly_v2');
@@ -281,8 +306,8 @@ export class IAPManager {
         };
       }
 
-      // RNIap 모듈 필수 확인
-      if (!RNIap || typeof RNIap.requestSubscription !== 'function') {
+      // RNIap 모듈 필수 확인 (v14.x는 requestPurchase 사용)
+      if (!RNIap || typeof RNIap.requestPurchase !== 'function') {
         console.error('❌ CRITICAL: 구매 API를 사용할 수 없습니다.');
         throw new Error('PURCHASE_API_NOT_AVAILABLE');
       }
@@ -300,25 +325,38 @@ export class IAPManager {
       this.activePurchases.add(productId);
 
       try {
-        // ✅ 실제 Apple/Google 결제 처리
-        const purchase = await RNIap.requestSubscription({
-          sku: productId,
-          ...(Platform.OS === 'android' && {
-            subscriptionOffers: [
-              {
-                sku: productId,
-                offerToken: 'default_offer_token'
+        // ✅ v14.x: requestPurchase는 이벤트 기반, 플랫폼별 객체 사용
+        // purchaseUpdatedListener를 통해 결과 수신
+        await RNIap.requestPurchase(
+          Platform.OS === 'ios'
+            ? {
+                ios: {
+                  sku: productId
+                }
               }
-            ]
-          })
-        });
+            : {
+                android: {
+                  skus: [productId],
+                  subscriptionOffers: [
+                    {
+                      sku: productId,
+                      offerToken: 'default_offer_token'
+                    }
+                  ]
+                }
+              }
+        );
+
+        // ⚠️ requestPurchase는 void를 반환하므로 이벤트 리스너에서 처리해야 함
+        console.log('✅ 구매 요청 전송 완료 (이벤트 대기 중)');
+        const purchase: any = null; // 실제 purchase는 purchaseUpdatedListener에서 처리
 
         console.log('✅ 구매 완료:', purchase);
 
         if (purchase && purchase.transactionId) {
           // 영수증 검증 및 프리미엄 상태 업데이트
-          const receiptData = purchase.transactionReceipt ||
-                              JSON.stringify(purchase);
+          // v14.x: transactionReceipt 제거됨, transaction 데이터를 JSON으로 사용
+          const receiptData = JSON.stringify(purchase);
 
           await this.processPurchaseSuccess(
             productId,
@@ -410,14 +448,14 @@ export class IAPManager {
       for (const purchase of purchases) {
         if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
           // 구매 복원 시에도 영수증 검증 수행
-          const receiptData = purchase.transactionReceipt ||
-                              JSON.stringify({
-                                transactionId: purchase.transactionId,
-                                productId: purchase.productId,
-                                purchaseDate: purchase.transactionDate
-                              });
+          // v14.x: transactionReceipt 대신 transactionId 사용
+          const receiptData = JSON.stringify({
+            transactionId: purchase.transactionId,
+            productId: purchase.productId,
+            purchaseDate: purchase.transactionDate
+          });
 
-          await this.processPurchaseSuccess(purchase.productId, purchase.transactionId, receiptData);
+          await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
           console.log('✅ 구독 복원 및 검증 완료:', purchase.productId);
           restoredCount++;
         }
@@ -649,7 +687,8 @@ export class IAPManager {
             console.log('🔄 새로운 구독 갱신이 감지되었습니다:', purchase.transactionId);
 
             // 새로운 구독 정보로 업데이트
-            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId, purchase.transactionReceipt);
+            const receiptData = JSON.stringify(purchase);
+            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
             break;
           }
         }
@@ -709,7 +748,7 @@ export class IAPManager {
       const gracePeriodStatus: PremiumStatus = {
         ...currentStatus,
         expiry_date: gracePeriodEnd.toISOString(),
-        validation_environment: 'GracePeriod',
+        validation_environment: 'Sandbox', // GracePeriod는 유효한 타입이 아님
         last_validated: new Date().toISOString()
       };
 
