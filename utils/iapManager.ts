@@ -14,8 +14,11 @@ import * as RNIapModule from 'react-native-iap';
 
 console.log('📦 RNIapModule import 완료');
 console.log('📦 RNIapModule 타입:', typeof RNIapModule);
+console.log('📦 RNIapModule 전체 키:', Object.keys(RNIapModule || {}));
+console.log('📦 RNIapModule.getSubscriptions 타입:', typeof (RNIapModule as any)?.getSubscriptions);
+console.log('📦 RNIapModule.initConnection 타입:', typeof (RNIapModule as any)?.initConnection);
 console.log('📦 RNIapModule.getProducts 타입:', typeof (RNIapModule as any)?.getProducts);
-console.log('📦 RNIapModule.fetchProducts 타입:', typeof RNIapModule?.fetchProducts);
+console.log('📦 RNIapModule.requestPurchase 타입:', typeof (RNIapModule as any)?.requestPurchase);
 console.log('📦 사용 가능한 메서드:', Object.keys(RNIapModule || {}).filter(key => typeof (RNIapModule as any)[key] === 'function'));
 
 const RNIap = Platform.OS === 'web' ? null : RNIapModule;
@@ -68,6 +71,9 @@ export class IAPManager {
     resolve: (value: PurchaseResult) => void;
     reject: (reason?: any) => void;
   }> = new Map();
+
+  // 타임아웃 추적을 위한 Map (Race Condition 방지)
+  private static purchaseTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
   /**
    * IAP 초기화
@@ -191,20 +197,51 @@ export class IAPManager {
       console.log('📦 Purchase 상세:', JSON.stringify(purchase, null, 2));
 
       try {
-        const productId = purchase.productId;
-        const transactionId = purchase.transactionId;
+        const productId = purchase?.productId || '';
+        const transactionId = purchase?.transactionId || '';
+
+        if (!productId) {
+          console.error('❌ productId가 없습니다');
+          return;
+        }
+
+        // ✅ Deferred purchase 체크 (iOS Ask to Buy)
+        // iOS에서 부모 승인이 필요한 구매의 경우 transactionStateIOS가 'DEFERRED'
+        const transactionState = purchase?.transactionStateIOS;
+        if (transactionState === 'DEFERRED' || transactionState === 2) {
+          console.log('⏳ 구매가 지연됨 (부모 승인 대기 중):', productId);
+
+          // Pending 중인 Promise를 특별한 결과로 해결
+          const resolver = this.pendingPurchaseResolvers.get(productId);
+          if (resolver) {
+            // 타임아웃 정리
+            const timeoutId = this.purchaseTimeouts.get(productId);
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              this.purchaseTimeouts.delete(productId);
+            }
+
+            resolver.resolve({
+              success: false,
+              productId,
+              error: '구매가 부모님의 승인을 기다리고 있습니다. 승인 후 자동으로 처리됩니다.'
+            });
+            this.pendingPurchaseResolvers.delete(productId);
+          }
+          return; // Deferred 상태에서는 더 이상 처리하지 않음
+        }
 
         // 영수증 데이터 생성 (v14.x에서는 transactionReceipt 없음)
         const receiptData = JSON.stringify({
-          transactionId: purchase.transactionId,
-          productId: purchase.productId,
-          purchaseDate: purchase.transactionDate,
-          originalTransactionId: purchase.originalTransactionId,
-          originalTransactionDate: purchase.originalTransactionDateIOS
+          transactionId: transactionId,
+          productId: productId,
+          purchaseDate: purchase?.transactionDate || '',
+          originalTransactionId: purchase?.originalTransactionId || '',
+          originalTransactionDate: purchase?.originalTransactionDateIOS || ''
         });
 
         // 구매 성공 처리
-        await this.processPurchaseSuccess(productId, transactionId || '', receiptData);
+        await this.processPurchaseSuccess(productId, transactionId, receiptData);
 
         // 거래 완료 처리 (중요!)
         await RNIap.finishTransaction({ purchase, isConsumable: false });
@@ -213,11 +250,18 @@ export class IAPManager {
         // Pending 중인 Promise 해결
         const resolver = this.pendingPurchaseResolvers.get(productId);
         if (resolver) {
+          // 타임아웃 정리 (Race Condition 방지)
+          const timeoutId = this.purchaseTimeouts.get(productId);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            this.purchaseTimeouts.delete(productId);
+          }
+
           resolver.resolve({
             success: true,
             productId,
             transactionId,
-            purchaseDate: purchase.transactionDate?.toString()
+            purchaseDate: purchase?.transactionDate?.toString() || ''
           });
           this.pendingPurchaseResolvers.delete(productId);
         }
@@ -226,10 +270,18 @@ export class IAPManager {
         console.error('❌ 구매 업데이트 처리 오류:', error);
 
         // Pending 중인 Promise 거부
-        const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+        const purchaseProductId = purchase?.productId || '';
+        const resolver = this.pendingPurchaseResolvers.get(purchaseProductId);
         if (resolver) {
+          // 타임아웃 정리 (Race Condition 방지)
+          const timeoutId = this.purchaseTimeouts.get(purchaseProductId);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            this.purchaseTimeouts.delete(purchaseProductId);
+          }
+
           resolver.reject(error);
-          this.pendingPurchaseResolvers.delete(purchase.productId);
+          this.pendingPurchaseResolvers.delete(purchaseProductId);
         }
       }
     });
@@ -237,12 +289,18 @@ export class IAPManager {
     // ✅ 구매 에러 리스너 (구매 실패 시 호출됨)
     this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error: any) => {
       console.error('❌ purchaseErrorListener 호출됨:', error);
-      console.error('📌 에러 코드:', error.code);
-      console.error('📌 에러 메시지:', error.message);
+      console.error('📌 에러 코드:', error?.code || 'unknown');
+      console.error('📌 에러 메시지:', error?.message || 'no message');
+
+      // 모든 타임아웃 정리 (Race Condition 방지)
+      for (const [productId, timeoutId] of this.purchaseTimeouts.entries()) {
+        clearTimeout(timeoutId);
+        this.purchaseTimeouts.delete(productId);
+      }
 
       // Pending 중인 모든 Promise 거부
       for (const [productId, resolver] of this.pendingPurchaseResolvers.entries()) {
-        resolver.reject(error);
+        resolver.reject(error || new Error('Unknown purchase error'));
         this.pendingPurchaseResolvers.delete(productId);
       }
     });
@@ -264,8 +322,8 @@ export class IAPManager {
             productId: SUBSCRIPTION_SKUS.monthly,
             title: '타로 타이머 프리미엄 (월간)',
             description: '한 달 동안 모든 프리미엄 기능을 사용할 수 있습니다',
-            price: '9900',
-            localizedPrice: '₩9,900',
+            price: '6600',
+            localizedPrice: '₩6,600',
             currency: 'KRW',
             type: 'monthly'
           },
@@ -273,8 +331,8 @@ export class IAPManager {
             productId: SUBSCRIPTION_SKUS.yearly,
             title: '타로 타이머 프리미엄 (연간)',
             description: '1년 동안 모든 프리미엄 기능을 사용할 수 있습니다',
-            price: '99000',
-            localizedPrice: '₩99,000',
+            price: '49000',
+            localizedPrice: '₩49,000',
             currency: 'KRW',
             type: 'yearly'
           }
@@ -282,7 +340,7 @@ export class IAPManager {
         return this.products;
       }
 
-      // RNIap 모듈 필수 확인 (v14.x는 fetchProducts 사용)
+      // RNIap 모듈 필수 확인 (v14.x는 fetchProducts 사용 - 구독/일반 상품 모두)
       if (!RNIap || typeof RNIap.fetchProducts !== 'function') {
         console.error('❌ 구독 상품 API를 사용할 수 없습니다.');
         console.error('📦 RNIap:', RNIap);
@@ -300,13 +358,16 @@ export class IAPManager {
       // ✅ 네트워크 헬퍼 동적 임포트
       const { fetchWithTimeoutAndRetry, isNetworkError } = await import('./networkHelpers');
 
-      // ✅ 타임아웃 + 재시도로 상품 정보 가져오기
-      let subscriptions: any[] | null;
+      // ✅ 타임아웃 + 재시도로 구독 상품 정보 가져오기
+      let subscriptions: any[] = [];
       try {
         console.log('🔄 RNIap.fetchProducts() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
+        console.log('📦 요청 SKUs:', productIds);
 
-        subscriptions = await fetchWithTimeoutAndRetry(
-          () => RNIap.fetchProducts({ skus: productIds }),
+        // ✅ v14.x fetchProducts 올바른 호출 방법: { skus: string[], type: 'subs' }
+        // type: 'subs'를 지정해야 구독 상품을 가져옴 (기본값은 'in-app')
+        const response = await fetchWithTimeoutAndRetry(
+          () => RNIap.fetchProducts({ skus: productIds, type: 'subs' }),
           {
             timeoutMs: 30000, // 30초 타임아웃
             maxRetries: 3,    // 최대 3회 재시도
@@ -319,22 +380,44 @@ export class IAPManager {
         );
 
         console.log('✅ fetchProducts 응답 받음');
-        console.log('📦 응답 타입:', typeof subscriptions);
-        console.log('📦 응답 길이:', subscriptions?.length);
-        console.log('📦 응답 내용:', JSON.stringify(subscriptions, null, 2));
-      } catch (getSubError: any) {
-        console.error('❌ fetchProducts 호출 최종 실패 (3회 재시도 후):', getSubError);
-        console.error('📌 에러 타입:', typeof getSubError);
-        console.error('📌 에러 메시지:', getSubError?.message);
-        console.error('📌 에러 코드:', getSubError?.code);
+        console.log('📦 응답 타입:', typeof response);
+        console.log('📦 응답 Array 여부:', Array.isArray(response));
+        console.log('📦 응답 전체:', JSON.stringify(response, null, 2));
+
+        // ✅ v14.x fetchProducts는 배열을 직접 반환
+        if (Array.isArray(response)) {
+          subscriptions = response;
+          console.log('📦 구독 상품 배열:', subscriptions.length, '개');
+        } else {
+          console.error('📦 예상치 못한 응답 형식 (배열이 아님):', typeof response);
+          subscriptions = [];
+        }
+
+        // 로드된 상품 상세 로깅
+        if (subscriptions.length > 0) {
+          subscriptions.forEach((sub, index) => {
+            console.log(`📦 상품 ${index + 1}:`, {
+              productId: sub.productId,
+              title: sub.title,
+              localizedPrice: sub.localizedPrice,
+              price: sub.price,
+              currency: sub.currency
+            });
+          });
+        }
+      } catch (fetchError: any) {
+        console.error('❌ fetchProducts 호출 최종 실패 (3회 재시도 후):', fetchError);
+        console.error('📌 에러 타입:', typeof fetchError);
+        console.error('📌 에러 메시지:', fetchError?.message);
+        console.error('📌 에러 코드:', fetchError?.code);
 
         // ✅ 에러 타입별 처리
-        if (isNetworkError(getSubError)) {
+        if (isNetworkError(fetchError)) {
           throw new Error('NETWORK_ERROR');
-        } else if (getSubError.message === 'REQUEST_TIMEOUT') {
+        } else if (fetchError.message === 'REQUEST_TIMEOUT') {
           throw new Error('TIMEOUT_ERROR');
         } else {
-          throw getSubError;
+          throw fetchError;
         }
       }
 
@@ -354,15 +437,20 @@ export class IAPManager {
       }
 
       // 상품 데이터 매핑
-      this.products = subscriptions.map(sub => ({
-        productId: sub.productId,
-        title: sub.title || sub.productId,
-        description: sub.description || '',
-        price: sub.price,
-        localizedPrice: sub.localizedPrice,
-        currency: sub.currency,
-        type: sub.productId.includes('yearly') ? 'yearly' : 'monthly'
-      }));
+      // v14.x에서는 id와 displayPrice를 기본으로 사용
+      this.products = subscriptions.map(sub => {
+        const productId = sub?.id || sub?.productId || '';
+        console.log('📦 상품 매핑:', { raw: sub, productId });
+        return {
+          productId,
+          title: sub?.title || sub?.localizedTitle || productId,
+          description: sub?.description || sub?.localizedDescription || '',
+          price: sub?.price || '0',
+          localizedPrice: sub?.displayPrice || sub?.localizedPrice || '₩0',
+          currency: sub?.currency || 'KRW',
+          type: productId.includes('yearly') ? 'yearly' : 'monthly'
+        };
+      });
 
       console.log('✅ 구독 상품 로드 완료:', this.products);
       return this.products;
@@ -426,13 +514,17 @@ export class IAPManager {
         const purchasePromise = new Promise<PurchaseResult>((resolve, reject) => {
           this.pendingPurchaseResolvers.set(productId, { resolve, reject });
 
-          // 30초 타임아웃 설정
-          setTimeout(() => {
+          // 60초 타임아웃 설정 (Race Condition 방지를 위해 ID 저장)
+          const timeoutId = setTimeout(() => {
             if (this.pendingPurchaseResolvers.has(productId)) {
               this.pendingPurchaseResolvers.delete(productId);
+              this.purchaseTimeouts.delete(productId);
               reject(new Error('PURCHASE_TIMEOUT'));
             }
-          }, 30000);
+          }, 60000);
+
+          // 타임아웃 ID 저장 (나중에 정리하기 위해)
+          this.purchaseTimeouts.set(productId, timeoutId);
         });
 
         // requestPurchase 호출 (이벤트 리스너가 결과 처리)
@@ -471,8 +563,11 @@ export class IAPManager {
     } catch (error: any) {
       console.error('❌ 구매 오류:', error);
 
+      const errorCode = error?.code || '';
+      const errorMsg = error?.message || '';
+
       // 사용자 취소
-      if (error.code === 'E_USER_CANCELLED') {
+      if (errorCode === 'E_USER_CANCELLED') {
         return {
           success: false,
           error: '구매를 취소했습니다.'
@@ -480,7 +575,7 @@ export class IAPManager {
       }
 
       // 네트워크 오류
-      if (error.code === 'E_NETWORK_ERROR') {
+      if (errorCode === 'E_NETWORK_ERROR') {
         return {
           success: false,
           error: '네트워크 연결을 확인하고 다시 시도해주세요.'
@@ -490,13 +585,13 @@ export class IAPManager {
       // 기타 오류
       let errorMessage = '구매 처리 중 오류가 발생했습니다.';
 
-      if (error.message === 'IAP_NOT_INITIALIZED') {
+      if (errorMsg === 'IAP_NOT_INITIALIZED') {
         errorMessage = '구독 시스템이 초기화되지 않았습니다.\n앱을 재시작해주세요.';
-      } else if (error.message === 'PURCHASE_API_NOT_AVAILABLE') {
+      } else if (errorMsg === 'PURCHASE_API_NOT_AVAILABLE') {
         errorMessage = '앱 내 구매 기능을 사용할 수 없습니다.\n앱을 최신 버전으로 업데이트해주세요.';
-      } else if (error.code === 'E_SERVICE_ERROR') {
+      } else if (errorCode === 'E_SERVICE_ERROR') {
         errorMessage = '앱스토어 서비스에 일시적인 문제가 있습니다.\n잠시 후 다시 시도해주세요.';
-      } else if (error.code === 'E_RECEIPT_FAILED') {
+      } else if (errorCode === 'E_RECEIPT_FAILED') {
         errorMessage = '영수증 검증에 실패했습니다.\n고객센터로 문의해주세요.';
       }
 
@@ -528,17 +623,18 @@ export class IAPManager {
       let restoredCount = 0;
 
       for (const purchase of purchases) {
-        if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
+        const purchaseProductId = purchase?.productId || '';
+        if (purchaseProductId && Object.values(SUBSCRIPTION_SKUS).includes(purchaseProductId)) {
           // 구매 복원 시에도 영수증 검증 수행
           // v14.x: transactionReceipt 대신 transactionId 사용
           const receiptData = JSON.stringify({
-            transactionId: purchase.transactionId,
-            productId: purchase.productId,
-            purchaseDate: purchase.transactionDate
+            transactionId: purchase?.transactionId || '',
+            productId: purchaseProductId,
+            purchaseDate: purchase?.transactionDate || ''
           });
 
-          await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
-          console.log('✅ 구독 복원 및 검증 완료:', purchase.productId);
+          await this.processPurchaseSuccess(purchaseProductId, purchase?.transactionId || '', receiptData);
+          console.log('✅ 구독 복원 및 검증 완료:', purchaseProductId);
           restoredCount++;
         }
       }
@@ -763,14 +859,17 @@ export class IAPManager {
       const currentStatus = await LocalStorageManager.getPremiumStatus();
 
       for (const purchase of purchases) {
-        if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
+        const purchaseProductId = purchase?.productId || '';
+        const purchaseTransactionId = purchase?.transactionId || '';
+
+        if (purchaseProductId && Object.values(SUBSCRIPTION_SKUS).includes(purchaseProductId)) {
           // 기존 거래 ID와 다른 새로운 거래가 있는지 확인
-          if (purchase.transactionId !== currentStatus.store_transaction_id) {
-            console.log('🔄 새로운 구독 갱신이 감지되었습니다:', purchase.transactionId);
+          if (purchaseTransactionId && purchaseTransactionId !== currentStatus.store_transaction_id) {
+            console.log('🔄 새로운 구독 갱신이 감지되었습니다:', purchaseTransactionId);
 
             // 새로운 구독 정보로 업데이트
-            const receiptData = JSON.stringify(purchase);
-            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
+            const receiptData = JSON.stringify(purchase || {});
+            await this.processPurchaseSuccess(purchaseProductId, purchaseTransactionId, receiptData);
             break;
           }
         }
@@ -1065,11 +1164,41 @@ export class IAPManager {
 
   /**
    * IAP 연결 해제
+   * ✅ 개선: 모든 리스너와 타임아웃 정리 추가
    */
   static async dispose(): Promise<void> {
     try {
       // 주기적 갱신 모니터링 중지
       this.stopPeriodicRenewalCheck();
+
+      // 모든 타임아웃 정리
+      for (const [productId, timeoutId] of this.purchaseTimeouts.entries()) {
+        clearTimeout(timeoutId);
+        this.purchaseTimeouts.delete(productId);
+      }
+      console.log('✅ 모든 구매 타임아웃 정리 완료');
+
+      // 모든 pending Promise 거부
+      for (const [productId, resolver] of this.pendingPurchaseResolvers.entries()) {
+        resolver.reject(new Error('IAP_DISPOSED'));
+        this.pendingPurchaseResolvers.delete(productId);
+      }
+      console.log('✅ 모든 pending Promise 정리 완료');
+
+      // 이벤트 리스너 제거
+      if (this.purchaseUpdateSubscription) {
+        this.purchaseUpdateSubscription.remove();
+        this.purchaseUpdateSubscription = null;
+        console.log('✅ purchaseUpdateSubscription 제거 완료');
+      }
+      if (this.purchaseErrorSubscription) {
+        this.purchaseErrorSubscription.remove();
+        this.purchaseErrorSubscription = null;
+        console.log('✅ purchaseErrorSubscription 제거 완료');
+      }
+
+      // 활성 구매 목록 정리
+      this.activePurchases.clear();
 
       if (Platform.OS !== 'web' && this.initialized && RNIap && typeof RNIap.endConnection === 'function') {
         await RNIap.endConnection();

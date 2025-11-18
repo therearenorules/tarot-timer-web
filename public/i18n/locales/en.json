@@ -183,6 +183,12 @@
       "japanese": "日本語",
       "chinese": "中文",
       "spanish": "Español"
+    },
+    "premium": {
+      "subscriptionCompleteTitle": "Subscription Complete",
+      "subscriptionCompleteMessage": "Your premium subscription has been successfully completed. You now have access to all premium features.",
+      "comingSoonTitle": "Coming Soon",
+      "comingSoonDesc": "This feature is coming soon. Please stay tuned!"
     }
   },
   "pwa": {

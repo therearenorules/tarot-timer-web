@@ -104,6 +104,9 @@ export class AdManager {
   // 광고 인스턴스 (전면광고만)
   private static interstitialAd: any = null;
 
+  // 광고 이벤트 리스너 참조 (cleanup용)
+  private static interstitialListeners: any[] = [];
+
   // 광고 상태 관리 (전면광고만)
   private static adStates: {
     interstitial: AdState;
@@ -298,6 +301,9 @@ export class AdManager {
 
       this.adStates.interstitial.isLoading = true;
 
+      // 기존 리스너 정리 (메모리 누수 방지)
+      this.cleanupInterstitialListeners();
+
       this.interstitialAd = InterstitialAd.createForAdRequest(adUnitId, {
         requestNonPersonalizedAdsOnly: false,
       });
@@ -311,15 +317,17 @@ export class AdManager {
 
         const EventType = InterstitialAdEventType || AdEventType;
 
-        this.interstitialAd.addAdEventListener(EventType.LOADED, () => {
+        // 리스너 참조 저장 (cleanup용)
+        const loadedListener = this.interstitialAd.addAdEventListener(EventType.LOADED, () => {
           clearTimeout(timeout);
           this.adStates.interstitial.isLoaded = true;
           this.adStates.interstitial.isLoading = false;
           console.log('✅ 전면광고 로드 완료');
           resolve(true);
         });
+        this.interstitialListeners.push(loadedListener);
 
-        this.interstitialAd.addAdEventListener(EventType.ERROR, (error: any) => {
+        const errorListener = this.interstitialAd.addAdEventListener(EventType.ERROR, (error: any) => {
           clearTimeout(timeout);
           this.adStates.interstitial.isLoading = false;
           this.adStates.interstitial.errorCount++;
@@ -328,6 +336,7 @@ export class AdManager {
           console.error('⚠️ AdMob 앱 승인 상태를 확인하세요: https://apps.admob.com');
           resolve(false);
         });
+        this.interstitialListeners.push(errorListener);
 
         this.interstitialAd.load();
       });
@@ -587,10 +596,32 @@ export class AdManager {
   }
 
   /**
+   * 전면광고 이벤트 리스너 정리 (메모리 누수 방지)
+   */
+  private static cleanupInterstitialListeners(): void {
+    try {
+      for (const listener of this.interstitialListeners) {
+        if (listener && typeof listener === 'function') {
+          listener();
+        }
+      }
+      this.interstitialListeners = [];
+      console.log('🧹 전면광고 이벤트 리스너 정리 완료');
+    } catch (error) {
+      console.warn('⚠️ 전면광고 리스너 정리 오류:', error);
+      this.interstitialListeners = [];
+    }
+  }
+
+  /**
    * AdManager 정리
+   * ✅ 개선: 모든 리스너 정리 추가
    */
   static dispose(): void {
     try {
+      // 모든 이벤트 리스너 정리
+      this.cleanupInterstitialListeners();
+
       this.interstitialAd = null;
       // ✅ REMOVED: rewardedAd는 제거됨 (전면광고만 사용)
       this.initialized = false;

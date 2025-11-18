@@ -183,6 +183,12 @@
       "japanese": "日本語",
       "chinese": "中文",
       "spanish": "Español"
+    },
+    "premium": {
+      "subscriptionCompleteTitle": "구독 완료",
+      "subscriptionCompleteMessage": "프리미엄 구독이 성공적으로 완료되었습니다. 모든 프리미엄 기능을 이용하실 수 있습니다.",
+      "comingSoonTitle": "준비 중",
+      "comingSoonDesc": "이 기능은 곧 출시될 예정입니다. 조금만 기다려주세요!"
     }
   },
   "pwa": {

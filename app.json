@@ -28,14 +28,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "125",
+      "buildNumber": "137",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
         "NSUserNotificationUsageDescription": "24시간 타로 카드 학습 알림과 시간별 카드 뽑기 알림을 위해 알림 권한이 필요합니다."
-      },
-      "entitlements": {
-        "com.apple.developer.in-app-payments": []
       },
       "config": {
         "usesNonExemptEncryption": false,

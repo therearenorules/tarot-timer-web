@@ -18,7 +18,7 @@ const SECURITY_CONFIG = {
   RETRY_DELAY_BASE: 1000, // 1초
   RECEIPT_EXPIRY_GRACE_PERIOD: 300000, // 5분
   MAX_RECEIPT_AGE: 86400000, // 24시간
-  VALIDATION_TIMEOUT: 30000, // 30초
+  VALIDATION_TIMEOUT: 60000, // 60초 (App Store 응답 시간 고려하여 증가)
 } as const;
 
 // 영수증 검증 결과 인터페이스

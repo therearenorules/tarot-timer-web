@@ -73,7 +73,13 @@
       "Bash(test:*)",
       "Bash(expo prebuild:*)",
       "Bash(./gradlew:*)",
-      "Bash(npx react-native:*)"
+      "Bash(npx react-native:*)",
+      "Bash(find:*)",
+      "Bash(npx expo-modules-autolinking:*)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(eas credentials:*)",
+      "Bash(node -e:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
