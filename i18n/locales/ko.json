@@ -437,7 +437,11 @@
         "monthlyEquivalent": "월 {{price}}원 상당",
         "nextRenewal": "다음 갱신일: {{date}}",
         "cannotOpenUrl": "{{title}} 페이지를 열 수 없습니다.",
-        "urlOpenError": "{{title}} 페이지를 여는 중 오류가 발생했습니다."
+        "urlOpenError": "{{title}} 페이지를 여는 중 오류가 발생했습니다.",
+        "monthlyTitle": "월간 구독",
+        "monthlyDescription": "한 달 동안 모든 프리미엄 기능을 사용할 수 있습니다",
+        "yearlyTitle": "연간 구독",
+        "yearlyDescription": "1년 동안 모든 프리미엄 기능을 사용할 수 있습니다"
       }
     },
     "display": {

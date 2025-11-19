@@ -254,6 +254,20 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   const renderPlanCard = (product: SubscriptionProduct) => {
     const isSelected = selectedPlan === product.productId;
     const isYearly = product.type === 'yearly';
+    const isMonthly = product.type === 'monthly';
+
+    // 번역된 제목과 설명 사용
+    const planTitle = isYearly
+      ? t('settings.premium.plans.yearlyTitle')
+      : isMonthly
+        ? t('settings.premium.plans.monthlyTitle')
+        : product.title;
+
+    const planDescription = isYearly
+      ? t('settings.premium.plans.yearlyDescription')
+      : isMonthly
+        ? t('settings.premium.plans.monthlyDescription')
+        : product.description;
 
     // 할인 정보 계산
     let discountInfo = null;
@@ -287,8 +301,8 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         {/* 선택 표시 */}
         <View style={styles.planHeader}>
           <View style={styles.planTitleContainer}>
-            <Text style={styles.planTitle}>{product.title}</Text>
-            <Text style={styles.planDescription}>{product.description}</Text>
+            <Text style={styles.planTitle}>{planTitle}</Text>
+            <Text style={styles.planDescription}>{planDescription}</Text>
           </View>
 
           <View style={[

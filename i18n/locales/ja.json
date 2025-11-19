@@ -436,7 +436,11 @@
         "monthlyEquivalent": "月額{{price}}円相当",
         "nextRenewal": "次回更新日: {{date}}",
         "cannotOpenUrl": "{{title}}ページを開けません。",
-        "urlOpenError": "{{title}}ページを開く際にエラーが発生しました。"
+        "urlOpenError": "{{title}}ページを開く際にエラーが発生しました。",
+        "monthlyTitle": "月間サブスクリプション",
+        "monthlyDescription": "1ヶ月間すべてのプレミアム機能をご利用いただけます",
+        "yearlyTitle": "年間サブスクリプション",
+        "yearlyDescription": "1年間すべてのプレミアム機能をご利用いただけます"
       }
     },
     "display": {

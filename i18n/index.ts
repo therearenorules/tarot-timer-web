@@ -34,63 +34,127 @@ export const LANGUAGES = {
   }
 };
 
-// 앱 시작 시 저장된 언어 불러오기
-const initializeLanguage = async () => {
-  try {
-    let savedLanguage: string | null = null;
+// iOS/Android용 AsyncStorage 기반 언어 감지기
+const asyncStorageLanguageDetector = {
+  type: 'languageDetector' as const,
+  async: true,
+  detect: async (callback: (lng: string) => void) => {
+    try {
+      // iOS/Android: AsyncStorage에서 저장된 언어 확인
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        const savedLanguage = await AsyncStorage.getItem('i18nextLng');
+        console.log(`📱 AsyncStorage 언어 감지: ${savedLanguage}`);
 
-    // React Native: AsyncStorage에서 불러오기
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      savedLanguage = await AsyncStorage.getItem('i18nextLng');
-      console.log(`📱 저장된 언어 (AsyncStorage): ${savedLanguage}`);
-    }
-    // 웹: localStorage에서 불러오기
-    else if (typeof localStorage !== 'undefined') {
-      savedLanguage = localStorage.getItem('i18nextLng');
-      console.log(`🌐 저장된 언어 (localStorage): ${savedLanguage}`);
-    }
+        if (savedLanguage && ['ko', 'en', 'ja'].includes(savedLanguage)) {
+          callback(savedLanguage);
+          return;
+        }
+        // 저장된 언어가 없으면 한국어 기본값
+        console.log('📱 저장된 언어 없음, 한국어 기본값 사용');
+        callback('ko');
+        return;
+      }
 
-    if (savedLanguage && ['ko', 'en', 'ja'].includes(savedLanguage)) {
-      await i18n.changeLanguage(savedLanguage);
-      console.log(`✅ 언어 복원 완료: ${savedLanguage}`);
+      // 웹: localStorage 확인
+      if (typeof localStorage !== 'undefined') {
+        const savedLanguage = localStorage.getItem('i18nextLng');
+        console.log(`🌐 localStorage 언어 감지: ${savedLanguage}`);
+
+        if (savedLanguage && ['ko', 'en', 'ja'].includes(savedLanguage)) {
+          callback(savedLanguage);
+          return;
+        }
+      }
+
+      // 기본값: 한국어
+      callback('ko');
+    } catch (error) {
+      console.error('언어 감지 오류:', error);
+      callback('ko');
     }
-  } catch (error) {
-    console.error('언어 초기화 오류:', error);
+  },
+  init: () => {},
+  cacheUserLanguage: async (lng: string) => {
+    try {
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        await AsyncStorage.setItem('i18nextLng', lng);
+        console.log(`📱 언어 캐시 저장 (AsyncStorage): ${lng}`);
+      } else if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('i18nextLng', lng);
+        console.log(`🌐 언어 캐시 저장 (localStorage): ${lng}`);
+      }
+    } catch (error) {
+      console.error('언어 캐시 저장 오류:', error);
+    }
   }
 };
 
 // Initialize i18next
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    lng: 'ko',
-    fallbackLng: 'ko',
-    debug: false,
+// iOS/Android에서는 커스텀 감지기 사용, 웹에서는 브라우저 감지기 사용
+const initI18n = async () => {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    // 모바일: AsyncStorage 기반 커스텀 감지기
+    await i18n
+      .use(asyncStorageLanguageDetector)
+      .use(initReactI18next)
+      .init({
+        fallbackLng: 'ko',
+        debug: false,
 
-    resources: {
-      ko: { translation: ko },
-      en: { translation: en },
-      ja: { translation: ja }
-    },
+        resources: {
+          ko: { translation: ko },
+          en: { translation: en },
+          ja: { translation: ja }
+        },
 
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage']
-    },
+        interpolation: {
+          escapeValue: false
+        },
 
-    interpolation: {
-      escapeValue: false
-    },
+        react: {
+          useSuspense: false
+        }
+      });
 
-    react: {
-      useSuspense: false
-    }
-  })
-  .then(() => {
-    // i18n 초기화 후 저장된 언어 복원
-    initializeLanguage();
-  });
+    console.log(`✅ i18n 초기화 완료 (모바일): ${i18n.language}`);
+  } else {
+    // 웹: 브라우저 감지기 사용
+    await i18n
+      .use(LanguageDetector)
+      .use(initReactI18next)
+      .init({
+        lng: 'ko',
+        fallbackLng: 'ko',
+        debug: false,
+
+        resources: {
+          ko: { translation: ko },
+          en: { translation: en },
+          ja: { translation: ja }
+        },
+
+        detection: {
+          order: ['localStorage', 'navigator'],
+          caches: ['localStorage']
+        },
+
+        interpolation: {
+          escapeValue: false
+        },
+
+        react: {
+          useSuspense: false
+        }
+      });
+
+    console.log(`✅ i18n 초기화 완료 (웹): ${i18n.language}`);
+  }
+};
+
+// 초기화 실행
+initI18n().catch(error => {
+  console.error('i18n 초기화 실패:', error);
+});
 
 // Language utilities
 export const LanguageUtils = {
