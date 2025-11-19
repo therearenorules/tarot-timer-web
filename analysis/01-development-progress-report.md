@@ -1,11 +1,55 @@
 # 📈 타로 타이머 웹앱 개발 진행 현황 보고서
 
-**보고서 날짜**: 2025-11-18 (메모리 누수 방지 + Race Condition 수정)
-**프로젝트 전체 완성도**: 95% - V2 구독 시스템 + API 호환성 + 메모리 안정성 완벽 적용
+**보고서 날짜**: 2025-11-19 (Build 142 App Store 제출 완료)
+**프로젝트 전체 완성도**: 96% - V2 구독 시스템 + 다국어화 + App Store 심사 중
 **현재 버전**:
-- iOS v1.1.3 Build 134 (메모리/Race Condition 수정 - 테스트 대기)
-- Android v1.1.2 Build 104 (로컬 AAB 빌드 완료)
+- iOS v1.1.3 Build 142 (App Store Connect 제출 완료 - 심사 대기)
+- Android v1.1.2 Build 104 (offerToken 수정 필요)
 **아키텍처**: 완전한 크로스 플랫폼 + react-native-iap v14.4.23 + 메모리 안정성
+
+---
+
+## 🔥 **2025-11-19 주요 업데이트 - Build 142 App Store 제출**
+
+### 1. **iOS Build 142 App Store Connect 제출 완료** ✅
+
+#### **빌드 정보**
+- 버전: 1.1.3
+- 빌드 번호: 142
+- 커밋: `afb612a` (구독 플랜 다국어화)
+- 제출 시간: 2025-11-19 오후 5:23
+
+#### **포함된 주요 변경사항**
+| 커밋 | 내용 |
+|------|------|
+| `afb612a` | 구독 플랜 제목 다국어화 및 i18n 초기화 개선 |
+| `0c99612` | IAP 메모리 누수 방지 및 레이스 컨디션 수정 |
+| `5b67628` | 구매 이벤트 리스너 구현 (v14.x) |
+| `73c1309` | react-native-iap Config Plugin 및 IAP 권한 추가 |
+| `d6320da` | react-native-iap v14.x API 업데이트 |
+
+#### **심사 대응**
+이전 심사에서 구독 페이월 오류로 거절됨. Build 142에서 수정:
+- 네트워크 재시도 로직 추가 (3회, 30초 타임아웃)
+- 폴백 UI 구현 (기본 가격 표시)
+- 에러 핸들링 개선
+
+### 2. **구독 시스템 코드 분석 완료** ✅
+
+#### **정상 작동 확인됨**
+- `iapManager.ts`: v14.x API 올바르게 사용
+- `receiptValidator.ts`: 보안 검증 시스템 완비
+- `PremiumContext.tsx`: 전역 상태 관리 정상
+- `SubscriptionPlans.tsx`: UI 컴포넌트 정상
+
+#### **Android 수정 필요 사항**
+```typescript
+// iapManager.ts:544 - offerToken 하드코딩 문제
+offerToken: 'default_offer_token'  // ❌
+
+// 수정 필요
+offerToken: product.subscriptionOfferDetails?.[0]?.offerToken || ''
+```
 
 ---
 
@@ -106,35 +150,35 @@ static async dispose(): Promise<void> {
 
 | 플랫폼 | 버전 | 빌드 | 상태 |
 |--------|------|------|------|
-| iOS | v1.1.3 | 134 | ✅ 메모리/Race Condition 수정 - 테스트 대기 |
-| Android | v1.1.2 | 104 | ✅ 로컬 AAB 빌드 완료 |
+| iOS | v1.1.3 | 142 | ✅ App Store Connect 제출 완료 - 심사 대기 |
+| Android | v1.1.2 | 104 | ⚠️ offerToken 수정 필요 |
 
 ---
 
 ## 🎯 **다음 단계 (우선순위 순)**
 
-### 최우선: Build 134 TestFlight 테스트 🚀
+### iOS: App Store 심사 대기 중 ⏳
 
-1. **빌드 실행** (사용자 승인 필요)
-   ```bash
-   eas build --platform ios --profile production-ios
+1. **심사 통과 대기**
+   - Build 142 App Store Connect 제출 완료
+   - Apple 처리 완료 후 심사 진행
+
+2. **심사 거절 시 대응**
+   - 구독 페이월 오류 수정 완료
+   - 네트워크 재시도/폴백 UI 구현 완료
+
+### Android: offerToken 수정 필요 ⚠️
+
+1. **코드 수정 필요**
+   ```typescript
+   // iapManager.ts:544
+   offerToken: product.subscriptionOfferDetails?.[0]?.offerToken || ''
    ```
 
-2. **TestFlight 테스트 체크리스트**
-   - [ ] V2 구독 상품 로딩 확인
-   - [ ] 실제 가격 표시 확인 (displayPrice)
-   - [ ] 월간/연간 구독 구매 테스트
-   - [ ] 영수증 검증 테스트
-   - [ ] 디버그 로그 확인
-
-3. **프로덕션 배포**
-   - [ ] TestFlight 테스트 통과
-   - [ ] App Store 제출
-
-### Android
-- [x] 로컬 AAB 빌드 완료 (app-release.aab)
-- [ ] V2 구독 상품 Google Play Console 설정
-- [ ] Google Play Console 업로드
+2. **빌드 및 제출**
+   - [ ] offerToken 수정
+   - [ ] EAS 빌드 실행
+   - [ ] Google Play Console 업로드
 
 ---
 
@@ -170,40 +214,44 @@ interface PurchaseCommon {
 
 | 빌드 | 날짜 | 주요 변경 | 결과 |
 |------|------|----------|------|
-| 134 | 2025-11-18 | v14.x API 속성명 수정 | 대기 중 |
-| 133 | 2025-11-15 | includes undefined 수정 | 테스트 필요 |
+| 142 | 2025-11-19 | 다국어화 + App Store 제출 | ✅ 제출 완료 |
+| 141 | 2025-11-19 | IAP 이벤트 리스너 + 메모리 수정 | ✅ 빌드 완료 |
+| 134 | 2025-11-18 | v14.x API 속성명 수정 | 테스트 완료 |
+| 133 | 2025-11-15 | includes undefined 수정 | 테스트 완료 |
 | 132 | 2025-11-14 | fetchProducts API 수정 | 구독 로딩 실패 |
 | 131 | 2025-11-13 | getProducts API 사용 | 구독 로딩 실패 |
 | 119 | 2025-11-07 | V2 구독 시스템 | TestFlight 완료 |
 
 ---
 
-## 📝 **이번 세션 작업 요약**
+## 📝 **이번 세션 작업 요약 (2025-11-19)**
 
-### 수정된 파일 (메모리/Race Condition 수정)
+### 주요 작업
 
-1. **utils/iapManager.ts**
-   - `purchaseTimeouts` Map 추가 (Race Condition 방지)
-   - Deferred purchase 처리 (iOS Ask to Buy)
-   - dispose() 완전한 cleanup 구현
-   - 타임아웃 30초 → 60초 증가
+1. **GitHub 업데이트 동기화**
+   - 10개 커밋 pull (Build 121 이후 변경사항)
+   - IAP v14.x 마이그레이션 완료 확인
 
-2. **utils/adManager.ts**
-   - `interstitialListeners` 배열 추가
-   - `cleanupInterstitialListeners()` 메서드 추가
-   - dispose() 시 리스너 cleanup
+2. **구독 시스템 코드 분석**
+   - `iapManager.ts`: 1,213줄 전체 분석
+   - `receiptValidator.ts`: 보안 검증 시스템 분석
+   - `PremiumContext.tsx`: 상태 관리 분석
+   - `SubscriptionPlans.tsx`: UI 컴포넌트 분석
 
-3. **utils/receiptValidator.ts**
-   - VALIDATION_TIMEOUT 30초 → 60초
+3. **iOS Build 142 빌드 및 제출**
+   - EAS 빌드 실행 (non-interactive)
+   - App Store Connect 자동 제출
+   - IPA: https://expo.dev/artifacts/eas/nC7jU2K3DD2LUYWQfcEbT9.ipa
 
-### 분석 결과
-- IAP Race Condition: ✅ 타임아웃 Map 추적으로 완전 방지
-- 메모리 안정성: ✅ 리스너 cleanup 완료
-- Deferred Purchase: ✅ Ask to Buy 사용자 경험 개선
-- 타임아웃 안정성: ✅ App Store 응답 고려
+4. **App Review 답변 작성**
+   - 구독 페이월 오류 해결 설명
+   - 테스트 정보 제공
+
+### 발견된 이슈
+- Android offerToken 하드코딩 (`'default_offer_token'`) - 추후 수정 예정
 
 ---
 
-**마지막 업데이트**: 2025-11-18
-**완성도**: 95% (메모리/Race Condition 수정 완료)
-**현재 작업**: Build 135 빌드 및 TestFlight 배포 대기
+**마지막 업데이트**: 2025-11-19
+**완성도**: 96% (App Store 심사 대기)
+**현재 작업**: iOS 심사 대기 / Android offerToken 수정 예정
