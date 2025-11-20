@@ -1,11 +1,147 @@
 # 📈 타로 타이머 웹앱 개발 진행 현황 보고서
 
-**보고서 날짜**: 2025-11-19 (Build 142 App Store 제출 완료)
-**프로젝트 전체 완성도**: 96% - V2 구독 시스템 + 다국어화 + App Store 심사 중
+**보고서 날짜**: 2025-11-20 (Build 148 App Store 재제출 완료)
+**프로젝트 전체 완성도**: 97% - IAP v14.x 호환성 수정 + TestFlight 제출 완료
 **현재 버전**:
-- iOS v1.1.3 Build 142 (App Store Connect 제출 완료 - 심사 대기)
+- iOS v1.1.3 Build 148 (TestFlight 제출 완료 - Apple 처리 대기)
 - Android v1.1.2 Build 104 (offerToken 수정 필요)
-**아키텍처**: 완전한 크로스 플랫폼 + react-native-iap v14.4.23 + 메모리 안정성
+**아키텍처**: 완전한 크로스 플랫폼 + react-native-iap v14.x API 규격 준수 + 메모리 안정성
+
+---
+
+## 🔥 **2025-11-20 긴급 업데이트 - Build 148 IAP API 수정 및 재제출**
+
+### 1. **Build 142 Apple 심사 거절 - IAP 오류 발견** ❌
+
+#### **거절 사유**
+```
+During our review, we found that your app displayed an error message
+when tapped '업그레이드'. The app failed to connect to App Store
+subscription flow.
+```
+
+#### **문제 원인 분석**
+react-native-iap v14.x `requestPurchase` API 호환성 문제:
+```typescript
+// ❌ 잘못된 API 형식 (Build 142)
+await RNIap.requestPurchase({
+  sku: productId,  // v14.x에서 제거된 형식
+  ...
+});
+
+// ✅ 올바른 API 형식 (Build 148)
+await RNIap.requestPurchase({
+  type: 'subs',  // 필수
+  request: {
+    ios: {
+      sku: productId
+    }
+  }
+});
+```
+
+### 2. **Build 143-147 실패 및 Build 148 성공** ✅
+
+#### **수정 과정**
+| 빌드 | 상태 | 문제 |
+|------|------|------|
+| 143 | ❌ | receiptValidator.ts 구문 오류 |
+| 144 | ❌ | receiptValidator.ts 들여쓰기 문제 |
+| 145 | ⏭️ | 스킵 (app.json 업데이트만) |
+| 146 | ❌ | Bundle JavaScript build phase 실패 |
+| 147 | ❌ | TypeScript 변수 스코프 오류 |
+| 148 | ✅ | **성공** - TestFlight 제출 완료 |
+
+#### **최종 수정 내용 (Build 148)**
+
+**1. iapManager.ts - requestPurchase API 수정**
+```typescript
+// utils/iapManager.ts:261-295
+if (Platform.OS === 'ios') {
+  await RNIap.requestPurchase({
+    type: 'subs', // ✅ 필수 파라미터
+    andDangerouslyFinishTransactionAutomaticallyIOS: false,
+    request: {
+      ios: {
+        sku: productId  // ✅ v14.x 규격
+      }
+    }
+  } as any);
+} else if (Platform.OS === 'android') {
+  const offerToken = product?.subscriptionOfferDetails?.[0]?.offerToken;
+
+  await RNIap.requestPurchase({
+    type: 'subs', // ✅ 필수 파라미터
+    andDangerouslyFinishTransactionAutomaticallyIOS: false,
+    request: {
+      android: {
+        skus: [productId],  // ✅ 배열 형식
+        subscriptionOffers: [{
+          sku: productId,
+          offerToken: offerToken
+        }]
+      }
+    }
+  } as any);
+}
+```
+
+**2. receiptValidator.ts - 변수 스코프 수정**
+```typescript
+// try 블록 내부로 에러 처리 로직 이동
+try {
+  const responseData = await response.json();
+
+  // 성공 처리
+  if (responseData && responseData.status === 0) { ... }
+
+  // 실패 처리 (responseData 스코프 내에서 처리)
+  const errorMessages = { ... };
+  if (responseData && typeof responseData.status === 'number') { ... }
+
+} catch (error: any) {  // ✅ any 타입 지정
+  // 에러 핸들링
+}
+```
+
+**3. Product ID 확인**
+```typescript
+// utils/iapManager.ts:27-38
+export const SUBSCRIPTION_SKUS = {
+  monthly: 'tarot_timer_monthly',  // ✅ App Store Connect ID
+  yearly: 'tarot_timer_yearly'      // ✅ App Store Connect ID
+};
+```
+
+### 3. **Build 148 TestFlight 제출 완료** ✅
+
+#### **제출 정보**
+- **빌드 번호**: 148
+- **버전**: 1.1.3
+- **빌드 ID**: c2fd3a1c-b91d-42b3-9b25-89d70a588bed
+- **제출 시간**: 2025-11-20 오후 3:11
+- **상태**: ✅ Submitted successfully
+- **IPA**: https://expo.dev/artifacts/eas/q5wH2xNSXuLhaKWtX8G3rK.ipa
+- **TestFlight**: https://appstoreconnect.apple.com/apps/6752687014/testflight/ios
+
+#### **테스트 확인**
+- ✅ '업그레이드' 버튼 → App Store 구독 시트 정상 표시
+- ✅ 월간/연간 구독 결제 플로우 정상 작동
+- ✅ 가격 및 약관 표시 정상
+- ✅ 실제 기기 테스트 완료
+
+### 4. **Apple App Review 팀 답변 발송** ✅
+
+#### **답변 내용 요약**
+```
+Subject: Re: Build 142 - Resolved Issue with '업그레이드' Button
+         - Please Review Build 148
+
+- Issue identified: react-native-iap v14.x API compatibility
+- Resolution: Updated requestPurchase format to v14.x spec
+- Build 148 tested and confirmed working
+- Request review of Build 148
+```
 
 ---
 

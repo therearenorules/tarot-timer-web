@@ -88,7 +88,7 @@
               "locale" : "ko_KR"
             }
           ],
-          "productID" : "tarot_timer_monthly_v2",
+          "productID" : "tarot_timer_monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Monthly Premium",
           "subscriptionGroupID" : "21820675",
@@ -113,7 +113,7 @@
               "locale" : "ko_KR"
             }
           ],
-          "productID" : "tarot_timer_yearly_v2",
+          "productID" : "tarot_timer_yearly",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Yearly Premium",
           "subscriptionGroupID" : "21820675",

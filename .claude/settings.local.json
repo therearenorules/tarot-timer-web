@@ -79,7 +79,9 @@
       "Bash(npx expo-doctor:*)",
       "Bash(eas credentials:*)",
       "Bash(node -e:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm run build:prod:ios:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

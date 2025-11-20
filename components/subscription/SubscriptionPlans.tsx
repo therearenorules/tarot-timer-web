@@ -46,7 +46,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   // 실제 App Store Connect 설정 가격: 월간 ₩6,600 ($4.99), 연간 ₩49,000 ($34.99)
   const defaultProducts: SubscriptionProduct[] = [
     {
-      productId: 'tarot_timer_monthly_v2',
+      productId: 'tarot_timer_monthly',
       title: '타로 타이머 프리미엄 (월간)',
       description: '한 달 동안 모든 프리미엄 기능을 사용할 수 있습니다',
       price: '6600',
@@ -55,7 +55,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       type: 'monthly'
     },
     {
-      productId: 'tarot_timer_yearly_v2',
+      productId: 'tarot_timer_yearly',
       title: '타로 타이머 프리미엄 (연간)',
       description: '1년 동안 모든 프리미엄 기능을 사용할 수 있습니다',
       price: '49000',

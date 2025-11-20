@@ -13,13 +13,6 @@ console.log('📱 Platform.OS:', Platform.OS);
 import * as RNIapModule from 'react-native-iap';
 
 console.log('📦 RNIapModule import 완료');
-console.log('📦 RNIapModule 타입:', typeof RNIapModule);
-console.log('📦 RNIapModule 전체 키:', Object.keys(RNIapModule || {}));
-console.log('📦 RNIapModule.getSubscriptions 타입:', typeof (RNIapModule as any)?.getSubscriptions);
-console.log('📦 RNIapModule.initConnection 타입:', typeof (RNIapModule as any)?.initConnection);
-console.log('📦 RNIapModule.getProducts 타입:', typeof (RNIapModule as any)?.getProducts);
-console.log('📦 RNIapModule.requestPurchase 타입:', typeof (RNIapModule as any)?.requestPurchase);
-console.log('📦 사용 가능한 메서드:', Object.keys(RNIapModule || {}).filter(key => typeof (RNIapModule as any)[key] === 'function'));
 
 const RNIap = Platform.OS === 'web' ? null : RNIapModule;
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -27,20 +20,20 @@ const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 console.log('🔍 최종 RNIap:', RNIap ? 'Loaded' : 'Null (Web)');
 
 import LocalStorageManager, { PremiumStatus } from './localStorage';
-import ReceiptValidator from './receiptValidator';
+import { ReceiptValidator } from './receiptValidator';
 
 // 구독 상품 ID 정의
-// Subscription Group: Tarot Timer Premium V2 (ID: 21820675)
+// Subscription Group: Tarot Timer Premium (App Store Connect에 등록된 ID)
 export const SUBSCRIPTION_SKUS = {
   monthly: Platform.select({
-    ios: 'tarot_timer_monthly_v2', // Apple ID: 6754749911
-    android: 'tarot_timer_monthly_v2',
-    default: 'tarot_timer_monthly_v2'
+    ios: 'tarot_timer_monthly',
+    android: 'tarot_timer_monthly',
+    default: 'tarot_timer_monthly'
   }),
   yearly: Platform.select({
-    ios: 'tarot_timer_yearly_v2', // Apple ID: 6755033513
-    android: 'tarot_timer_yearly_v2',
-    default: 'tarot_timer_yearly_v2'
+    ios: 'tarot_timer_yearly',
+    android: 'tarot_timer_yearly',
+    default: 'tarot_timer_yearly'
   })
 } as const;
 
@@ -52,6 +45,7 @@ export interface SubscriptionProduct {
   localizedPrice: string;
   currency: string;
   type: 'monthly' | 'yearly';
+  subscriptionOfferDetails?: any[]; // Android Offer Token용
 }
 
 export interface PurchaseResult {
@@ -62,586 +56,281 @@ export interface PurchaseResult {
   error?: string;
 }
 
-export class IAPManager {
+class IAPManager {
   private static initialized = false;
   private static products: SubscriptionProduct[] = [];
   private static purchaseUpdateSubscription: any = null;
   private static purchaseErrorSubscription: any = null;
-  private static pendingPurchaseResolvers: Map<string, {
-    resolve: (value: PurchaseResult) => void;
-    reject: (reason?: any) => void;
-  }> = new Map();
-
-  // 타임아웃 추적을 위한 Map (Race Condition 방지)
-  private static purchaseTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private static purchaseTimeouts = new Map<string, NodeJS.Timeout>();
+  private static pendingPurchaseResolvers = new Map<string, { resolve: (value: PurchaseResult) => void, reject: (reason?: any) => void }>();
+  private static renewalCheckInterval: ReturnType<typeof setInterval> | null = null;
+  private static activePurchases = new Set<string>();
 
   /**
    * IAP 초기화
-   * ✅ 완전 재작성: 실패 시 명확히 false 반환, 모바일에서 시뮬레이션 모드 차단
    */
   static async initialize(): Promise<boolean> {
+    if (this.initialized) {
+      console.log('✅ IAPManager 이미 초기화됨');
+      return true;
+    }
+
     try {
-      // 🌐 웹 환경에서만 시뮬레이션 허용
+      console.log('🔄 IAPManager 초기화 중...');
+
       if (Platform.OS === 'web') {
-        console.log('🌐 웹 환경: IAP 기능 비활성화 (정상)');
         this.initialized = true;
         return true;
       }
 
-      // 📱 모바일 환경에서는 반드시 RNIap 모듈 필요
       if (!RNIap) {
-        console.error('❌ CRITICAL: react-native-iap 모듈을 로드할 수 없습니다.');
-        console.error('📌 원인: 네이티브 모듈이 빌드에 포함되지 않음');
-        console.error('📌 해결: npx expo prebuild --clean 후 재빌드 필요');
-        throw new Error('IAP_MODULE_NOT_LOADED');
+        console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
+        return false;
       }
 
-      // ✅ RNIap API 메서드 존재 확인
-      if (typeof RNIap.initConnection !== 'function') {
-        console.error('❌ CRITICAL: react-native-iap API를 사용할 수 없습니다.');
-        console.error('📌 원인: Expo Go 또는 개발 빌드 사용 중');
-        console.error('📌 해결: Production 빌드 필요');
-        throw new Error('IAP_API_NOT_AVAILABLE');
-      }
-
-      console.log('💳 IAP 매니저 초기화 시작...');
-      console.log('📱 플랫폼:', Platform.OS);
-      console.log('📱 iOS 버전:', Platform.Version);
-      console.log('🔧 react-native-iap 버전: 14.4.23');
-
-      // ✅ 네트워크 헬퍼 동적 임포트
-      const { fetchWithTimeoutAndRetry } = await import('./networkHelpers');
-
-      // ✅ RNIap 초기화 (타임아웃 + 재시도)
-      // v14.x는 자동으로 최적의 StoreKit 버전 선택
-      console.log('🔄 IAP 연결 초기화 중 (타임아웃: 30초, 최대 3회 재시도)...');
-
-      const isReady = await fetchWithTimeoutAndRetry(
-        () => RNIap.initConnection(),
-        {
-          timeoutMs: 30000, // 30초 타임아웃
-          maxRetries: 3,    // 최대 3회 재시도
-          baseDelay: 2000,  // 2초 초기 지연
-          onRetry: (attempt, delay, error) => {
-            console.log(`⏳ IAP 초기화 재시도 ${attempt}/3: ${delay}ms 대기 중...`);
-            console.log(`📌 이전 에러: ${error.message}`);
-          }
-        }
-      );
-
-      if (!isReady) {
-        console.error('❌ IAP 연결 초기화 실패 (3회 재시도 후)');
-        console.error('📌 네트워크 연결을 확인하고 다시 시도해주세요.');
-        throw new Error('IAP_CONNECTION_FAILED');
-      }
-
-      console.log('✅ IAP 연결 초기화 성공');
-
-      // 구독 상품 로드 (필수)
-      const products = await this.loadProducts();
-      if (products.length === 0) {
-        console.error('❌ 구독 상품을 로드할 수 없습니다.');
-        console.error('📌 App Store Connect에서 상품 설정 확인 필요');
-        throw new Error('NO_PRODUCTS_AVAILABLE');
-      }
-
-      console.log(`✅ 구독 상품 ${products.length}개 로드 완료`);
-
-      // ✅ Purchase Event Listeners 등록 (v14.x 필수!)
-      console.log('🎧 Purchase Event Listeners 등록 중...');
-      this.setupPurchaseListeners();
-
-      // 구매 복원 시도 (선택적 - 실패해도 계속 진행)
-      try {
-        await this.restorePurchases();
-      } catch (error) {
-        console.warn('⚠️ 구매 복원 실패 (무시하고 계속):', error);
-      }
-
-      // 주기적 갱신 모니터링 시작
-      this.startPeriodicRenewalCheck();
-
+      // 연결 초기화
+      await RNIap.initConnection();
       this.initialized = true;
-      console.log('✅ IAP 매니저 초기화 완료');
+      console.log('✅ RNIap 연결 성공');
+
+      // 리스너 설정
+      await this.setupPurchaseListeners();
+
+      // 상품 로드 (비동기) - await 없이 실행하여 초기화 지연 방지
+      this.loadProducts().catch(e => console.warn('⚠️ 초기 상품 로드 실패:', e));
+
       return true;
-
-    } catch (error: any) {
-      console.error('❌ IAP 초기화 실패:', error);
-      this.initialized = false;
-      return false; // ✅ 명확히 실패 반환
+    } catch (error) {
+      console.error('❌ IAPManager 초기화 실패:', error);
+      return false;
     }
   }
 
   /**
-   * Purchase Event Listeners 설정 (v14.x 필수!)
-   * purchaseUpdatedListener: 구매 성공 처리
-   * purchaseErrorListener: 구매 실패 처리
+   * 구매 리스너 설정
    */
-  private static setupPurchaseListeners() {
-    if (!RNIap) {
-      console.error('❌ RNIap이 없어 이벤트 리스너를 등록할 수 없습니다.');
-      return;
-    }
+  static async setupPurchaseListeners() {
+    if (Platform.OS === 'web' || !RNIap) return;
 
-    // 기존 리스너 제거 (중복 등록 방지)
-    if (this.purchaseUpdateSubscription) {
-      this.purchaseUpdateSubscription.remove();
-    }
-    if (this.purchaseErrorSubscription) {
-      this.purchaseErrorSubscription.remove();
-    }
-
-    // ✅ 구매 업데이트 리스너 (구매 성공 시 호출됨)
-    this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase: any) => {
-      console.log('🎉 purchaseUpdatedListener 호출됨:', purchase);
-      console.log('📦 Purchase 상세:', JSON.stringify(purchase, null, 2));
-
-      try {
-        const productId = purchase?.productId || '';
-        const transactionId = purchase?.transactionId || '';
-
-        if (!productId) {
-          console.error('❌ productId가 없습니다');
-          return;
-        }
-
-        // ✅ Deferred purchase 체크 (iOS Ask to Buy)
-        // iOS에서 부모 승인이 필요한 구매의 경우 transactionStateIOS가 'DEFERRED'
-        const transactionState = purchase?.transactionStateIOS;
-        if (transactionState === 'DEFERRED' || transactionState === 2) {
-          console.log('⏳ 구매가 지연됨 (부모 승인 대기 중):', productId);
-
-          // Pending 중인 Promise를 특별한 결과로 해결
-          const resolver = this.pendingPurchaseResolvers.get(productId);
-          if (resolver) {
-            // 타임아웃 정리
-            const timeoutId = this.purchaseTimeouts.get(productId);
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              this.purchaseTimeouts.delete(productId);
-            }
-
-            resolver.resolve({
-              success: false,
-              productId,
-              error: '구매가 부모님의 승인을 기다리고 있습니다. 승인 후 자동으로 처리됩니다.'
-            });
-            this.pendingPurchaseResolvers.delete(productId);
-          }
-          return; // Deferred 상태에서는 더 이상 처리하지 않음
-        }
-
-        // 영수증 데이터 생성 (v14.x에서는 transactionReceipt 없음)
-        const receiptData = JSON.stringify({
-          transactionId: transactionId,
-          productId: productId,
-          purchaseDate: purchase?.transactionDate || '',
-          originalTransactionId: purchase?.originalTransactionId || '',
-          originalTransactionDate: purchase?.originalTransactionDateIOS || ''
-        });
-
-        // 구매 성공 처리
-        await this.processPurchaseSuccess(productId, transactionId, receiptData);
-
-        // 거래 완료 처리 (중요!)
-        await RNIap.finishTransaction({ purchase, isConsumable: false });
-        console.log('✅ 거래 완료 처리됨:', transactionId);
-
-        // Pending 중인 Promise 해결
-        const resolver = this.pendingPurchaseResolvers.get(productId);
-        if (resolver) {
-          // 타임아웃 정리 (Race Condition 방지)
-          const timeoutId = this.purchaseTimeouts.get(productId);
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            this.purchaseTimeouts.delete(productId);
-          }
-
-          resolver.resolve({
-            success: true,
-            productId,
-            transactionId,
-            purchaseDate: purchase?.transactionDate?.toString() || ''
-          });
-          this.pendingPurchaseResolvers.delete(productId);
-        }
-
-      } catch (error) {
-        console.error('❌ 구매 업데이트 처리 오류:', error);
-
-        // Pending 중인 Promise 거부
-        const purchaseProductId = purchase?.productId || '';
-        const resolver = this.pendingPurchaseResolvers.get(purchaseProductId);
-        if (resolver) {
-          // 타임아웃 정리 (Race Condition 방지)
-          const timeoutId = this.purchaseTimeouts.get(purchaseProductId);
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            this.purchaseTimeouts.delete(purchaseProductId);
-          }
-
-          resolver.reject(error);
-          this.pendingPurchaseResolvers.delete(purchaseProductId);
-        }
-      }
-    });
-
-    // ✅ 구매 에러 리스너 (구매 실패 시 호출됨)
-    this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error: any) => {
-      console.error('❌ purchaseErrorListener 호출됨:', error);
-      console.error('📌 에러 코드:', error?.code || 'unknown');
-      console.error('📌 에러 메시지:', error?.message || 'no message');
-
-      // 모든 타임아웃 정리 (Race Condition 방지)
-      for (const [productId, timeoutId] of this.purchaseTimeouts.entries()) {
-        clearTimeout(timeoutId);
-        this.purchaseTimeouts.delete(productId);
-      }
-
-      // Pending 중인 모든 Promise 거부
-      for (const [productId, resolver] of this.pendingPurchaseResolvers.entries()) {
-        resolver.reject(error || new Error('Unknown purchase error'));
-        this.pendingPurchaseResolvers.delete(productId);
-      }
-    });
-
-    console.log('✅ Purchase Event Listeners 등록 완료');
-  }
-
-  /**
-   * 구독 상품 정보 로드
-   * ✅ V2: 타임아웃 + 재시도 + 네트워크 상태 체크 추가
-   */
-  static async loadProducts(): Promise<SubscriptionProduct[]> {
     try {
-      // 웹 환경에서는 목 데이터 반환 (미리보기용)
-      if (Platform.OS === 'web') {
-        console.log('🌐 웹 환경: 구독 상품 목 데이터 로드');
-        this.products = [
-          {
-            productId: SUBSCRIPTION_SKUS.monthly,
-            title: '타로 타이머 프리미엄 (월간)',
-            description: '한 달 동안 모든 프리미엄 기능을 사용할 수 있습니다',
-            price: '6600',
-            localizedPrice: '₩6,600',
-            currency: 'KRW',
-            type: 'monthly'
-          },
-          {
-            productId: SUBSCRIPTION_SKUS.yearly,
-            title: '타로 타이머 프리미엄 (연간)',
-            description: '1년 동안 모든 프리미엄 기능을 사용할 수 있습니다',
-            price: '49000',
-            localizedPrice: '₩49,000',
-            currency: 'KRW',
-            type: 'yearly'
-          }
-        ];
-        return this.products;
+      // 기존 리스너 제거
+      if (this.purchaseUpdateSubscription) {
+        this.purchaseUpdateSubscription.remove();
+        this.purchaseUpdateSubscription = null;
+      }
+      if (this.purchaseErrorSubscription) {
+        this.purchaseErrorSubscription.remove();
+        this.purchaseErrorSubscription = null;
       }
 
-      // RNIap 모듈 필수 확인 (v14.x는 fetchProducts 사용 - 구독/일반 상품 모두)
-      if (!RNIap || typeof RNIap.fetchProducts !== 'function') {
-        console.error('❌ 구독 상품 API를 사용할 수 없습니다.');
-        console.error('📦 RNIap:', RNIap);
-        console.error('📦 fetchProducts 타입:', typeof RNIap?.fetchProducts);
-        throw new Error('SUBSCRIPTIONS_API_NOT_AVAILABLE');
-      }
+      // 구매 업데이트 리스너
+      this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase) => {
+        console.log('💳 구매 업데이트 수신:', purchase.productId);
 
-      const productIds = Object.values(SUBSCRIPTION_SKUS);
-      console.log('📦 구독 상품 로드 시도:', productIds);
-      console.log('📱 플랫폼:', Platform.OS);
-      console.log('📱 iOS 버전:', Platform.Version);
-      console.log('🔧 Bundle ID: com.tarottimer.app');
-      console.log('🔧 App ID: 6752687014');
+        const receipt = purchase.transactionReceipt;
+        if (receipt) {
+          try {
+            // 결제 승인 (iOS 필수)
+            await RNIap.finishTransaction({ purchase, isConsumable: false });
+            console.log('✅ 결제 승인(finishTransaction) 완료');
 
-      // ✅ 네트워크 헬퍼 동적 임포트
-      const { fetchWithTimeoutAndRetry, isNetworkError } = await import('./networkHelpers');
+            // 성공 처리
+            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receipt);
 
-      // ✅ 타임아웃 + 재시도로 구독 상품 정보 가져오기
-      let subscriptions: any[] = [];
-      try {
-        console.log('🔄 RNIap.fetchProducts() 호출 중 (타임아웃: 30초, 최대 3회 재시도)...');
-        console.log('📦 요청 SKUs:', productIds);
-
-        // ✅ v14.x fetchProducts 올바른 호출 방법: { skus: string[], type: 'subs' }
-        // type: 'subs'를 지정해야 구독 상품을 가져옴 (기본값은 'in-app')
-        const response = await fetchWithTimeoutAndRetry(
-          () => RNIap.fetchProducts({ skus: productIds, type: 'subs' }),
-          {
-            timeoutMs: 30000, // 30초 타임아웃
-            maxRetries: 3,    // 최대 3회 재시도
-            baseDelay: 2000,  // 2초 초기 지연
-            onRetry: (attempt, delay, error) => {
-              console.log(`⏳ 재시도 ${attempt}/3: ${delay}ms 대기 중...`);
-              console.log(`📌 이전 에러: ${error.message}`);
+            // Pending Promise 해결
+            const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+            if (resolver) {
+              resolver.resolve({
+                success: true,
+                productId: purchase.productId,
+                transactionId: purchase.transactionId,
+                purchaseDate: new Date(purchase.transactionDate).toISOString()
+              });
+              this.pendingPurchaseResolvers.delete(purchase.productId);
             }
+          } catch (ackErr) {
+            console.error('❌ 결제 승인 실패:', ackErr);
           }
-        );
-
-        console.log('✅ fetchProducts 응답 받음');
-        console.log('📦 응답 타입:', typeof response);
-        console.log('📦 응답 Array 여부:', Array.isArray(response));
-        console.log('📦 응답 전체:', JSON.stringify(response, null, 2));
-
-        // ✅ v14.x fetchProducts는 배열을 직접 반환
-        if (Array.isArray(response)) {
-          subscriptions = response;
-          console.log('📦 구독 상품 배열:', subscriptions.length, '개');
-        } else {
-          console.error('📦 예상치 못한 응답 형식 (배열이 아님):', typeof response);
-          subscriptions = [];
         }
-
-        // 로드된 상품 상세 로깅
-        if (subscriptions.length > 0) {
-          subscriptions.forEach((sub, index) => {
-            console.log(`📦 상품 ${index + 1}:`, {
-              productId: sub.productId,
-              title: sub.title,
-              localizedPrice: sub.localizedPrice,
-              price: sub.price,
-              currency: sub.currency
-            });
-          });
-        }
-      } catch (fetchError: any) {
-        console.error('❌ fetchProducts 호출 최종 실패 (3회 재시도 후):', fetchError);
-        console.error('📌 에러 타입:', typeof fetchError);
-        console.error('📌 에러 메시지:', fetchError?.message);
-        console.error('📌 에러 코드:', fetchError?.code);
-
-        // ✅ 에러 타입별 처리
-        if (isNetworkError(fetchError)) {
-          throw new Error('NETWORK_ERROR');
-        } else if (fetchError.message === 'REQUEST_TIMEOUT') {
-          throw new Error('TIMEOUT_ERROR');
-        } else {
-          throw fetchError;
-        }
-      }
-
-      if (!subscriptions || subscriptions.length === 0) {
-        console.error('❌ 구독 상품을 찾을 수 없습니다.');
-        console.error('📌 확인된 Product IDs:', productIds);
-        console.error('📌 App Store Connect 상태: 승인됨');
-        console.error('📌 Product IDs:');
-        console.error('   - tarot_timer_monthly_v2');
-        console.error('   - tarot_timer_yearly_v2');
-        console.error('📌 가능한 원인:');
-        console.error('   1. Sandbox 계정으로 로그인되지 않음');
-        console.error('   2. App Store Connect 동기화 대기 중 (최대 48시간)');
-        console.error('   3. 구독 그룹(V2)이 활성화되지 않음');
-        console.error('   4. 네트워크 연결 불안정');
-        throw new Error('NO_SUBSCRIPTIONS_FOUND');
-      }
-
-      // 상품 데이터 매핑
-      // v14.x에서는 id와 displayPrice를 기본으로 사용
-      this.products = subscriptions.map(sub => {
-        const productId = sub?.id || sub?.productId || '';
-        console.log('📦 상품 매핑:', { raw: sub, productId });
-        return {
-          productId,
-          title: sub?.title || sub?.localizedTitle || productId,
-          description: sub?.description || sub?.localizedDescription || '',
-          price: sub?.price || '0',
-          localizedPrice: sub?.displayPrice || sub?.localizedPrice || '₩0',
-          currency: sub?.currency || 'KRW',
-          type: productId.includes('yearly') ? 'yearly' : 'monthly'
-        };
       });
 
-      console.log('✅ 구독 상품 로드 완료:', this.products);
-      return this.products;
+      // 구매 에러 리스너
+      this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error) => {
+        console.error('❌ 구매 에러 리스너:', error);
+        // Pending Promise 거부
+        this.pendingPurchaseResolvers.forEach((resolver, key) => {
+          resolver.reject(error);
+          this.pendingPurchaseResolvers.delete(key);
+        });
+      });
 
+      console.log('✅ 구매 리스너 설정 완료');
     } catch (error) {
-      console.error('❌ 구독 상품 로드 오류:', error);
-      this.products = [];
-      throw error; // ✅ 오류를 상위로 전파
+      console.error('❌ 리스너 설정 실패:', error);
     }
   }
 
   /**
-   * 구독 상품 목록 조회
+   * 상품 목록 로드
+   * ✅ FIX: v14.x 규격 준수 (getProducts + type: 'subs')
    */
-  static getProducts(): SubscriptionProduct[] {
-    return this.products;
+  static async loadProducts(): Promise<SubscriptionProduct[]> {
+    if (Platform.OS === 'web') return [];
+
+    try {
+      if (!this.initialized) await this.initialize();
+
+      const skus = Object.values(SUBSCRIPTION_SKUS).filter(id => id !== 'default');
+      console.log('🔄 구독 상품 정보 요청:', skus);
+
+      if (!RNIap) {
+        console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
+        return [];
+      }
+
+      // ✅ FIX: getProducts 사용 및 type: 'subs' 명시
+      const products = await RNIap.getProducts({ skus, type: 'subs' } as any);
+      console.log(`✅ 상품 로드 성공: ${products.length}개`);
+
+      this.products = products.map(p => ({
+        productId: p.productId,
+        title: p.title,
+        description: p.description,
+        price: p.price,
+        localizedPrice: p.localizedPrice,
+        currency: p.currency,
+        type: p.productId.includes('yearly') ? 'yearly' : 'monthly',
+        // ✅ Android Offer Token 저장
+        subscriptionOfferDetails: (p as any).subscriptionOfferDetails
+      }));
+
+      return this.products;
+    } catch (error) {
+      console.error('❌ 상품 로드 실패:', error);
+      return [];
+    }
   }
 
   /**
-   * 구독 구매 처리
-   * ✅ 완전 재작성: 실제 구매만 처리, 시뮬레이션 제거
+   * 구독 구매 요청
+   * ✅ FIX: RNIap v14.x API 규격 준수
    */
   static async purchaseSubscription(productId: string): Promise<PurchaseResult> {
+    if (Platform.OS === 'web') return this.simulateWebPurchase(productId);
+
     try {
-      // 초기화 확인
-      if (!this.initialized) {
-        throw new Error('IAP_NOT_INITIALIZED');
-      }
+      if (!this.initialized) await this.initialize();
 
-      // 웹 환경에서는 구매 불가
-      if (Platform.OS === 'web') {
-        return {
-          success: false,
-          error: '웹 환경에서는 구독을 구매할 수 없습니다.\n앱을 다운로드해주세요.'
-        };
-      }
+      console.log('💳 구매 요청 시작:', productId);
 
-      // RNIap 모듈 필수 확인 (v14.x는 requestPurchase 사용)
-      if (!RNIap || typeof RNIap.requestPurchase !== 'function') {
-        console.error('❌ CRITICAL: 구매 API를 사용할 수 없습니다.');
-        throw new Error('PURCHASE_API_NOT_AVAILABLE');
+      if (!RNIap) {
+        return { success: false, error: 'IAP 모듈이 초기화되지 않았습니다.' };
       }
-
-      console.log('💳 구독 구매 시작:', productId);
 
       // 중복 구매 방지
       if (this.activePurchases.has(productId)) {
-        return {
-          success: false,
-          error: '이미 해당 상품의 결제가 진행 중입니다.'
-        };
+        return { success: false, error: '이미 구매가 진행 중입니다.' };
       }
-
       this.activePurchases.add(productId);
 
-      try {
-        // ✅ v14.x: requestPurchase는 이벤트 기반, Promise로 래핑
-        console.log('💳 구매 요청 전송 중...');
+      // Promise 생성
+      return new Promise<PurchaseResult>(async (resolve, reject) => {
+        // 타임아웃 설정 (30초)
+        const timeoutId = setTimeout(() => {
+          this.pendingPurchaseResolvers.delete(productId);
+          this.activePurchases.delete(productId);
+          reject(new Error('TIMEOUT_ERROR'));
+        }, 30000);
+        this.purchaseTimeouts.set(productId, timeoutId);
 
-        // Promise를 생성하고 이벤트 리스너가 resolve/reject 할 수 있도록 저장
-        const purchasePromise = new Promise<PurchaseResult>((resolve, reject) => {
-          this.pendingPurchaseResolvers.set(productId, { resolve, reject });
-
-          // 60초 타임아웃 설정 (Race Condition 방지를 위해 ID 저장)
-          const timeoutId = setTimeout(() => {
-            if (this.pendingPurchaseResolvers.has(productId)) {
-              this.pendingPurchaseResolvers.delete(productId);
-              this.purchaseTimeouts.delete(productId);
-              reject(new Error('PURCHASE_TIMEOUT'));
-            }
-          }, 60000);
-
-          // 타임아웃 ID 저장 (나중에 정리하기 위해)
-          this.purchaseTimeouts.set(productId, timeoutId);
+        this.pendingPurchaseResolvers.set(productId, {
+          resolve: (val) => {
+            clearTimeout(timeoutId);
+            this.purchaseTimeouts.delete(productId);
+            this.activePurchases.delete(productId);
+            resolve(val);
+          },
+          reject: (err) => {
+            clearTimeout(timeoutId);
+            this.purchaseTimeouts.delete(productId);
+            this.activePurchases.delete(productId);
+            reject(err);
+          }
         });
 
-        // requestPurchase 호출 (이벤트 리스너가 결과 처리)
-        await RNIap.requestPurchase(
-          Platform.OS === 'ios'
-            ? {
+        try {
+          // ✅ FIX: v14.x requestPurchase 파라미터 구조 수정 (type: 'subs' 추가 및 Android 구조 변경)
+          if (Platform.OS === 'ios') {
+            await RNIap.requestPurchase({
+              type: 'subs', // ✅ 필수
+              andDangerouslyFinishTransactionAutomaticallyIOS: false,
+              request: {
                 ios: {
                   sku: productId
                 }
               }
-            : {
+            } as any);
+          } else if (Platform.OS === 'android') {
+            // Android: Offer Token 찾기
+            const product = this.products.find(p => p.productId === productId);
+            const offerToken = (product as any)?.subscriptionOfferDetails?.[0]?.offerToken;
+
+            if (!offerToken) {
+              throw new Error('Android Offer Token을 찾을 수 없습니다.');
+            }
+
+            await RNIap.requestPurchase({
+              type: 'subs', // ✅ 필수
+              andDangerouslyFinishTransactionAutomaticallyIOS: false,
+              request: {
                 android: {
-                  skus: [productId],
-                  subscriptionOffers: [
-                    {
-                      sku: productId,
-                      offerToken: 'default_offer_token'
-                    }
-                  ]
+                  skus: [productId], // ✅ skus 배열로 변경
+                  subscriptionOffers: [{
+                    sku: productId,
+                    offerToken: offerToken
+                  }]
                 }
               }
-        );
-
-        console.log('✅ 구매 요청 전송 완료 (이벤트 대기 중...)');
-
-        // 이벤트 리스너가 Promise를 resolve/reject 할 때까지 대기
-        const result = await purchasePromise;
-        console.log('✅ 구매 완료:', result);
-
-        return result;
-
-      } finally {
-        this.activePurchases.delete(productId);
-      }
+            } as any);
+          }
+        } catch (err) {
+          this.pendingPurchaseResolvers.get(productId)?.reject(err);
+        }
+      });
 
     } catch (error: any) {
-      console.error('❌ 구매 오류:', error);
-
-      const errorCode = error?.code || '';
-      const errorMsg = error?.message || '';
-
-      // 사용자 취소
-      if (errorCode === 'E_USER_CANCELLED') {
-        return {
-          success: false,
-          error: '구매를 취소했습니다.'
-        };
-      }
-
-      // 네트워크 오류
-      if (errorCode === 'E_NETWORK_ERROR') {
-        return {
-          success: false,
-          error: '네트워크 연결을 확인하고 다시 시도해주세요.'
-        };
-      }
-
-      // 기타 오류
-      let errorMessage = '구매 처리 중 오류가 발생했습니다.';
-
-      if (errorMsg === 'IAP_NOT_INITIALIZED') {
-        errorMessage = '구독 시스템이 초기화되지 않았습니다.\n앱을 재시작해주세요.';
-      } else if (errorMsg === 'PURCHASE_API_NOT_AVAILABLE') {
-        errorMessage = '앱 내 구매 기능을 사용할 수 없습니다.\n앱을 최신 버전으로 업데이트해주세요.';
-      } else if (errorCode === 'E_SERVICE_ERROR') {
-        errorMessage = '앱스토어 서비스에 일시적인 문제가 있습니다.\n잠시 후 다시 시도해주세요.';
-      } else if (errorCode === 'E_RECEIPT_FAILED') {
-        errorMessage = '영수증 검증에 실패했습니다.\n고객센터로 문의해주세요.';
-      }
-
-      return {
-        success: false,
-        error: errorMessage
-      };
+      console.error('❌ 구매 요청 실패:', error);
+      this.activePurchases.delete(productId);
+      return { success: false, error: error.message || '구매 요청 실패' };
     }
   }
 
-  /**
-   * 구매 복원 처리
-   * ✅ FIX: 실제 복원된 항목 수를 기반으로 정확한 결과 반환
-   */
   static async restorePurchases(): Promise<boolean> {
+    if (Platform.OS === 'web' || !RNIap) {
+      console.log('📌 실제 기기에서만 구매 복원이 가능합니다.');
+      return false;
+    }
+
     try {
-      // 웹 환경 또는 RNIap 모듈이 없는 경우
-      if (!isMobile || !RNIap || typeof RNIap.getAvailablePurchases !== 'function') {
-        console.log('🌐 시뮬레이션 모드: 구매 복원 불가');
-        console.log('📌 실제 기기에서만 구매 복원이 가능합니다.');
-        return false; // ✅ 수정: 시뮬레이션에서는 false 반환
-      }
-
       console.log('🔄 구매 복원 시작...');
-
       const purchases = await RNIap.getAvailablePurchases();
-      console.log(`📦 앱스토어 구매 내역: ${purchases.length}개`);
+      console.log(`📦 복원된 구매 내역: ${purchases.length}개`);
 
       let restoredCount = 0;
-
       for (const purchase of purchases) {
-        const purchaseProductId = purchase?.productId || '';
-        if (purchaseProductId && Object.values(SUBSCRIPTION_SKUS).includes(purchaseProductId)) {
-          // 구매 복원 시에도 영수증 검증 수행
-          // v14.x: transactionReceipt 대신 transactionId 사용
+        if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
           const receiptData = JSON.stringify({
-            transactionId: purchase?.transactionId || '',
-            productId: purchaseProductId,
-            purchaseDate: purchase?.transactionDate || ''
+            transactionId: purchase.transactionId,
+            productId: purchase.productId,
+            purchaseDate: purchase.transactionDate
           });
 
-          await this.processPurchaseSuccess(purchaseProductId, purchase?.transactionId || '', receiptData);
-          console.log('✅ 구독 복원 및 검증 완료:', purchaseProductId);
+          await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
           restoredCount++;
         }
       }
 
-      console.log(`✅ 구매 복원 완료: ${restoredCount}개 복원됨`);
-      return restoredCount > 0; // ✅ 수정: 실제 복원된 항목이 있을 때만 true
-
+      return restoredCount > 0;
     } catch (error) {
       console.error('❌ 구매 복원 오류:', error);
       return false;
@@ -650,49 +339,31 @@ export class IAPManager {
 
   /**
    * 구매 성공 처리 (프리미엄 상태 업데이트)
-   * ✅ 보안 강화: 모바일에서 영수증 필수
    */
   private static async processPurchaseSuccess(productId: string, transactionId: string, receiptData?: string): Promise<void> {
     try {
       console.log('🔍 구매 성공 처리 및 영수증 검증 시작...');
 
-      // 📱 모바일 환경에서는 영수증 필수
       if (Platform.OS !== 'web' && !receiptData) {
-        console.error('❌ CRITICAL: 모바일에서 영수증 데이터 누락');
         throw new Error('영수증 데이터가 필요합니다');
       }
 
-      // 영수증 검증 수행
       if (receiptData) {
         const validationResult = await ReceiptValidator.validateReceipt(receiptData, transactionId);
+        if (!validationResult.isValid) throw new Error('영수증 검증 실패: ' + validationResult.error);
+        if (!validationResult.isActive) throw new Error('구독이 활성 상태가 아닙니다');
 
-        if (!validationResult.isValid) {
-          console.error('❌ 영수증 검증 실패:', validationResult.error);
-          throw new Error('영수증 검증에 실패했습니다: ' + validationResult.error);
-        }
-
-        if (!validationResult.isActive) {
-          console.error('❌ 구독이 활성 상태가 아닙니다');
-          throw new Error('구독이 활성 상태가 아닙니다');
-        }
-
-        // 검증된 영수증 데이터로 구독 상태 동기화
         await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
         console.log('✅ 영수증 검증 및 동기화 완료');
         return;
       }
 
-      // 🌐 웹 환경에서만 영수증 없이 처리 허용 (시뮬레이션)
+      // Web Simulation
       const isYearly = productId.includes('yearly');
       const currentDate = new Date();
       const expiryDate = new Date(currentDate);
-
-      // 만료일 계산
-      if (isYearly) {
-        expiryDate.setFullYear(currentDate.getFullYear() + 1);
-      } else {
-        expiryDate.setMonth(currentDate.getMonth() + 1);
-      }
+      if (isYearly) expiryDate.setFullYear(currentDate.getFullYear() + 1);
+      else expiryDate.setMonth(currentDate.getMonth() + 1);
 
       const premiumStatus: PremiumStatus = {
         is_premium: true,
@@ -712,7 +383,7 @@ export class IAPManager {
 
     } catch (error) {
       console.error('❌ 구매 성공 처리 오류:', error);
-      throw error; // 에러를 다시 던져서 상위에서 처리하도록 함
+      throw error;
     }
   }
 
@@ -721,7 +392,6 @@ export class IAPManager {
    */
   private static async simulateWebPurchase(productId: string): Promise<PurchaseResult> {
     return new Promise((resolve) => {
-      // 2초 후 성공으로 시뮬레이션
       setTimeout(() => {
         resolve({
           success: true,
@@ -738,14 +408,10 @@ export class IAPManager {
    */
   static async getCurrentSubscriptionStatus(): Promise<PremiumStatus> {
     const currentStatus = await LocalStorageManager.getPremiumStatus();
-
-    // 주기적 영수증 검증 수행
     if (currentStatus.is_premium) {
       await ReceiptValidator.periodicValidation();
-      // 검증 후 업데이트된 상태 반환
       return await LocalStorageManager.getPremiumStatus();
     }
-
     return currentStatus;
   }
 
@@ -755,33 +421,20 @@ export class IAPManager {
   static async forceValidateSubscription(): Promise<boolean> {
     try {
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-
-      if (!currentStatus.is_premium || !currentStatus.store_transaction_id) {
-        console.log('⚠️ 검증할 구독이 없습니다.');
-        return false;
-      }
+      if (!currentStatus.is_premium || !currentStatus.store_transaction_id) return false;
 
       console.log('🔄 강제 구독 검증 시작...');
-
-      // 영수증 데이터 준비
-      // ✅ V2 Product IDs 사용 (SUBSCRIPTION_SKUS 상수에서 가져옴)
       const receiptData = currentStatus.receipt_data || JSON.stringify({
         transactionId: currentStatus.store_transaction_id,
         productId: currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly,
         purchaseDate: currentStatus.purchase_date
       });
 
-      // 영수증 검증 수행
       const validationResult = await ReceiptValidator.validateReceipt(receiptData, currentStatus.store_transaction_id);
-
-      // 검증 결과에 따라 구독 상태 업데이트
-      // ✅ V2 Product IDs 사용 (SUBSCRIPTION_SKUS 상수에서 가져옴)
       const productId = currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly;
       await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
 
-      console.log('✅ 강제 구독 검증 완료:', validationResult.isActive ? '활성' : '비활성');
       return validationResult.isActive;
-
     } catch (error) {
       console.error('❌ 강제 구독 검증 오류:', error);
       return false;
@@ -789,54 +442,30 @@ export class IAPManager {
   }
 
   /**
-   * 구독 갱신 자동 처리 로직 (NEW)
-   * 앱 시작 시 및 주기적으로 호출되어 구독 상태를 자동 갱신
+   * 구독 갱신 자동 처리 로직
    */
   static async processSubscriptionRenewal(): Promise<boolean> {
     try {
       const currentStatus = await LocalStorageManager.getPremiumStatus();
+      if (!currentStatus.is_premium) return false;
 
-      if (!currentStatus.is_premium) {
-        console.log('⚠️ 프리미엄 구독이 없어 갱신 처리 건너뜀');
-        return false;
-      }
-
-      console.log('🔄 구독 갱신 자동 처리 시작...');
-
-      // 만료일 확인
       if (currentStatus.expiry_date) {
         const now = new Date();
         const expiryDate = new Date(currentStatus.expiry_date);
         const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-        console.log(`📅 구독 만료까지 ${daysUntilExpiry}일 남음`);
-
-        // 만료된 경우 상태 업데이트
         if (daysUntilExpiry <= 0) {
-          console.log('⏰ 구독이 만료되었습니다. 상태를 확인합니다...');
-
-          // 앱스토어에서 최신 구매 정보 확인
           const latestPurchases = await this.restorePurchases();
+          if (latestPurchases) return true;
 
-          if (latestPurchases) {
-            console.log('✅ 구독 갱신이 확인되었습니다.');
-            return true;
-          } else {
-            console.log('❌ 구독 갱신이 확인되지 않았습니다. 프리미엄 상태를 해제합니다.');
-            await this.deactivatePremiumStatus();
-            return false;
-          }
+          await this.deactivatePremiumStatus();
+          return false;
         }
 
-        // 만료 7일 전부터 알림 대상으로 표시
         if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
-          console.log('⚠️ 구독 만료 임박: 갱신 확인을 권장합니다.');
-
-          // 갱신 상태 미리 확인
           await this.checkRenewalStatus();
         }
       }
-
       return true;
     } catch (error) {
       console.error('❌ 구독 갱신 처리 오류:', error);
@@ -845,31 +474,20 @@ export class IAPManager {
   }
 
   /**
-   * 구독 갱신 상태 확인 (NEW)
+   * 구독 갱신 상태 확인
    */
   private static async checkRenewalStatus(): Promise<void> {
     try {
-      if (Platform.OS === 'web' || !RNIap || typeof RNIap.getAvailablePurchases !== 'function') {
-        console.log('🌐 웹 환경: 갱신 상태 확인 건너뜀');
-        return;
-      }
+      if (Platform.OS === 'web' || !RNIap) return;
 
-      // 최신 구매 내역에서 갱신된 구독 찾기
       const purchases = await RNIap.getAvailablePurchases();
       const currentStatus = await LocalStorageManager.getPremiumStatus();
 
       for (const purchase of purchases) {
-        const purchaseProductId = purchase?.productId || '';
-        const purchaseTransactionId = purchase?.transactionId || '';
-
-        if (purchaseProductId && Object.values(SUBSCRIPTION_SKUS).includes(purchaseProductId)) {
-          // 기존 거래 ID와 다른 새로운 거래가 있는지 확인
-          if (purchaseTransactionId && purchaseTransactionId !== currentStatus.store_transaction_id) {
-            console.log('🔄 새로운 구독 갱신이 감지되었습니다:', purchaseTransactionId);
-
-            // 새로운 구독 정보로 업데이트
+        if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
+          if (purchase.transactionId && purchase.transactionId !== currentStatus.store_transaction_id) {
             const receiptData = JSON.stringify(purchase || {});
-            await this.processPurchaseSuccess(purchaseProductId, purchaseTransactionId, receiptData);
+            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId, receiptData);
             break;
           }
         }
@@ -880,142 +498,94 @@ export class IAPManager {
   }
 
   /**
-   * 프리미엄 상태 비활성화 (NEW)
+   * 프리미엄 상태 비활성화
    */
   private static async deactivatePremiumStatus(): Promise<void> {
     try {
       const deactivatedStatus: PremiumStatus = {
         is_premium: false,
-        subscription_type: undefined,
-        purchase_date: undefined,
-        expiry_date: undefined,
-        store_transaction_id: undefined,
         unlimited_storage: false,
         ad_free: false,
         premium_spreads: false,
         last_validated: new Date().toISOString(),
         validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
       };
-
       await LocalStorageManager.updatePremiumStatus(deactivatedStatus);
 
-      // 프리미엄 상태 변경 이벤트 발생
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('premiumStatusChanged', {
-          detail: { isPremium: false }
-        }));
+        window.dispatchEvent(new CustomEvent('premiumStatusChanged', { detail: { isPremium: false } }));
       }
-
-      console.log('✅ 프리미엄 상태가 비활성화되었습니다.');
     } catch (error) {
       console.error('❌ 프리미엄 상태 비활성화 오류:', error);
-      throw error;
     }
   }
 
   /**
-   * 구독 갱신 실패 처리 (NEW)
+   * 구독 갱신 실패 처리
    */
   static async handleRenewalFailure(reason: string): Promise<void> {
     try {
       console.log('❌ 구독 갱신 실패:', reason);
-
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-
-      // 유예 기간 설정 (7일)
       const gracePeriodEnd = new Date();
       gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
 
       const gracePeriodStatus: PremiumStatus = {
         ...currentStatus,
         expiry_date: gracePeriodEnd.toISOString(),
-        validation_environment: 'Sandbox', // GracePeriod는 유효한 타입이 아님
+        validation_environment: 'Sandbox',
         last_validated: new Date().toISOString()
       };
-
       await LocalStorageManager.updatePremiumStatus(gracePeriodStatus);
-
-      console.log('⏳ 구독 갱신 유예 기간이 설정되었습니다 (7일)');
     } catch (error) {
       console.error('❌ 갱신 실패 처리 오류:', error);
     }
   }
 
   /**
-   * 주기적 구독 상태 모니터링 시작 (NEW)
+   * 주기적 구독 상태 모니터링 시작
    */
   static startPeriodicRenewalCheck(): void {
-    // 기존 타이머가 있으면 제거
-    if (this.renewalCheckInterval) {
-      clearInterval(this.renewalCheckInterval);
-    }
-
-    // 24시간마다 갱신 상태 확인
+    if (this.renewalCheckInterval) clearInterval(this.renewalCheckInterval);
     this.renewalCheckInterval = setInterval(async () => {
-      console.log('🔄 주기적 구독 갱신 확인 시작...');
       await this.processSubscriptionRenewal();
-    }, 24 * 60 * 60 * 1000); // 24시간
-
-    console.log('✅ 주기적 구독 갱신 모니터링이 시작되었습니다.');
+    }, 24 * 60 * 60 * 1000);
   }
 
   /**
-   * 주기적 구독 상태 모니터링 중지 (NEW)
+   * 주기적 구독 상태 모니터링 중지
    */
   static stopPeriodicRenewalCheck(): void {
     if (this.renewalCheckInterval) {
       clearInterval(this.renewalCheckInterval);
       this.renewalCheckInterval = null;
-      console.log('✅ 주기적 구독 갱신 모니터링이 중지되었습니다.');
     }
   }
 
-  // 클래스 정적 변수 추가
-  private static renewalCheckInterval: ReturnType<typeof setInterval> | null = null;
-
   /**
-   * 네트워크 오류 시 복구 로직 (NEW)
+   * 네트워크 오류 시 복구 로직
    */
-  static async retryWithExponentialBackoff<T>(
-    operation: () => Promise<T>,
-    maxRetries: number = 3,
-    baseDelay: number = 1000
-  ): Promise<T> {
+  static async retryWithExponentialBackoff<T>(operation: () => Promise<T>, maxRetries = 3, baseDelay = 1000): Promise<T> {
     let lastError: Error;
-
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        console.warn(`⚠️ 작업 실패 (시도 ${i + 1}/${maxRetries}):`, error);
-
-        if (i === maxRetries - 1) {
-          break; // 마지막 재시도
-        }
-
-        // 지수 백오프 대기
-        const delay = baseDelay * Math.pow(2, i);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        if (i === maxRetries - 1) break;
+        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, i)));
       }
     }
-
     throw lastError!;
   }
 
   /**
-   * 중복 결제 방지 메커니즘 (NEW)
+   * 중복 결제 방지 메커니즘
    */
-  private static activePurchases = new Set<string>();
-
   static async purchaseWithDuplicateProtection(productId: string): Promise<PurchaseResult> {
     if (this.activePurchases.has(productId)) {
-      return {
-        success: false,
-        error: '이미 해당 상품의 결제가 진행 중입니다. 잠시 후 다시 시도해주세요.'
-      };
+      return { success: false, error: '이미 결제가 진행 중입니다.' };
     }
-
     try {
       this.activePurchases.add(productId);
       return await this.purchaseSubscription(productId);
@@ -1025,52 +595,31 @@ export class IAPManager {
   }
 
   /**
-   * 결제 중단 시 상태 롤백 (NEW)
+   * 결제 중단 시 상태 롤백
    */
   static async rollbackFailedPurchase(productId: string, transactionId?: string): Promise<void> {
     try {
-      console.log('🔄 실패한 결제 상태 롤백 시작:', productId);
-
-      // 부분적으로 저장된 프리미엄 상태가 있다면 제거
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-
       if (currentStatus.store_transaction_id === transactionId && transactionId) {
-        console.log('⚠️ 실패한 거래의 프리미엄 상태를 제거합니다.');
         await this.deactivatePremiumStatus();
       }
-
-      // 활성 결제 목록에서 제거
       this.activePurchases.delete(productId);
-
-      console.log('✅ 결제 상태 롤백 완료');
     } catch (error) {
       console.error('❌ 결제 롤백 오류:', error);
     }
   }
 
   /**
-   * 환불 처리 자동화 (NEW)
+   * 환불 처리 자동화
    */
   static async handleRefund(transactionId: string): Promise<void> {
     try {
-      console.log('💰 환불 처리 시작:', transactionId);
-
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-
-      // 해당 거래 ID와 일치하는 경우 프리미엄 상태 해제
       if (currentStatus.store_transaction_id === transactionId) {
         await this.deactivatePremiumStatus();
-
-        // 환불 알림 이벤트 발생
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('subscriptionRefunded', {
-            detail: { transactionId }
-          }));
+          window.dispatchEvent(new CustomEvent('subscriptionRefunded', { detail: { transactionId } }));
         }
-
-        console.log('✅ 환불로 인한 프리미엄 상태 해제 완료');
-      } else {
-        console.log('⚠️ 현재 활성 구독과 다른 거래 ID입니다.');
       }
     } catch (error) {
       console.error('❌ 환불 처리 오류:', error);
@@ -1078,132 +627,85 @@ export class IAPManager {
   }
 
   /**
-   * 구독 취소 (앱스토어에서 수동으로 처리)
+   * 구독 취소
    */
   static async cancelSubscription(): Promise<void> {
-    // 실제 취소는 앱스토어에서 사용자가 직접 처리
-    // 여기서는 UI 안내만 제공
     const cancelUrl = Platform.select({
       ios: 'https://apps.apple.com/account/subscriptions',
       android: 'https://play.google.com/store/account/subscriptions',
       default: 'https://support.apple.com/en-us/HT202039'
     });
-
     console.log('📱 구독 취소 URL:', cancelUrl);
-    // 실제 앱에서는 Linking.openURL(cancelUrl) 사용
   }
 
   /**
-   * 프리미엄 상태 시뮬레이션 (테스트용)
-   * ✅ FIX: AdManager와 동기화하여 광고 표시 상태도 즉시 변경
-   * 🔒 SECURITY: 프로덕션에서는 차단
+   * 프리미엄 상태 시뮬레이션
    */
   static async simulatePremiumStatusChange(isPremium: boolean): Promise<void> {
-    // 🔒 프로덕션에서는 시뮬레이션 차단
-    if (!__DEV__) {
-      console.error('🚫 프로덕션에서 시뮬레이션 모드 사용 불가');
-      throw new Error('Simulation mode is only available in development');
-    }
+    if (!__DEV__) throw new Error('Simulation mode is only available in development');
+
+    const mockStatus: PremiumStatus = {
+      is_premium: isPremium,
+      subscription_type: isPremium ? 'monthly' : undefined,
+      purchase_date: isPremium ? new Date().toISOString() : undefined,
+      expiry_date: isPremium ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+      store_transaction_id: isPremium ? `sim-${Date.now()}` : undefined,
+      unlimited_storage: isPremium,
+      ad_free: isPremium,
+      premium_spreads: isPremium,
+      last_validated: new Date().toISOString(),
+      validation_environment: 'Simulation',
+      is_simulation: true
+    };
+
+    await LocalStorageManager.updatePremiumStatus(mockStatus);
 
     try {
-      const mockStatus: PremiumStatus = {
-        is_premium: isPremium,
-        subscription_type: isPremium ? 'monthly' : undefined,
-        purchase_date: isPremium ? new Date().toISOString() : undefined,
-        expiry_date: isPremium ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined, // 30일 후
-        store_transaction_id: isPremium ? `sim-${Date.now()}` : undefined,
-        unlimited_storage: isPremium,
-        ad_free: isPremium,
-        premium_spreads: isPremium,
-        last_validated: new Date().toISOString(),
-        validation_environment: 'Simulation',
-        is_simulation: true // ✅ FIX: 시뮬레이션 플래그 추가
-      };
+      const AdManager = require('./adManager').default;
+      AdManager.setPremiumStatus(isPremium);
+    } catch (e) { }
 
-      await LocalStorageManager.updatePremiumStatus(mockStatus);
-
-      // ✅ FIX: AdManager와 즉시 동기화
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('premiumStatusChanged', { detail: { isPremium } }));
+    } else if (Platform.OS !== 'web') {
       try {
-        const AdManager = require('./adManager').default;
-        AdManager.setPremiumStatus(isPremium);
-        console.log(`🔄 AdManager 동기화 완료: ${isPremium ? '프리미엄 활성' : '무료 버전'}`);
-      } catch (error) {
-        console.warn('⚠️ AdManager 동기화 실패:', error);
-      }
-
-      // 프리미엄 상태 변경 이벤트 발생
-      // 웹 환경
-      if (Platform.OS === 'web') {
-        try {
-          if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('premiumStatusChanged', {
-              detail: { isPremium }
-            }));
-          }
-        } catch (error) {
-          console.warn('⚠️ CustomEvent 사용 불가:', error);
-        }
-      }
-
-      // 모바일 환경 (React Native)
-      if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        try {
-          const { DeviceEventEmitter } = require('react-native');
-          DeviceEventEmitter.emit('premiumStatusChanged', { isPremium });
-        } catch (error) {
-          console.warn('⚠️ DeviceEventEmitter 사용 불가:', error);
-        }
-      }
-
-      console.log('✅ 프리미엄 상태 시뮬레이션 완료:', isPremium ? '활성화' : '비활성화');
-    } catch (error) {
-      console.error('❌ 프리미엄 상태 시뮬레이션 오류:', error);
-      throw error;
+        const { DeviceEventEmitter } = require('react-native');
+        DeviceEventEmitter.emit('premiumStatusChanged', { isPremium });
+      } catch (e) { }
     }
   }
 
   /**
    * IAP 연결 해제
-   * ✅ 개선: 모든 리스너와 타임아웃 정리 추가
    */
   static async dispose(): Promise<void> {
     try {
-      // 주기적 갱신 모니터링 중지
       this.stopPeriodicRenewalCheck();
 
-      // 모든 타임아웃 정리
       for (const [productId, timeoutId] of this.purchaseTimeouts.entries()) {
         clearTimeout(timeoutId);
-        this.purchaseTimeouts.delete(productId);
       }
-      console.log('✅ 모든 구매 타임아웃 정리 완료');
+      this.purchaseTimeouts.clear();
 
-      // 모든 pending Promise 거부
-      for (const [productId, resolver] of this.pendingPurchaseResolvers.entries()) {
+      for (const resolver of this.pendingPurchaseResolvers.values()) {
         resolver.reject(new Error('IAP_DISPOSED'));
-        this.pendingPurchaseResolvers.delete(productId);
       }
-      console.log('✅ 모든 pending Promise 정리 완료');
+      this.pendingPurchaseResolvers.clear();
 
-      // 이벤트 리스너 제거
       if (this.purchaseUpdateSubscription) {
         this.purchaseUpdateSubscription.remove();
         this.purchaseUpdateSubscription = null;
-        console.log('✅ purchaseUpdateSubscription 제거 완료');
       }
       if (this.purchaseErrorSubscription) {
         this.purchaseErrorSubscription.remove();
         this.purchaseErrorSubscription = null;
-        console.log('✅ purchaseErrorSubscription 제거 완료');
       }
 
-      // 활성 구매 목록 정리
       this.activePurchases.clear();
 
-      if (Platform.OS !== 'web' && this.initialized && RNIap && typeof RNIap.endConnection === 'function') {
+      if (Platform.OS !== 'web' && this.initialized && RNIap) {
         await RNIap.endConnection();
         this.initialized = false;
-        console.log('✅ IAP 연결 해제 완료');
       }
     } catch (error) {
       console.error('❌ IAP 연결 해제 오류:', error);

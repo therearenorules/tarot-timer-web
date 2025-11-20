@@ -38,6 +38,8 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
   const [products, setProducts] = useSafeState<SubscriptionProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useSafeState(true);
   const [purchasing, setPurchasing] = useSafeState<string | null>(null);
+  const [loadError, setLoadError] = useSafeState<string | null>(null);
+  const [retryCount, setRetryCount] = useSafeState(0);
 
   useEffect(() => {
     loadSubscriptionProducts();
@@ -50,9 +52,13 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
 
   /**
    * 구독 상품 로드
+   * ✅ 에러 처리 및 폴백 UI 추가
    */
   const loadSubscriptionProducts = async () => {
     try {
+      setLoadingProducts(true);
+      setLoadError(null);
+
       if (Platform.OS === 'web') {
         // 웹 환경용 시뮬레이션 데이터 로드
         const webProducts = await IAPManager.loadProducts();
@@ -61,14 +67,80 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
         return;
       }
 
-      await IAPManager.initialize();
+      // ✅ 초기화 시도 (실패해도 계속 진행)
+      const initialized = await IAPManager.initialize();
+      if (!initialized) {
+        console.warn('⚠️ IAP 초기화 실패, 폴백 상품 표시');
+        setProducts(getFallbackProducts());
+        setLoadError('INIT_FAILED');
+        setLoadingProducts(false);
+        return;
+      }
+
       const productList = await IAPManager.loadProducts();
-      setProducts(productList);
-    } catch (error) {
+
+      if (productList && productList.length > 0) {
+        setProducts(productList);
+        setLoadError(null);
+      } else {
+        // 상품이 없는 경우 폴백 데이터 사용
+        console.warn('⚠️ 구독 상품을 불러올 수 없어 기본 정보를 표시합니다.');
+        setProducts(getFallbackProducts());
+        setLoadError('PRODUCTS_EMPTY');
+      }
+    } catch (error: any) {
       console.error('Failed to load products:', error);
+
+      // 에러 메시지 설정
+      let errorMessage = 'LOAD_ERROR';
+      if (error?.message === 'NETWORK_ERROR') {
+        errorMessage = 'NETWORK_ERROR';
+      } else if (error?.message === 'TIMEOUT_ERROR') {
+        errorMessage = 'TIMEOUT_ERROR';
+      } else if (error?.message === 'NO_SUBSCRIPTIONS_FOUND') {
+        errorMessage = 'NO_SUBSCRIPTIONS_FOUND';
+      }
+
+      setLoadError(errorMessage);
+      // 에러 시에도 폴백 상품 표시
+      setProducts(getFallbackProducts());
     } finally {
       setLoadingProducts(false);
     }
+  };
+
+  /**
+   * 폴백 상품 데이터 (네트워크 오류 시 표시)
+   */
+  const getFallbackProducts = (): SubscriptionProduct[] => {
+    return [
+      {
+        productId: 'tarot_timer_monthly',
+        title: t('settings.premium.plans.monthly.title', { defaultValue: 'Monthly Premium' }),
+        description: t('settings.premium.plans.monthly.description', { defaultValue: 'Monthly subscription' }),
+        price: '4900',
+        localizedPrice: '₩4,900',
+        currency: 'KRW',
+        type: 'monthly'
+      },
+      {
+        productId: 'tarot_timer_yearly',
+        title: t('settings.premium.plans.yearly.title', { defaultValue: 'Yearly Premium' }),
+        description: t('settings.premium.plans.yearly.description', { defaultValue: 'Yearly subscription - Save 50%' }),
+        price: '29000',
+        localizedPrice: '₩29,000',
+        currency: 'KRW',
+        type: 'yearly'
+      }
+    ];
+  };
+
+  /**
+   * 상품 다시 로드
+   */
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    loadSubscriptionProducts();
   };
 
   /**
@@ -125,10 +197,17 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
 
   /**
    * 구독 구매
+   * ✅ 에러 처리 개선 및 사용자 친화적 메시지
    */
   const handlePurchase = async (productId: string) => {
     try {
       setPurchasing(productId);
+
+      // 에러 상태가 있는 경우 먼저 재시도 권장
+      if (loadError) {
+        console.log('⚠️ 에러 상태에서 구매 시도, 상품 재로드 시도...');
+      }
+
       const result = await IAPManager.purchaseSubscription(productId);
 
       if (!result.success && result.error) {
@@ -136,16 +215,29 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
       }
 
       // 구매 성공 시 처리
-      if (result.success && onPurchaseComplete) {
-        onPurchaseComplete();
+      if (result.success) {
+        setLoadError(null); // 성공 시 에러 상태 초기화
+        if (onPurchaseComplete) {
+          onPurchaseComplete();
+        }
       }
     } catch (error: any) {
       console.error('Purchase failed:', error);
       setPurchasing(null);
 
+      // 사용자 친화적 에러 메시지
+      let errorMessage = error.message || t('settings.premium.purchaseError.message');
+
+      // 네트워크 관련 에러 감지
+      if (errorMessage.includes('네트워크') || errorMessage.includes('Network')) {
+        errorMessage = t('settings.premium.error.network', {
+          defaultValue: 'Network connection issue. Please check your connection and try again.'
+        });
+      }
+
       Alert.alert(
         t('settings.premium.purchaseError.title'),
-        error.message || t('settings.premium.purchaseError.message'),
+        errorMessage,
         [{ text: t('common.ok') }]
       );
     }
@@ -271,6 +363,30 @@ export const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({
         </View>
       ) : (
         <View style={styles.productsContainer}>
+          {/* 에러 상태 표시 및 재시도 버튼 */}
+          {loadError && (
+            <View style={styles.errorContainer}>
+              <Icon name="alert-circle" size={20} color={Colors.state.warning} />
+              <Text style={styles.errorText}>
+                {loadError === 'NETWORK_ERROR'
+                  ? t('settings.premium.error.network', { defaultValue: 'Network connection issue. Showing default prices.' })
+                  : loadError === 'TIMEOUT_ERROR'
+                  ? t('settings.premium.error.timeout', { defaultValue: 'Connection timed out. Showing default prices.' })
+                  : loadError === 'INIT_FAILED'
+                  ? t('settings.premium.error.init', { defaultValue: 'Could not connect to App Store. Please try again.' })
+                  : t('settings.premium.error.general', { defaultValue: 'Could not load latest prices. Showing default prices.' })}
+              </Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={handleRetry}
+                activeOpacity={0.7}
+              >
+                <Icon name="refresh" size={14} color={Colors.brand.primary} />
+                <Text style={styles.retryText}>{t('settings.premium.retry', { defaultValue: 'Retry' })}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {products.map((product) => (
             <TouchableOpacity
               key={product.productId}
@@ -505,5 +621,37 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     color: Colors.text.secondary,
     textAlign: 'center',
+  },
+
+  errorContainer: {
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+
+  errorText: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(123, 44, 191, 0.2)',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.xs,
+  },
+
+  retryText: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.brand.primary,
+    fontWeight: '600',
   },
 });

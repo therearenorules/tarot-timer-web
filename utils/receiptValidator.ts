@@ -326,7 +326,44 @@ export class ReceiptValidator {
         }
       }
 
-    } catch (error) {
+      // 실패 상태 코드 처리
+      const errorMessages: { [key: number]: string } = {
+        21000: '영수증 데이터가 유효하지 않습니다.',
+        21002: '영수증 데이터가 손상되었습니다.',
+        21003: '영수증이 인증되지 않았습니다.',
+        21004: '공유 비밀키가 일치하지 않습니다.',
+        21005: '영수증 서버가 일시적으로 사용할 수 없습니다.',
+        21006: '영수증이 유효하지만 구독이 만료되었습니다.',
+        21007: '이 영수증은 Sandbox용입니다.',
+        21008: '이 영수증은 Production용입니다.'
+      };
+
+      // responseData가 유효한 경우에만 처리
+      if (responseData && typeof responseData.status === 'number') {
+        const errorMessage = errorMessages[responseData.status] || `App Store 오류: ${responseData.status}`;
+
+        this.secureLog('warn', 'App Store 영수증 검증 실패', {
+          status: responseData.status,
+          error: errorMessage,
+          environment: isSandbox ? 'Sandbox' : 'Production'
+        });
+
+        return {
+          isValid: false,
+          isActive: false,
+          error: errorMessage
+        };
+      }
+
+      // responseData가 없거나 유효하지 않은 경우
+      this.secureLog('warn', 'App Store 응답 데이터가 유효하지 않음');
+      return {
+        isValid: false,
+        isActive: false,
+        error: 'App Store 응답 데이터가 유효하지 않습니다.'
+      };
+
+    } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         this.secureLog('warn', 'App Store API 요청 타임아웃');
@@ -334,43 +371,6 @@ export class ReceiptValidator {
       }
       throw error;
     }
-
-    // 실패 상태 코드 처리
-    const errorMessages: { [key: number]: string } = {
-      21000: '영수증 데이터가 유효하지 않습니다.',
-      21002: '영수증 데이터가 손상되었습니다.',
-      21003: '영수증이 인증되지 않았습니다.',
-      21004: '공유 비밀키가 일치하지 않습니다.',
-      21005: '영수증 서버가 일시적으로 사용할 수 없습니다.',
-      21006: '영수증이 유효하지만 구독이 만료되었습니다.',
-      21007: '이 영수증은 Sandbox용입니다.',
-      21008: '이 영수증은 Production용입니다.'
-    };
-
-    // responseData가 유효한 경우에만 처리
-    if (responseData && typeof responseData.status === 'number') {
-      const errorMessage = errorMessages[responseData.status] || `App Store 오류: ${responseData.status}`;
-
-      this.secureLog('warn', 'App Store 영수증 검증 실패', {
-        status: responseData.status,
-        error: errorMessage,
-        environment: isSandbox ? 'Sandbox' : 'Production'
-      });
-
-      return {
-        isValid: false,
-        isActive: false,
-        error: errorMessage
-      };
-    }
-
-    // responseData가 없거나 유효하지 않은 경우
-    this.secureLog('warn', 'App Store 응답 데이터가 유효하지 않음');
-    return {
-      isValid: false,
-      isActive: false,
-      error: 'App Store 응답 데이터가 유효하지 않습니다.'
-    };
   }
 
   /**
@@ -468,7 +468,7 @@ export class ReceiptValidator {
           environment: responseData.purchaseType === 0 ? 'Sandbox' : 'Production'
         };
 
-      } catch (error) {
+      } catch (error: any) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
           this.secureLog('warn', 'Google Play API 요청 타임아웃');
@@ -477,7 +477,7 @@ export class ReceiptValidator {
         throw error;
       }
 
-    } catch (error) {
+    } catch (error: any) {
       this.secureLog('error', 'Google Play 영수증 검증 오류', {
         error: error instanceof Error ? error.message : '알 수 없는 오류'
       });
