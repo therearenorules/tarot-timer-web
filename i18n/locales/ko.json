@@ -271,6 +271,11 @@
   "settings": {
     "title": "Settings",
     "subtitle": "앱을 개인화하세요",
+    "betaTester": {
+      "title": "🎁 베타 테스터 특전",
+      "message": "내부 테스트에 참여해주셔서 감사합니다!\n베타 기간 동안 모든 프리미엄 기능을 무료로 이용하실 수 있습니다.",
+      "badge": "베타 테스터"
+    },
     "premium": {
       "title": "프리미엄 멤버십",
       "upgradeTitle": "프리미엄 업그레이드",

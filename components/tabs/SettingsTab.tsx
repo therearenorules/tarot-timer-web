@@ -345,6 +345,14 @@ const SettingsTab: React.FC = () => {
           )}
         </View>
 
+        {/* 안드로이드 베타 테스터 배너 */}
+        {Platform.OS === 'android' && (
+          <View style={styles.betaTesterBanner}>
+            <Text style={styles.betaTesterTitle}>{t('settings.betaTester.title')}</Text>
+            <Text style={styles.betaTesterMessage}>{t('settings.betaTester.message')}</Text>
+          </View>
+        )}
+
         {/* iOS/Android: 프리미엄 사용자면 구독 관리, 아니면 업그레이드 */}
         {Platform.OS !== 'web' ? (
           isPremium ? (
@@ -1165,6 +1173,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
     fontFamily: 'NotoSansKR_700Bold',
+  },
+  // 베타 테스터 배너
+  betaTesterBanner: {
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(244, 208, 63, 0.5)',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  betaTesterTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.brand.secondary,
+    marginBottom: Spacing.xs,
+    fontFamily: 'NotoSansKR_700Bold',
+  },
+  betaTesterMessage: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+    fontFamily: 'NotoSansKR_400Regular',
   },
   premiumFeatures: {
     marginBottom: Spacing.lg,

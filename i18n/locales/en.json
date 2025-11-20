@@ -271,6 +271,11 @@
   "settings": {
     "title": "Settings",
     "subtitle": "Personalize your app",
+    "betaTester": {
+      "title": "🎁 Beta Tester Perk",
+      "message": "Thank you for participating in our internal test!\nDuring the beta period, you can enjoy all premium features for free.",
+      "badge": "Beta Tester"
+    },
     "premium": {
       "title": "Premium Membership",
       "upgradeTitle": "Premium Upgrade",

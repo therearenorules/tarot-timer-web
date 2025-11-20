@@ -540,8 +540,11 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 편의 함수들
+   * ✅ 안드로이드 베타 테스트: 무료 프리미엄 제공
    */
-  const isPremium = premiumStatus?.is_premium || false;
+  const isPremium = Platform.OS === 'android'
+    ? true  // 안드로이드는 베타 기간 동안 무료 프리미엄
+    : (premiumStatus?.is_premium || false);
 
   const isSubscriptionActive = (): boolean => {
     if (!premiumStatus?.is_premium) return false;
@@ -577,6 +580,9 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   const daysUntilExpiryValue = daysUntilExpiry();
 
   const canAccessFeature = (feature: PremiumFeature): boolean => {
+    // 안드로이드 베타 테스터는 모든 프리미엄 기능 접근 가능
+    if (Platform.OS === 'android') return true;
+
     if (!isPremium) return false;
 
     switch (feature) {
