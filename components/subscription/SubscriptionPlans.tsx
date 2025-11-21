@@ -430,7 +430,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
               {purchasing ? (
                 <ActivityIndicator size="small" color={Colors.text.inverse} />
               ) : (
-                <Icon name="credit-card" size={20} color={Colors.text.inverse} />
+                <Icon name="star" size={20} color={Colors.text.inverse} />
               )}
               <Text style={styles.purchaseButtonText}>
                 {purchasing ? t('settings.premium.plans.purchasing') : t('settings.premium.plans.startSubscription')}

@@ -146,7 +146,7 @@ class IAPManager {
       this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase) => {
         console.log('💳 [1/5] 구매 업데이트 수신:', purchase.productId);
 
-        const receipt = purchase.transactionReceipt;
+        const receipt = purchase.purchaseToken || purchase.transactionId;
         if (receipt) {
           try {
             console.log('💳 [2/5] 영수증 확인 완료');
@@ -170,7 +170,7 @@ class IAPManager {
               resolver.resolve({
                 success: true,
                 productId: purchase.productId,
-                transactionId: purchase.transactionId,
+                transactionId: purchase.transactionId || '',
                 purchaseDate: new Date(purchase.transactionDate).toISOString()
               });
               this.pendingPurchaseResolvers.delete(purchase.productId);
@@ -258,16 +258,16 @@ class IAPManager {
         if (products && products.length > 0) {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
 
-          this.products = products.map(p => ({
-            productId: p.productId,
-            title: p.title,
-            description: p.description,
-            price: p.price,
-            localizedPrice: p.localizedPrice,
-            currency: p.currency,
-            type: p.productId.includes('yearly') ? 'yearly' : 'monthly',
+          this.products = products.map((p: any) => ({
+            productId: p.productId || p.sku,
+            title: p.title || p.name || '',
+            description: p.description || '',
+            price: p.price || '0',
+            localizedPrice: p.localizedPrice || p.price || '0',
+            currency: p.currency || 'KRW',
+            type: (p.productId || p.sku || '').includes('yearly') ? 'yearly' as const : 'monthly' as const,
             // ✅ Android Offer Token 저장
-            subscriptionOfferDetails: (p as any).subscriptionOfferDetails
+            subscriptionOfferDetails: p.subscriptionOfferDetails
           }));
 
           return this.products;

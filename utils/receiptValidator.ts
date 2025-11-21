@@ -182,7 +182,7 @@ export class ReceiptValidator {
         };
 
         // Supabase Functions invoke 사용
-        const { data, error } = await supabase.functions.invoke<EdgeFunctionResponse>(
+        const { data, error } = await supabase!.functions.invoke<EdgeFunctionResponse>(
           'verify-receipt',
           {
             body: requestData,

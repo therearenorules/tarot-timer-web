@@ -58,7 +58,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   const [lastError, setLastError] = useSafeState<string | null>(null);
 
   // ✅ CRITICAL FIX: Stale Closure 문제 해결 - refreshStatus의 최신 참조 유지
-  const refreshStatusRef = useRef<() => Promise<void>>();
+  const refreshStatusRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   // ✅ FIX: Debounce 패턴 - 중복 호출 방지
   const lastRefreshTime = useRef<number>(0);
@@ -272,8 +272,8 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   const setupEventListeners = () => {
     // 웹 환경: window 이벤트 리스너
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.addEventListener('premiumStatusChanged', handlePremiumStatusChange);
-      window.addEventListener('purchaseError', handlePurchaseError);
+      window.addEventListener('premiumStatusChanged', handlePremiumStatusChange as unknown as EventListener);
+      window.addEventListener('purchaseError', handlePurchaseError as unknown as EventListener);
     }
 
     // 모바일 환경: DeviceEventEmitter
@@ -295,8 +295,8 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   const removeEventListeners = () => {
     // 웹 환경: window 이벤트 리스너 제거
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.removeEventListener('premiumStatusChanged', handlePremiumStatusChange);
-      window.removeEventListener('purchaseError', handlePurchaseError);
+      window.removeEventListener('premiumStatusChanged', handlePremiumStatusChange as unknown as EventListener);
+      window.removeEventListener('purchaseError', handlePurchaseError as unknown as EventListener);
     }
 
     // 모바일 환경: DeviceEventEmitter 제거
