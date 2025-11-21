@@ -137,32 +137,60 @@ export default function PremiumSubscription({
   const handlePurchase = async (productId: string) => {
     try {
       setPurchasing(productId);
+      console.log('💳 [UI] 구매 프로세스 시작:', productId);
 
       const result: PurchaseResult = await IAPManager.purchaseSubscription(productId);
 
       if (result.success) {
+        console.log('✅ [UI] 구매 성공 - 사용자 알림 표시');
         Alert.alert(
-          '구매 완료',
-          '프리미엄 구독이 활성화되었습니다! 🎉',
+          '구독 완료! 🎉',
+          '프리미엄 구독이 성공적으로 활성화되었습니다.\n\n모든 프리미엄 기능을 이용하실 수 있습니다.',
           [
             {
               text: '확인',
-              onPress: () => {
+              onPress: async () => {
+                console.log('✅ [UI] 구매 완료 확인 - 상태 새로고침');
                 onPurchaseSuccess?.(productId);
-                initializeIAP(); // 상태 새로고침
+                await initializeIAP(); // 상태 새로고침
               }
             }
           ]
         );
       } else {
+        // ✅ FIX: 에러 타입별 상세 메시지 표시
+        console.error('❌ [UI] 구매 실패:', result.error);
+
         if (result.error && !result.error.includes('취소')) {
-          Alert.alert('구매 실패', result.error);
+          let errorTitle = '구독 실패';
+          let errorMessage = result.error;
+
+          // 에러 메시지 개선
+          if (result.error.includes('네트워크')) {
+            errorTitle = '네트워크 오류';
+          } else if (result.error.includes('이미 구매')) {
+            errorTitle = '이미 구독 중';
+            errorMessage = result.error + '\n\n"구매 복원" 버튼을 눌러주세요.';
+          } else if (result.error.includes('상품')) {
+            errorTitle = '상품 오류';
+          }
+
+          Alert.alert(errorTitle, errorMessage, [{ text: '확인' }]);
+        } else if (result.error?.includes('취소')) {
+          console.log('ℹ️ [UI] 사용자 구매 취소');
         }
       }
 
-    } catch (error) {
-      console.error('구매 처리 오류:', error);
-      Alert.alert('오류', '구매 처리 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      console.error('❌ [UI] 구매 처리 예외:', error);
+      console.error('  - Error Message:', error?.message);
+      console.error('  - Error Stack:', error?.stack);
+
+      Alert.alert(
+        '구독 처리 오류',
+        error?.message || '구매 처리 중 오류가 발생했습니다.\n\n잠시 후 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
     } finally {
       setPurchasing(null);
     }

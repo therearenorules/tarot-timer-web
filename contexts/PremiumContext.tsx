@@ -453,30 +453,58 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 구독 구매
+   * ✅ FIX: Sandbox 환경 대응 - 구매 완료 후 딜레이 추가
    */
   const purchaseSubscription = async (productId: string): Promise<boolean> => {
     try {
       setIsLoading(true);
       setLastError(null);
 
-      console.log('💳 구독 구매 시작:', productId);
+      console.log('💳 [PremiumContext] 구독 구매 시작:', productId);
 
       const result = await IAPManager.purchaseSubscription(productId);
 
       if (result.success) {
-        await refreshStatus();
-        console.log('✅ 구독 구매 성공');
+        console.log('✅ [PremiumContext] 구독 구매 성공 - 상태 검증 시작');
+
+        // ✅ FIX: Sandbox 환경 대응 - 1초 추가 딜레이 후 상태 갱신
+        console.log('⏳ [PremiumContext] 구독 상태 전파 대기 중... (1초)');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // ✅ FIX: 재시도 로직 포함된 상태 갱신
+        let statusRefreshed = false;
+        let retries = 2;
+
+        while (retries > 0 && !statusRefreshed) {
+          try {
+            await refreshStatus();
+            statusRefreshed = true;
+            console.log('✅ [PremiumContext] 구독 상태 갱신 완료');
+          } catch (err) {
+            console.warn(`⚠️ [PremiumContext] 상태 갱신 실패 (시도 ${3 - retries}/2):`, err);
+            if (retries > 1) {
+              await new Promise(r => setTimeout(r, 1000));
+            }
+            retries--;
+          }
+        }
+
+        if (!statusRefreshed) {
+          console.warn('⚠️ [PremiumContext] 상태 갱신 실패 - 수동 새로고침 필요');
+        }
+
         return true;
       } else {
-        setLastError(result.error || '구매에 실패했습니다.');
-        console.log('❌ 구독 구매 실패:', result.error);
+        const errorMsg = result.error || '구매에 실패했습니다.';
+        setLastError(errorMsg);
+        console.log('❌ [PremiumContext] 구독 구매 실패:', errorMsg);
         return false;
       }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '구매 처리 중 오류가 발생했습니다.';
       setLastError(errorMessage);
-      console.error('❌ 구독 구매 오류:', error);
+      console.error('❌ [PremiumContext] 구독 구매 오류:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -485,30 +513,49 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
   /**
    * 구매 복원
+   * ✅ FIX: 재시도 로직이 포함된 상태 갱신
    */
   const restorePurchases = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
       setLastError(null);
 
-      console.log('🔄 구매 복원 시작...');
+      console.log('🔄 [PremiumContext] 구매 복원 시작...');
 
       const success = await IAPManager.restorePurchases();
 
       if (success) {
-        await refreshStatus();
-        console.log('✅ 구매 복원 성공');
+        console.log('✅ [PremiumContext] 구매 복원 성공 - 상태 검증 시작');
+
+        // ✅ FIX: 재시도 로직 포함된 상태 갱신
+        let statusRefreshed = false;
+        let retries = 2;
+
+        while (retries > 0 && !statusRefreshed) {
+          try {
+            await refreshStatus();
+            statusRefreshed = true;
+            console.log('✅ [PremiumContext] 복원 후 상태 갱신 완료');
+          } catch (err) {
+            console.warn(`⚠️ [PremiumContext] 복원 후 상태 갱신 실패 (시도 ${3 - retries}/2):`, err);
+            if (retries > 1) {
+              await new Promise(r => setTimeout(r, 1000));
+            }
+            retries--;
+          }
+        }
+
         return true;
       } else {
         setLastError('복원할 구매 내역이 없습니다.');
-        console.log('⚠️ 복원할 구매 내역 없음');
+        console.log('⚠️ [PremiumContext] 복원할 구매 내역 없음');
         return false;
       }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '구매 복원 중 오류가 발생했습니다.';
       setLastError(errorMessage);
-      console.error('❌ 구매 복원 오류:', error);
+      console.error('❌ [PremiumContext] 구매 복원 오류:', error);
       return false;
     } finally {
       setIsLoading(false);

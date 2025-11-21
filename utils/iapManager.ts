@@ -125,17 +125,25 @@ class IAPManager {
 
       // 구매 업데이트 리스너
       this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase) => {
-        console.log('💳 구매 업데이트 수신:', purchase.productId);
+        console.log('💳 [1/5] 구매 업데이트 수신:', purchase.productId);
 
         const receipt = purchase.transactionReceipt;
         if (receipt) {
           try {
-            // 결제 승인 (iOS 필수)
+            console.log('💳 [2/5] 영수증 확인 완료');
+
+            // ✅ FIX: finishTransaction 호출
             await RNIap.finishTransaction({ purchase, isConsumable: false });
-            console.log('✅ 결제 승인(finishTransaction) 완료');
+            console.log('💳 [3/5] 결제 승인(finishTransaction) 완료');
+
+            // ✅ FIX: Sandbox 환경 대응 - 2초 딜레이 (영수증 전파 대기)
+            console.log('⏳ Sandbox 영수증 전파 대기 중... (2초)');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log('💳 [4/5] 영수증 전파 대기 완료');
 
             // 성공 처리
             await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receipt);
+            console.log('💳 [5/5] 구독 처리 완료');
 
             // Pending Promise 해결
             const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
@@ -149,17 +157,46 @@ class IAPManager {
               this.pendingPurchaseResolvers.delete(purchase.productId);
             }
           } catch (ackErr) {
-            console.error('❌ 결제 승인 실패:', ackErr);
+            console.error('❌ 결제 승인 실패 [상세]:', ackErr);
+            const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+            if (resolver) {
+              resolver.reject(ackErr);
+              this.pendingPurchaseResolvers.delete(purchase.productId);
+            }
           }
         }
       });
 
       // 구매 에러 리스너
       this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error) => {
-        console.error('❌ 구매 에러 리스너:', error);
+        console.error('❌ [IAP Error Listener] 구매 에러 발생:');
+        console.error('  - Error Code:', (error as any)?.code);
+        console.error('  - Error Message:', (error as any)?.message);
+        console.error('  - Error Details:', JSON.stringify(error, null, 2));
+
+        // ✅ FIX: 에러 타입별 상세 메시지
+        let userFriendlyMessage = '구매 처리 중 오류가 발생했습니다.';
+
+        const errorCode = (error as any)?.code;
+        if (errorCode === 'E_USER_CANCELLED') {
+          userFriendlyMessage = '사용자가 구매를 취소했습니다.';
+          console.log('ℹ️ 사용자 취소 - 정상 동작');
+        } else if (errorCode === 'E_NETWORK_ERROR') {
+          userFriendlyMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+        } else if (errorCode === 'E_ITEM_UNAVAILABLE') {
+          userFriendlyMessage = '구매할 수 없는 상품입니다.';
+        } else if (errorCode === 'E_ALREADY_OWNED') {
+          userFriendlyMessage = '이미 구매한 상품입니다. 구매 복원을 시도해주세요.';
+        } else if (errorCode === 'E_UNKNOWN') {
+          userFriendlyMessage = '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        }
+
         // Pending Promise 거부
+        const errorWithMessage = new Error(userFriendlyMessage);
+        (errorWithMessage as any).originalError = error;
+
         this.pendingPurchaseResolvers.forEach((resolver, key) => {
-          resolver.reject(error);
+          resolver.reject(errorWithMessage);
           this.pendingPurchaseResolvers.delete(key);
         });
       });
@@ -305,6 +342,10 @@ class IAPManager {
     }
   }
 
+  /**
+   * 구매 복원
+   * ✅ FIX: 재시도 로직 추가 (Sandbox 환경 대응)
+   */
   static async restorePurchases(): Promise<boolean> {
     if (Platform.OS === 'web' || !RNIap) {
       console.log('📌 실제 기기에서만 구매 복원이 가능합니다.');
@@ -312,11 +353,43 @@ class IAPManager {
     }
 
     try {
-      console.log('🔄 구매 복원 시작...');
-      const purchases = await RNIap.getAvailablePurchases();
-      console.log(`📦 복원된 구매 내역: ${purchases.length}개`);
+      console.log('🔄 [1/4] 구매 복원 시작...');
 
+      // ✅ FIX: 재시도 로직 (최대 3회, 1초 간격)
+      let purchases: any[] = [];
+      let retries = 3;
+
+      while (retries > 0) {
+        try {
+          purchases = await RNIap.getAvailablePurchases();
+          console.log(`📦 [2/4] 복원된 구매 내역: ${purchases.length}개 (시도: ${4 - retries}/3)`);
+
+          if (purchases && purchases.length > 0) {
+            break; // 성공
+          }
+
+          if (retries > 1) {
+            console.log(`⏳ 구매 내역 없음 - 1초 후 재시도... (남은 시도: ${retries - 1})`);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        } catch (err) {
+          console.error(`❌ getAvailablePurchases 오류 (시도 ${4 - retries}/3):`, err);
+          if (retries > 1) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+
+        retries--;
+      }
+
+      if (!purchases || purchases.length === 0) {
+        console.log('⚠️ [3/4] 복원할 구매 내역이 없습니다.');
+        return false;
+      }
+
+      console.log(`🔍 [3/4] 구독 내역 처리 중... (${purchases.length}개)`);
       let restoredCount = 0;
+
       for (const purchase of purchases) {
         if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
           const receiptData = JSON.stringify({
@@ -327,12 +400,15 @@ class IAPManager {
 
           await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
           restoredCount++;
+          console.log(`✅ 구독 복원 완료: ${purchase.productId}`);
         }
       }
 
+      console.log(`✅ [4/4] 구매 복원 완료 (${restoredCount}개)`);
       return restoredCount > 0;
+
     } catch (error) {
-      console.error('❌ 구매 복원 오류:', error);
+      console.error('❌ 구매 복원 최종 오류:', error);
       return false;
     }
   }
