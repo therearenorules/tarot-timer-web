@@ -93,9 +93,15 @@ class IAPManager {
     while (retries > 0) {
       try {
         console.log(`🔄 IAPManager 초기화 시도 (${4 - retries}/3)...`);
+        console.log('📋 RNIap.initConnection 호출 전 상태:');
+        console.log('  - Platform:', Platform.OS);
+        console.log('  - RNIap 존재:', !!RNIap);
+        console.log('  - initialized:', this.initialized);
 
         // 연결 초기화
-        await RNIap.initConnection();
+        const connectionResult = await RNIap.initConnection();
+        console.log('📋 RNIap.initConnection 결과:', connectionResult);
+
         this.initialized = true;
         console.log('✅ RNIap 연결 성공');
 
@@ -110,7 +116,12 @@ class IAPManager {
 
       } catch (error) {
         lastError = error;
-        console.error(`❌ IAPManager 초기화 실패 (시도 ${4 - retries}/3):`, error);
+        // ✅ 자세한 오류 정보 출력
+        console.error(`❌ IAPManager 초기화 실패 (시도 ${4 - retries}/3):`);
+        console.error('📋 오류 타입:', error instanceof Error ? error.constructor.name : typeof error);
+        console.error('📋 오류 메시지:', error instanceof Error ? error.message : String(error));
+        console.error('📋 오류 코드:', (error as any)?.code);
+        console.error('📋 전체 오류 객체:', JSON.stringify(error, null, 2));
 
         if (retries > 1) {
           console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
@@ -121,7 +132,11 @@ class IAPManager {
       }
     }
 
-    console.error('❌ IAPManager 초기화 최종 실패 (3회 시도 모두 실패):', lastError);
+    console.error('❌ IAPManager 초기화 최종 실패 (3회 시도 모두 실패):');
+    console.error('📋 최종 오류 타입:', lastError instanceof Error ? lastError.constructor.name : typeof lastError);
+    console.error('📋 최종 오류 메시지:', lastError instanceof Error ? lastError.message : String(lastError));
+    console.error('📋 최종 오류 코드:', (lastError as any)?.code);
+    console.error('📋 최종 오류 전체:', JSON.stringify(lastError, null, 2));
     return false;
   }
 
@@ -251,12 +266,20 @@ class IAPManager {
     while (retries > 0) {
       try {
         console.log(`📦 상품 로드 시도 (${4 - retries}/3)...`);
+        console.log('📋 fetchProducts 호출 전 상태:');
+        console.log('  - initialized:', this.initialized);
+        console.log('  - Platform:', Platform.OS);
+        console.log('  - RNIap 존재:', !!RNIap);
+        console.log('  - SKUs:', skus);
 
         // ✅ FIX: v14.x API - fetchProducts 사용 (type: 'subs'로 구독 상품 조회)
+        console.log('📋 RNIap.fetchProducts 호출 중...');
         const products = await RNIap!.fetchProducts({ skus, type: 'subs' });
+        console.log('📋 RNIap.fetchProducts 완료:', products?.length, '개');
 
         if (products && products.length > 0) {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
+          console.log('📊 상품 원본 데이터:', JSON.stringify(products, null, 2));
 
           this.products = products.map((p: any) => ({
             productId: p.productId || p.sku,
@@ -270,6 +293,7 @@ class IAPManager {
             subscriptionOfferDetails: p.subscriptionOfferDetails
           }));
 
+          console.log('📊 변환된 상품 데이터:', JSON.stringify(this.products, null, 2));
           return this.products;
         }
 
@@ -282,7 +306,14 @@ class IAPManager {
 
       } catch (error) {
         lastError = error;
-        console.error(`❌ 상품 로드 실패 (시도 ${4 - retries}/3):`, error);
+        // ✅ 자세한 오류 정보 출력
+        console.error(`❌ 상품 로드 실패 (시도 ${4 - retries}/3):`);
+        console.error('📋 오류 타입:', error instanceof Error ? error.constructor.name : typeof error);
+        console.error('📋 오류 메시지:', error instanceof Error ? error.message : String(error));
+        console.error('📋 오류 코드:', (error as any)?.code);
+        console.error('📋 전체 오류 객체:', JSON.stringify(error, null, 2));
+        console.error('📋 initialized 상태:', this.initialized);
+        console.error('📋 RNIap 존재 여부:', !!RNIap);
 
         if (retries > 1) {
           console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
@@ -293,7 +324,12 @@ class IAPManager {
       retries--;
     }
 
-    console.error('❌ 상품 로드 최종 실패 (3회 시도 모두 실패):', lastError);
+    console.error('❌ 상품 로드 최종 실패 (3회 시도 모두 실패):');
+    console.error('📋 최종 오류 타입:', lastError instanceof Error ? lastError.constructor.name : typeof lastError);
+    console.error('📋 최종 오류 메시지:', lastError instanceof Error ? lastError.message : String(lastError));
+    console.error('📋 최종 오류 코드:', (lastError as any)?.code);
+    console.error('📋 최종 오류 전체:', JSON.stringify(lastError, null, 2));
+    console.error('📋 최종 initialized 상태:', this.initialized);
     return [];
   }
 
