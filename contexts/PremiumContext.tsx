@@ -7,7 +7,7 @@ import React, { createContext, useContext, useEffect, useRef, useCallback, React
 import { Platform } from 'react-native';
 import IAPManager from '../utils/iapManager';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
-import ReceiptValidator from '../utils/receiptValidator';
+import { ReceiptValidator } from '../utils/receiptValidator';
 import { useSafeState } from '../hooks/useSafeState';
 
 // Context 인터페이스 정의

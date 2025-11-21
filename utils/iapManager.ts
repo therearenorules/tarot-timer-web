@@ -197,7 +197,8 @@ class IAPManager {
         let userFriendlyMessage = '구매 처리 중 오류가 발생했습니다.';
 
         const errorCode = (error as any)?.code;
-        if (errorCode === 'E_USER_CANCELLED') {
+        // v14.x에서는 'user-cancelled' 또는 'E_USER_CANCELLED' 모두 체크
+        if (errorCode === 'E_USER_CANCELLED' || errorCode === 'user-cancelled') {
           userFriendlyMessage = '사용자가 구매를 취소했습니다.';
           console.log('ℹ️ 사용자 취소 - 정상 동작');
         } else if (errorCode === 'E_NETWORK_ERROR') {
@@ -251,8 +252,8 @@ class IAPManager {
       try {
         console.log(`📦 상품 로드 시도 (${4 - retries}/3)...`);
 
-        // ✅ FIX: getProducts 사용 및 type: 'subs' 명시
-        const products = await RNIap.getProducts({ skus, type: 'subs' } as any);
+        // ✅ FIX: v14.x API - getSubscriptions 사용
+        const products = await RNIap!.getSubscriptions({ skus });
 
         if (products && products.length > 0) {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
