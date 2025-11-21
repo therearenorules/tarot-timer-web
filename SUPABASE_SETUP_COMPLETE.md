@@ -191,13 +191,30 @@ supabase functions deploy verify-receipt
 
 ---
 
-## 📋 **빌드 명령어**
+## 📋 **빌드 이력**
 
+### ✅ Build 152 (2025-11-21) - 최신
 ```bash
-# iOS Build 151
-eas build --platform ios --profile production-ios
+# iOS Build 152 - TestFlight 제출 완료
+eas build --platform ios --profile production-ios --non-interactive
+eas submit --platform ios --latest
+```
 
-# Android Build 105
+**상태**: 🟢 TestFlight 제출 완료
+- **빌드 ID**: 97bed3d6-d345-41d2-91b6-36a7c4ef7dec
+- **제출 ID**: 76841346-c66c-4971-9884-896c3ad23cb1
+- **App Store Connect**: https://appstoreconnect.apple.com/apps/6752687014/testflight/ios
+
+**주요 수정사항**:
+- ✅ IAP v14.x API 호환성 (`fetchProducts`)
+- ✅ 영수증 검증 시스템 완성
+- ✅ Supabase 연동 완료
+- ✅ TypeScript 오류 전체 수정
+- ✅ 구독 상품 로딩 검증 완료
+
+### 다음 빌드
+```bash
+# Android Build 105 (대기 중)
 eas build --platform android --profile production-android
 ```
 
@@ -282,4 +299,5 @@ eas build --platform ios --profile production-ios
 ---
 
 **작성 날짜**: 2025-11-21
-**상태**: 🟢 **프로덕션 준비 완료**
+**최종 업데이트**: 2025-11-21 17:15 (Build 152 TestFlight 제출 완료)
+**상태**: 🟢 **프로덕션 배포 완료**

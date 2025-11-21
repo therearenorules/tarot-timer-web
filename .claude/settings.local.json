@@ -89,7 +89,12 @@
       "Bash(del supabase_windows_amd64.tar.gz)",
       "Bash(start https://supabase.com/dashboard/project/syzefbnrnnjkdnoqbwsk)",
       "Bash(start explorer.exe C:UserscntusDesktoptarot-timer-websupabase)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(node test-platform-select.js:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(eas env:list:*)",
+      "Bash(supabase link:*)",
+      "Bash(eas secret:create:*)"
     ],
     "deny": [],
     "ask": []
