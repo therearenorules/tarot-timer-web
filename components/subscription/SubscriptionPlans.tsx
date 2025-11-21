@@ -325,7 +325,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         {isYearly && (
           <Text style={styles.monthlyEquivalent}>
             {t('settings.premium.plans.monthlyEquivalent', {
-              price: Math.round(parseInt(product.price) / 12).toLocaleString()
+              price: (Math.floor(parseFloat(product.price) / 12 * 100) / 100).toFixed(2)
             })}
           </Text>
         )}
