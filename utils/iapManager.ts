@@ -252,8 +252,8 @@ class IAPManager {
       try {
         console.log(`📦 상품 로드 시도 (${4 - retries}/3)...`);
 
-        // ✅ FIX: v14.x API - getSubscriptions 사용
-        const products = await RNIap!.getSubscriptions({ skus });
+        // ✅ FIX: v14.x API - fetchProducts 사용 (type: 'subs'로 구독 상품 조회)
+        const products = await RNIap!.fetchProducts({ skus, type: 'subs' });
 
         if (products && products.length > 0) {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
