@@ -211,6 +211,22 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         iapStatus = defaultPremiumStatus; // 명시적으로 기본값 재할당
       }
 
+      // ✅ NEW: Supabase 주기적 동기화 (타임아웃 5초) - 초기화 시에도 실행
+      try {
+        await Promise.race([
+          ReceiptValidator.periodicValidation(),
+          new Promise<void>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ Supabase 동기화 타임아웃 - 건너뜀');
+              resolve();
+            }, 5000)
+          )
+        ]);
+        console.log('✅ Supabase 주기적 동기화 완료');
+      } catch (error) {
+        console.error('❌ Supabase 동기화 오류 (무시):', error);
+      }
+
       // ✅ CRITICAL FIX: 상태 설정도 try-catch로 감싸기
       try {
         // IAP 구독이 있으면 IAP 상태 우선, 없으면 무료 체험 상태 사용
@@ -422,6 +438,22 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       } catch (error) {
         console.error('❌ IAP 상태 조회 오류 (무시):', error);
         iapStatus = defaultPremiumStatus;
+      }
+
+      // ✅ NEW: 3. Supabase 주기적 동기화 (타임아웃 5초)
+      try {
+        await Promise.race([
+          ReceiptValidator.periodicValidation(),
+          new Promise<void>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ Supabase 동기화 타임아웃 - 건너뜀');
+              resolve();
+            }, 5000)
+          )
+        ]);
+        console.log('✅ Supabase 주기적 동기화 완료');
+      } catch (error) {
+        console.error('❌ Supabase 동기화 오류 (무시):', error);
       }
 
       // 3. 상태 우선순위 결정: IAP > 무료 체험 > 무료 버전

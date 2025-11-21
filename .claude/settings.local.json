@@ -81,7 +81,15 @@
       "Bash(node -e:*)",
       "Bash(grep:*)",
       "Bash(npm run build:prod:ios:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(where scoop)",
+      "Bash(powershell:*)",
+      "Bash(tar:*)",
+      "Bash(C:supabase-clisupabase.exe --version)",
+      "Bash(del supabase_windows_amd64.tar.gz)",
+      "Bash(start https://supabase.com/dashboard/project/syzefbnrnnjkdnoqbwsk)",
+      "Bash(start explorer.exe C:UserscntusDesktoptarot-timer-websupabase)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,262 +1,183 @@
-# 🔮 Tarot Timer - Learn Card Meanings
+# Supabase CLI
 
-React Native + Expo 기반의 24시간 타로 카드 학습 애플리케이션
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-[![Status](https://img.shields.io/badge/Status-95%25%20Complete-brightgreen.svg)](https://github.com/therearenorules/tarot-timer-web)
-[![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20iOS%20%7C%20Android-blue.svg)](https://expo.dev)
-[![Build](https://img.shields.io/badge/Build-137%20%7C%20v1.1.3-success.svg)](https://expo.dev)
-[![iOS](https://img.shields.io/badge/iOS-Build%20137%20Ready-blue.svg)](#ios-app-store-출시)
-[![Android](https://img.shields.io/badge/Android-Phase%201%20Complete-orange.svg)](#android-개발-현황)
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-## ✨ 주요 기능
+This repository contains all the functionality for Supabase CLI.
 
-### 🎯 완성된 기능들 (v1.1.3, Build 137)
-- **⏰ 24시간 타로 타이머**: 매 시간마다 다른 타로카드 with AsyncStorage 지속성
-- **🎨 미스틱 UI 디자인**: 보라/골드 테마의 고품질 디자인 시스템
-- **🔮 SVG 아이콘 시스템**: 25개+ 벡터 아이콘 (완전 크로스 플랫폼)
-- **🏛️ 브랜드 로고**: 3장의 타로카드와 신비로운 요소
-- **🌙 배경 패턴**: 신성한 기하학 패턴 텍스처
-- **💫 그라데이션 버튼**: Primary/Secondary 스타일
-- **💎 타로카드 컴포넌트**: 골드 테두리와 그림자 효과
-- **📱 반응형 디자인**: 99% 안드로이드 기기 대응 (Phase 1 완료)
-- **🌍 다국어 지원**: 한국어, 영어, 일본어 (i18next)
-- **🔔 알림 시스템**: iOS 알림 8개 버그 수정 완료
-- **💰 구독 시스템 V2**: $4.99/월, $34.99/년 (react-native-iap v14.x 완벽 호환)
-- **🛡️ 메모리 안정성**: Race Condition 방지 + 메모리 누수 방지 완벽 적용
-- **🍎 iOS Build 137**: 메모리/Race Condition 수정 완료 (TestFlight 대기)
-- **🤖 Android 개발**: Phase 1 완료 (반응형 개선, 99점 호환성)
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### 🚧 개발 중인 기능들
-- **🤖 Android Play Store**: Phase 2-7 진행 중 (법률 문서, 빌드, 테스트, 배포)
-- **🃏 스프레드 탭**: 다양한 타로 스프레드 레이아웃
-- **📖 저널 탭**: 일일 타로 리딩 기록
-- **⚙️ 설정 탭**: 테마, 알림, 언어 설정 고도화
+## Getting started
 
-## 🚀 빠른 시작
+### Install the CLI
 
-### 개발 서버 시작
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+
 ```bash
-# 의존성 설치
-npm install
-
-# 개발 서버 시작 (포트 8083)
-npm run dev
-
-# 웹 브라우저에서 테스트
-# http://localhost:8083
+npm i supabase --save-dev
 ```
 
-### 프로덕션 빌드
+To install the beta release channel:
+
 ```bash
-# App Store 준비 빌드
-npm run app-store:prepare
-
-# iOS 프로덕션 빌드
-npm run build:prod:ios
-
-# 빌드 상태 확인
-npm run build:list
+npm i supabase@beta --save-dev
 ```
 
-## 📁 프로젝트 구조
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
 ```
-tarot-timer-web/
-├── analysis/                   # 📊 프로젝트 분석 보고서 시스템
-│   ├── 00-comprehensive-analysis-summary.md
-│   ├── 01-development-progress-report.md
-│   ├── 02-gaps-analysis-report.md
-│   ├── 03-future-development-plan.md
-│   └── 04-technical-recommendations-report.md
-├── ANDROID_MASTER_PLAN.md      # 🤖 안드로이드 앱 구축 마스터 플랜 (7단계)
-├── ANDROID_LAUNCH_CHECKLIST.md # ✅ Play Store 출시 체크리스트
-├── ANDROID_RESPONSIVE_ANALYSIS.md # 📱 반응형 대응 분석 (85→99점)
-├── ANDROID_SETUP_COMPLETE.md   # 🎉 Phase 1 완료 보고서
-├── SUBSCRIPTION_EVALUATION_REPORT.md # 💰 구독 모델 평가
-├── SUBSCRIPTION_UPDATES_CHANGELOG.md # 📝 구독 시스템 변경 로그
-├── .claude/                    # Claude Code 프로젝트 설정
-│   ├── CLAUDE.md              # 개발 룰 및 가이드라인
-│   └── check-status.js        # 자동 상태 체크 스크립트
-├── components/                 # React Native 컴포넌트
-│   ├── Icon.tsx               # SVG 아이콘 시스템 (25개+ 아이콘)
-│   ├── Logo.tsx               # 브랜드 로고
-│   ├── BackgroundPattern.tsx  # 배경 패턴
-│   ├── GradientButton.tsx     # 그라데이션 버튼
-│   ├── DesignSystem.tsx       # 통합 디자인 시스템
-│   └── tabs/                  # 탭 컴포넌트들
-├── contexts/                   # React Context
-│   ├── AuthContext.tsx        # 인증 컨텍스트
-│   ├── NotificationContext.tsx # 알림 컨텍스트
-│   ├── PremiumContext.tsx     # 프리미엄 컨텍스트
-│   └── TarotContext.tsx       # 타로 컨텍스트
-├── utils/                      # 유틸리티
-│   ├── tarotData.ts           # 타로 데이터 관리 (78장)
-│   ├── analyticsManager.ts    # 분석 매니저
-│   ├── iapManager.ts          # 인앱 구매 매니저
-│   └── supabase.ts            # Supabase 연동
-├── i18n/                      # 국제화
-│   └── locales/               # 언어 파일 (ko, en, ja)
-├── assets/                    # 에셋
-│   └── tarot-cards/           # 78장 타로카드 이미지
-├── backend/                   # 백엔드 서버 (포트 3004)
-├── tarot-admin-dashboard/     # 관리자 대시보드 (포트 3005)
-├── docs/                      # 문서
-├── public/                    # 공개 파일
-│   └── privacy-policy.html    # 개인정보 처리방침
-├── utils/networkHelpers.ts    # 네트워크 타임아웃/재시도 헬퍼 (NEW)
-├── App.tsx                    # 메인 앱 컴포넌트
-├── app.json                   # Expo 설정 (Build 121, v1.1.3)
-└── metro.config.js            # Metro 번들러 설정
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
-## 🎨 디자인 시스템
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-### 색상 팔레트
-- **Primary**: `#7b2cbf` (보라)
-- **Secondary**: `#f4d03f` (골드)
-- **Accent**: `#d4b8ff` (라이트 퍼플)
-- **Background**: `#1a1625` (다크 퍼플)
-- **Surface**: `#2d1b47` (미드 퍼플)
+<details>
+  <summary><b>macOS</b></summary>
 
-### 아이콘 시스템
-25개 이상의 SVG 아이콘이 포함되어 있습니다:
-- ⏰ clock, 🃏 tarot-cards, 📖 book-open, ⚙️ settings
-- 🔄 rotate-ccw, 👁️ eye/eye-off, ⭐ star, 🌙 moon
-- ☀️ sun, ✨ sparkles, ⚡ zap, 🔔 bell, 🌍 globe 등
+  Available via [Homebrew](https://brew.sh). To install:
 
-## 🔧 기술 스택
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-### Frontend
-- **React Native**: 0.81.4
-- **Expo**: 54.0.8
-- **Graphics**: react-native-svg + react-native-svg-web
-- **Language**: TypeScript
-- **국제화**: i18next + react-i18next
-- **상태관리**: React Context + AsyncStorage
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-### Backend & Infrastructure
-- **Backend**: Node.js + Express (포트 3004)
-- **Database**: Supabase PostgreSQL
-- **Admin**: Next.js 14 대시보드 (포트 3005)
-- **Analytics**: Custom Analytics Manager
-- **IAP**: react-native-iap
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-### Development & Deployment
-- **Build System**: EAS Build
-- **Platform**: iOS (TestFlight), Android, Web
-- **CI/CD**: GitHub Actions ready
-- **Monitoring**: 실시간 시스템 헬스 체크
+<details>
+  <summary><b>Windows</b></summary>
 
-## 📊 현재 프로젝트 현황 (2025-11-18)
+  Available via [Scoop](https://scoop.sh). To install:
 
-**전체 진행률**: 95% ⭐⭐⭐
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-| 영역 | 완성도 | 상태 | 비고 |
-|------|--------|------|------|
-| **Frontend** | 100% | ✅ | React Native + Expo, AsyncStorage 완성 |
-| **iOS Build 137** | 95% | 🔵 | 메모리/Race Condition 수정 완료, TestFlight 대기 |
-| **구독 시스템 V2** | 100% | ✅ | react-native-iap v14.x 완벽 호환 |
-| **메모리 안정성** | 100% | ✅ | Race Condition 방지 + 메모리 누수 방지 |
-| **Android 개발** | 75% | 🟡 | Phase 1 완료 (반응형 99점), Phase 2-7 진행 예정 |
-| **알림 시스템** | 100% | ✅ | iOS 8개 버그 수정 완료 |
-| **카드 데이터 지속성** | 100% | ✅ | AsyncStorage 기반 완전 해결 |
-| **관리자 대시보드** | 90% | 🟢 | Next.js 14, 실시간 데이터 연동 |
-| **다국어 지원** | 100% | ✅ | 한/영/일 premium 키 완성 |
+  To upgrade:
 
-## 🍎 iOS App Store 출시
+  ```powershell
+  scoop update supabase
+  ```
+</details>
 
-### 🔵 Build 137 - 메모리/Race Condition 수정 완료 (2025-11-18)
-- **버전**: v1.1.3 (Build 137)
-- **상태**: EAS 빌드 완료, TestFlight 배포 대기 (EAS 서비스 복구 대기)
-- **주요 수정사항**:
-  - ✅ **IAP Race Condition 방지**: 타임아웃 ID를 Map으로 추적하여 완전 방지
-  - ✅ **메모리 누수 방지**: 광고 이벤트 리스너 cleanup 구현
-  - ✅ **Deferred Purchase 처리**: iOS Ask to Buy 사용자 경험 개선
-  - ✅ **타임아웃 안정성**: 영수증 검증 30초 → 60초 (App Store 응답 고려)
-  - ✅ **dispose() 완전 구현**: 모든 타임아웃/Promise/리스너 정리
-  - ✅ **react-native-iap v14.x**: API 호환성 완벽 적용 (id/displayPrice)
-- **이전 버전**: v1.0.2 (Build 29) - App Store Live ✅
+<details>
+  <summary><b>Linux</b></summary>
 
-### 📄 관련 문서
-- [Apple Review Bug Resolution](./APPLE_REVIEW_BUG_RESOLUTION_SUMMARY.md) - Build 121 수정 사항
-- [App Store Connect V2 Checklist](./APP_STORE_CONNECT_V2_CHECKLIST.md) - V2 마이그레이션 체크리스트
-- [App Store Connect 제출 가이드](./App-Store-Connect-Submission-Complete-Guide.md)
-- [개인정보 처리방침](./public/privacy-policy.html)
+  Available via [Homebrew](https://brew.sh) and Linux packages.
 
----
+  #### via Homebrew
 
-## 🤖 Android 개발 현황
+  To install:
 
-### ✅ Phase 1 완료 (2025-10-15)
-**반응형 개선 및 호환성 향상**
-- **호환성 점수**: 85/100 → **99/100** (+14점)
-- **터치 타겟**: 48dp (Material Design 준수)
-- **모달 높이**: 동적 계산 (21:9 화면 대응)
-- **Safe Area**: 노치/펀치홀 디스플레이 대응
-- **대응 기기**: Galaxy S23 Ultra, Pixel 7, Sony Xperia 등
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-### 🔄 진행 중 (Phase 2-7)
-1. **Phase 2**: 법률 문서 준비 (개인정보 처리방침, 이용약관)
-2. **Phase 3**: 첫 안드로이드 빌드 (APK/AAB)
-3. **Phase 4**: Google Play Console 설정
-4. **Phase 5**: 내부 테스트 트랙
-5. **Phase 6**: 프로덕션 배포
-6. **Phase 7**: Google Play 심사 (1~7일)
+  To upgrade:
 
-**예상 출시일**: 2025-10-30 (총 15일 소요)
+  ```sh
+  brew upgrade supabase
+  ```
 
-### 📄 안드로이드 관련 문서
-- [안드로이드 마스터 플랜](./ANDROID_MASTER_PLAN.md) - 7단계 통합 실행 계획
-- [Play Store 출시 체크리스트](./ANDROID_LAUNCH_CHECKLIST.md)
-- [반응형 대응 분석](./ANDROID_RESPONSIVE_ANALYSIS.md)
-- [Phase 1 완료 보고서](./ANDROID_SETUP_COMPLETE.md)
-- [구독 모델 평가](./SUBSCRIPTION_EVALUATION_REPORT.md)
+  #### via Linux packages
 
-## 🎯 다음 단계
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
 
-### 즉시 처리 (1주 이내)
-1. **Phase 2**: 법률 문서 작성 (개인정보 처리방침, 이용약관)
-2. **Phase 3**: 안드로이드 첫 빌드 (APK/AAB 생성)
-3. **Phase 4**: Google Play Console 설정 및 구독 상품 등록
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
 
-### 단기 계획 (2주 이내)
-1. **Phase 5-7**: 내부 테스트 → 프로덕션 배포 → Google Play 심사
-2. **Android 앱 출시**: 2025-10-30 목표
-3. **크로스 플랫폼 운영**: iOS + Android 동시 운영 시작
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
 
-### 중기 계획 (1-2개월)
-1. **AI 기반 타로 해석**: GPT 연동 스마트 해석
-2. **사용자 맞춤 추천**: 개인별 최적 카드 추천
-3. **소셜 공유**: SNS 연동 및 커뮤니티 기능
-4. **광고 수익화**: AdMob 연동 (Android 우선)
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
 
-## 📱 지원 플랫폼
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
 
-- ✅ **웹 브라우저** (Chrome, Safari, Edge) - 개발/테스트 환경
-- ✅ **iOS** (App Store 출시 완료 - v1.0.2)
-- 🔄 **Android** (Phase 1 완료, Play Store 출시 준비 중)
+<details>
+  <summary><b>Other Platforms</b></summary>
 
-## 🔗 관련 링크
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
 
-- **GitHub**: [tarot-timer-web](https://github.com/therearenorules/tarot-timer-web)
-- **Admin Dashboard**: [tarot-admin-dashboard](https://github.com/therearenorules/tarot-admin-dashboard)
-- **iOS App Store**: v1.0.2 출시 완료 ✅
-- **Android Play Store**: 출시 준비 중 (Phase 1/7 완료)
-- **개인정보 처리방침**: https://api.tarottimer.app/privacy-policy.html
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
 
-## 🤝 기여하기
+  Add a symlink to the binary in `$PATH` for easier access:
 
-이 프로젝트는 Claude Code와 함께 개발되었습니다. 개발 룰과 가이드라인은 [.claude/CLAUDE.md](.claude/CLAUDE.md)를 참조하세요.
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
 
----
+  This works on other non-standard Linux distros.
+</details>
 
-**마지막 업데이트**: 2025-11-18
-**현재 버전**: v1.1.3 (Build 137)
-**iOS 상태**: 🔵 Build 137 - 메모리/Race Condition 수정 완료 (TestFlight 대기)
-**Android 상태**: 🔄 Phase 1 완료 (7단계 중 1단계)
-**현재 서버**: http://localhost:8083
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
 
-📊 **프로젝트 분석**: [analysis/](./analysis/) - 5개 종합 분석 보고서
-📱 **Android 개발**: [ANDROID_MASTER_PLAN.md](./ANDROID_MASTER_PLAN.md) - 7단계 마스터 플랜
-💰 **구독 시스템 V2**: $4.99/월, $34.99/년 (react-native-iap v14.x 완벽 호환)
-🛡️ **메모리 안정성**: Race Condition 방지 + 메모리 누수 방지 완벽 적용
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```

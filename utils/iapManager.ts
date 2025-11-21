@@ -473,7 +473,8 @@ class IAPManager {
       }
 
       if (receiptData) {
-        const validationResult = await ReceiptValidator.validateReceipt(receiptData, transactionId);
+        // ✅ FIX: productId 파라미터 추가 (Supabase Edge Function 연동)
+        const validationResult = await ReceiptValidator.validateReceipt(receiptData, transactionId, productId);
         if (!validationResult.isValid) throw new Error('영수증 검증 실패: ' + validationResult.error);
         if (!validationResult.isActive) throw new Error('구독이 활성 상태가 아닙니다');
 
@@ -548,14 +549,15 @@ class IAPManager {
       if (!currentStatus.is_premium || !currentStatus.store_transaction_id) return false;
 
       console.log('🔄 강제 구독 검증 시작...');
+      const productId = currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly;
       const receiptData = currentStatus.receipt_data || JSON.stringify({
         transactionId: currentStatus.store_transaction_id,
-        productId: currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly,
+        productId: productId,
         purchaseDate: currentStatus.purchase_date
       });
 
-      const validationResult = await ReceiptValidator.validateReceipt(receiptData, currentStatus.store_transaction_id);
-      const productId = currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly;
+      // ✅ FIX: productId 파라미터 추가 (Supabase Edge Function 연동)
+      const validationResult = await ReceiptValidator.validateReceipt(receiptData, currentStatus.store_transaction_id, productId);
       await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
 
       return validationResult.isActive;

@@ -1,704 +1,397 @@
 /**
- * 영수증 검증 시스템
- * App Store & Google Play Store 영수증 검증 및 보안 강화
+ * 영수증 검증 시스템 (Supabase Edge Function 연동)
  *
- * 보안 기능:
- * - 민감한 데이터 암호화 및 마스킹
- * - 재시도 로직과 지수 백오프
- * - 타임스탬프 검증 및 리플레이 공격 방지
- * - 안전한 로깅 시스템
+ * ⚠️ 중요: 이제 클라이언트에서 직접 Apple Server를 호출하지 않습니다!
+ * 모든 영수증 검증은 Supabase Edge Function을 통해 수행됩니다.
+ *
+ * 변경 사항:
+ * - APPLE_SHARED_SECRET 제거 (Edge Function으로 이동)
+ * - Apple API 직접 호출 제거
+ * - Supabase Edge Function 호출로 대체
+ * - 보안 강화 (민감한 정보 클라이언트에서 제거)
  */
 
 import { Platform } from 'react-native';
+import { supabase } from './supabase';
 import LocalStorageManager, { PremiumStatus } from './localStorage';
 
-// 보안 설정
-const SECURITY_CONFIG = {
+// ============================================================================
+// 설정
+// ============================================================================
+const VALIDATION_CONFIG = {
   MAX_RETRY_ATTEMPTS: 3,
-  RETRY_DELAY_BASE: 1000, // 1초
-  RECEIPT_EXPIRY_GRACE_PERIOD: 300000, // 5분
-  MAX_RECEIPT_AGE: 86400000, // 24시간
-  VALIDATION_TIMEOUT: 60000, // 60초 (App Store 응답 시간 고려하여 증가)
+  RETRY_DELAY_BASE: 2000, // 2초
+  VALIDATION_TIMEOUT: 60000, // 60초
+  EDGE_FUNCTION_URL: process.env.EXPO_PUBLIC_SUPABASE_URL
+    ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/verify-receipt`
+    : null,
 } as const;
 
-// 영수증 검증 결과 인터페이스
+// ============================================================================
+// 타입 정의
+// ============================================================================
+
 export interface ReceiptValidationResult {
   isValid: boolean;
   isActive: boolean;
   expirationDate?: Date;
   originalTransactionId?: string;
   environment?: 'Sandbox' | 'Production';
+  subscriptionId?: string;
   error?: string;
 }
 
-// 앱스토어 영수증 데이터 구조
-export interface AppStoreReceiptData {
+interface EdgeFunctionRequest {
   receipt_data: string;
-  password?: string; // App Store Connect에서 생성한 공유 비밀키
+  transaction_id: string;
+  product_id: string;
+  platform: 'ios' | 'android';
+  user_id: string;
 }
 
-// Google Play 영수증 데이터 구조
-export interface GooglePlayReceiptData {
-  packageName: string;
-  productId: string;
-  purchaseToken: string;
+interface EdgeFunctionResponse {
+  success: boolean;
+  is_active: boolean;
+  expiry_date?: string;
+  purchase_date?: string;
+  subscription_id?: string;
+  environment?: 'Sandbox' | 'Production';
+  error?: string;
 }
+
+// ============================================================================
+// ReceiptValidator 클래스
+// ============================================================================
 
 export class ReceiptValidator {
-  // App Store Connect 공유 비밀키 (실제 배포시 환경변수로 관리)
-  private static readonly APP_STORE_SHARED_SECRET = (() => {
-    const secret =
-      process.env.EXPO_PUBLIC_APP_STORE_SHARED_SECRET || // 로컬 개발 (.env 파일)
-      process.env.APPLE_SHARED_SECRET;                   // EAS Build (EAS Secret)
-
-    if (!secret) {
-      console.error('❌ CRITICAL: APPLE_SHARED_SECRET is not configured!');
-      console.error('📌 영수증 검증이 실패합니다.');
-      console.error('📌 EAS Secret 확인: eas secret:list');
-    }
-
-    return secret || '';  // 빈 문자열 반환 (Apple이 명확히 거부)
-  })();
-
-  // Google Play Service Account (실제 배포시 환경변수로 관리)
-  private static readonly GOOGLE_PLAY_SERVICE_ACCOUNT = process.env.EXPO_PUBLIC_GOOGLE_PLAY_SERVICE_ACCOUNT;
-
-  // 재시도 횟수 추적
-  private static retryAttempts = new Map<string, number>();
-
   /**
-   * 민감한 데이터 마스킹 (보안 로깅용)
+   * 플랫폼별 영수증 검증 (Supabase Edge Function 호출)
    */
-  private static maskSensitiveData(data: string, visibleChars: number = 4): string {
-    if (!data || data.length <= visibleChars * 2) return '***';
-    const start = data.substring(0, visibleChars);
-    const end = data.substring(data.length - visibleChars);
-    return `${start}${'*'.repeat(Math.max(8, data.length - visibleChars * 2))}${end}`;
-  }
-
-  /**
-   * 안전한 로깅 (민감한 정보 제외)
-   */
-  private static secureLog(level: 'info' | 'warn' | 'error', message: string, data?: any): void {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
-
-    if (data) {
-      // 민감한 키 필터링
-      const sanitizedData = { ...data };
-      const sensitiveKeys = ['receipt_data', 'password', 'purchaseToken', 'signature'];
-
-      sensitiveKeys.forEach(key => {
-        if (sanitizedData[key]) {
-          sanitizedData[key] = this.maskSensitiveData(sanitizedData[key]);
-        }
-      });
-
-      console.log(logMessage, sanitizedData);
-    } else {
-      console.log(logMessage);
-    }
-  }
-
-  /**
-   * 지수 백오프와 함께하는 재시도 로직
-   */
-  private static async retryWithBackoff<T>(
-    operation: () => Promise<T>,
-    identifier: string,
-    maxAttempts: number = SECURITY_CONFIG.MAX_RETRY_ATTEMPTS
-  ): Promise<T> {
-    const currentAttempts = this.retryAttempts.get(identifier) || 0;
-
+  static async validateReceipt(
+    receiptData: string,
+    transactionId: string,
+    productId?: string
+  ): Promise<ReceiptValidationResult> {
     try {
-      const result = await operation();
-      // 성공 시 재시도 횟수 초기화
-      this.retryAttempts.delete(identifier);
-      return result;
-    } catch (error) {
-      const newAttempts = currentAttempts + 1;
-      this.retryAttempts.set(identifier, newAttempts);
+      console.log('🔍 [ReceiptValidator] 영수증 검증 시작...');
 
-      if (newAttempts >= maxAttempts) {
-        this.retryAttempts.delete(identifier);
-        this.secureLog('error', `최대 재시도 횟수 도달: ${identifier}`, { attempts: newAttempts });
-        throw error;
-      }
-
-      const delay = SECURITY_CONFIG.RETRY_DELAY_BASE * Math.pow(2, newAttempts - 1);
-      this.secureLog('warn', `재시도 대기 중: ${identifier} (시도 ${newAttempts}/${maxAttempts})`, { delay });
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return this.retryWithBackoff(operation, identifier, maxAttempts);
-    }
-  }
-
-  /**
-   * 타임스탬프 검증 (리플레이 공격 방지)
-   */
-  private static validateTimestamp(timestamp: number): boolean {
-    const now = Date.now();
-    const age = now - timestamp;
-
-    // 너무 오래된 영수증 거부
-    if (age > SECURITY_CONFIG.MAX_RECEIPT_AGE) {
-      this.secureLog('warn', '영수증이 너무 오래되었습니다', { age: age / 1000 / 60 });
-      return false;
-    }
-
-    // 미래 타임스탬프 거부 (클록 스큐 고려하여 5분 여유)
-    if (age < -SECURITY_CONFIG.RECEIPT_EXPIRY_GRACE_PERIOD) {
-      this.secureLog('warn', '미래 타임스탬프 감지됨', { age: age / 1000 / 60 });
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * 플랫폼별 영수증 검증 (보안 강화)
-   */
-  static async validateReceipt(receiptData: string, transactionId: string): Promise<ReceiptValidationResult> {
-    try {
-      // 입력값 검증
+      // 입력 검증
       if (!receiptData || !transactionId) {
-        this.secureLog('warn', '영수증 데이터 또는 트랜잭션 ID가 누락됨');
+        console.error('❌ [ReceiptValidator] 필수 데이터 누락');
         return {
           isValid: false,
           isActive: false,
-          error: '필수 데이터가 누락되었습니다.'
+          error: '영수증 데이터 또는 트랜잭션 ID가 누락되었습니다',
         };
       }
 
-      // 재시도 로직과 함께 검증 수행
-      const identifier = `${Platform.OS}-${this.maskSensitiveData(transactionId)}`;
+      // Supabase 설정 확인
+      if (!supabase) {
+        console.error('❌ [ReceiptValidator] Supabase가 설정되지 않았습니다');
+        return {
+          isValid: false,
+          isActive: false,
+          error: 'Supabase 연결이 설정되지 않았습니다',
+        };
+      }
 
-      this.secureLog('info', '영수증 검증 시작', {
-        platform: Platform.OS,
-        transactionId: this.maskSensitiveData(transactionId)
-      });
+      // Edge Function URL 확인
+      if (!VALIDATION_CONFIG.EDGE_FUNCTION_URL) {
+        console.error('❌ [ReceiptValidator] Edge Function URL 없음');
+        return {
+          isValid: false,
+          isActive: false,
+          error: 'Edge Function URL이 설정되지 않았습니다',
+        };
+      }
 
-      const result = await this.retryWithBackoff(async () => {
-        if (Platform.OS === 'web') {
-          return this.validateWebReceipt(receiptData, transactionId);
-        }
+      // 현재 사용자 가져오기
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-        if (Platform.OS === 'ios') {
-          return await this.validateAppStoreReceipt(receiptData, transactionId);
-        }
+      if (authError || !user) {
+        console.error('❌ [ReceiptValidator] 사용자 인증 실패:', authError);
+        return {
+          isValid: false,
+          isActive: false,
+          error: '사용자 인증이 필요합니다',
+        };
+      }
 
-        if (Platform.OS === 'android') {
-          return await this.validateGooglePlayReceipt(receiptData, transactionId);
-        }
+      console.log('📤 [ReceiptValidator] Edge Function 호출 시작...');
 
-        throw new Error('지원하지 않는 플랫폼입니다.');
-      }, identifier);
+      // 플랫폼별 처리
+      if (Platform.OS === 'web') {
+        return this.validateWebReceipt(receiptData, transactionId);
+      }
 
-      this.secureLog('info', '영수증 검증 완료', {
-        isValid: result.isValid,
-        isActive: result.isActive,
-        environment: result.environment
-      });
+      if (Platform.OS === 'ios') {
+        return await this.validateAppleReceiptViaEdgeFunction(
+          receiptData,
+          transactionId,
+          productId || '',
+          user.id
+        );
+      }
 
-      return result;
+      if (Platform.OS === 'android') {
+        // TODO: Google Play 검증 (향후 구현)
+        throw new Error('Android 플랫폼은 아직 지원하지 않습니다');
+      }
 
+      throw new Error('지원하지 않는 플랫폼입니다');
     } catch (error) {
-      this.secureLog('error', '영수증 검증 오류', {
-        error: error instanceof Error ? error.message : '알 수 없는 오류'
-      });
+      console.error('❌ [ReceiptValidator] 영수증 검증 오류:', error);
       return {
         isValid: false,
         isActive: false,
-        error: error instanceof Error ? error.message : '영수증 검증 중 오류가 발생했습니다.'
+        error: error instanceof Error ? error.message : '영수증 검증 중 오류가 발생했습니다',
       };
     }
   }
 
   /**
-   * App Store 영수증 검증
+   * Apple 영수증 검증 (Supabase Edge Function 호출)
    */
-  private static async validateAppStoreReceipt(receiptData: string, transactionId: string): Promise<ReceiptValidationResult> {
-    try {
-      // 먼저 Sandbox 환경에서 검증 시도
-      let result = await this.callAppStoreAPI(receiptData, true);
+  private static async validateAppleReceiptViaEdgeFunction(
+    receiptData: string,
+    transactionId: string,
+    productId: string,
+    userId: string
+  ): Promise<ReceiptValidationResult> {
+    console.log('🍎 [Apple] Edge Function 검증 시작...');
 
-      // Sandbox에서 실패하면 Production 환경에서 재시도
-      if (!result.isValid && result.error?.includes('21007')) {
-        result = await this.callAppStoreAPI(receiptData, false);
-      }
+    // 재시도 로직
+    let lastError: any = null;
+    let retries = VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS;
 
-      return result;
-
-    } catch (error) {
-      console.error('❌ App Store 영수증 검증 오류:', error);
-      return {
-        isValid: false,
-        isActive: false,
-        error: 'App Store 영수증 검증에 실패했습니다.'
-      };
-    }
-  }
-
-  /**
-   * App Store API 호출 (보안 강화)
-   */
-  private static async callAppStoreAPI(receiptData: string, isSandbox: boolean): Promise<ReceiptValidationResult> {
-    const url = isSandbox
-      ? 'https://sandbox.itunes.apple.com/verifyReceipt'
-      : 'https://buy.itunes.apple.com/verifyReceipt';
-
-    const requestData: AppStoreReceiptData = {
-      receipt_data: receiptData,
-      password: this.APP_STORE_SHARED_SECRET
-    };
-
-    this.secureLog('info', 'App Store API 호출', {
-      environment: isSandbox ? 'Sandbox' : 'Production',
-      url: url
-    });
-
-    // 타임아웃과 함께 요청
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), SECURITY_CONFIG.VALIDATION_TIMEOUT);
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'TarotTimer/1.0'
-        },
-        body: JSON.stringify(requestData),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      // Expo Go 환경에서 response.json() 실패 대비
-      let responseData: any;
+    while (retries > 0) {
       try {
-        responseData = await response.json();
-      } catch (jsonError) {
-        this.secureLog('warn', 'App Store 응답 파싱 실패 (Expo Go 환경일 수 있음)');
-        throw new Error('App Store 응답을 파싱할 수 없습니다.');
-      }
+        const attempt = VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS - retries + 1;
+        console.log(`🔄 [Apple] 검증 시도 ${attempt}/${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS}`);
 
-      // App Store 응답 상태 코드 확인
-      if (responseData && responseData.status === 0) {
-        // 성공: 구독 정보 파싱
-        const latestReceiptInfo = responseData.latest_receipt_info?.[0];
-        const pendingRenewalInfo = responseData.pending_renewal_info?.[0];
+        // Edge Function 요청 데이터
+        const requestData: EdgeFunctionRequest = {
+          receipt_data: receiptData,
+          transaction_id: transactionId,
+          product_id: productId,
+          platform: 'ios',
+          user_id: userId,
+        };
 
-        if (latestReceiptInfo) {
-          const expirationDate = new Date(parseInt(latestReceiptInfo.expires_date_ms));
-          const purchaseDate = new Date(parseInt(latestReceiptInfo.purchase_date_ms));
-
-          // 타임스탬프 검증
-          if (!this.validateTimestamp(purchaseDate.getTime())) {
-            this.secureLog('warn', '영수증 타임스탬프 검증 실패');
-            return {
-              isValid: false,
-              isActive: false,
-              error: '영수증 타임스탬프가 유효하지 않습니다.'
-            };
+        // Supabase Functions invoke 사용
+        const { data, error } = await supabase.functions.invoke<EdgeFunctionResponse>(
+          'verify-receipt',
+          {
+            body: requestData,
           }
+        );
 
-          const isActive = new Date() < expirationDate;
+        if (error) {
+          console.error(`❌ [Apple] Edge Function 오류 (시도 ${attempt}):`, error);
+          lastError = error;
 
-          this.secureLog('info', 'App Store 영수증 검증 성공', {
-            environment: isSandbox ? 'Sandbox' : 'Production',
-            isActive,
-            expirationDate: expirationDate.toISOString(),
-            originalTransactionId: this.maskSensitiveData(latestReceiptInfo.original_transaction_id)
-          });
-
-          return {
-            isValid: true,
-            isActive,
-            expirationDate,
-            originalTransactionId: latestReceiptInfo.original_transaction_id,
-            environment: isSandbox ? 'Sandbox' : 'Production'
-          };
+          if (retries > 1) {
+            const delay = VALIDATION_CONFIG.RETRY_DELAY_BASE * attempt;
+            console.log(`⏳ [Apple] ${delay}ms 후 재시도...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+          retries--;
+          continue;
         }
-      }
 
-      // 실패 상태 코드 처리
-      const errorMessages: { [key: number]: string } = {
-        21000: '영수증 데이터가 유효하지 않습니다.',
-        21002: '영수증 데이터가 손상되었습니다.',
-        21003: '영수증이 인증되지 않았습니다.',
-        21004: '공유 비밀키가 일치하지 않습니다.',
-        21005: '영수증 서버가 일시적으로 사용할 수 없습니다.',
-        21006: '영수증이 유효하지만 구독이 만료되었습니다.',
-        21007: '이 영수증은 Sandbox용입니다.',
-        21008: '이 영수증은 Production용입니다.'
-      };
+        if (!data) {
+          throw new Error('Edge Function 응답이 없습니다');
+        }
 
-      // responseData가 유효한 경우에만 처리
-      if (responseData && typeof responseData.status === 'number') {
-        const errorMessage = errorMessages[responseData.status] || `App Store 오류: ${responseData.status}`;
-
-        this.secureLog('warn', 'App Store 영수증 검증 실패', {
-          status: responseData.status,
-          error: errorMessage,
-          environment: isSandbox ? 'Sandbox' : 'Production'
+        console.log('✅ [Apple] Edge Function 응답 수신:', {
+          success: data.success,
+          is_active: data.is_active,
+          environment: data.environment,
         });
 
-        return {
-          isValid: false,
-          isActive: false,
-          error: errorMessage
-        };
-      }
-
-      // responseData가 없거나 유효하지 않은 경우
-      this.secureLog('warn', 'App Store 응답 데이터가 유효하지 않음');
-      return {
-        isValid: false,
-        isActive: false,
-        error: 'App Store 응답 데이터가 유효하지 않습니다.'
-      };
-
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        this.secureLog('warn', 'App Store API 요청 타임아웃');
-        throw new Error('App Store 서버 응답 시간 초과');
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Google Play 영수증 검증 (실제 Google Play Developer API 연동)
-   */
-  private static async validateGooglePlayReceipt(receiptData: string, transactionId: string): Promise<ReceiptValidationResult> {
-    try {
-      const receipt: GooglePlayReceiptData = JSON.parse(receiptData);
-
-      // Google Play Developer API 호출 (서버 사이드 권장)
-      const serviceAccount = this.GOOGLE_PLAY_SERVICE_ACCOUNT;
-
-      if (!serviceAccount) {
-        this.secureLog('warn', 'Google Play Service Account가 설정되지 않았습니다. Mock 검증으로 전환합니다.');
-        return this.validateGooglePlayReceiptMock(receiptData, transactionId);
-      }
-
-      // Google Play Developer API를 통한 실제 영수증 검증
-      const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${receipt.packageName}/purchases/subscriptions/${receipt.productId}/tokens/${receipt.purchaseToken}`;
-
-      this.secureLog('info', 'Google Play API 호출', {
-        packageName: receipt.packageName,
-        productId: receipt.productId
-      });
-
-      // 타임아웃과 함께 요청
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), SECURITY_CONFIG.VALIDATION_TIMEOUT);
-
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${serviceAccount}`,
-            'Content-Type': 'application/json',
-            'User-Agent': 'TarotTimer/1.0'
-          },
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        // Expo Go 환경에서 response.json() 실패 대비
-        let responseData: any;
-        try {
-          responseData = await response.json();
-        } catch (jsonError) {
-          this.secureLog('warn', 'Google Play 응답 파싱 실패 (Expo Go 환경일 수 있음)');
-          throw new Error('Google Play 응답을 파싱할 수 없습니다.');
-        }
-
-        // Google Play 구독 상태 확인
-        const expiryTimeMillis = responseData?.expiryTimeMillis;
-        const purchaseTimeMillis = responseData?.startTimeMillis;
-
-        if (!expiryTimeMillis || !purchaseTimeMillis) {
-          this.secureLog('warn', 'Google Play 응답에 필수 데이터 누락');
+        // 검증 실패
+        if (!data.success) {
           return {
             isValid: false,
             isActive: false,
-            error: '영수증 데이터가 불완전합니다.'
+            error: data.error || '영수증 검증에 실패했습니다',
           };
         }
 
-        const expirationDate = new Date(parseInt(expiryTimeMillis));
-        const purchaseDate = new Date(parseInt(purchaseTimeMillis));
-
-        // 타임스탬프 검증
-        if (!this.validateTimestamp(purchaseDate.getTime())) {
-          this.secureLog('warn', '영수증 타임스탬프 검증 실패');
-          return {
-            isValid: false,
-            isActive: false,
-            error: '영수증 타임스탬프가 유효하지 않습니다.'
-          };
-        }
-
-        const isActive = new Date() < expirationDate && responseData.paymentState === 1;
-
-        this.secureLog('info', 'Google Play 영수증 검증 성공', {
-          isActive,
-          expirationDate: expirationDate.toISOString(),
-          paymentState: responseData.paymentState
-        });
-
+        // 검증 성공
         return {
           isValid: true,
-          isActive,
-          expirationDate,
+          isActive: data.is_active,
+          expirationDate: data.expiry_date ? new Date(data.expiry_date) : undefined,
           originalTransactionId: transactionId,
-          environment: responseData.purchaseType === 0 ? 'Sandbox' : 'Production'
+          environment: data.environment,
+          subscriptionId: data.subscription_id,
         };
+      } catch (error) {
+        console.error(`❌ [Apple] 예외 발생 (시도 ${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS - retries + 1}):`, error);
+        lastError = error;
 
-      } catch (error: any) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          this.secureLog('warn', 'Google Play API 요청 타임아웃');
-          throw new Error('Google Play 서버 응답 시간 초과');
+        if (retries > 1) {
+          const delay = VALIDATION_CONFIG.RETRY_DELAY_BASE * (VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS - retries + 1);
+          console.log(`⏳ [Apple] ${delay}ms 후 재시도...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
-        throw error;
+        retries--;
       }
-
-    } catch (error: any) {
-      this.secureLog('error', 'Google Play 영수증 검증 오류', {
-        error: error instanceof Error ? error.message : '알 수 없는 오류'
-      });
-
-      // 오류 발생 시 Mock 검증으로 폴백 (개발 환경용)
-      if (error instanceof SyntaxError) {
-        this.secureLog('warn', 'JSON 파싱 오류, Mock 검증으로 전환');
-        return this.validateGooglePlayReceiptMock(receiptData, transactionId);
-      }
-
-      return {
-        isValid: false,
-        isActive: false,
-        error: 'Google Play 영수증 검증에 실패했습니다.'
-      };
     }
+
+    // 모든 재시도 실패
+    console.error(`❌ [Apple] 모든 재시도 실패 (${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS}회)`);
+    return {
+      isValid: false,
+      isActive: false,
+      error: lastError?.message || '영수증 검증에 실패했습니다 (네트워크 오류)',
+    };
   }
 
   /**
-   * Google Play 영수증 검증 시뮬레이션 (개발용)
+   * 웹 환경 시뮬레이션 (개발/테스트용)
    */
-  private static validateGooglePlayReceiptMock(receiptData: string, transactionId: string): ReceiptValidationResult {
-    try {
-      // JSON 형태의 영수증 데이터 파싱
-      const receipt = JSON.parse(receiptData);
+  private static async validateWebReceipt(
+    receiptData: string,
+    transactionId: string
+  ): Promise<ReceiptValidationResult> {
+    console.log('🌐 [Web] 시뮬레이션 검증...');
 
-      // 기본 유효성 검증
-      if (!receipt.orderId || !receipt.packageName || !receipt.productId) {
-        return {
-          isValid: false,
-          isActive: false,
-          error: '영수증 데이터가 불완전합니다.'
-        };
-      }
-
-      // 구독 만료일 확인 (시뮬레이션)
-      const purchaseTime = new Date(receipt.purchaseTime || Date.now());
-      const expirationDate = new Date(purchaseTime);
-
-      // 구독 타입에 따른 만료일 계산
-      if (receipt.productId.includes('yearly')) {
-        expirationDate.setFullYear(purchaseTime.getFullYear() + 1);
-      } else {
-        expirationDate.setMonth(purchaseTime.getMonth() + 1);
-      }
-
-      const isActive = new Date() < expirationDate;
-
-      return {
-        isValid: true,
-        isActive,
-        expirationDate,
-        originalTransactionId: receipt.orderId,
-        environment: 'Production'
-      };
-
-    } catch (error) {
-      return {
-        isValid: false,
-        isActive: false,
-        error: '영수증 데이터 파싱에 실패했습니다.'
-      };
-    }
-  }
-
-  /**
-   * 웹 환경 영수증 검증 (시뮬레이션)
-   */
-  private static validateWebReceipt(receiptData: string, transactionId: string): ReceiptValidationResult {
-    console.log('🌐 웹 환경: 영수증 검증 시뮬레이션');
-
-    // 웹 환경에서는 항상 유효한 것으로 시뮬레이션
-    const expirationDate = new Date();
-    expirationDate.setMonth(expirationDate.getMonth() + 1); // 1개월 후 만료
+    // 웹 환경에서는 실제 검증 불가 - 시뮬레이션만
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     return {
       isValid: true,
       isActive: true,
-      expirationDate,
+      expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30일 후
       originalTransactionId: transactionId,
-      environment: 'Sandbox'
+      environment: 'Sandbox',
     };
   }
 
   /**
-   * 로컬 구독 상태와 영수증 검증 결과 동기화 (보안 강화)
+   * 구독 상태와 Supabase 동기화
    */
-  static async syncSubscriptionStatus(validationResult: ReceiptValidationResult, productId: string): Promise<void> {
+  static async syncSubscriptionStatus(
+    validationResult: ReceiptValidationResult,
+    productId: string
+  ): Promise<void> {
     try {
+      console.log('🔄 [Sync] 구독 상태 동기화 시작...');
+
       if (!validationResult.isValid) {
-        this.secureLog('warn', '유효하지 않은 영수증으로 구독 상태 업데이트 거부');
+        console.warn('⚠️ [Sync] 유효하지 않은 영수증 - 동기화 건너뜀');
         return;
       }
 
-      // 추가 보안 검증
-      if (!productId || typeof productId !== 'string') {
-        this.secureLog('warn', '유효하지 않은 제품 ID');
-        return;
-      }
+      // 구독 타입 결정
+      const isYearly = productId.includes('yearly');
+      const expiryDate = validationResult.expirationDate || new Date();
 
-      const currentStatus = await LocalStorageManager.getPremiumStatus();
-
-      // 기존 트랜잭션 ID와 비교 (중복 처리 방지)
-      if (currentStatus.store_transaction_id === validationResult.originalTransactionId &&
-          currentStatus.is_premium === validationResult.isActive) {
-        this.secureLog('info', '구독 상태가 이미 최신 상태입니다');
-        return;
-      }
-
-      const updatedStatus: PremiumStatus = {
+      // LocalStorage에 프리미엄 상태 저장
+      const premiumStatus: PremiumStatus = {
         is_premium: validationResult.isActive,
-        subscription_type: productId.includes('yearly') ? 'yearly' : 'monthly',
+        subscription_type: isYearly ? 'yearly' : 'monthly',
         purchase_date: new Date().toISOString(),
-        expiry_date: validationResult.expirationDate?.toISOString() || null,
+        expiry_date: expiryDate.toISOString(),
         store_transaction_id: validationResult.originalTransactionId || '',
         unlimited_storage: validationResult.isActive,
         ad_free: validationResult.isActive,
         premium_spreads: validationResult.isActive,
         last_validated: new Date().toISOString(),
-        validation_environment: validationResult.environment || 'Unknown'
+        validation_environment: validationResult.environment || 'Production',
       };
 
-      await LocalStorageManager.updatePremiumStatus(updatedStatus);
+      await LocalStorageManager.updatePremiumStatus(premiumStatus);
+      console.log('✅ [Sync] LocalStorage 업데이트 완료');
 
-      this.secureLog('info', '구독 상태 동기화 완료', {
-        isPremium: validationResult.isActive,
-        subscriptionType: updatedStatus.subscription_type,
-        environment: validationResult.environment,
-        transactionId: this.maskSensitiveData(validationResult.originalTransactionId || '')
-      });
-
+      // Supabase에 저장된 구독 정보는 Edge Function에서 자동으로 처리됨
+      console.log('✅ [Sync] 구독 상태 동기화 완료');
     } catch (error) {
-      this.secureLog('error', '구독 상태 동기화 오류', {
-        error: error instanceof Error ? error.message : '알 수 없는 오류'
-      });
-      throw error; // 상위에서 처리할 수 있도록 재throw
+      console.error('❌ [Sync] 동기화 오류:', error);
+      throw error;
     }
   }
 
   /**
-   * 주기적 구독 상태 검증
+   * 주기적 검증 (앱 시작 시 또는 주기적 실행)
    */
   static async periodicValidation(): Promise<void> {
     try {
-      const currentStatus = await LocalStorageManager.getPremiumStatus();
+      console.log('⏰ [Periodic] 주기적 검증 시작...');
 
-      if (!currentStatus.is_premium || !currentStatus.store_transaction_id) {
+      // Supabase에서 사용자의 활성 구독 조회
+      if (!supabase) {
+        console.warn('⚠️ [Periodic] Supabase 미설정 - 건너뜀');
         return;
       }
 
-      // 마지막 검증으로부터 24시간이 지났는지 확인
-      const lastValidated = currentStatus.last_validated ? new Date(currentStatus.last_validated) : new Date(0);
-      const now = new Date();
-      const hoursSinceLastValidation = (now.getTime() - lastValidated.getTime()) / (1000 * 60 * 60);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (hoursSinceLastValidation < 24) {
-        console.log('⏰ 아직 재검증 시간이 아닙니다.');
+      if (!user) {
+        console.warn('⚠️ [Periodic] 사용자 미인증 - 건너뜀');
         return;
       }
 
-      console.log('🔄 주기적 구독 상태 재검증 시작...');
+      // Supabase에서 활성 구독 확인
+      const { data: subscriptions, error } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .gt('expiry_date', new Date().toISOString())
+        .order('expiry_date', { ascending: false })
+        .limit(1);
 
-      // 영수증 재검증 (실제 구현에서는 저장된 영수증 데이터 사용)
-      const mockReceiptData = JSON.stringify({
-        transactionId: currentStatus.store_transaction_id,
-        productId: currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly_v2' : 'tarot_timer_monthly_v2',
-        purchaseDate: currentStatus.purchase_date
-      });
-
-      const validationResult = await this.validateReceipt(mockReceiptData, currentStatus.store_transaction_id);
-
-      // 검증 결과에 따라 구독 상태 업데이트
-      await this.syncSubscriptionStatus(validationResult, currentStatus.subscription_type === 'yearly' ? 'tarot_timer_yearly_v2' : 'tarot_timer_monthly_v2');
-
-      if (!validationResult.isActive) {
-        console.log('⚠️ 구독이 만료되었습니다.');
+      if (error) {
+        console.error('❌ [Periodic] 구독 조회 오류:', error);
+        return;
       }
 
+      if (subscriptions && subscriptions.length > 0) {
+        const subscription = subscriptions[0];
+        console.log('✅ [Periodic] 활성 구독 발견:', {
+          product_id: subscription.product_id,
+          expiry_date: subscription.expiry_date,
+        });
+
+        // LocalStorage 업데이트
+        const premiumStatus: PremiumStatus = {
+          is_premium: true,
+          subscription_type: subscription.product_id.includes('yearly') ? 'yearly' : 'monthly',
+          purchase_date: subscription.purchase_date,
+          expiry_date: subscription.expiry_date,
+          store_transaction_id: subscription.original_transaction_id,
+          unlimited_storage: true,
+          ad_free: true,
+          premium_spreads: true,
+          last_validated: new Date().toISOString(),
+          validation_environment: subscription.environment,
+        };
+
+        await LocalStorageManager.updatePremiumStatus(premiumStatus);
+        console.log('✅ [Periodic] 프리미엄 상태 업데이트 완료');
+      } else {
+        console.log('ℹ️ [Periodic] 활성 구독 없음');
+
+        // 프리미엄 상태 비활성화
+        const currentStatus = await LocalStorageManager.getPremiumStatus();
+        if (currentStatus.is_premium) {
+          await LocalStorageManager.updatePremiumStatus({
+            ...currentStatus,
+            is_premium: false,
+          });
+          console.log('✅ [Periodic] 프리미엄 상태 비활성화 완료');
+        }
+      }
     } catch (error) {
-      console.error('❌ 주기적 검증 오류:', error);
+      console.error('❌ [Periodic] 주기적 검증 오류:', error);
     }
-  }
-
-  /**
-   * 영수증 검증 캐시 무효화 및 보안 정리
-   */
-  static clearValidationCache(): void {
-    this.secureLog('info', '영수증 검증 캐시 및 보안 데이터 초기화');
-
-    // 재시도 추적 데이터 초기화
-    this.retryAttempts.clear();
-
-    // 메모리에서 민감한 데이터 정리
-    if (typeof global !== 'undefined' && global.gc) {
-      global.gc();
-    }
-  }
-
-  /**
-   * 보안 감사 로그 생성
-   */
-  static generateSecurityAuditLog(): {
-    timestamp: string;
-    activeRetries: number;
-    lastValidationAttempts: Array<{
-      identifier: string;
-      attempts: number;
-    }>;
-  } {
-    const auditData = {
-      timestamp: new Date().toISOString(),
-      activeRetries: this.retryAttempts.size,
-      lastValidationAttempts: Array.from(this.retryAttempts.entries()).map(([identifier, attempts]) => ({
-        identifier: this.maskSensitiveData(identifier),
-        attempts
-      }))
-    };
-
-    this.secureLog('info', '보안 감사 로그 생성', auditData);
-    return auditData;
   }
 }
-
-export default ReceiptValidator;
