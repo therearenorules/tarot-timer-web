@@ -105,18 +105,38 @@ export class ReceiptValidator {
         };
       }
 
-      // 현재 사용자 가져오기
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      // ✅ FIX: 사용자 인증 (익명 인증 자동 생성)
+      let user = null;
+      try {
+        // 1. 기존 세션 확인
+        const { data: { session } } = await supabase.auth.getSession();
 
-      if (authError || !user) {
-        console.error('❌ [ReceiptValidator] 사용자 인증 실패:', authError);
+        if (session && session.user) {
+          user = session.user;
+          console.log('✅ [ReceiptValidator] 기존 세션 사용:', user.id);
+        } else {
+          // 2. 익명 인증 자동 생성
+          console.log('🔐 [ReceiptValidator] 익명 인증 생성 중...');
+          const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+
+          if (authError) {
+            console.error('❌ [ReceiptValidator] 익명 인증 실패:', authError);
+            throw new Error('익명 인증 생성에 실패했습니다: ' + authError.message);
+          }
+
+          user = authData.user;
+          console.log('✅ [ReceiptValidator] 익명 사용자 생성 완료:', user?.id);
+        }
+
+        if (!user) {
+          throw new Error('사용자 생성에 실패했습니다');
+        }
+      } catch (error) {
+        console.error('❌ [ReceiptValidator] 인증 오류:', error);
         return {
           isValid: false,
           isActive: false,
-          error: '사용자 인증이 필요합니다',
+          error: error instanceof Error ? error.message : '사용자 인증에 실패했습니다',
         };
       }
 
