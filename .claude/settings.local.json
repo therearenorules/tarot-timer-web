@@ -94,7 +94,8 @@
       "Bash(npx ts-node:*)",
       "Bash(eas env:list:*)",
       "Bash(supabase link:*)",
-      "Bash(eas secret:create:*)"
+      "Bash(eas secret:create:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

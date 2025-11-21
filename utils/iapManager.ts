@@ -45,7 +45,7 @@ export interface SubscriptionProduct {
   localizedPrice: string;
   currency: string;
   type: 'monthly' | 'yearly';
-  subscriptionOfferDetails?: any[]; // Android Offer Token용
+  // ✅ v12.x: subscriptionOfferDetails 불필요 (v14.x 전용)
 }
 
 export interface PurchaseResult {
@@ -250,7 +250,7 @@ class IAPManager {
 
   /**
    * 상품 목록 로드
-   * ✅ FIX: v14.x 규격 준수 + 재시도 로직 추가 (App Review 환경 대응)
+   * ✅ FIX: v12.x API 사용 (getSubscriptions)
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     if (Platform.OS === 'web') return [];
@@ -272,31 +272,30 @@ class IAPManager {
     while (retries > 0) {
       try {
         console.log(`📦 상품 로드 시도 (${4 - retries}/3)...`);
-        console.log('📋 fetchProducts 호출 전 상태:');
+        console.log('📋 getSubscriptions 호출 전 상태:');
         console.log('  - initialized:', this.initialized);
         console.log('  - Platform:', Platform.OS);
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - SKUs:', skus);
 
-        // ✅ FIX: v14.x API - fetchProducts 사용 (type: 'subs'로 구독 상품 조회)
-        console.log('📋 RNIap.fetchProducts 호출 중...');
-        const products = await RNIap!.fetchProducts({ skus, type: 'subs' });
-        console.log('📋 RNIap.fetchProducts 완료:', products?.length, '개');
+        // ✅ FIX: v12.x API - getSubscriptions 사용 (간단한 배열 파라미터)
+        console.log('📋 RNIap.getSubscriptions 호출 중...');
+        const products = await (RNIap! as any).getSubscriptions(skus);
+        console.log('📋 RNIap.getSubscriptions 완료:', products?.length, '개');
 
         if (products && products.length > 0) {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
           console.log('📊 상품 원본 데이터:', JSON.stringify(products, null, 2));
 
+          // ✅ v12.x: subscriptionOfferDetails 제거 (불필요)
           this.products = products.map((p: any) => ({
-            productId: p.productId || p.sku,
-            title: p.title || p.name || '',
+            productId: p.productId,
+            title: p.title || '',
             description: p.description || '',
             price: p.price || '0',
             localizedPrice: p.localizedPrice || p.price || '0',
             currency: p.currency || 'KRW',
-            type: (p.productId || p.sku || '').includes('yearly') ? 'yearly' as const : 'monthly' as const,
-            // ✅ Android Offer Token 저장
-            subscriptionOfferDetails: p.subscriptionOfferDetails
+            type: (p.productId || '').includes('yearly') ? 'yearly' as const : 'monthly' as const
           }));
 
           console.log('📊 변환된 상품 데이터:', JSON.stringify(this.products, null, 2));
@@ -341,23 +340,29 @@ class IAPManager {
 
   /**
    * 구독 구매 요청
-   * ✅ FIX: RNIap v14.x API 규격 준수
+   * ✅ FIX: v12.x API 사용 (requestSubscription)
    */
   static async purchaseSubscription(productId: string): Promise<PurchaseResult> {
     if (Platform.OS === 'web') return this.simulateWebPurchase(productId);
 
     try {
-      if (!this.initialized) await this.initialize();
+      if (!this.initialized) {
+        const initSuccess = await this.initialize();
+        if (!initSuccess) {
+          return { success: false, error: '결제 시스템 초기화에 실패했습니다.' };
+        }
+      }
 
       console.log('💳 구매 요청 시작:', productId);
 
       if (!RNIap) {
-        return { success: false, error: 'IAP 모듈이 초기화되지 않았습니다.' };
+        return { success: false, error: 'IAP 모듈을 사용할 수 없습니다.' };
       }
 
       // 중복 구매 방지
       if (this.activePurchases.has(productId)) {
-        return { success: false, error: '이미 구매가 진행 중입니다.' };
+        console.warn('⚠️ 이미 구매 진행 중인 상품:', productId);
+        return { success: false, error: '이미 구매가 진행 중입니다. 잠시만 기다려주세요.' };
       }
       this.activePurchases.add(productId);
 
@@ -367,7 +372,7 @@ class IAPManager {
         const timeoutId = setTimeout(() => {
           this.pendingPurchaseResolvers.delete(productId);
           this.activePurchases.delete(productId);
-          reject(new Error('TIMEOUT_ERROR'));
+          resolve({ success: false, error: '구매 요청 시간이 초과되었습니다.' });
         }, 30000);
         this.purchaseTimeouts.set(productId, timeoutId);
 
@@ -382,47 +387,30 @@ class IAPManager {
             clearTimeout(timeoutId);
             this.purchaseTimeouts.delete(productId);
             this.activePurchases.delete(productId);
-            reject(err);
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            resolve({ success: false, error: errorMsg });
           }
         });
 
         try {
-          // ✅ FIX: v14.x requestPurchase 파라미터 구조 수정 (type: 'subs' 추가 및 Android 구조 변경)
+          // ✅ FIX: v12.x API - requestSubscription (간단한 파라미터)
+          // iOS: requestSubscription(sku, andDangerouslyFinishTransactionAutomaticallyIOS)
+          // Android: requestSubscription(sku) - Offer Token 불필요
+          console.log('📞 RNIap.requestSubscription 호출:', productId);
           if (Platform.OS === 'ios') {
-            await RNIap.requestPurchase({
-              type: 'subs', // ✅ 필수
-              andDangerouslyFinishTransactionAutomaticallyIOS: false,
-              request: {
-                ios: {
-                  sku: productId
-                }
-              }
-            } as any);
-          } else if (Platform.OS === 'android') {
-            // Android: Offer Token 찾기
-            const product = this.products.find(p => p.productId === productId);
-            const offerToken = (product as any)?.subscriptionOfferDetails?.[0]?.offerToken;
-
-            if (!offerToken) {
-              throw new Error('Android Offer Token을 찾을 수 없습니다.');
-            }
-
-            await RNIap.requestPurchase({
-              type: 'subs', // ✅ 필수
-              andDangerouslyFinishTransactionAutomaticallyIOS: false,
-              request: {
-                android: {
-                  skus: [productId], // ✅ skus 배열로 변경
-                  subscriptionOffers: [{
-                    sku: productId,
-                    offerToken: offerToken
-                  }]
-                }
-              }
-            } as any);
+            await (RNIap as any).requestSubscription(productId, false);
+          } else {
+            await (RNIap as any).requestSubscription(productId);
           }
+          console.log('✅ requestSubscription 호출 성공 - 결제 시트 표시됨');
         } catch (err) {
-          this.pendingPurchaseResolvers.get(productId)?.reject(err);
+          console.error('❌ requestSubscription 호출 실패:', err);
+          const resolver = this.pendingPurchaseResolvers.get(productId);
+          if (resolver) {
+            resolver.reject(err);
+          } else {
+            this.activePurchases.delete(productId);
+          }
         }
       });
 
