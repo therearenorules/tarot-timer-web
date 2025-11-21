@@ -98,8 +98,15 @@ class IAPManager {
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - initialized:', this.initialized);
 
-        // 연결 초기화
-        const connectionResult = await RNIap.initConnection();
+        // ✅ FIX: initConnection에 5초 타임아웃 적용 (v14.x StoreKit 2.0 대응)
+        // 문제: v14.x의 initConnection()이 20초 이상 걸리는 경우 있음
+        // 해결: 5초 안에 완료되지 않으면 재시도 (최대 3회)
+        const connectionResult = await Promise.race([
+          RNIap.initConnection(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('initConnection timeout after 5s')), 5000)
+          )
+        ]);
         console.log('📋 RNIap.initConnection 결과:', connectionResult);
 
         this.initialized = true;
@@ -250,7 +257,7 @@ class IAPManager {
 
   /**
    * 상품 목록 로드
-   * ✅ FIX: v12.x API 사용 (getSubscriptions)
+   * ✅ FIX: v14.x API 사용 (fetchProducts)
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     if (Platform.OS === 'web') return [];
@@ -272,22 +279,23 @@ class IAPManager {
     while (retries > 0) {
       try {
         console.log(`📦 상품 로드 시도 (${4 - retries}/3)...`);
-        console.log('📋 getSubscriptions 호출 전 상태:');
+        console.log('📋 fetchProducts 호출 전 상태:');
         console.log('  - initialized:', this.initialized);
         console.log('  - Platform:', Platform.OS);
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - SKUs:', skus);
 
-        // ✅ FIX: v12.x API - getSubscriptions 사용 (간단한 배열 파라미터)
-        console.log('📋 RNIap.getSubscriptions 호출 중...');
-        const products = await (RNIap! as any).getSubscriptions(skus);
-        console.log('📋 RNIap.getSubscriptions 완료:', products?.length, '개');
+        // ✅ FIX: v14.x API - fetchProducts 사용
+        console.log('📋 RNIap.fetchProducts 호출 중...');
+        const result = await RNIap.fetchProducts({ skus, type: 'subs' });
+        const products = result || [];
+        console.log('📋 RNIap.fetchProducts 완료:', products?.length, '개');
 
         if (products && products.length > 0) {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
           console.log('📊 상품 원본 데이터:', JSON.stringify(products, null, 2));
 
-          // ✅ v12.x: subscriptionOfferDetails 제거 (불필요)
+          // ✅ v14.x: subscriptionOfferDetails 제거 (Android 전용)
           this.products = products.map((p: any) => ({
             productId: p.productId,
             title: p.title || '',
@@ -393,16 +401,10 @@ class IAPManager {
         });
 
         try {
-          // ✅ FIX: v12.x API - requestSubscription (간단한 파라미터)
-          // iOS: requestSubscription(sku, andDangerouslyFinishTransactionAutomaticallyIOS)
-          // Android: requestSubscription(sku) - Offer Token 불필요
-          console.log('📞 RNIap.requestSubscription 호출:', productId);
-          if (Platform.OS === 'ios') {
-            await (RNIap as any).requestSubscription(productId, false);
-          } else {
-            await (RNIap as any).requestSubscription(productId);
-          }
-          console.log('✅ requestSubscription 호출 성공 - 결제 시트 표시됨');
+          // ✅ FIX: v14.x API - requestPurchase 사용
+          console.log('📞 RNIap.requestPurchase 호출:', productId);
+          await RNIap.requestPurchase({ sku: productId });
+          console.log('✅ requestPurchase 호출 성공 - 결제 시트 표시됨');
         } catch (err) {
           console.error('❌ requestSubscription 호출 실패:', err);
           const resolver = this.pendingPurchaseResolvers.get(productId);
