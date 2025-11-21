@@ -108,8 +108,14 @@ class IAPManager {
         // 리스너 설정
         await this.setupPurchaseListeners();
 
-        // 상품 로드 (비동기) - await 없이 실행하여 초기화 지연 방지
-        this.loadProducts().catch(e => console.warn('⚠️ 초기 상품 로드 실패:', e));
+        // ✅ FIX: StoreKit 완전 초기화 대기 (1초)
+        // 이유: initConnection()이 반환되어도 StoreKit의 transaction queue와
+        // product catalog가 완전히 준비되려면 추가 시간 필요
+        // 이 딜레이 없이 fetchProducts()를 즉시 호출하면
+        // "Connection not initialized" 오류 발생 가능
+        console.log('⏳ StoreKit 완전 초기화 대기 중... (1초)');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('✅ StoreKit 준비 완료');
 
         console.log(`✅ IAPManager 초기화 완료 (시도 ${4 - retries}/3)`);
         return true;
