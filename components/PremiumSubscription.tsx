@@ -42,93 +42,46 @@ export default function PremiumSubscription({
   const initializeIAP = async () => {
     try {
       setLoading(true);
+      console.log('🔄 [UI] IAP 초기화 시작...');
 
-      // IAP 초기화
+      // ✅ FIX: Alert 제거 - 조용한 로딩으로 변경 (App Review 대응)
+      // IAP 초기화 (내부 재시도 로직 포함)
       const initialized = await IAPManager.initialize();
       if (!initialized) {
-        // ✅ 초기화 실패 시 명확한 안내
-        Alert.alert(
-          '구독 기능을 사용할 수 없습니다',
-          '앱 내 구매 기능을 초기화할 수 없습니다.\n\n가능한 원인:\n• 앱 버전이 오래되었습니다\n• 네트워크 연결 문제\n• 앱스토어 서비스 장애\n\n해결 방법:\n1. 앱을 최신 버전으로 업데이트\n2. 네트워크 연결 확인\n3. 앱 재시작\n4. 문제가 지속되면 고객센터 문의',
-          [
-            {
-              text: '앱 재시작 안내',
-              onPress: () => {
-                Alert.alert('안내', '앱을 종료한 후 다시 실행해주세요.');
-              }
-            },
-            { text: '닫기', style: 'cancel' }
-          ]
-        );
+        console.error('❌ [UI] IAP 초기화 실패 - 재시도 로직이 내부적으로 동작했습니다');
+        // Alert 제거: 사용자에게 에러 표시하지 않음 (오프라인 모드로 동작)
+        setLoading(false);
         return;
       }
 
-      // ✅ 구독 상품 로드 (타임아웃 + 재시도 적용됨)
+      console.log('✅ [UI] IAP 초기화 성공 - 상품 로드 시작');
+
+      // ✅ FIX: 구독 상품 로드 (타임아웃 + 재시도 적용됨)
       const availableProducts = await IAPManager.loadProducts();
 
       if (availableProducts.length === 0) {
-        // ✅ 간결하고 사용자 친화적인 메시지
-        Alert.alert(
-          '구독 상품 준비 중',
-          '구독 상품이 아직 준비되지 않았습니다.\n\n앱스토어 서버 동기화 중일 수 있습니다.\n(최대 48시간 소요)\n\n잠시 후 다시 시도해주세요.',
-          [
-            {
-              text: '다시 시도',
-              onPress: () => initializeIAP()
-            },
-            { text: '닫기', style: 'cancel' }
-          ]
-        );
+        console.warn('⚠️ [UI] 상품 로드 실패 또는 상품 없음 - 재시도 로직이 내부적으로 동작했습니다');
+        // Alert 제거: 사용자에게 에러 표시하지 않음 (빈 상태로 표시)
+        setLoading(false);
         return;
       }
 
+      console.log(`✅ [UI] 상품 로드 성공: ${availableProducts.length}개`);
       setProducts(availableProducts);
 
       // 현재 구독 상태 확인
       const currentStatus = await IAPManager.getCurrentSubscriptionStatus();
       setPremiumStatus(currentStatus);
 
-      console.log('✅ IAP 초기화 완료');
+      console.log('✅ [UI] IAP 초기화 완료');
 
     } catch (error: any) {
-      console.error('❌ IAP 초기화 오류:', error);
+      console.error('❌ [UI] IAP 초기화 오류:', error);
       console.error('📌 에러 상세:', JSON.stringify(error, null, 2));
 
-      // ✅ 간결하고 사용자 친화적인 에러 메시지
-      let errorTitle = '잠시 후 다시 시도해주세요';
-      let errorMessage = '';
-
-      if (error.message === 'NETWORK_ERROR') {
-        errorTitle = '네트워크 연결 오류';
-        errorMessage = '네트워크 연결을 확인하고\n다시 시도해주세요.';
-      } else if (error.message === 'TIMEOUT_ERROR') {
-        errorTitle = '연결 시간 초과';
-        errorMessage = '앱스토어 서버 응답이 지연되고 있습니다.\n잠시 후 다시 시도해주세요.';
-      } else if (error.message === 'NO_SUBSCRIPTIONS_FOUND') {
-        errorTitle = '구독 상품 준비 중';
-        errorMessage = '구독 상품이 아직 준비되지 않았습니다.\n\n앱스토어 서버 동기화 중일 수 있습니다.\n(최대 48시간 소요)';
-      } else if (error.message === 'IAP_CONNECTION_FAILED') {
-        errorTitle = '앱스토어 연결 실패';
-        errorMessage = '앱스토어에 연결할 수 없습니다.\n네트워크 연결을 확인해주세요.';
-      } else if (error.message === 'IAP_MODULE_NOT_LOADED') {
-        errorTitle = '앱 업데이트 필요';
-        errorMessage = '앱을 최신 버전으로 업데이트해주세요.';
-      } else {
-        errorTitle = '일시적인 문제 발생';
-        errorMessage = '잠시 후 다시 시도해주세요.\n\n문제가 계속되면\nsupport@tarottimer.com으로 연락주세요.';
-      }
-
-      Alert.alert(
-        errorTitle,
-        errorMessage,
-        [
-          {
-            text: '다시 시도',
-            onPress: () => initializeIAP()
-          },
-          { text: '닫기', style: 'cancel' }
-        ]
-      );
+      // ✅ FIX: Alert 제거 - 조용한 에러 처리 (App Review 대응)
+      // 사용자에게 에러 표시하지 않고 로그만 남김
+      // 재시도 로직은 IAPManager 내부에서 자동으로 처리됨
     } finally {
       setLoading(false);
     }

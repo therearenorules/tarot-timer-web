@@ -68,6 +68,7 @@ class IAPManager {
 
   /**
    * IAP 초기화
+   * ✅ FIX: 재시도 로직 추가 (App Review 환경 대응)
    */
   static async initialize(): Promise<boolean> {
     if (this.initialized) {
@@ -75,35 +76,53 @@ class IAPManager {
       return true;
     }
 
-    try {
-      console.log('🔄 IAPManager 초기화 중...');
-
-      if (Platform.OS === 'web') {
-        this.initialized = true;
-        return true;
-      }
-
-      if (!RNIap) {
-        console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
-        return false;
-      }
-
-      // 연결 초기화
-      await RNIap.initConnection();
+    if (Platform.OS === 'web') {
       this.initialized = true;
-      console.log('✅ RNIap 연결 성공');
-
-      // 리스너 설정
-      await this.setupPurchaseListeners();
-
-      // 상품 로드 (비동기) - await 없이 실행하여 초기화 지연 방지
-      this.loadProducts().catch(e => console.warn('⚠️ 초기 상품 로드 실패:', e));
-
       return true;
-    } catch (error) {
-      console.error('❌ IAPManager 초기화 실패:', error);
+    }
+
+    if (!RNIap) {
+      console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
       return false;
     }
+
+    // ✅ FIX: 재시도 로직 (최대 3회, 2초 간격)
+    let retries = 3;
+    let lastError: any = null;
+
+    while (retries > 0) {
+      try {
+        console.log(`🔄 IAPManager 초기화 시도 (${4 - retries}/3)...`);
+
+        // 연결 초기화
+        await RNIap.initConnection();
+        this.initialized = true;
+        console.log('✅ RNIap 연결 성공');
+
+        // 리스너 설정
+        await this.setupPurchaseListeners();
+
+        // 상품 로드 (비동기) - await 없이 실행하여 초기화 지연 방지
+        this.loadProducts().catch(e => console.warn('⚠️ 초기 상품 로드 실패:', e));
+
+        console.log(`✅ IAPManager 초기화 완료 (시도 ${4 - retries}/3)`);
+        return true;
+
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ IAPManager 초기화 실패 (시도 ${4 - retries}/3):`, error);
+
+        if (retries > 1) {
+          console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        retries--;
+      }
+    }
+
+    console.error('❌ IAPManager 초기화 최종 실패 (3회 시도 모두 실패):', lastError);
+    return false;
   }
 
   /**
@@ -209,43 +228,72 @@ class IAPManager {
 
   /**
    * 상품 목록 로드
-   * ✅ FIX: v14.x 규격 준수 (getProducts + type: 'subs')
+   * ✅ FIX: v14.x 규격 준수 + 재시도 로직 추가 (App Review 환경 대응)
    */
   static async loadProducts(): Promise<SubscriptionProduct[]> {
     if (Platform.OS === 'web') return [];
 
-    try {
-      if (!this.initialized) await this.initialize();
-
-      const skus = Object.values(SUBSCRIPTION_SKUS).filter(id => id !== 'default');
-      console.log('🔄 구독 상품 정보 요청:', skus);
-
-      if (!RNIap) {
-        console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
-        return [];
-      }
-
-      // ✅ FIX: getProducts 사용 및 type: 'subs' 명시
-      const products = await RNIap.getProducts({ skus, type: 'subs' } as any);
-      console.log(`✅ 상품 로드 성공: ${products.length}개`);
-
-      this.products = products.map(p => ({
-        productId: p.productId,
-        title: p.title,
-        description: p.description,
-        price: p.price,
-        localizedPrice: p.localizedPrice,
-        currency: p.currency,
-        type: p.productId.includes('yearly') ? 'yearly' : 'monthly',
-        // ✅ Android Offer Token 저장
-        subscriptionOfferDetails: (p as any).subscriptionOfferDetails
-      }));
-
-      return this.products;
-    } catch (error) {
-      console.error('❌ 상품 로드 실패:', error);
+    if (!RNIap) {
+      console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
       return [];
     }
+
+    if (!this.initialized) await this.initialize();
+
+    const skus = Object.values(SUBSCRIPTION_SKUS).filter(id => id !== 'default');
+    console.log('🔄 구독 상품 정보 요청:', skus);
+
+    // ✅ FIX: 재시도 로직 (최대 3회, 2초 간격)
+    let retries = 3;
+    let lastError: any = null;
+
+    while (retries > 0) {
+      try {
+        console.log(`📦 상품 로드 시도 (${4 - retries}/3)...`);
+
+        // ✅ FIX: getProducts 사용 및 type: 'subs' 명시
+        const products = await RNIap.getProducts({ skus, type: 'subs' } as any);
+
+        if (products && products.length > 0) {
+          console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
+
+          this.products = products.map(p => ({
+            productId: p.productId,
+            title: p.title,
+            description: p.description,
+            price: p.price,
+            localizedPrice: p.localizedPrice,
+            currency: p.currency,
+            type: p.productId.includes('yearly') ? 'yearly' : 'monthly',
+            // ✅ Android Offer Token 저장
+            subscriptionOfferDetails: (p as any).subscriptionOfferDetails
+          }));
+
+          return this.products;
+        }
+
+        // 상품이 없는 경우 재시도
+        console.warn(`⚠️ 상품 로드 결과 없음 (시도 ${4 - retries}/3)`);
+        if (retries > 1) {
+          console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ 상품 로드 실패 (시도 ${4 - retries}/3):`, error);
+
+        if (retries > 1) {
+          console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      retries--;
+    }
+
+    console.error('❌ 상품 로드 최종 실패 (3회 시도 모두 실패):', lastError);
+    return [];
   }
 
   /**
