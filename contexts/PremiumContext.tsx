@@ -182,29 +182,36 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       // ✅ CRITICAL FIX: IAP 시스템 초기화 (안전 모드 + 타임아웃)
       let iapStatus = defaultPremiumStatus;
       try {
-        // IAP 초기화에 5초 타임아웃 추가
-        await Promise.race([
+        // ✅ FIX: IAP 초기화에 10초 타임아웃 (3회 재시도 × 2초 + 여유시간)
+        const iapInitResult = await Promise.race([
           IAPManager.initialize(),
-          new Promise((resolve) =>
+          new Promise<boolean>((resolve) =>
             setTimeout(() => {
-              console.warn('⏱️ IAP 초기화 타임아웃 - 건너뜀');
-              resolve(null);
-            }, 5000) // 5초 타임아웃
+              console.warn('⏱️ IAP 초기화 타임아웃 (10초) - 건너뜀');
+              resolve(false);
+            }, 10000) // 10초 타임아웃 (기존 5초에서 증가)
           )
         ]);
-        console.log('✅ IAPManager 초기화 완료');
 
-        // 현재 구독 상태 로드 (IAP에서) - 타임아웃 적용
-        iapStatus = await Promise.race([
-          IAPManager.getCurrentSubscriptionStatus(),
-          new Promise<PremiumStatus>((resolve) =>
-            setTimeout(() => {
-              console.warn('⏱️ IAP 상태 조회 타임아웃 - 기본값 사용');
-              resolve(defaultPremiumStatus);
-            }, 3000) // 3초 타임아웃
-          )
-        ]);
-        console.log('✅ IAP 구독 상태 로드 완료');
+        if (iapInitResult === false) {
+          console.error('❌ IAP 초기화 타임아웃으로 실패 - IAP 없이 계속 진행');
+          // 초기화 실패 시 상품 로드 스킵
+          iapStatus = defaultPremiumStatus;
+        } else {
+          console.log('✅ IAPManager 초기화 완료');
+
+          // 현재 구독 상태 로드 (IAP에서) - 타임아웃 적용
+          iapStatus = await Promise.race([
+            IAPManager.getCurrentSubscriptionStatus(),
+            new Promise<PremiumStatus>((resolve) =>
+              setTimeout(() => {
+                console.warn('⏱️ IAP 상태 조회 타임아웃 - 기본값 사용');
+                resolve(defaultPremiumStatus);
+              }, 3000) // 3초 타임아웃
+            )
+          ]);
+          console.log('✅ IAP 구독 상태 로드 완료');
+        }
       } catch (error) {
         console.error('❌ IAPManager 초기화 오류 (무시):', error);
         console.log('📌 IAP 없이 계속 진행');
