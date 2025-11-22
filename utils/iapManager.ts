@@ -401,12 +401,18 @@ class IAPManager {
         });
 
         try {
-          // ✅ FIX: v14.x API - requestPurchase 사용
+          // ✅ FIX: v14.x Nitro API - requestPurchase (구독 타입)
           console.log('📞 RNIap.requestPurchase 호출:', productId);
-          await RNIap.requestPurchase({ sku: productId });
+          await RNIap.requestPurchase({
+            request: {
+              ios: { sku: productId },
+              android: { skus: [productId] }
+            },
+            type: 'subs'  // 구독 상품
+          });
           console.log('✅ requestPurchase 호출 성공 - 결제 시트 표시됨');
         } catch (err) {
-          console.error('❌ requestSubscription 호출 실패:', err);
+          console.error('❌ requestPurchase 호출 실패:', err);
           const resolver = this.pendingPurchaseResolvers.get(productId);
           if (resolver) {
             resolver.reject(err);

@@ -66,7 +66,7 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   ];
 
   const [products, setProducts] = useSafeState<SubscriptionProduct[]>(defaultProducts);
-  const [selectedPlan, setSelectedPlan] = useSafeState<string | null>(defaultProducts[0].productId);
+  const [selectedPlan, setSelectedPlan] = useSafeState<string | null>(null); // ✅ 개선: API 로드 후 설정
   const [loading, setLoading] = useSafeState(true);
   const [purchasing, setPurchasing] = useSafeState(false);
   const [apiLoaded, setApiLoaded] = useSafeState(false); // API에서 실제 가격을 로드했는지 여부
@@ -97,21 +97,34 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         setApiLoaded(true);
         console.log('✅ 구독 상품 로드 완료 (실제 가격):', availableProducts.length);
 
-        // 실제 가격으로 업데이트된 경우 월간 구독 선택
+        // ✅ 개선: 실제 가격으로 업데이트된 경우 월간 구독 선택
         const monthlyProduct = availableProducts.find(p => p.type === 'monthly');
         if (monthlyProduct) {
           setSelectedPlan(monthlyProduct.productId);
+        } else if (availableProducts.length > 0) {
+          // 월간 상품이 없으면 첫 번째 상품 선택
+          setSelectedPlan(availableProducts[0].productId);
         }
       } else {
-        // 빈 배열 반환 시 기본 가격 유지
+        // ✅ 개선: 빈 배열 반환 시 기본 가격 유지 + 기본 선택 설정
         console.log('⚠️ API 응답이 비어있음, 기본 가격 사용');
         setApiLoaded(false);
+        const monthlyProduct = defaultProducts.find(p => p.type === 'monthly');
+        if (monthlyProduct) {
+          setSelectedPlan(monthlyProduct.productId);
+        }
       }
     } catch (error: any) {
       console.error('❌ 구독 상품 로드 오류:', error);
 
       // ✅ API 실패해도 기본 가격으로 UI 표시 (products는 이미 defaultProducts로 설정됨)
       setApiLoaded(false);
+
+      // ✅ 개선: API 실패 시에도 기본 월간 상품 선택
+      const monthlyProduct = defaultProducts.find(p => p.type === 'monthly');
+      if (monthlyProduct) {
+        setSelectedPlan(monthlyProduct.productId);
+      }
 
       // 사용자에게 알림 표시 (UI는 기본 가격으로 계속 표시)
       let errorMessage = '';

@@ -658,7 +658,7 @@ const SettingsTab: React.FC = () => {
         >
           <SubscriptionPlans
             onClose={() => setShowSubscriptionModal(false)}
-            onPurchaseSuccess={handleSubscriptionSuccess}
+            onSubscriptionSuccess={handleSubscriptionSuccess}
           />
         </Modal>
       )}
