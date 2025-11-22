@@ -891,8 +891,14 @@ const SettingsTab: React.FC = () => {
                 <View style={styles.syncInfoRow}>
                   <Text style={styles.syncLabel}>마지막 동기화:</Text>
                   <Text style={styles.syncValue}>
-                    {syncStatus.lastSyncTime
-                      ? new Date(syncStatus.lastSyncTime).toLocaleString('ko-KR')
+                    {syncStatus.lastSyncTime !== null
+                      ? new Date(syncStatus.lastSyncTime as number).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
                       : '없음'}
                   </Text>
                 </View>
@@ -1651,6 +1657,32 @@ const styles = StyleSheet.create({
   },
 
   // 클라우드 백업 관련 스타일
+  sectionContent: {
+    paddingTop: Spacing.md,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(244, 208, 63, 0.1)',
+  },
+  settingInfo: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  settingLabel: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_500Medium',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  settingDescription: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_400Regular',
+    color: Colors.text.secondary,
+  },
   infoBox: {
     backgroundColor: 'rgba(123, 44, 191, 0.15)',
     borderRadius: BorderRadius.md,
@@ -1734,19 +1766,7 @@ const styles = StyleSheet.create({
     fontFamily: 'NotoSansKR_600SemiBold',
   },
 
-  // 크래시 로그 모달 스타일
-  modalButton: {
-    backgroundColor: Colors.brand.accent,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.md,
-  },
-  modalButtonText: {
-    color: '#000',
-    fontSize: 14,
-    fontWeight: 'bold',
-    fontFamily: 'NotoSansKR_700Bold',
-  },
+  // 크래시 로그 모달 스타일 (modalButton, modalButtonText는 위에 이미 정의됨)
   emptyState: {
     flex: 1,
     justifyContent: 'center',
