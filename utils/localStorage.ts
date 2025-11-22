@@ -440,12 +440,19 @@ export class LocalStorageManager {
 
   // 프리미엄 상태 관리
   static async getPremiumStatus(): Promise<PremiumStatus> {
-    return await this.getItem<PremiumStatus>(STORAGE_KEYS.PREMIUM_STATUS, {
+    const status = await this.getItem<PremiumStatus>(STORAGE_KEYS.PREMIUM_STATUS, {
       is_premium: false,
       unlimited_storage: false,
       ad_free: false,
       premium_spreads: false
     });
+    // ✅ FIX: defaultValue가 제공되므로 항상 non-null 보장
+    return status || {
+      is_premium: false,
+      unlimited_storage: false,
+      ad_free: false,
+      premium_spreads: false
+    };
   }
 
   static async updatePremiumStatus(status: PremiumStatus): Promise<void> {

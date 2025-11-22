@@ -129,7 +129,7 @@ export class LocalDataManager {
 
   static async updatePremiumStatus(status: PremiumStatus): Promise<void> {
     await LocalStorageManager.updatePremiumStatus(status);
-    console.log('💎 프리미엄 상태 업데이트됨:', status.isPremium);
+    console.log('💎 프리미엄 상태 업데이트됨:', status.is_premium);
   }
 
   // 로컬 데이터 상태 조회
