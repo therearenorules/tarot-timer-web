@@ -71,6 +71,19 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   const [purchasing, setPurchasing] = useSafeState(false);
   const [apiLoaded, setApiLoaded] = useSafeState(false); // API에서 실제 가격을 로드했는지 여부
 
+  // ✅ DEBUG: 상태 변경 추적
+  useEffect(() => {
+    console.log('🔵 [DEBUG] selectedPlan 변경됨:', selectedPlan);
+  }, [selectedPlan]);
+
+  useEffect(() => {
+    console.log('🔵 [DEBUG] purchasing 변경됨:', purchasing);
+  }, [purchasing]);
+
+  useEffect(() => {
+    console.log('🔵 [DEBUG] loading 변경됨:', loading);
+  }, [loading]);
+
   const {
     premiumStatus,
     purchaseSubscription,
@@ -153,12 +166,18 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
    * 구독 구매 처리
    */
   const handlePurchase = async () => {
+    console.log('🔵 [DEBUG] handlePurchase 호출됨');
+    console.log('🔵 [DEBUG] selectedPlan:', selectedPlan);
+    console.log('🔵 [DEBUG] purchasing:', purchasing);
+
     if (!selectedPlan) {
+      console.log('🔴 [DEBUG] selectedPlan이 없음 - Alert 표시');
       Alert.alert(t('settings.premium.plans.selectPlanPrompt'), t('settings.premium.plans.selectPlanMessage'));
       return;
     }
 
     try {
+      console.log('🟢 [DEBUG] setPurchasing(true) 호출');
       setPurchasing(true);
       console.log('💳 구독 구매 시작:', selectedPlan);
 
@@ -301,7 +320,10 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
           styles.planCard,
           isSelected && styles.selectedPlanCard
         ]}
-        onPress={() => setSelectedPlan(product.productId)}
+        onPress={() => {
+          console.log('🔵 [DEBUG] 요금제 카드 클릭:', product.productId);
+          setSelectedPlan(product.productId);
+        }}
         activeOpacity={0.7}
       >
         {/* 할인 배지 */}
@@ -436,7 +458,13 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
                 styles.purchaseButton,
                 (!selectedPlan || purchasing) && styles.disabledButton
               ]}
-              onPress={handlePurchase}
+              onPress={() => {
+                console.log('🔵 [DEBUG] 구매 버튼 onPress 트리거됨');
+                console.log('🔵 [DEBUG] selectedPlan:', selectedPlan);
+                console.log('🔵 [DEBUG] purchasing:', purchasing);
+                console.log('🔵 [DEBUG] disabled:', !selectedPlan || purchasing);
+                handlePurchase();
+              }}
               disabled={!selectedPlan || purchasing}
               activeOpacity={0.7}
             >
