@@ -305,10 +305,17 @@ class IAPManager {
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - SKUs:', skus);
 
-        // ✅ FIX: v14.x API - fetchProducts 사용
+        // ✅ FIX: v14.x API - fetchProducts 사용 (5초 타임아웃 추가)
         console.log('📋 RNIap.fetchProducts 호출 중...');
-        const result = await RNIap.fetchProducts({ skus, type: 'subs' });
-        const products = result || [];
+
+        const result = await Promise.race([
+          RNIap.fetchProducts({ skus, type: 'subs' }),
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 5000)
+          )
+        ]);
+
+        const products = (result || []) as any[];
         console.log('📋 RNIap.fetchProducts 완료:', products?.length, '개');
 
         if (products && products.length > 0) {
