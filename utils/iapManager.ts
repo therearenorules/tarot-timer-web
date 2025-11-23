@@ -9,12 +9,32 @@ import { Platform } from 'react-native';
 console.log('🚀 iapManager.ts 모듈 초기화 시작');
 console.log('📱 Platform.OS:', Platform.OS);
 
-// react-native-iap을 static import로 변경 (Expo autolinking 활용)
-import * as RNIapModule from 'react-native-iap';
+// react-native-iap named imports
+import {
+  initConnection,
+  endConnection,
+  finishTransaction,
+  getAvailablePurchases,
+  fetchProducts,
+  requestPurchase,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+} from 'react-native-iap';
 
 console.log('📦 RNIapModule import 완료');
 
-const RNIap = Platform.OS === 'web' ? null : RNIapModule;
+// Web 환경 대응을 위한 RNIap 객체 구성
+const RNIap = Platform.OS === 'web' ? null : {
+  initConnection,
+  endConnection,
+  finishTransaction,
+  getAvailablePurchases,
+  fetchProducts,
+  requestPurchase,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+};
+
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 console.log('🔍 최종 RNIap:', RNIap ? 'Loaded' : 'Null (Web)');
@@ -303,7 +323,7 @@ class IAPManager {
             price: p.price || '0',
             localizedPrice: p.localizedPrice || p.price || '0',
             currency: p.currency || 'KRW',
-            type: (p.productId || '').includes('yearly') ? 'yearly' as const : 'monthly' as const
+            type: p.productId === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'
           }));
 
           console.log('📊 변환된 상품 데이터:', JSON.stringify(this.products, null, 2));

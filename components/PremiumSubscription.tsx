@@ -387,7 +387,14 @@ export default function PremiumSubscription({
       <View style={styles.subscriptionsContainer}>
         <Text style={styles.subscriptionsTitle}>구독 플랜 선택</Text>
 
-        {products.map(renderSubscriptionCard)}
+        {products.length > 0 ? (
+          products.map(renderSubscriptionCard)
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>현재 구매 가능한 상품이 없습니다.</Text>
+            <Text style={styles.emptySubText}>잠시 후 다시 시도해주세요.</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           style={styles.restoreButton}
@@ -623,6 +630,29 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2d1b47',
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7b2cbf',
+    borderStyle: 'dashed',
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#f4d03f',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#d4b8ff',
     textAlign: 'center',
   },
 });
