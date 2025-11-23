@@ -322,15 +322,15 @@ class IAPManager {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
           console.log('📊 상품 원본 데이터:', JSON.stringify(products, null, 2));
 
-          // ✅ v14.x: subscriptionOfferDetails 제거 (Android 전용)
+          // ✅ v14.x: 공식 타입에 맞춰 필드 매핑
           this.products = products.map((p: any) => ({
-            productId: p.productId,
+            productId: p.id,  // ✅ 공식 타입: 'id'
             title: p.title || '',
             description: p.description || '',
-            price: p.price || '0',
-            localizedPrice: p.localizedPrice || p.price || '0',
+            price: p.displayPrice || String(p.price) || '0',  // ✅ displayPrice (포맷된 가격)
+            localizedPrice: p.displayPrice || String(p.price) || '0',  // ✅ displayPrice 사용
             currency: p.currency || 'KRW',
-            type: p.productId === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'
+            type: p.id === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'  // ✅ 'id' 사용
           }));
 
           console.log('📊 변환된 상품 데이터:', JSON.stringify(this.products, null, 2));
