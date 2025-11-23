@@ -102,8 +102,11 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
    */
   const loadSubscriptionProducts = async () => {
     try {
+      console.log('🔵 [DEBUG] loadSubscriptionProducts 시작');
       setLoading(true);
+      console.log('🔵 [DEBUG] IAPManager.loadProducts() 호출 중...');
       const availableProducts = await IAPManager.loadProducts();
+      console.log('🔵 [DEBUG] IAPManager.loadProducts() 완료:', availableProducts?.length, '개');
 
       if (availableProducts && availableProducts.length > 0) {
         setProducts(availableProducts);
@@ -129,6 +132,10 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       }
     } catch (error: any) {
       console.error('❌ 구독 상품 로드 오류:', error);
+      console.error('🔴 [DEBUG] 에러 타입:', error?.constructor?.name);
+      console.error('🔴 [DEBUG] 에러 메시지:', error?.message);
+      console.error('🔴 [DEBUG] 에러 코드:', error?.code);
+      console.error('🔴 [DEBUG] 전체 에러:', JSON.stringify(error, null, 2));
 
       // ✅ API 실패해도 기본 가격으로 UI 표시 (products는 이미 defaultProducts로 설정됨)
       setApiLoaded(false);
@@ -158,7 +165,9 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       // 선택적: Alert 표시 (기본 가격으로 UI는 표시됨)
       // Alert.alert('알림', errorMessage, [{ text: '확인' }]);
     } finally {
+      console.log('🔵 [DEBUG] loadSubscriptionProducts finally - setLoading(false)');
       setLoading(false);
+      console.log('🔵 [DEBUG] loadSubscriptionProducts 완료');
     }
   };
 
