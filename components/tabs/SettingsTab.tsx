@@ -27,17 +27,26 @@ import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 import PremiumTest from '../PremiumTest';
 // BannerAd 제거: 전면광고만 사용으로 unitId 크래시 방지
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// 조건부 import - 모바일 환경에서 안전하게 로드
+// 조건부 import - 모바일 환경에서만 로드
 let SubscriptionPlans: any = null;
 let SubscriptionManagement: any = null;
 
-try {
-  const subscriptionPlans = require('../subscription/SubscriptionPlans');
-  const subscriptionManagement = require('../subscription/SubscriptionManagement');
-  SubscriptionPlans = subscriptionPlans.default || subscriptionPlans.SubscriptionPlans;
-  SubscriptionManagement = subscriptionManagement.default || subscriptionManagement.SubscriptionManagement;
-} catch (error) {
-  console.warn('⚠️ 구독 컴포넌트 로드 실패 (시뮬레이션 모드):', error);
+if (Platform.OS !== 'web') {
+  try {
+    const subscriptionPlans = require('../subscription/SubscriptionPlans');
+    const subscriptionManagement = require('../subscription/SubscriptionManagement');
+    SubscriptionPlans = subscriptionPlans.default || subscriptionPlans.SubscriptionPlans;
+    SubscriptionManagement = subscriptionManagement.default || subscriptionManagement.SubscriptionManagement;
+    console.log('✅ 구독 컴포넌트 로드 성공');
+  } catch (error) {
+    console.error('❌ 구독 컴포넌트 로드 실패:', error);
+    // 사용자에게 알림 표시
+    Alert.alert(
+      '오류',
+      '구독 기능을 불러오는데 실패했습니다. 앱을 다시 시작해주세요.',
+      [{ text: '확인' }]
+    );
+  }
 }
 
 // 알림 진단 컴포넌트 (개발 모드 전용)
@@ -206,15 +215,6 @@ const SettingsTab: React.FC = () => {
     );
   };
 
-  const handleUpgradePress = () => {
-    // 구독 기능 준비 중 알림
-    Alert.alert(
-      t('settings.premium.comingSoonTitle'),
-      t('settings.premium.comingSoonDesc'),
-      [{ text: t('common.ok') }]
-    );
-  };
-
   const handleRequestPermissions = async () => {
     try {
       const granted = await requestPermission();
@@ -353,25 +353,25 @@ const SettingsTab: React.FC = () => {
           </View>
         )}
 
-        {/* iOS/Android: 프리미엄 사용자면 구독 관리, 아니면 업그레이드 */}
-        {Platform.OS !== 'web' ? (
-          isPremium ? (
-            // 프리미엄 활성 사용자 - 구독 관리
-            <View style={styles.premiumStatusContainer}>
+        {/* 프리미엄 사용자면 구독 관리, 아니면 업그레이드 */}
+        {isPremium ? (
+          // 프리미엄 활성 사용자 - 구독 관리
+          <View style={styles.premiumStatusContainer}>
+            <View style={styles.premiumInfo}>
+              <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionStatus')}</Text>
+              <Text style={styles.premiumStatusValue}>
+                {isSubscriptionActive ? t('settings.premium.active') : t('settings.premium.expired')}
+              </Text>
+            </View>
+            {daysUntilExpiry !== null && daysUntilExpiry > 0 && (
               <View style={styles.premiumInfo}>
-                <Text style={styles.premiumStatusTitle}>{t('settings.premium.subscriptionStatus')}</Text>
+                <Text style={styles.premiumStatusTitle}>{t('settings.premium.remainingPeriod')}</Text>
                 <Text style={styles.premiumStatusValue}>
-                  {isSubscriptionActive ? t('settings.premium.active') : t('settings.premium.expired')}
+                  {t('settings.premium.daysRemaining', { days: daysUntilExpiry })}
                 </Text>
               </View>
-              {daysUntilExpiry !== null && daysUntilExpiry > 0 && (
-                <View style={styles.premiumInfo}>
-                  <Text style={styles.premiumStatusTitle}>{t('settings.premium.remainingPeriod')}</Text>
-                  <Text style={styles.premiumStatusValue}>
-                    {t('settings.premium.daysRemaining', { days: daysUntilExpiry })}
-                  </Text>
-                </View>
-              )}
+            )}
+            {Platform.OS !== 'web' && (
               <TouchableOpacity
                 style={styles.manageSubscriptionButton}
                 onPress={() => setShowManagementModal(true)}
@@ -380,33 +380,10 @@ const SettingsTab: React.FC = () => {
                   {t('settings.premium.manageSubscription')}
                 </Text>
               </TouchableOpacity>
-            </View>
-          ) : (
-            // 비프리미엄 사용자 - 업그레이드 안내
-            <View style={styles.premiumFeatures}>
-              <View style={styles.featureRow}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>{t('settings.premium.features.unlimitedTarotStorage')}</Text>
-              </View>
-              <View style={styles.featureRow}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>{t('settings.premium.features.removeAds')}</Text>
-              </View>
-              <View style={styles.featureRow}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>{t('settings.premium.features.premiumSpreads')}</Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.upgradeButton}
-                onPress={() => setShowSubscriptionModal(true)}
-              >
-                <Text style={styles.upgradeButtonText}>{t('settings.premium.upgradeButton')}</Text>
-              </TouchableOpacity>
-            </View>
-          )
+            )}
+          </View>
         ) : (
-          // 웹: 준비중 메시지
+          // 비프리미엄 사용자 - 업그레이드 안내
           <View style={styles.premiumFeatures}>
             <View style={styles.featureRow}>
               <Text style={styles.featureBullet}>•</Text>
@@ -423,9 +400,21 @@ const SettingsTab: React.FC = () => {
 
             <TouchableOpacity
               style={styles.upgradeButton}
-              onPress={handleUpgradePress}
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  Alert.alert(
+                    t('settings.premium.comingSoonTitle'),
+                    t('settings.premium.comingSoonDesc'),
+                    [{ text: t('common.ok') }]
+                  );
+                } else {
+                  setShowSubscriptionModal(true);
+                }
+              }}
             >
-              <Text style={styles.upgradeButtonText}>{t('settings.premium.comingSoon')}</Text>
+              <Text style={styles.upgradeButtonText}>
+                {Platform.OS === 'web' ? t('settings.premium.comingSoon') : t('settings.premium.upgradeButton')}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -648,8 +637,8 @@ const SettingsTab: React.FC = () => {
       {/* 하단 여백 */}
       <View style={styles.bottomSpace} />
 
-      {/* 구독 선택 모달 */}
-      {SubscriptionPlans && (
+      {/* 구독 선택 모달 - 모바일만 */}
+      {Platform.OS !== 'web' && SubscriptionPlans && (
         <Modal
           visible={showSubscriptionModal}
           animationType="slide"
@@ -663,8 +652,8 @@ const SettingsTab: React.FC = () => {
         </Modal>
       )}
 
-      {/* 구독 관리 모달 */}
-      {SubscriptionManagement && (
+      {/* 구독 관리 모달 - 모바일만 */}
+      {Platform.OS !== 'web' && SubscriptionManagement && (
         <Modal
           visible={showManagementModal}
           animationType="slide"
