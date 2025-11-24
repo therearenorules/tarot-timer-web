@@ -196,18 +196,24 @@ class IAPManager {
         console.log('💳 [1/7] 구매 업데이트 수신:', purchase.productId);
         console.log('📋 [Purchase] 전체 객체:', JSON.stringify(purchase, null, 2));
         console.log('📋 [Purchase] transactionId:', purchase.transactionId);
-        console.log('📋 [Purchase] transactionReceipt:', purchase.transactionReceipt ? `${purchase.transactionReceipt.substring(0, 50)}...` : 'null');
+        console.log('📋 [Purchase] transactionReceipt:', purchase.transactionReceipt ? `${purchase.transactionReceipt.substring(0, 50)}...` : 'EMPTY');
+        console.log('📋 [Purchase] verificationResultIOS:', purchase.verificationResultIOS ? `${purchase.verificationResultIOS.substring(0, 50)}...` : 'null');
         console.log('📋 [Purchase] purchaseToken:', purchase.purchaseToken ? `${purchase.purchaseToken.substring(0, 50)}...` : 'null');
         console.log('📋 [Purchase] productId:', purchase.productId);
 
-        // ✅ CRITICAL FIX: iOS는 transactionReceipt, Android는 purchaseToken 사용
+        // ✅ CRITICAL FIX V2: Supabase Edge Function은 Legacy Receipt만 지원
+        // iOS: transactionReceipt (legacy) 우선 → Edge Function 호환
+        //      verificationResultIOS는 StoreKit 2 JWT지만 Edge Function 미지원
+        // Android: purchaseToken
         const receipt = Platform.OS === 'ios'
-          ? (purchase.transactionReceipt || purchase.transactionId)
-          : (purchase.purchaseToken || purchase.transactionId);
+          ? (purchase.transactionReceipt || '')
+          : (purchase.purchaseToken || '');
 
         const transactionId = purchase.transactionId || purchase.originalTransactionIdentifierIOS || '';
 
-        console.log('📋 [Receipt] 사용할 영수증:', receipt ? `${receipt.substring(0, 50)}...` : 'null');
+        console.log('📋 [Receipt] 사용할 영수증 타입:', Platform.OS === 'ios' ? 'Legacy Receipt (Edge Function 호환)' : 'Android Token');
+        console.log('📋 [Receipt] 영수증 존재 여부:', !!receipt);
+        console.log('📋 [Receipt] 영수증 길이:', receipt ? receipt.length : 0);
         console.log('📋 [Transaction] 사용할 트랜잭션 ID:', transactionId);
 
         if (!receipt || !transactionId) {
@@ -591,11 +597,20 @@ class IAPManager {
 
       for (const purchase of purchases) {
         if (Object.values(SUBSCRIPTION_SKUS).includes(purchase.productId)) {
-          const receiptData = JSON.stringify({
-            transactionId: purchase.transactionId,
-            productId: purchase.productId,
-            purchaseDate: purchase.transactionDate
-          });
+          console.log(`🔍 구독 복원 처리 중: ${purchase.productId}`);
+          console.log(`📋 [Restore] transactionId: ${purchase.transactionId}`);
+          console.log(`📋 [Restore] verificationResultIOS: ${purchase.verificationResultIOS ? 'exists' : 'null'}`);
+          console.log(`📋 [Restore] transactionReceipt: ${purchase.transactionReceipt ? 'exists' : 'null'}`);
+
+          // ✅ CRITICAL FIX: Legacy Receipt 사용 (Edge Function 호환)
+          const receiptData = Platform.OS === 'ios'
+            ? (purchase.transactionReceipt || '')
+            : (purchase.purchaseToken || '');
+
+          if (!receiptData) {
+            console.error(`❌ 구독 복원 실패 (영수증 없음): ${purchase.productId}`);
+            continue;
+          }
 
           await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
           restoredCount++;
