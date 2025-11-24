@@ -78,13 +78,14 @@ export class ReceiptValidator {
       console.log('📋 [ReceiptValidator] productId:', productId);
       console.log('📋 [ReceiptValidator] transactionId:', transactionId);
 
-      // 입력 검증
-      if (!receiptData || !transactionId) {
-        console.error('❌ [ReceiptValidator] 필수 데이터 누락');
+      // ✅ CRITICAL FIX V5: 빈 문자열('')도 허용 (로컬 검증 fallback용)
+      // transactionId만 필수, receiptData는 빈 문자열 가능
+      if (!transactionId) {
+        console.error('❌ [ReceiptValidator] 트랜잭션 ID 누락');
         return {
           isValid: false,
           isActive: false,
-          error: '영수증 데이터 또는 트랜잭션 ID가 누락되었습니다',
+          error: '트랜잭션 ID가 누락되었습니다',
         };
       }
 
@@ -197,14 +198,16 @@ export class ReceiptValidator {
     console.log('🔐 [Local] 로컬 영수증 검증 모드 시작');
     console.log('📋 [Local] productId:', productId);
     console.log('📋 [Local] transactionId:', transactionId);
+    console.log('📋 [Local] receiptData 길이:', receiptData?.length || 0);
 
-    // 기본 검증: transactionId 존재 확인
-    if (!transactionId || !receiptData) {
-      console.error('❌ [Local] 영수증 데이터 누락');
+    // ✅ CRITICAL FIX V5: transactionId만 필수, receiptData는 빈 문자열 허용
+    // 로컬 검증은 transactionId만으로 구독 활성화 가능
+    if (!transactionId) {
+      console.error('❌ [Local] 트랜잭션 ID 누락');
       return {
         isValid: false,
         isActive: false,
-        error: '영수증 데이터 누락'
+        error: '트랜잭션 ID가 누락되었습니다'
       };
     }
 
