@@ -72,6 +72,7 @@ import { usePWA } from './hooks/usePWA';
 import AdManager from './utils/adManager';
 import IAPManager from './utils/iapManager';
 import AnalyticsManager from './utils/analyticsManager';
+import { BetaManager } from './utils/betaManager';
 import {
   Colors,
   Spacing,
@@ -476,6 +477,19 @@ function AppContent() {
             console.log(iapSuccess ? '   ✅ IAP 초기화 완료' : '   ⚠️ IAP 초기화 실패');
           } catch (error) {
             console.warn('   ⚠️ IAP 초기화 오류:', error);
+          }
+
+          // Step 2.5: Android 베타 프리미엄 초기화 (Android만)
+          console.log('🎁 Step 2.5: Android 베타 프리미엄 초기화 시작...');
+          try {
+            const betaActivated = await BetaManager.initializeBetaPremium();
+            if (betaActivated) {
+              console.log('   ✅ Android 베타 프리미엄 활성화 완료 (14일 - 다운로드 날짜 기준)');
+            } else {
+              console.log('   ℹ️ Android 베타 프리미엄 비활성화 (iOS 또는 이미 활성화됨)');
+            }
+          } catch (error) {
+            console.warn('   ⚠️ 베타 프리미엄 초기화 오류:', error);
           }
         } else {
           console.log('🌐 웹 환경: IAP 시스템 건너뛰기');
