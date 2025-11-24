@@ -411,7 +411,50 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         }
       }
 
-      // 1. 무료 체험 상태 확인 (타임아웃 3초)
+      // ✅ V2: LocalStorage 우선 정책 (Supabase는 백그라운드 동기화)
+      // 1. LocalStorage에서 현재 저장된 상태 확인 (가장 빠르고 신뢰성 있음)
+      let localStatus = defaultPremiumStatus;
+      try {
+        localStatus = await LocalStorageManager.getPremiumStatus();
+        console.log('✅ LocalStorage 상태 확인 완료');
+        console.log('📋 [LocalStorage] is_premium:', localStatus.is_premium);
+        console.log('📋 [LocalStorage] subscription_type:', localStatus.subscription_type);
+        console.log('📋 [LocalStorage] expiry_date:', localStatus.expiry_date);
+      } catch (error) {
+        console.error('❌ LocalStorage 조회 오류 (무시):', error);
+      }
+
+      // ✅ NEW: LocalStorage에 유료 구독이 있으면 즉시 적용 (Supabase 대기 X)
+      if (localStatus.is_premium && localStatus.subscription_type !== 'trial') {
+        console.log('✅ LocalStorage 유료 구독 발견 - 즉시 적용');
+        setPremiumStatus(localStatus);
+
+        // ✅ 백그라운드에서 Supabase 동기화 (블로킹 X)
+        console.log('🔄 백그라운드 Supabase 동기화 시작 (5초 후)...');
+        setTimeout(async () => {
+          try {
+            await Promise.race([
+              ReceiptValidator.periodicValidation(),
+              new Promise<void>((resolve) =>
+                setTimeout(() => {
+                  console.warn('⏱️ 백그라운드 Supabase 동기화 타임아웃 - 건너뜀');
+                  resolve();
+                }, 5000)
+              )
+            ]);
+            console.log('✅ 백그라운드 Supabase 동기화 완료');
+          } catch (err) {
+            console.warn('⚠️ 백그라운드 Supabase 동기화 실패 (무시):', err);
+          }
+        }, 5000); // 5초 후 백그라운드 실행
+
+        console.log('✅ 구독 상태 새로고침 완료 (LocalStorage 우선)');
+        return; // ✅ 여기서 종료 (나머지 체크 불필요)
+      }
+
+      // LocalStorage에 유료 구독이 없는 경우에만 아래 체크 진행
+
+      // 2. 무료 체험 상태 확인 (타임아웃 3초)
       let trialStatus = defaultPremiumStatus;
       try {
         trialStatus = await Promise.race([
@@ -429,7 +472,7 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         trialStatus = defaultPremiumStatus;
       }
 
-      // 2. IAP 구독 상태 확인 (타임아웃 3초)
+      // 3. IAP 구독 상태 확인 (타임아웃 3초) - LocalStorage에 없을 때만
       let iapStatus = defaultPremiumStatus;
       try {
         iapStatus = await Promise.race([
@@ -447,27 +490,20 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         iapStatus = defaultPremiumStatus;
       }
 
-      // ✅ NEW: 3. Supabase 주기적 동기화 (타임아웃 5초)
-      try {
-        await Promise.race([
-          ReceiptValidator.periodicValidation(),
-          new Promise<void>((resolve) =>
-            setTimeout(() => {
-              console.warn('⏱️ Supabase 동기화 타임아웃 - 건너뜀');
-              resolve();
-            }, 5000)
-          )
-        ]);
-        console.log('✅ Supabase 주기적 동기화 완료');
-      } catch (error) {
-        console.error('❌ Supabase 동기화 오류 (무시):', error);
-      }
-
-      // 3. 상태 우선순위 결정: IAP > 무료 체험 > 무료 버전
+      // 4. 상태 우선순위 결정: IAP > 무료 체험 > 무료 버전
       if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
-        // 유료 구독자
+        // IAP에서 유료 구독 발견
         setPremiumStatus(iapStatus);
-        console.log('✅ 유료 구독 활성화');
+        console.log('✅ IAP 유료 구독 활성화');
+
+        // ✅ LocalStorage에 동기화
+        try {
+          await LocalStorageManager.updatePremiumStatus(iapStatus);
+          console.log('✅ LocalStorage에 IAP 상태 동기화 완료');
+        } catch (syncErr) {
+          console.warn('⚠️ LocalStorage 동기화 실패 (무시):', syncErr);
+        }
+
       } else if (trialStatus.is_premium && trialStatus.subscription_type === 'trial') {
         // 무료 체험 중
         setPremiumStatus(trialStatus);
@@ -477,6 +513,24 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
         setPremiumStatus(defaultPremiumStatus);
         console.log('✅ 무료 버전 활성화');
       }
+
+      // ✅ Supabase 동기화 (백그라운드)
+      setTimeout(async () => {
+        try {
+          await Promise.race([
+            ReceiptValidator.periodicValidation(),
+            new Promise<void>((resolve) =>
+              setTimeout(() => {
+                console.warn('⏱️ Supabase 동기화 타임아웃 - 건너뜀');
+                resolve();
+              }, 5000)
+            )
+          ]);
+          console.log('✅ Supabase 동기화 완료');
+        } catch (error) {
+          console.error('❌ Supabase 동기화 오류 (무시):', error);
+        }
+      }, 3000); // 3초 후 백그라운드 실행
 
       console.log('✅ 구독 상태 새로고침 완료');
     } catch (error) {
