@@ -191,45 +191,114 @@ class IAPManager {
       }
 
       // 구매 업데이트 리스너
+      // ✅ V2: 검증 먼저 수행 → 성공 시 finishTransaction
       this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase) => {
-        console.log('💳 [1/5] 구매 업데이트 수신:', purchase.productId);
+        console.log('💳 [1/7] 구매 업데이트 수신:', purchase.productId);
+        console.log('📋 [Purchase] 전체 객체:', JSON.stringify(purchase, null, 2));
+        console.log('📋 [Purchase] transactionId:', purchase.transactionId);
+        console.log('📋 [Purchase] transactionReceipt:', purchase.transactionReceipt ? `${purchase.transactionReceipt.substring(0, 50)}...` : 'null');
+        console.log('📋 [Purchase] purchaseToken:', purchase.purchaseToken ? `${purchase.purchaseToken.substring(0, 50)}...` : 'null');
+        console.log('📋 [Purchase] productId:', purchase.productId);
 
-        const receipt = purchase.purchaseToken || purchase.transactionId;
-        if (receipt) {
-          try {
-            console.log('💳 [2/5] 영수증 확인 완료');
+        // ✅ CRITICAL FIX: iOS는 transactionReceipt, Android는 purchaseToken 사용
+        const receipt = Platform.OS === 'ios'
+          ? (purchase.transactionReceipt || purchase.transactionId)
+          : (purchase.purchaseToken || purchase.transactionId);
 
-            // ✅ FIX: finishTransaction 호출
-            await RNIap.finishTransaction({ purchase, isConsumable: false });
-            console.log('💳 [3/5] 결제 승인(finishTransaction) 완료');
+        const transactionId = purchase.transactionId || purchase.originalTransactionIdentifierIOS || '';
 
-            // ✅ FIX: Sandbox 환경 대응 - 2초 딜레이 (영수증 전파 대기)
-            console.log('⏳ Sandbox 영수증 전파 대기 중... (2초)');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log('💳 [4/5] 영수증 전파 대기 완료');
+        console.log('📋 [Receipt] 사용할 영수증:', receipt ? `${receipt.substring(0, 50)}...` : 'null');
+        console.log('📋 [Transaction] 사용할 트랜잭션 ID:', transactionId);
 
-            // 성공 처리
-            await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receipt);
-            console.log('💳 [5/5] 구독 처리 완료');
+        if (!receipt || !transactionId) {
+          console.error('❌ [1/7] 영수증 또는 트랜잭션 ID 없음');
+          console.error('📋 [Debug] receipt:', !!receipt);
+          console.error('📋 [Debug] transactionId:', !!transactionId);
+          const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+          if (resolver) {
+            resolver.reject(new Error('영수증 데이터 또는 트랜잭션 ID가 누락되었습니다'));
+            this.pendingPurchaseResolvers.delete(purchase.productId);
+          }
+          return;
+        }
 
-            // Pending Promise 해결
-            const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
-            if (resolver) {
-              resolver.resolve({
-                success: true,
-                productId: purchase.productId,
-                transactionId: purchase.transactionId || '',
-                purchaseDate: new Date(purchase.transactionDate).toISOString()
-              });
-              this.pendingPurchaseResolvers.delete(purchase.productId);
+        try {
+          console.log('💳 [2/7] 영수증 확인 완료');
+          console.log('📋 [Receipt] 길이:', receipt.length);
+
+          // ✅ FIX: 검증 먼저 수행 (finishTransaction 전에)
+          console.log('💳 [3/7] 영수증 검증 시작...');
+          console.log('📋 [Validation Input] receipt:', receipt.substring(0, 100));
+          console.log('📋 [Validation Input] transactionId:', transactionId);
+          console.log('📋 [Validation Input] productId:', purchase.productId);
+
+          const validationResult = await ReceiptValidator.validateReceipt(
+            receipt,
+            transactionId,
+            purchase.productId
+          );
+
+          console.log('📋 [Validation] isValid:', validationResult.isValid);
+          console.log('📋 [Validation] isActive:', validationResult.isActive);
+          console.log('📋 [Validation] environment:', validationResult.environment);
+
+          if (!validationResult.isValid) {
+            console.error('❌ [3/7] 영수증 검증 실패:', validationResult.error);
+            throw new Error(validationResult.error || '영수증 검증에 실패했습니다');
+          }
+
+          console.log('✅ [3/7] 영수증 검증 성공');
+
+          // ✅ 검증 성공 후에만 finishTransaction 호출
+          console.log('💳 [4/7] 결제 승인(finishTransaction) 시작...');
+          await RNIap.finishTransaction({ purchase, isConsumable: false });
+          console.log('✅ [4/7] 결제 승인(finishTransaction) 완료');
+
+          // ✅ FIX: Sandbox 환경 대응 - 2초 딜레이 (영수증 전파 대기)
+          console.log('⏳ [5/7] Sandbox 영수증 전파 대기 중... (2초)');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          console.log('✅ [5/7] 영수증 전파 대기 완료');
+
+          // ✅ 상태 동기화
+          console.log('💳 [6/7] 구독 상태 동기화 시작...');
+          await ReceiptValidator.syncSubscriptionStatus(validationResult, purchase.productId);
+          console.log('✅ [6/7] 구독 상태 동기화 완료');
+
+          console.log('✅ [7/7] 구독 처리 완료');
+
+          // Pending Promise 해결
+          const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+          if (resolver) {
+            resolver.resolve({
+              success: true,
+              productId: purchase.productId,
+              transactionId: transactionId,
+              purchaseDate: new Date(purchase.transactionDate || Date.now()).toISOString()
+            });
+            this.pendingPurchaseResolvers.delete(purchase.productId);
+          }
+
+        } catch (ackErr) {
+          console.error('❌ 결제 처리 실패 [상세]:', ackErr);
+          console.error('📋 [Error] 타입:', ackErr instanceof Error ? ackErr.constructor.name : typeof ackErr);
+          console.error('📋 [Error] 메시지:', ackErr instanceof Error ? ackErr.message : String(ackErr));
+
+          // ✅ 사용자 친화적 오류 메시지
+          let userMessage = '구독 처리 중 오류가 발생했습니다.';
+          if (ackErr instanceof Error) {
+            if (ackErr.message.includes('영수증')) {
+              userMessage = '영수증 검증에 실패했습니다. 잠시 후 다시 시도해주세요.';
+            } else if (ackErr.message.includes('네트워크') || ackErr.message.includes('인증')) {
+              userMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
+            } else {
+              userMessage = ackErr.message;
             }
-          } catch (ackErr) {
-            console.error('❌ 결제 승인 실패 [상세]:', ackErr);
-            const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
-            if (resolver) {
-              resolver.reject(ackErr);
-              this.pendingPurchaseResolvers.delete(purchase.productId);
-            }
+          }
+
+          const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+          if (resolver) {
+            resolver.reject(new Error(userMessage));
+            this.pendingPurchaseResolvers.delete(purchase.productId);
           }
         }
       });
@@ -305,13 +374,13 @@ class IAPManager {
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - SKUs:', skus);
 
-        // ✅ FIX: v14.x API - fetchProducts 사용 (5초 타임아웃 추가)
+        // ✅ V2: fetchProducts 타임아웃 10초로 증가 (5초 → 10초)
         console.log('📋 RNIap.fetchProducts 호출 중...');
 
         const result = await Promise.race([
           RNIap.fetchProducts({ skus, type: 'subs' }),
           new Promise<any>((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 5000)
+            setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 10000) // ✅ 10초로 증가
           )
         ]);
 
@@ -322,16 +391,32 @@ class IAPManager {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
           console.log('📊 상품 원본 데이터:', JSON.stringify(products, null, 2));
 
-          // ✅ v14.x: 공식 타입에 맞춰 필드 매핑
-          this.products = products.map((p: any) => ({
-            productId: p.id,  // ✅ 공식 타입: 'id'
-            title: p.title || '',
-            description: p.description || '',
-            price: p.displayPrice || String(p.price) || '0',  // ✅ displayPrice (포맷된 가격)
-            localizedPrice: p.displayPrice || String(p.price) || '0',  // ✅ displayPrice 사용
-            currency: p.currency || 'KRW',
-            type: p.id === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'  // ✅ 'id' 사용
-          }));
+          // ✅ V2: 통화 기호 자동 매핑 추가
+          this.products = products.map((p: any) => {
+            const currency = p.currency || 'KRW';
+            const rawPrice = p.price || '0';
+            const displayPrice = p.displayPrice || '';
+
+            console.log(`📋 [Product ${p.id}] currency: ${currency}, rawPrice: ${rawPrice}, displayPrice: ${displayPrice}`);
+
+            // ✅ displayPrice가 없거나 잘못된 경우 통화 기호 자동 추가
+            let formattedPrice = displayPrice;
+            if (!displayPrice || displayPrice === '0' || displayPrice === rawPrice) {
+              const currencySymbol = this.getCurrencySymbol(currency);
+              formattedPrice = `${currencySymbol}${this.formatPrice(rawPrice, currency)}`;
+              console.log(`📋 [Product ${p.id}] displayPrice 없음 - 자동 포맷: ${formattedPrice}`);
+            }
+
+            return {
+              productId: p.id,  // ✅ 공식 타입: 'id'
+              title: p.title || '',
+              description: p.description || '',
+              price: String(rawPrice),
+              localizedPrice: formattedPrice,
+              currency: currency,
+              type: p.id === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'  // ✅ 'id' 사용
+            };
+          });
 
           console.log('📊 변환된 상품 데이터:', JSON.stringify(this.products, null, 2));
           return this.products;
@@ -828,6 +913,51 @@ class IAPManager {
       default: 'https://support.apple.com/en-us/HT202039'
     });
     console.log('📱 구독 취소 URL:', cancelUrl);
+  }
+
+  /**
+   * ✅ NEW: 통화 기호 매핑
+   */
+  private static getCurrencySymbol(currency: string): string {
+    const symbols: Record<string, string> = {
+      'KRW': '₩',
+      'USD': '$',
+      'EUR': '€',
+      'JPY': '¥',
+      'CNY': '¥',
+      'GBP': '£',
+      'AUD': 'A$',
+      'CAD': 'C$',
+      'CHF': 'CHF ',
+      'HKD': 'HK$',
+      'SGD': 'S$',
+      'INR': '₹',
+      'RUB': '₽',
+      'BRL': 'R$',
+      'MXN': 'MX$',
+      'TWD': 'NT$',
+      'THB': '฿',
+      'VND': '₫',
+    };
+    return symbols[currency] || `${currency} `;
+  }
+
+  /**
+   * ✅ NEW: 가격 포맷팅 (천 단위 콤마 추가)
+   */
+  private static formatPrice(price: string | number, currency: string): string {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+
+    // 원화는 소수점 없이 표시
+    if (currency === 'KRW' || currency === 'JPY') {
+      return Math.floor(numPrice).toLocaleString('ko-KR');
+    }
+
+    // 기타 통화는 소수점 2자리
+    return numPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   }
 
   /**
