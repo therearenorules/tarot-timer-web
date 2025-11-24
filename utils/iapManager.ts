@@ -19,6 +19,7 @@ import {
   requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
+  setup, // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정용
 } from 'react-native-iap';
 
 console.log('📦 RNIapModule import 완료');
@@ -33,6 +34,7 @@ const RNIap = Platform.OS === 'web' ? null : {
   requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
+  setup, // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정용
 };
 
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -117,6 +119,22 @@ class IAPManager {
         console.log('  - Platform:', Platform.OS);
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - initialized:', this.initialized);
+
+        // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정
+        // 문제: react-native-iap v14는 기본적으로 StoreKit 2 모드 사용
+        //       → transactionReceipt 필드가 EMPTY STRING으로 반환됨
+        //       → Supabase Edge Function은 Legacy Receipt만 검증 가능
+        // 해결: setup({storekitMode: 'STOREKIT1_MODE'})로 강제 설정
+        //       → transactionReceipt에 Base64 Legacy Receipt 반환됨
+        if (Platform.OS === 'ios') {
+          console.log('🍎 iOS: StoreKit 1 모드 강제 설정 중...');
+          try {
+            RNIap.setup({ storekitMode: 'STOREKIT1_MODE' });
+            console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
+          } catch (setupError) {
+            console.warn('⚠️ StoreKit 모드 설정 실패 (계속 진행):', setupError);
+          }
+        }
 
         // ✅ FIX: initConnection에 5초 타임아웃 적용 (v14.x StoreKit 2.0 대응)
         // 문제: v14.x의 initConnection()이 20초 이상 걸리는 경우 있음
