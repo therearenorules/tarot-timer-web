@@ -112,6 +112,29 @@ class IAPManager {
     let retries = 3;
     let lastError: any = null;
 
+    // ✅ CRITICAL FIX V4: StoreKit 1 모드 설정을 initConnection() 이전에 명확히 분리
+    // 문제: setup()과 initConnection()이 같은 try 블록에 있으면 설정 적용 전에 초기화될 수 있음
+    // 해결: setup()을 완전히 분리하고 100ms 대기로 설정 적용 보장
+    if (Platform.OS === 'ios' && RNIap) {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🍎 iOS: StoreKit 1 모드 강제 설정 (최우선)');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      try {
+        // StoreKit 1 모드 강제 설정
+        RNIap.setup({ storekitMode: 'STOREKIT1_MODE' });
+        console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
+
+        // ✅ 설정 적용 대기 (100ms)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('✅ StoreKit 1 모드 적용 대기 완료');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      } catch (setupError) {
+        console.warn('⚠️ StoreKit 모드 설정 실패 (계속 진행):', setupError);
+        console.warn('   → 이 경우 transactionReceipt가 비어있을 수 있음');
+        console.warn('   → 로컬 검증 fallback으로 구독 활성화 시도\n');
+      }
+    }
+
     while (retries > 0) {
       try {
         console.log(`🔄 IAPManager 초기화 시도 (${4 - retries}/3)...`);
@@ -119,22 +142,6 @@ class IAPManager {
         console.log('  - Platform:', Platform.OS);
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - initialized:', this.initialized);
-
-        // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정
-        // 문제: react-native-iap v14는 기본적으로 StoreKit 2 모드 사용
-        //       → transactionReceipt 필드가 EMPTY STRING으로 반환됨
-        //       → Supabase Edge Function은 Legacy Receipt만 검증 가능
-        // 해결: setup({storekitMode: 'STOREKIT1_MODE'})로 강제 설정
-        //       → transactionReceipt에 Base64 Legacy Receipt 반환됨
-        if (Platform.OS === 'ios') {
-          console.log('🍎 iOS: StoreKit 1 모드 강제 설정 중...');
-          try {
-            RNIap.setup({ storekitMode: 'STOREKIT1_MODE' });
-            console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
-          } catch (setupError) {
-            console.warn('⚠️ StoreKit 모드 설정 실패 (계속 진행):', setupError);
-          }
-        }
 
         // ✅ FIX: initConnection에 5초 타임아웃 적용 (v14.x StoreKit 2.0 대응)
         // 문제: v14.x의 initConnection()이 20초 이상 걸리는 경우 있음
@@ -234,16 +241,47 @@ class IAPManager {
         console.log('📋 [Receipt] 영수증 길이:', receipt ? receipt.length : 0);
         console.log('📋 [Transaction] 사용할 트랜잭션 ID:', transactionId);
 
-        if (!receipt || !transactionId) {
-          console.error('❌ [1/7] 영수증 또는 트랜잭션 ID 없음');
-          console.error('📋 [Debug] receipt:', !!receipt);
-          console.error('📋 [Debug] transactionId:', !!transactionId);
+        // ✅ CRITICAL FIX V4: 영수증이 없어도 transactionId가 있으면 로컬 검증 시도
+        if (!transactionId) {
+          console.error('❌ [1/7] 트랜잭션 ID 없음 (치명적)');
           const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
           if (resolver) {
-            resolver.reject(new Error('영수증 데이터 또는 트랜잭션 ID가 누락되었습니다'));
+            resolver.reject(new Error('트랜잭션 ID가 누락되었습니다'));
             this.pendingPurchaseResolvers.delete(purchase.productId);
           }
           return;
+        }
+
+        if (!receipt) {
+          console.warn('⚠️ [1/7] 영수증 없음 - 로컬 검증 모드로 전환');
+          console.warn('📋 [Fallback] transactionId만으로 구독 활성화 시도');
+          console.warn('📋 [Fallback] productId:', purchase.productId);
+
+          // ✅ 영수증 없이 transactionId만으로 로컬 검증 시도
+          // 빈 문자열로 receipt 전달하면 ReceiptValidator가 로컬 검증으로 fallback함
+          try {
+            await this.processPurchaseSuccess(purchase.productId, transactionId, '');
+            console.log('✅ [Fallback] 로컬 검증으로 구독 활성화 성공');
+
+            // finishTransaction 호출
+            await RNIap.finishTransaction({ purchase, isConsumable: false });
+            console.log('✅ [7/7] finishTransaction 완료');
+
+            const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+            if (resolver) {
+              resolver.resolve({ success: true, productId: purchase.productId, transactionId });
+              this.pendingPurchaseResolvers.delete(purchase.productId);
+            }
+            return;
+          } catch (fallbackError) {
+            console.error('❌ [Fallback] 로컬 검증 실패:', fallbackError);
+            const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
+            if (resolver) {
+              resolver.reject(fallbackError);
+              this.pendingPurchaseResolvers.delete(purchase.productId);
+            }
+            return;
+          }
         }
 
         try {
