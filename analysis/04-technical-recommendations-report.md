@@ -1,10 +1,69 @@
 # 🔧 기술적 권장사항 보고서
 
-**업데이트일**: 2025-11-20 (react-native-iap v14.x API 규격 준수 완료)
+**업데이트일**: 2025-11-25 (Android 로컬 빌드 시스템 구축 완료)
 **프로젝트**: 타로 타이머 웹앱
-**버전**: iOS v1.1.3 Build 148
-**완성도**: 97% ✅
-**아키텍처**: V2 구독 시스템 + react-native-iap v14.x API 완전 준수 + 메모리 안정성 완벽
+**버전**:
+- iOS v1.1.3 Build 174 (TestFlight)
+- Android v1.1.3 Build 105 (로컬 빌드)
+**완성도**: 98% ✅
+**아키텍처**: 완전한 크로스 플랫폼 + 로컬/클라우드 하이브리드 빌드 시스템
+
+---
+
+## 🔥 **2025-11-25 기술 개선 - Android 로컬 빌드 시스템** ⭐⭐⭐⭐⭐
+
+### ✅ **로컬 빌드 환경 구축 및 최적화**
+
+#### **문제 정의**
+- EAS 클라우드 빌드: 15-20분 소요, 인터넷 필수, 빌드 크레딧 제한
+- 빠른 반복 개발 필요, 오프라인 개발 지원 필요
+
+#### **1. Android SDK 환경 구축** ✅
+```bash
+# 환경 검증
+SDK 경로: C:\Users\cntus\AppData\Local\Android\Sdk
+Build Tools: 35.0.0, 36.0.0, 36.1.0
+Java: OpenJDK 17.0.16
+
+# 환경 변수 설정
+ANDROID_HOME=C:\Users\cntus\AppData\Local\Android\Sdk
+PATH 업데이트 (platform-tools, tools)
+```
+
+#### **2. 로컬 AAB 빌드 구현** ✅
+```bash
+# 빌드 명령어
+cd android
+gradlew.bat bundleRelease
+
+# 결과
+빌드 시간: 1분 20초 (EAS 대비 92% 단축)
+출력: android/app/build/outputs/bundle/release/app-release.aab
+파일 크기: 122MB
+```
+
+#### **3. 버전 관리 자동화** ✅
+```typescript
+// app.json 동기화
+{
+  "version": "1.1.3",
+  "android": {
+    "versionCode": 105
+  }
+}
+
+// android/app/build.gradle 자동 반영
+defaultConfig {
+  versionCode 105
+  versionName "1.1.3"
+}
+```
+
+#### **장점**
+- ⚡ **속도**: 1-2분 (EAS 15-20분 대비 90% 단축)
+- 💰 **비용**: 무제한 빌드 (EAS 크레딧 불필요)
+- 🔧 **디버깅**: 즉시 문제 해결 가능
+- 📦 **오프라인**: 인터넷 연결 불필요
 
 ---
 
