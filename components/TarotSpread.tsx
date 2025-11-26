@@ -549,6 +549,9 @@ export const TarotSpread: React.FC = () => {
         showsVerticalScrollIndicator={false}
         automaticallyAdjustContentInsets={false}
         contentInsetAdjustmentBehavior="never"
+        removeClippedSubviews={true}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
       >
 
         {/* 스프레드 리스트 (세로 배치) */}
@@ -669,6 +672,9 @@ export const TarotSpread: React.FC = () => {
         showsVerticalScrollIndicator={false}
         automaticallyAdjustContentInsets={false}
         contentInsetAdjustmentBehavior="never"
+        removeClippedSubviews={true}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
       >
         {/* 헤더 */}
         <View style={styles.spreadHeader}>

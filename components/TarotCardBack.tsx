@@ -17,9 +17,10 @@ interface TarotCardBackProps {
   height?: number;
 }
 
-export const TarotCardBack: React.FC<TarotCardBackProps> = ({ 
-  width = 120, 
-  height = 180 
+// ✅ Android 성능: TarotCardBack 메모이제이션 (불필요한 SVG 리렌더링 방지)
+export const TarotCardBack: React.FC<TarotCardBackProps> = React.memo(({
+  width = 120,
+  height = 180
 }) => {
   const centerX = width / 2;
   const centerY = height / 2;
@@ -140,7 +141,10 @@ export const TarotCardBack: React.FC<TarotCardBackProps> = ({
       </Svg>
     </View>
   );
-};
+}, (prevProps, nextProps) => {
+  // ✅ props 비교: width/height 변경시에만 리렌더링
+  return prevProps.width === nextProps.width && prevProps.height === nextProps.height;
+});
 
 const styles = StyleSheet.create({
   container: {

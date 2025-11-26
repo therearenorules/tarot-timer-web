@@ -116,8 +116,8 @@ export const TarotCardComponent: React.FC<TarotCardProps> = memo(({
             onError={handleImageError}
             onLoadStart={() => setImageError(false)}
             priority={size === 'large' || size === 'extra-large' ? 'high' : 'normal'}
-            fadeDuration={80}
-            showLoader={true}
+            fadeDuration={0}
+            showLoader={false}
             cacheKey={`tarot_${card.id}_${size}`}
           />
         )}
@@ -192,17 +192,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    elevation: 2,
+    // ✅ Android 성능: elevation 제거 (그림자 성능 저하 방지)
     shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
     borderWidth: 0.5,
     borderColor: 'rgba(244, 208, 63, 0.3)',
-    // 고화질 렌더링을 위한 컨테이너 최적화
+    // ✅ Android 성능: 하드웨어 가속 최적화
     backgroundColor: 'transparent',
-    shouldRasterizeIOS: true,
-    renderToHardwareTextureAndroid: true,
+    ...(Platform.OS === 'ios' && {
+      shouldRasterizeIOS: true,
+    }),
+    ...(Platform.OS === 'android' && {
+      renderToHardwareTextureAndroid: true,
+      needsOffscreenAlphaCompositing: false,
+    }),
     ...(Platform.OS === 'web' && {
       WebkitOptimizeLegibility: 'optimizeQuality',
       imageRendering: 'high-quality',
@@ -210,9 +215,8 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     borderRadius: 12,
-    // 고화질 렌더링을 위한 스타일 최적화
+    // ✅ Android 성능: 3D 변환 제거 (오버헤드 방지)
     backfaceVisibility: 'hidden',
-    transform: [{ perspective: 1000 }],
     ...(Platform.OS === 'web' && {
       imageRendering: 'crisp-edges',
       WebkitBackfaceVisibility: 'hidden',

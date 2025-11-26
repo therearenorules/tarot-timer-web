@@ -46,7 +46,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
   resizeMode = 'cover',
   placeholder,
   showLoader = true,
-  fadeDuration = 100, // 페이드 시간 최소화 (150ms → 100ms)
+  fadeDuration = 0, // ✅ Android 깜빡임 방지: 페이드 비활성화 (100ms → 0ms)
   onLoad,
   onError,
   onLoadStart,
@@ -131,7 +131,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
 
   return (
     <View style={containerStyle}>
-      {loading && renderPlaceholder()}
+      {/* ✅ Android 성능: placeholder 제거 (깜빡임 방지) */}
 
       <Image
         source={source}
@@ -141,16 +141,21 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
         onLoadStart={handleLoadStart}
         onLoad={handleLoad}
         onError={handleError}
-        // ✅ expo-image 자동 캐싱 설정
+        // ✅ Android 성능 최적화 캐싱 설정
         cachePolicy="memory-disk"
-        // 우선순위 기반 로딩
+        // ✅ 우선순위 기반 로딩 강화
         priority={priority}
+        // ✅ Android 네이티브 캐싱 활용
+        recyclingKey={cacheKey}
         // 블러 효과 (선택)
         blurRadius={blurRadius}
         // 틴트 컬러 (선택)
         tintColor={tintColor}
-        // placeholder 블러 효과
+        // ✅ placeholder 블러 효과 (자연스러운 로딩)
         placeholderContentFit="cover"
+        // ✅ Android 메모리 효율성
+        autoplay={false}
+        allowDownscaling={true}
       />
     </View>
   );
