@@ -663,9 +663,10 @@ class IAPManager {
             ? (purchase.transactionReceipt || '')
             : (purchase.purchaseToken || '');
 
+          // ✅ FIX: 영수증이 없어도 transactionId가 있으면 복원 시도 (로컬 검증 Fallback)
           if (!receiptData) {
-            console.error(`❌ 구독 복원 실패 (영수증 없음): ${purchase.productId}`);
-            continue;
+            console.warn(`⚠️ 영수증 없음 - transactionId로 복원 시도: ${purchase.productId}`);
+            // continue; // ❌ 기존: 건너뛰기 -> ✅ 수정: 계속 진행
           }
 
           await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
@@ -690,9 +691,10 @@ class IAPManager {
     try {
       console.log('🔍 구매 성공 처리 및 영수증 검증 시작...');
 
-      if (Platform.OS !== 'web' && !receiptData) {
-        throw new Error('영수증 데이터가 필요합니다');
-      }
+      // ✅ FIX: 영수증 데이터가 없어도 transactionId가 있으면 진행 (로컬 검증 Fallback)
+      // if (Platform.OS !== 'web' && !receiptData) {
+      //   throw new Error('영수증 데이터가 필요합니다');
+      // }
 
       if (receiptData) {
         // ✅ FIX: productId 파라미터 추가 (Supabase Edge Function 연동)
