@@ -686,19 +686,32 @@ class IAPManager {
 
   /**
    * 구매 성공 처리 (프리미엄 상태 업데이트)
+   * ✅ FIX: receiptData가 없으면 LocalStorage에서 기존 영수증 사용
    */
   private static async processPurchaseSuccess(productId: string, transactionId: string, receiptData?: string): Promise<void> {
     try {
       console.log('🔍 구매 성공 처리 및 영수증 검증 시작...');
+      console.log('📋 [ProcessPurchase] productId:', productId);
+      console.log('📋 [ProcessPurchase] transactionId:', transactionId);
+      console.log('📋 [ProcessPurchase] receiptData 존재:', !!receiptData, '길이:', receiptData?.length || 0);
 
-      // ✅ FIX: 영수증 데이터가 없어도 transactionId가 있으면 진행 (로컬 검증 Fallback)
-      // if (Platform.OS !== 'web' && !receiptData) {
-      //   throw new Error('영수증 데이터가 필요합니다');
-      // }
+      // ✅ FIX: receiptData가 없으면 LocalStorage에서 기존 영수증 가져오기
+      let effectiveReceipt = receiptData;
+      if (!effectiveReceipt && Platform.OS !== 'web') {
+        console.log('⚠️ [ProcessPurchase] receiptData 없음 - LocalStorage에서 기존 영수증 확인...');
+        const currentStatus = await LocalStorageManager.getPremiumStatus();
+        if (currentStatus.receipt_data) {
+          effectiveReceipt = currentStatus.receipt_data;
+          console.log('✅ [ProcessPurchase] LocalStorage 영수증 발견, 길이:', effectiveReceipt.length);
+        } else {
+          console.warn('⚠️ [ProcessPurchase] LocalStorage에도 영수증 없음');
+        }
+      }
 
-      if (receiptData) {
+      if (effectiveReceipt) {
         // ✅ FIX: productId 파라미터 추가 (Supabase Edge Function 연동)
-        const validationResult = await ReceiptValidator.validateReceipt(receiptData, transactionId, productId);
+        console.log('🔄 [ProcessPurchase] Edge Function 호출 시작...');
+        const validationResult = await ReceiptValidator.validateReceipt(effectiveReceipt, transactionId, productId);
         if (!validationResult.isValid) throw new Error('영수증 검증 실패: ' + validationResult.error);
         if (!validationResult.isActive) throw new Error('구독이 활성 상태가 아닙니다');
 
@@ -707,7 +720,8 @@ class IAPManager {
         return;
       }
 
-      // Web Simulation
+      // Web Simulation 또는 영수증 없는 경우 LocalStorage만 업데이트
+      console.log('⚠️ [ProcessPurchase] 영수증 없음 - LocalStorage만 업데이트');
       const isYearly = productId.includes('yearly');
       const currentDate = new Date();
       const expiryDate = new Date(currentDate);
@@ -728,7 +742,7 @@ class IAPManager {
       };
 
       await LocalStorageManager.updatePremiumStatus(premiumStatus);
-      console.log('✅ 프리미엄 상태 업데이트 완료');
+      console.log('✅ 프리미엄 상태 업데이트 완료 (LocalStorage only)');
 
     } catch (error) {
       console.error('❌ 구매 성공 처리 오류:', error);
@@ -766,25 +780,59 @@ class IAPManager {
 
   /**
    * 강제 구독 상태 검증 및 갱신
+   * ✅ FIX: receipt_data가 없으면 LocalStorage 만료일 기준으로 검증
    */
   static async forceValidateSubscription(): Promise<boolean> {
     try {
       const currentStatus = await LocalStorageManager.getPremiumStatus();
-      if (!currentStatus.is_premium || !currentStatus.store_transaction_id) return false;
+      if (!currentStatus.is_premium) {
+        console.log('ℹ️ 강제 검증: 프리미엄 상태 아님');
+        return false;
+      }
 
       console.log('🔄 강제 구독 검증 시작...');
+
+      // ✅ FIX: receipt_data가 없으면 LocalStorage 만료일 기준으로 검증 (Edge Function 미연동 대응)
+      if (!currentStatus.receipt_data && !currentStatus.store_transaction_id) {
+        console.log('ℹ️ 강제 검증: 영수증 데이터 없음 - LocalStorage 만료일 기준 검증');
+
+        if (currentStatus.expiry_date) {
+          const expiryDate = new Date(currentStatus.expiry_date);
+          const now = new Date();
+          const isActive = now < expiryDate;
+
+          console.log(`✅ 강제 검증 완료 (LocalStorage): ${isActive ? '유효' : '만료'} (만료일: ${currentStatus.expiry_date})`);
+          return isActive;
+        }
+
+        console.warn('⚠️ 강제 검증: 만료일 없음 - 무효 처리');
+        return false;
+      }
+
       const productId = currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly;
-      const receiptData = currentStatus.receipt_data || JSON.stringify({
-        transactionId: currentStatus.store_transaction_id,
-        productId: productId,
-        purchaseDate: currentStatus.purchase_date
-      });
 
-      // ✅ FIX: productId 파라미터 추가 (Supabase Edge Function 연동)
-      const validationResult = await ReceiptValidator.validateReceipt(receiptData, currentStatus.store_transaction_id, productId);
-      await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
+      // ✅ FIX: 실제 영수증이 있을 때만 서버 검증 시도
+      if (currentStatus.receipt_data) {
+        const validationResult = await ReceiptValidator.validateReceipt(
+          currentStatus.receipt_data,
+          currentStatus.store_transaction_id || '',
+          productId
+        );
+        await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
+        return validationResult.isActive;
+      }
 
-      return validationResult.isActive;
+      // store_transaction_id만 있는 경우: LocalStorage 만료일 기준 검증
+      if (currentStatus.expiry_date) {
+        const expiryDate = new Date(currentStatus.expiry_date);
+        const now = new Date();
+        const isActive = now < expiryDate;
+
+        console.log(`✅ 강제 검증 완료 (만료일 기준): ${isActive ? '유효' : '만료'}`);
+        return isActive;
+      }
+
+      return false;
     } catch (error) {
       console.error('❌ 강제 구독 검증 오류:', error);
       return false;

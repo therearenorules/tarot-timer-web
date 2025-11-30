@@ -42,11 +42,12 @@ export interface ReceiptValidationResult {
 }
 
 interface EdgeFunctionRequest {
-  receipt_data: string;
+  receipt_data?: string;  // ✅ V2: 선택적 (lookup 모드에서는 불필요)
   transaction_id: string;
   product_id: string;
   platform: 'ios' | 'android';
   user_id: string;
+  mode?: 'verify' | 'lookup';  // ✅ V2: lookup=DB조회, verify=영수증검증
 }
 
 interface EdgeFunctionResponse {
@@ -236,7 +237,8 @@ export class ReceiptValidator {
   }
 
   /**
-   * Apple 영수증 검증 (Supabase Edge Function 호출)
+   * Apple 영수증 검증 via Edge Function
+   * ✅ V2: receipt가 없으면 자동으로 lookup 모드로 전환
    */
   private static async validateAppleReceiptViaEdgeFunction(
     receiptData: string,
@@ -244,7 +246,9 @@ export class ReceiptValidator {
     productId: string,
     userId: string
   ): Promise<ReceiptValidationResult> {
-    console.log('🍎 [Apple] Edge Function 검증 시작...');
+    // ✅ V2: receipt 유무에 따라 모드 결정
+    const mode = receiptData ? 'verify' : 'lookup';
+    console.log(`🍎 [Apple] Edge Function 검증 시작... (mode: ${mode})`);
 
     // 재시도 로직
     let lastError: any = null;
@@ -253,16 +257,28 @@ export class ReceiptValidator {
     while (retries > 0) {
       try {
         const attempt = VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS - retries + 1;
-        console.log(`🔄 [Apple] 검증 시도 ${attempt}/${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS}`);
+        console.log(`🔄 [Apple] 검증 시도 ${attempt}/${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS} (mode: ${mode})`);
 
         // Edge Function 요청 데이터
         const requestData: EdgeFunctionRequest = {
-          receipt_data: receiptData,
           transaction_id: transactionId,
           product_id: productId,
           platform: 'ios',
           user_id: userId,
+          mode: mode,  // ✅ V2: 모드 명시
         };
+
+        // receipt가 있을 때만 포함
+        if (receiptData) {
+          requestData.receipt_data = receiptData;
+        }
+
+        console.log('📤 [Apple] Edge Function 요청:', {
+          mode,
+          has_receipt: !!receiptData,
+          transaction_id: transactionId.substring(0, 10) + '...',
+          product_id: productId,
+        });
 
         // Supabase Functions invoke 사용
         const { data, error } = await supabase!.functions.invoke<EdgeFunctionResponse>(
@@ -293,6 +309,7 @@ export class ReceiptValidator {
           success: data.success,
           is_active: data.is_active,
           environment: data.environment,
+          mode: mode,
         });
 
         // 검증 실패
@@ -461,17 +478,37 @@ export class ReceiptValidator {
         await LocalStorageManager.updatePremiumStatus(premiumStatus);
         console.log('✅ [Periodic] 프리미엄 상태 업데이트 완료');
       } else {
-        console.log('ℹ️ [Periodic] 활성 구독 없음');
+        console.log('ℹ️ [Periodic] Supabase에 활성 구독 없음');
 
-        // 프리미엄 상태 비활성화
+        // ✅ FIX: LocalStorage 만료일 기반 구독 유지 (Edge Function 미연동 시 fallback)
         const currentStatus = await LocalStorageManager.getPremiumStatus();
-        if (currentStatus.is_premium) {
+
+        if (currentStatus.is_premium && currentStatus.expiry_date) {
+          const expiryDate = new Date(currentStatus.expiry_date);
+          const now = new Date();
+
+          if (now < expiryDate) {
+            // 만료 전이면 구독 유지 (Supabase DB에 없어도 LocalStorage 기준으로 유지)
+            console.log('✅ [Periodic] LocalStorage 구독 유지 (만료일:', currentStatus.expiry_date, ')');
+            return;
+          }
+
+          // 만료된 경우에만 비활성화
+          console.log('⏰ [Periodic] 구독 만료됨 - 비활성화 진행');
           await LocalStorageManager.updatePremiumStatus({
             ...currentStatus,
             is_premium: false,
           });
           console.log('✅ [Periodic] 프리미엄 상태 비활성화 완료');
+        } else if (currentStatus.is_premium && !currentStatus.expiry_date) {
+          // 만료일이 없는 프리미엄 상태 (비정상) - 비활성화
+          console.warn('⚠️ [Periodic] 만료일 없는 프리미엄 상태 - 비활성화');
+          await LocalStorageManager.updatePremiumStatus({
+            ...currentStatus,
+            is_premium: false,
+          });
         }
+        // is_premium이 false인 경우는 이미 무료 사용자이므로 아무 작업 안함
       }
     } catch (error) {
       console.error('❌ [Periodic] 주기적 검증 오류:', error);

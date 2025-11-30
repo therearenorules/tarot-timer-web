@@ -95,7 +95,13 @@
       "Bash(eas env:list:*)",
       "Bash(supabase link:*)",
       "Bash(eas secret:create:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(eas build:cancel:*)",
+      "Bash(supabase functions:*)",
+      "Bash(node test-anonymous-auth.js:*)",
+      "Bash(eas env:create:*)",
+      "Bash(npx supabase:*)",
+      "Bash(mdfind:*)"
     ],
     "deny": [],
     "ask": []

@@ -8,11 +8,12 @@
 // ============================================================================
 
 export interface ReceiptValidationRequest {
-  receipt_data: string;
+  receipt_data?: string;  // ✅ 선택적으로 변경 (DB lookup 모드용)
   transaction_id: string;
   product_id: string;
   platform: 'ios' | 'android';
   user_id: string;
+  mode?: 'verify' | 'lookup';  // ✅ 모드 추가: verify=영수증검증, lookup=DB조회
 }
 
 export interface ReceiptValidationResponse {

@@ -16,6 +16,7 @@ import {
 import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { usePremium } from '../../contexts/PremiumContext';
+import { IAPManager } from '../../utils/iapManager';
 import {
   Colors,
   Spacing,
@@ -48,12 +49,26 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
 
   /**
    * 구독 상태 새로고침
-   * useSafeState를 사용하여 컴포넌트 언마운트 시 자동 보호
+   * ✅ 수정: 먼저 구매 복원을 시도하여 Edge Function 호출
+   * ✅ 수정: 오류 발생 시에도 성공 팝업 표시 (구매 복원 실패는 치명적이지 않음)
    */
   const handleRefreshStatus = async () => {
     try {
       setValidating(true);
-      await validateSubscription();
+      console.log('🔄 [SubscriptionManagement] 상태 새로고침 시작...');
+
+      // ✅ 먼저 구매 복원 시도 (Edge Function 호출됨)
+      // 복원 실패해도 계속 진행 (기존 LocalStorage 상태 유지)
+      console.log('🔄 [SubscriptionManagement] 구매 복원 시도...');
+      try {
+        const restored = await IAPManager.restorePurchases();
+        console.log('✅ [SubscriptionManagement] 구매 복원 결과:', restored);
+      } catch (restoreError) {
+        console.warn('⚠️ [SubscriptionManagement] 구매 복원 실패 (계속 진행):', restoreError);
+        // 복원 실패해도 계속 진행 - 치명적 오류가 아님
+      }
+
+      // 그 후 상태 새로고침
       await refreshStatus();
 
       Alert.alert(
@@ -61,9 +76,12 @@ export const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({
         t('settings.premium.management.refreshSuccess')
       );
     } catch (error) {
+      console.error('❌ [SubscriptionManagement] 새로고침 오류:', error);
+      // ✅ 상세 오류 메시지 표시 (디버깅용)
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Alert.alert(
         t('settings.premium.management.refreshError'),
-        t('settings.premium.management.refreshErrorMessage')
+        `${t('settings.premium.management.refreshErrorMessage')}\n\n(${errorMessage})`
       );
     } finally {
       setValidating(false);

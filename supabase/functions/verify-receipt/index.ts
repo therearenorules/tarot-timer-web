@@ -63,12 +63,17 @@ function validateEnvironment(): {
 
 // ============================================================================
 // 요청 검증
+// ✅ V2: receipt_data가 없으면 자동으로 lookup 모드로 전환
 // ============================================================================
 function validateRequest(body: any): ReceiptValidationRequest {
-  const { receipt_data, transaction_id, product_id, platform, user_id } = body;
+  const { receipt_data, transaction_id, product_id, platform, user_id, mode } = body;
+
+  // ✅ 모드 결정: receipt_data가 없으면 자동으로 lookup 모드
+  const effectiveMode = mode || (receipt_data ? 'verify' : 'lookup');
 
   const missingFields: string[] = [];
-  if (!receipt_data) missingFields.push('receipt_data');
+  // receipt_data는 lookup 모드에서는 필수가 아님
+  if (effectiveMode === 'verify' && !receipt_data) missingFields.push('receipt_data');
   if (!transaction_id) missingFields.push('transaction_id');
   if (!product_id) missingFields.push('product_id');
   if (!platform) missingFields.push('platform');
@@ -90,12 +95,15 @@ function validateRequest(body: any): ReceiptValidationRequest {
     );
   }
 
+  console.log(`[Validate] 모드: ${effectiveMode}, receipt_data 존재: ${!!receipt_data}`);
+
   return {
-    receipt_data,
+    receipt_data: receipt_data || '',
     transaction_id,
     product_id,
     platform,
     user_id,
+    mode: effectiveMode,
   };
 }
 
@@ -180,19 +188,73 @@ serve(async (req: Request) => {
       transaction_id: validatedRequest.transaction_id.substring(0, 10) + '...',
     });
 
-    // 3. 플랫폼별 처리
+    // Database Helper 초기화 (모든 모드에서 필요)
+    const dbHelper = new DatabaseHelper(env.supabaseUrl, env.serviceRoleKey);
+
+    // ✅ V2: Lookup 모드 처리 (receipt 없이 DB에서 조회)
+    if (validatedRequest.mode === 'lookup') {
+      console.log('[Main] 🔍 Lookup 모드 - DB에서 구독 상태 조회');
+
+      // user_id로 활성 구독 조회
+      const existingSubscription = await dbHelper.getActiveSubscription(validatedRequest.user_id);
+
+      if (existingSubscription) {
+        // 만료일 확인
+        const expiryDate = new Date(existingSubscription.expiry_date);
+        const now = new Date();
+        const isActive = expiryDate > now && existingSubscription.is_active;
+
+        console.log('[Main] Lookup 결과:', {
+          found: true,
+          isActive,
+          expiryDate: existingSubscription.expiry_date,
+        });
+
+        const response: ReceiptValidationResponse = {
+          success: true,
+          is_active: isActive,
+          expiry_date: existingSubscription.expiry_date,
+          purchase_date: existingSubscription.purchase_date,
+          subscription_id: existingSubscription.id,
+          environment: existingSubscription.environment as 'Sandbox' | 'Production',
+        };
+
+        console.log('[Main] ✅ Lookup 완료 - 구독 발견');
+        console.log('='.repeat(80));
+
+        return new Response(JSON.stringify(response), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        console.log('[Main] Lookup 결과: 활성 구독 없음');
+
+        const response: ReceiptValidationResponse = {
+          success: true,
+          is_active: false,
+          error: '활성 구독을 찾을 수 없습니다',
+        };
+
+        console.log('[Main] ✅ Lookup 완료 - 구독 없음');
+        console.log('='.repeat(80));
+
+        return new Response(JSON.stringify(response), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // 3. 플랫폼별 처리 (verify 모드)
     if (validatedRequest.platform === 'ios') {
-      console.log('[Main] iOS 플랫폼 검증 시작');
+      console.log('[Main] iOS 플랫폼 검증 시작 (verify 모드)');
 
       // Apple Validator 초기화
       const appleValidator = new AppleValidator(env.appleSharedSecret);
 
-      // Database Helper 초기화
-      const dbHelper = new DatabaseHelper(env.supabaseUrl, env.serviceRoleKey);
-
       // Apple Server 영수증 검증
       console.log('[Main] Step 1/3: Apple Server 검증 요청...');
-      const appleResponse = await appleValidator.validate(validatedRequest.receipt_data);
+      const appleResponse = await appleValidator.validate(validatedRequest.receipt_data!);
 
       console.log('[Main] Step 2/3: 구독 정보 파싱...');
       const subscriptionInfo = appleValidator.parseSubscriptionInfo(appleResponse);
