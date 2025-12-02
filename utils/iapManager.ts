@@ -41,7 +41,7 @@ const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 console.log('🔍 최종 RNIap:', RNIap ? 'Loaded' : 'Null (Web)');
 
-import LocalStorageManager, { PremiumStatus } from './localStorage';
+import LocalStorageManager, { PremiumStatus, determinePurchaseDate } from './localStorage';
 import { ReceiptValidator } from './receiptValidator';
 
 // 구독 상품 ID 정의
@@ -645,6 +645,44 @@ class IAPManager {
 
       if (!purchases || purchases.length === 0) {
         console.log('⚠️ [3/4] 복원할 구매 내역이 없습니다.');
+
+        // ✅ FIX: 구매 내역이 없어도 Edge Function lookup 모드로 직접 호출
+        // StoreKit 2에서 getAvailablePurchases()가 빈 배열을 반환하는 경우 대응
+        console.log('🔄 [3/4] Edge Function lookup 모드로 직접 확인 시도...');
+        try {
+          const currentStatus = await LocalStorageManager.getPremiumStatus();
+          if (currentStatus.store_transaction_id) {
+            // 기존 transactionId가 있으면 lookup 모드로 검증
+            const productId = currentStatus.subscription_type === 'yearly'
+              ? SUBSCRIPTION_SKUS.yearly
+              : SUBSCRIPTION_SKUS.monthly;
+
+            console.log('📤 [3/4] Edge Function lookup 호출:', {
+              transactionId: currentStatus.store_transaction_id,
+              productId,
+            });
+
+            // 빈 문자열로 receipt 전달 → lookup 모드 자동 적용
+            const validationResult = await ReceiptValidator.validateReceipt(
+              '', // 빈 영수증 → lookup 모드
+              currentStatus.store_transaction_id,
+              productId
+            );
+
+            if (validationResult.isValid && validationResult.isActive) {
+              await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
+              console.log('✅ [3/4] Edge Function lookup 성공 - 구독 활성');
+              return true;
+            } else {
+              console.log('⚠️ [3/4] Edge Function lookup 결과: 구독 비활성 또는 실패');
+            }
+          } else {
+            console.log('ℹ️ [3/4] 기존 transactionId 없음 - lookup 불가');
+          }
+        } catch (lookupError) {
+          console.warn('⚠️ [3/4] Edge Function lookup 실패:', lookupError);
+        }
+
         return false;
       }
 
@@ -728,10 +766,20 @@ class IAPManager {
       if (isYearly) expiryDate.setFullYear(currentDate.getFullYear() + 1);
       else expiryDate.setMonth(currentDate.getMonth() + 1);
 
+      // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
+      const existingStatus = await LocalStorageManager.getPremiumStatus();
+      const { purchaseDate, isNewPurchase, isActiveRenewal } = determinePurchaseDate(existingStatus);
+
+      console.log('📅 [ProcessPurchase] purchase_date 판단:', {
+        isActiveRenewal,
+        isNewPurchase,
+        finalPurchaseDate: purchaseDate,
+      });
+
       const premiumStatus: PremiumStatus = {
         is_premium: true,
         subscription_type: isYearly ? 'yearly' : 'monthly',
-        purchase_date: currentDate.toISOString(),
+        purchase_date: purchaseDate, // ✅ 기존 구매일 유지
         expiry_date: expiryDate.toISOString(),
         store_transaction_id: transactionId,
         unlimited_storage: true,

@@ -111,6 +111,39 @@ export interface PremiumStatus {
   is_simulation?: boolean;
 }
 
+// ============================================================================
+// ✅ 구독 관련 유틸리티 함수
+// ============================================================================
+
+/**
+ * 구매일(purchase_date) 결정 로직
+ * - 신규 구매: 현재 날짜
+ * - 자동 갱신 (is_premium=true): 기존 purchase_date 유지
+ * - 만료 후 재구매 (is_premium=false): 현재 날짜
+ *
+ * @param existingStatus 기존 프리미엄 상태
+ * @returns { purchaseDate, isNewPurchase, isActiveRenewal }
+ */
+export function determinePurchaseDate(existingStatus: PremiumStatus): {
+  purchaseDate: string;
+  isNewPurchase: boolean;
+  isActiveRenewal: boolean;
+} {
+  const now = new Date();
+
+  // 갱신 조건: 현재 프리미엄 활성 상태 + 기존 purchase_date 존재
+  const isActiveRenewal = existingStatus.is_premium && !!existingStatus.purchase_date;
+
+  // 신규 구매 조건: 갱신이 아닌 모든 경우
+  const isNewPurchase = !isActiveRenewal;
+
+  const purchaseDate = isNewPurchase
+    ? now.toISOString()
+    : existingStatus.purchase_date!;
+
+  return { purchaseDate, isNewPurchase, isActiveRenewal };
+}
+
 export interface UsageLimits {
   max_daily_sessions: number;
   max_spread_sessions: number;

@@ -13,7 +13,7 @@
 
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
-import LocalStorageManager, { PremiumStatus } from './localStorage';
+import LocalStorageManager, { PremiumStatus, determinePurchaseDate } from './localStorage';
 
 // ============================================================================
 // 설정
@@ -392,11 +392,21 @@ export class ReceiptValidator {
       const isYearly = productId.includes('yearly');
       const expiryDate = validationResult.expirationDate || new Date();
 
+      // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
+      const existingStatus = await LocalStorageManager.getPremiumStatus();
+      const { purchaseDate, isNewPurchase, isActiveRenewal } = determinePurchaseDate(existingStatus);
+
+      console.log('📅 [Sync] purchase_date 판단:', {
+        isActiveRenewal,
+        isNewPurchase,
+        finalPurchaseDate: purchaseDate,
+      });
+
       // LocalStorage에 프리미엄 상태 저장
       const premiumStatus: PremiumStatus = {
         is_premium: validationResult.isActive,
         subscription_type: isYearly ? 'yearly' : 'monthly',
-        purchase_date: new Date().toISOString(),
+        purchase_date: purchaseDate, // ✅ 기존 구매일 유지
         expiry_date: expiryDate.toISOString(),
         store_transaction_id: validationResult.originalTransactionId || '',
         unlimited_storage: validationResult.isActive,
