@@ -14,6 +14,7 @@
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import LocalStorageManager, { PremiumStatus, determinePurchaseDate } from './localStorage';
+import { calculateSubscriptionExpiry } from './dateUtils';
 
 // ============================================================================
 // 설정
@@ -186,23 +187,22 @@ export class ReceiptValidator {
   /**
    * ✅ NEW: 로컬 영수증 검증 (Supabase 없이 동작)
    * Supabase Edge Function 실패 시 fallback으로 사용
-   *
-   * 주의: 이 방식은 완전한 보안 검증이 아니므로,
-   * Edge Function이 정상 작동하는 것이 이상적입니다.
-   * 하지만 사용자 경험을 위해 결제는 성공 처리합니다.
+   * 
+   * 변경사항:
+   * 1. dateUtils를 사용한 정확한 만료일 계산
+   * 2. Edge Function 실패 시에도 Supabase DB 직접 업데이트 시도 (Client-side)
    */
-  private static validateLocalReceipt(
+  private static async validateLocalReceipt(
     receiptData: string,
     transactionId: string,
     productId?: string
-  ): ReceiptValidationResult {
+  ): Promise<ReceiptValidationResult> {
     console.log('🔐 [Local] 로컬 영수증 검증 모드 시작');
     console.log('📋 [Local] productId:', productId);
     console.log('📋 [Local] transactionId:', transactionId);
     console.log('📋 [Local] receiptData 길이:', receiptData?.length || 0);
 
     // ✅ CRITICAL FIX V5: transactionId만 필수, receiptData는 빈 문자열 허용
-    // 로컬 검증은 transactionId만으로 구독 활성화 가능
     if (!transactionId) {
       console.error('❌ [Local] 트랜잭션 ID 누락');
       return {
@@ -214,15 +214,47 @@ export class ReceiptValidator {
 
     // 구독 타입 결정
     const isYearly = productId?.includes('yearly') || false;
+    const subscriptionType = isYearly ? 'yearly' : 'monthly';
 
-    // 만료일 계산
-    const expirationDate = new Date();
-    if (isYearly) {
-      expirationDate.setFullYear(expirationDate.getFullYear() + 1); // 1년 후
-      console.log('📅 [Local] 연간 구독 - 만료일:', expirationDate.toISOString());
-    } else {
-      expirationDate.setMonth(expirationDate.getMonth() + 1); // 1개월 후
-      console.log('📅 [Local] 월간 구독 - 만료일:', expirationDate.toISOString());
+    // ✅ FIX: dateUtils 사용하여 정확한 만료일 계산
+    const purchaseDate = new Date();
+    const expirationDate = calculateSubscriptionExpiry(purchaseDate, subscriptionType);
+
+    console.log(`📅 [Local] ${subscriptionType} 구독 - 만료일:`, expirationDate.toISOString());
+
+    // ✅ NEW: Supabase DB 직접 업데이트 시도 (Edge Function 실패 시 Fallback)
+    // 사용자가 로그인 상태라면 user_subscriptions 테이블에 직접 insert/update 시도
+    if (supabase) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log('🔄 [Local] Supabase DB 직접 업데이트 시도 (Fallback)...');
+
+          const subscriptionData = {
+            user_id: user.id,
+            product_id: productId || (isYearly ? 'tarot_timer_yearly' : 'tarot_timer_monthly'),
+            original_transaction_id: transactionId,
+            purchase_date: purchaseDate.toISOString(),
+            expiry_date: expirationDate.toISOString(),
+            is_active: true,
+            environment: 'Sandbox', // 로컬 검증은 Sandbox로 표시
+            platform: Platform.OS,
+            updated_at: new Date().toISOString()
+          };
+
+          const { error } = await supabase
+            .from('user_subscriptions')
+            .upsert(subscriptionData, { onConflict: 'original_transaction_id' });
+
+          if (error) {
+            console.warn('⚠️ [Local] Supabase DB 직접 업데이트 실패:', error.message);
+          } else {
+            console.log('✅ [Local] Supabase DB 직접 업데이트 성공');
+          }
+        }
+      } catch (dbError) {
+        console.warn('⚠️ [Local] Supabase DB 업데이트 중 오류:', dbError);
+      }
     }
 
     console.log('✅ [Local] 로컬 검증 성공 (임시 활성화)');
@@ -232,7 +264,7 @@ export class ReceiptValidator {
       isActive: true,
       expirationDate,
       originalTransactionId: transactionId,
-      environment: 'Sandbox', // 로컬 검증은 Sandbox 환경으로 표시
+      environment: 'Sandbox',
     };
   }
 

@@ -22,7 +22,25 @@ import {
   setup, // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정용
 } from 'react-native-iap';
 
+import { calculateSubscriptionExpiry } from './dateUtils';
+import { determinePurchaseDate, LocalStorageManager, PremiumStatus } from './localStorage';
+import { ReceiptValidator } from './receiptValidator';
+
 console.log('📦 RNIapModule import 완료');
+
+// ✅ SKUs 정의
+const SUBSCRIPTION_SKUS = {
+  monthly: Platform.select({
+    ios: 'tarot_timer_monthly',
+    android: 'tarot_timer_monthly',
+    default: 'tarot_timer_monthly'
+  }),
+  yearly: Platform.select({
+    ios: 'tarot_timer_yearly',
+    android: 'tarot_timer_yearly',
+    default: 'tarot_timer_yearly'
+  })
+};
 
 // Web 환경 대응을 위한 RNIap 객체 구성
 const RNIap = Platform.OS === 'web' ? null : {
@@ -34,30 +52,8 @@ const RNIap = Platform.OS === 'web' ? null : {
   requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
-  setup, // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정용
+  setup,
 };
-
-const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
-
-console.log('🔍 최종 RNIap:', RNIap ? 'Loaded' : 'Null (Web)');
-
-import LocalStorageManager, { PremiumStatus, determinePurchaseDate } from './localStorage';
-import { ReceiptValidator } from './receiptValidator';
-
-// 구독 상품 ID 정의
-// Subscription Group: Tarot Timer Premium (App Store Connect에 등록된 ID)
-export const SUBSCRIPTION_SKUS = {
-  monthly: Platform.select({
-    ios: 'tarot_timer_monthly',
-    android: 'tarot_timer_monthly',
-    default: 'tarot_timer_monthly'
-  }),
-  yearly: Platform.select({
-    ios: 'tarot_timer_yearly',
-    android: 'tarot_timer_yearly',
-    default: 'tarot_timer_yearly'
-  })
-} as const;
 
 export interface SubscriptionProduct {
   productId: string;
@@ -67,7 +63,6 @@ export interface SubscriptionProduct {
   localizedPrice: string;
   currency: string;
   type: 'monthly' | 'yearly';
-  // ✅ v12.x: subscriptionOfferDetails 불필요 (v14.x 전용)
 }
 
 export interface PurchaseResult {
@@ -113,18 +108,13 @@ class IAPManager {
     let lastError: any = null;
 
     // ✅ CRITICAL FIX V4: StoreKit 1 모드 설정을 initConnection() 이전에 명확히 분리
-    // 문제: setup()과 initConnection()이 같은 try 블록에 있으면 설정 적용 전에 초기화될 수 있음
-    // 해결: setup()을 완전히 분리하고 100ms 대기로 설정 적용 보장
     if (Platform.OS === 'ios' && RNIap) {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('🍎 iOS: StoreKit 1 모드 강제 설정 (최우선)');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       try {
-        // StoreKit 1 모드 강제 설정
         RNIap.setup({ storekitMode: 'STOREKIT1_MODE' });
         console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
-
-        // ✅ 설정 적용 대기 (100ms)
         await new Promise(resolve => setTimeout(resolve, 100));
         console.log('✅ StoreKit 1 모드 적용 대기 완료');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
@@ -143,9 +133,7 @@ class IAPManager {
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - initialized:', this.initialized);
 
-        // ✅ FIX: initConnection에 5초 타임아웃 적용 (v14.x StoreKit 2.0 대응)
-        // 문제: v14.x의 initConnection()이 20초 이상 걸리는 경우 있음
-        // 해결: 5초 안에 완료되지 않으면 재시도 (최대 3회)
+        // ✅ FIX: initConnection에 5초 타임아웃 적용
         const connectionResult = await Promise.race([
           RNIap.initConnection(),
           new Promise((_, reject) =>
@@ -161,10 +149,6 @@ class IAPManager {
         await this.setupPurchaseListeners();
 
         // ✅ FIX: StoreKit 완전 초기화 대기 (1초)
-        // 이유: initConnection()이 반환되어도 StoreKit의 transaction queue와
-        // product catalog가 완전히 준비되려면 추가 시간 필요
-        // 이 딜레이 없이 fetchProducts()를 즉시 호출하면
-        // "Connection not initialized" 오류 발생 가능
         console.log('⏳ StoreKit 완전 초기화 대기 중... (1초)');
         await new Promise(resolve => setTimeout(resolve, 1000));
         console.log('✅ StoreKit 준비 완료');
@@ -174,7 +158,6 @@ class IAPManager {
 
       } catch (error) {
         lastError = error;
-        // ✅ 자세한 오류 정보 출력
         console.error(`❌ IAPManager 초기화 실패 (시도 ${4 - retries}/3):`);
         console.error('📋 오류 타입:', error instanceof Error ? error.constructor.name : typeof error);
         console.error('📋 오류 메시지:', error instanceof Error ? error.message : String(error));
@@ -205,7 +188,6 @@ class IAPManager {
     if (Platform.OS === 'web' || !RNIap) return;
 
     try {
-      // 기존 리스너 제거
       if (this.purchaseUpdateSubscription) {
         this.purchaseUpdateSubscription.remove();
         this.purchaseUpdateSubscription = null;
@@ -215,8 +197,6 @@ class IAPManager {
         this.purchaseErrorSubscription = null;
       }
 
-      // 구매 업데이트 리스너
-      // ✅ V2: 검증 먼저 수행 → 성공 시 finishTransaction
       this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase) => {
         console.log('💳 [1/7] 구매 업데이트 수신:', purchase.productId);
         console.log('📋 [Purchase] 전체 객체:', JSON.stringify(purchase, null, 2));
@@ -226,10 +206,6 @@ class IAPManager {
         console.log('📋 [Purchase] purchaseToken:', purchase.purchaseToken ? `${purchase.purchaseToken.substring(0, 50)}...` : 'null');
         console.log('📋 [Purchase] productId:', purchase.productId);
 
-        // ✅ CRITICAL FIX V2: Supabase Edge Function은 Legacy Receipt만 지원
-        // iOS: transactionReceipt (legacy) 우선 → Edge Function 호환
-        //      verificationResultIOS는 StoreKit 2 JWT지만 Edge Function 미지원
-        // Android: purchaseToken
         const receipt = Platform.OS === 'ios'
           ? (purchase.transactionReceipt || '')
           : (purchase.purchaseToken || '');
@@ -241,7 +217,6 @@ class IAPManager {
         console.log('📋 [Receipt] 영수증 길이:', receipt ? receipt.length : 0);
         console.log('📋 [Transaction] 사용할 트랜잭션 ID:', transactionId);
 
-        // ✅ CRITICAL FIX V4: 영수증이 없어도 transactionId가 있으면 로컬 검증 시도
         if (!transactionId) {
           console.error('❌ [1/7] 트랜잭션 ID 없음 (치명적)');
           const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
@@ -257,13 +232,10 @@ class IAPManager {
           console.warn('📋 [Fallback] transactionId만으로 구독 활성화 시도');
           console.warn('📋 [Fallback] productId:', purchase.productId);
 
-          // ✅ 영수증 없이 transactionId만으로 로컬 검증 시도
-          // 빈 문자열로 receipt 전달하면 ReceiptValidator가 로컬 검증으로 fallback함
           try {
             await this.processPurchaseSuccess(purchase.productId, transactionId, '');
             console.log('✅ [Fallback] 로컬 검증으로 구독 활성화 성공');
 
-            // finishTransaction 호출
             await RNIap.finishTransaction({ purchase, isConsumable: false });
             console.log('✅ [7/7] finishTransaction 완료');
 
@@ -288,7 +260,6 @@ class IAPManager {
           console.log('💳 [2/7] 영수증 확인 완료');
           console.log('📋 [Receipt] 길이:', receipt.length);
 
-          // ✅ FIX: 검증 먼저 수행 (finishTransaction 전에)
           console.log('💳 [3/7] 영수증 검증 시작...');
           console.log('📋 [Validation Input] receipt:', receipt.substring(0, 100));
           console.log('📋 [Validation Input] transactionId:', transactionId);
@@ -311,24 +282,20 @@ class IAPManager {
 
           console.log('✅ [3/7] 영수증 검증 성공');
 
-          // ✅ 검증 성공 후에만 finishTransaction 호출
           console.log('💳 [4/7] 결제 승인(finishTransaction) 시작...');
           await RNIap.finishTransaction({ purchase, isConsumable: false });
           console.log('✅ [4/7] 결제 승인(finishTransaction) 완료');
 
-          // ✅ FIX: Sandbox 환경 대응 - 2초 딜레이 (영수증 전파 대기)
           console.log('⏳ [5/7] Sandbox 영수증 전파 대기 중... (2초)');
           await new Promise(resolve => setTimeout(resolve, 2000));
           console.log('✅ [5/7] 영수증 전파 대기 완료');
 
-          // ✅ 상태 동기화
           console.log('💳 [6/7] 구독 상태 동기화 시작...');
           await ReceiptValidator.syncSubscriptionStatus(validationResult, purchase.productId);
           console.log('✅ [6/7] 구독 상태 동기화 완료');
 
           console.log('✅ [7/7] 구독 처리 완료');
 
-          // Pending Promise 해결
           const resolver = this.pendingPurchaseResolvers.get(purchase.productId);
           if (resolver) {
             resolver.resolve({
@@ -345,7 +312,6 @@ class IAPManager {
           console.error('📋 [Error] 타입:', ackErr instanceof Error ? ackErr.constructor.name : typeof ackErr);
           console.error('📋 [Error] 메시지:', ackErr instanceof Error ? ackErr.message : String(ackErr));
 
-          // ✅ 사용자 친화적 오류 메시지
           let userMessage = '구독 처리 중 오류가 발생했습니다.';
           if (ackErr instanceof Error) {
             if (ackErr.message.includes('영수증')) {
@@ -365,18 +331,15 @@ class IAPManager {
         }
       });
 
-      // 구매 에러 리스너
       this.purchaseErrorSubscription = RNIap.purchaseErrorListener((error) => {
         console.error('❌ [IAP Error Listener] 구매 에러 발생:');
         console.error('  - Error Code:', (error as any)?.code);
         console.error('  - Error Message:', (error as any)?.message);
         console.error('  - Error Details:', JSON.stringify(error, null, 2));
 
-        // ✅ FIX: 에러 타입별 상세 메시지
         let userFriendlyMessage = '구매 처리 중 오류가 발생했습니다.';
 
         const errorCode = (error as any)?.code;
-        // v14.x에서는 'user-cancelled' 또는 'E_USER_CANCELLED' 모두 체크
         if (errorCode === 'E_USER_CANCELLED' || errorCode === 'user-cancelled') {
           userFriendlyMessage = '사용자가 구매를 취소했습니다.';
           console.log('ℹ️ 사용자 취소 - 정상 동작');
@@ -390,7 +353,6 @@ class IAPManager {
           userFriendlyMessage = '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
         }
 
-        // Pending Promise 거부
         const errorWithMessage = new Error(userFriendlyMessage);
         (errorWithMessage as any).originalError = error;
 
@@ -423,7 +385,6 @@ class IAPManager {
     const skus = Object.values(SUBSCRIPTION_SKUS).filter(id => id !== 'default');
     console.log('🔄 구독 상품 정보 요청:', skus);
 
-    // ✅ FIX: 재시도 로직 (최대 3회, 2초 간격)
     let retries = 3;
     let lastError: any = null;
 
@@ -436,13 +397,12 @@ class IAPManager {
         console.log('  - RNIap 존재:', !!RNIap);
         console.log('  - SKUs:', skus);
 
-        // ✅ V2: fetchProducts 타임아웃 10초로 증가 (5초 → 10초)
         console.log('📋 RNIap.fetchProducts 호출 중...');
 
         const result = await Promise.race([
           RNIap.fetchProducts({ skus, type: 'subs' }),
           new Promise<any>((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 10000) // ✅ 10초로 증가
+            setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 10000)
           )
         ]);
 
@@ -453,7 +413,6 @@ class IAPManager {
           console.log(`✅ 상품 로드 성공: ${products.length}개 (시도 ${4 - retries}/3)`);
           console.log('📊 상품 원본 데이터:', JSON.stringify(products, null, 2));
 
-          // ✅ V2: 통화 기호 자동 매핑 추가
           this.products = products.map((p: any) => {
             const currency = p.currency || 'KRW';
             const rawPrice = p.price || '0';
@@ -461,7 +420,6 @@ class IAPManager {
 
             console.log(`📋 [Product ${p.id}] currency: ${currency}, rawPrice: ${rawPrice}, displayPrice: ${displayPrice}`);
 
-            // ✅ displayPrice가 없거나 잘못된 경우 통화 기호 자동 추가
             let formattedPrice = displayPrice;
             if (!displayPrice || displayPrice === '0' || displayPrice === rawPrice) {
               const currencySymbol = this.getCurrencySymbol(currency);
@@ -470,13 +428,13 @@ class IAPManager {
             }
 
             return {
-              productId: p.id,  // ✅ 공식 타입: 'id'
+              productId: p.id,
               title: p.title || '',
               description: p.description || '',
               price: String(rawPrice),
               localizedPrice: formattedPrice,
               currency: currency,
-              type: p.id === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'  // ✅ 'id' 사용
+              type: p.id === SUBSCRIPTION_SKUS.yearly ? 'yearly' : 'monthly'
             };
           });
 
@@ -484,7 +442,6 @@ class IAPManager {
           return this.products;
         }
 
-        // 상품이 없는 경우 재시도
         console.warn(`⚠️ 상품 로드 결과 없음 (시도 ${4 - retries}/3)`);
         if (retries > 1) {
           console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
@@ -493,7 +450,6 @@ class IAPManager {
 
       } catch (error) {
         lastError = error;
-        // ✅ 자세한 오류 정보 출력
         console.error(`❌ 상품 로드 실패 (시도 ${4 - retries}/3):`);
         console.error('📋 오류 타입:', error instanceof Error ? error.constructor.name : typeof error);
         console.error('📋 오류 메시지:', error instanceof Error ? error.message : String(error));
@@ -541,16 +497,13 @@ class IAPManager {
         return { success: false, error: 'IAP 모듈을 사용할 수 없습니다.' };
       }
 
-      // 중복 구매 방지
       if (this.activePurchases.has(productId)) {
         console.warn('⚠️ 이미 구매 진행 중인 상품:', productId);
         return { success: false, error: '이미 구매가 진행 중입니다. 잠시만 기다려주세요.' };
       }
       this.activePurchases.add(productId);
 
-      // Promise 생성
       return new Promise<PurchaseResult>(async (resolve, reject) => {
-        // 타임아웃 설정 (30초)
         const timeoutId = setTimeout(() => {
           this.pendingPurchaseResolvers.delete(productId);
           this.activePurchases.delete(productId);
@@ -575,14 +528,13 @@ class IAPManager {
         });
 
         try {
-          // ✅ FIX: v14.x Nitro API - requestPurchase (구독 타입)
           console.log('📞 RNIap.requestPurchase 호출:', productId);
           await RNIap.requestPurchase({
             request: {
               ios: { sku: productId },
               android: { skus: [productId] }
             },
-            type: 'subs'  // 구독 상품
+            type: 'subs'
           });
           console.log('✅ requestPurchase 호출 성공 - 결제 시트 표시됨');
         } catch (err) {
@@ -616,7 +568,6 @@ class IAPManager {
     try {
       console.log('🔄 [1/4] 구매 복원 시작...');
 
-      // ✅ FIX: 재시도 로직 (최대 3회, 1초 간격)
       let purchases: any[] = [];
       let retries = 3;
 
@@ -626,7 +577,7 @@ class IAPManager {
           console.log(`📦 [2/4] 복원된 구매 내역: ${purchases.length}개 (시도: ${4 - retries}/3)`);
 
           if (purchases && purchases.length > 0) {
-            break; // 성공
+            break;
           }
 
           if (retries > 1) {
@@ -646,13 +597,10 @@ class IAPManager {
       if (!purchases || purchases.length === 0) {
         console.log('⚠️ [3/4] 복원할 구매 내역이 없습니다.');
 
-        // ✅ FIX: 구매 내역이 없어도 Edge Function lookup 모드로 직접 호출
-        // StoreKit 2에서 getAvailablePurchases()가 빈 배열을 반환하는 경우 대응
         console.log('🔄 [3/4] Edge Function lookup 모드로 직접 확인 시도...');
         try {
           const currentStatus = await LocalStorageManager.getPremiumStatus();
           if (currentStatus.store_transaction_id) {
-            // 기존 transactionId가 있으면 lookup 모드로 검증
             const productId = currentStatus.subscription_type === 'yearly'
               ? SUBSCRIPTION_SKUS.yearly
               : SUBSCRIPTION_SKUS.monthly;
@@ -662,9 +610,8 @@ class IAPManager {
               productId,
             });
 
-            // 빈 문자열로 receipt 전달 → lookup 모드 자동 적용
             const validationResult = await ReceiptValidator.validateReceipt(
-              '', // 빈 영수증 → lookup 모드
+              '',
               currentStatus.store_transaction_id,
               productId
             );
@@ -696,15 +643,12 @@ class IAPManager {
           console.log(`📋 [Restore] verificationResultIOS: ${purchase.verificationResultIOS ? 'exists' : 'null'}`);
           console.log(`📋 [Restore] transactionReceipt: ${purchase.transactionReceipt ? 'exists' : 'null'}`);
 
-          // ✅ CRITICAL FIX: Legacy Receipt 사용 (Edge Function 호환)
           const receiptData = Platform.OS === 'ios'
             ? (purchase.transactionReceipt || '')
             : (purchase.purchaseToken || '');
 
-          // ✅ FIX: 영수증이 없어도 transactionId가 있으면 복원 시도 (로컬 검증 Fallback)
           if (!receiptData) {
             console.warn(`⚠️ 영수증 없음 - transactionId로 복원 시도: ${purchase.productId}`);
-            // continue; // ❌ 기존: 건너뛰기 -> ✅ 수정: 계속 진행
           }
 
           await this.processPurchaseSuccess(purchase.productId, purchase.transactionId || '', receiptData);
@@ -723,107 +667,119 @@ class IAPManager {
   }
 
   /**
+   * 웹 환경 결제 시뮬레이션
+   */
+  private static async simulateWebPurchase(productId: string): Promise<PurchaseResult> {
+    console.log('💻 웹 결제 시뮬레이션 시작:', productId);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+
+    // 성공 시뮬레이션
+    const transactionId = 'web_sim_' + Date.now();
+    await this.processPurchaseSuccess(productId, transactionId, '');
+
+    return {
+      success: true,
+      productId,
+      transactionId,
+      purchaseDate: new Date().toISOString()
+    };
+  }
+
+  /**
    * 구매 성공 처리 (프리미엄 상태 업데이트)
    * ✅ FIX: receiptData가 없으면 LocalStorage에서 기존 영수증 사용
    */
   private static async processPurchaseSuccess(productId: string, transactionId: string, receiptData?: string): Promise<void> {
     try {
-      console.log('🔍 구매 성공 처리 및 영수증 검증 시작...');
-      console.log('📋 [ProcessPurchase] productId:', productId);
-      console.log('📋 [ProcessPurchase] transactionId:', transactionId);
-      console.log('📋 [ProcessPurchase] receiptData 존재:', !!receiptData, '길이:', receiptData?.length || 0);
+      console.log('🔄 [ProcessPurchase] 구매 성공 처리 시작:', { productId, transactionId, hasReceipt: !!receiptData });
 
-      // ✅ FIX: receiptData가 없으면 LocalStorage에서 기존 영수증 가져오기
+      // 1. 영수증 데이터 확보 (없으면 LocalStorage 확인)
       let effectiveReceipt = receiptData;
-      if (!effectiveReceipt && Platform.OS !== 'web') {
-        console.log('⚠️ [ProcessPurchase] receiptData 없음 - LocalStorage에서 기존 영수증 확인...');
+      if (!effectiveReceipt) {
         const currentStatus = await LocalStorageManager.getPremiumStatus();
-        if (currentStatus.receipt_data) {
-          effectiveReceipt = currentStatus.receipt_data;
-          console.log('✅ [ProcessPurchase] LocalStorage 영수증 발견, 길이:', effectiveReceipt.length);
-        } else {
-          console.warn('⚠️ [ProcessPurchase] LocalStorage에도 영수증 없음');
-        }
+        effectiveReceipt = currentStatus.receipt_data;
+        console.log('ℹ️ [ProcessPurchase] 전달된 영수증 없음 - LocalStorage 확인:', !!effectiveReceipt);
       }
 
+      // 2. 영수증 검증 (Edge Function)
       if (effectiveReceipt) {
         // ✅ FIX: productId 파라미터 추가 (Supabase Edge Function 연동)
         console.log('🔄 [ProcessPurchase] Edge Function 호출 시작...');
         const validationResult = await ReceiptValidator.validateReceipt(effectiveReceipt, transactionId, productId);
+
         if (!validationResult.isValid) throw new Error('영수증 검증 실패: ' + validationResult.error);
         if (!validationResult.isActive) throw new Error('구독이 활성 상태가 아닙니다');
 
+        // ✅ FIX: dateUtils 사용하여 정확한 만료일 계산
+        const isYearly = productId.includes('yearly');
+        const expiryDate = calculateSubscriptionExpiry(new Date(), isYearly ? 'yearly' : 'monthly');
+
+        // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
+        const existingStatus = await LocalStorageManager.getPremiumStatus();
+        const { purchaseDate } = determinePurchaseDate(existingStatus);
+
+        const premiumStatus: PremiumStatus = {
+          is_premium: true,
+          subscription_type: isYearly ? 'yearly' : 'monthly',
+          purchase_date: purchaseDate,
+          expiry_date: expiryDate.toISOString(),
+          store_transaction_id: transactionId,
+          receipt_data: effectiveReceipt, // ✅ 영수증 저장
+          unlimited_storage: true,
+          ad_free: true,
+          premium_spreads: true,
+          last_validated: new Date().toISOString(),
+          validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
+        };
+
+        await LocalStorageManager.updatePremiumStatus(premiumStatus);
+        console.log('✅ 프리미엄 상태 업데이트 완료 (검증 성공)');
+
+        // Edge Function과 상태 동기화
         await ReceiptValidator.syncSubscriptionStatus(validationResult, productId);
-        console.log('✅ 영수증 검증 및 동기화 완료');
-        return;
+
+      } else {
+        // 3. 영수증 없는 경우 (Web Simulation 또는 Fallback)
+        console.log('⚠️ [ProcessPurchase] 영수증 없음 - LocalStorage만 업데이트 (Fallback)');
+        const isYearly = productId.includes('yearly');
+        const currentDate = new Date();
+        const expiryDate = calculateSubscriptionExpiry(currentDate, isYearly ? 'yearly' : 'monthly');
+
+        const existingStatus = await LocalStorageManager.getPremiumStatus();
+        const { purchaseDate } = determinePurchaseDate(existingStatus);
+
+        const premiumStatus: PremiumStatus = {
+          is_premium: true,
+          subscription_type: isYearly ? 'yearly' : 'monthly',
+          purchase_date: purchaseDate,
+          expiry_date: expiryDate.toISOString(),
+          store_transaction_id: transactionId,
+          // receipt_data: undefined, // 영수증 없음
+          unlimited_storage: true,
+          ad_free: true,
+          premium_spreads: true,
+          last_validated: new Date().toISOString(),
+          validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
+        };
+
+        await LocalStorageManager.updatePremiumStatus(premiumStatus);
+        console.log('✅ 프리미엄 상태 업데이트 완료 (LocalStorage only)');
       }
 
-      // Web Simulation 또는 영수증 없는 경우 LocalStorage만 업데이트
-      console.log('⚠️ [ProcessPurchase] 영수증 없음 - LocalStorage만 업데이트');
-      const isYearly = productId.includes('yearly');
-      const currentDate = new Date();
-      const expiryDate = new Date(currentDate);
-      if (isYearly) expiryDate.setFullYear(currentDate.getFullYear() + 1);
-      else expiryDate.setMonth(currentDate.getMonth() + 1);
-
-      // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
-      const existingStatus = await LocalStorageManager.getPremiumStatus();
-      const { purchaseDate, isNewPurchase, isActiveRenewal } = determinePurchaseDate(existingStatus);
-
-      console.log('📅 [ProcessPurchase] purchase_date 판단:', {
-        isActiveRenewal,
-        isNewPurchase,
-        finalPurchaseDate: purchaseDate,
-      });
-
-      const premiumStatus: PremiumStatus = {
-        is_premium: true,
-        subscription_type: isYearly ? 'yearly' : 'monthly',
-        purchase_date: purchaseDate, // ✅ 기존 구매일 유지
-        expiry_date: expiryDate.toISOString(),
-        store_transaction_id: transactionId,
-        unlimited_storage: true,
-        ad_free: true,
-        premium_spreads: true,
-        last_validated: currentDate.toISOString(),
-        validation_environment: Platform.OS === 'web' ? 'Sandbox' : 'Production'
-      };
-
-      await LocalStorageManager.updatePremiumStatus(premiumStatus);
-      console.log('✅ 프리미엄 상태 업데이트 완료 (LocalStorage only)');
+      // 4. 이벤트 발송
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('premiumStatusChanged', { detail: { isPremium: true } }));
+      } else if (Platform.OS !== 'web') {
+        try {
+          const { DeviceEventEmitter } = require('react-native');
+          DeviceEventEmitter.emit('premiumStatusChanged', { isPremium: true });
+        } catch (e) { }
+      }
 
     } catch (error) {
       console.error('❌ 구매 성공 처리 오류:', error);
       throw error;
     }
-  }
-
-  /**
-   * 웹 환경용 구매 시뮬레이션
-   */
-  private static async simulateWebPurchase(productId: string): Promise<PurchaseResult> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          productId,
-          transactionId: `web_sim_${Date.now()}`,
-          purchaseDate: new Date().toISOString()
-        });
-      }, 2000);
-    });
-  }
-
-  /**
-   * 현재 구독 상태 확인
-   */
-  static async getCurrentSubscriptionStatus(): Promise<PremiumStatus> {
-    const currentStatus = await LocalStorageManager.getPremiumStatus();
-    if (currentStatus.is_premium) {
-      await ReceiptValidator.periodicValidation();
-      return await LocalStorageManager.getPremiumStatus();
-    }
-    return currentStatus;
   }
 
   /**
@@ -840,7 +796,6 @@ class IAPManager {
 
       console.log('🔄 강제 구독 검증 시작...');
 
-      // ✅ FIX: receipt_data가 없으면 LocalStorage 만료일 기준으로 검증 (Edge Function 미연동 대응)
       if (!currentStatus.receipt_data && !currentStatus.store_transaction_id) {
         console.log('ℹ️ 강제 검증: 영수증 데이터 없음 - LocalStorage 만료일 기준 검증');
 
@@ -859,7 +814,6 @@ class IAPManager {
 
       const productId = currentStatus.subscription_type === 'yearly' ? SUBSCRIPTION_SKUS.yearly : SUBSCRIPTION_SKUS.monthly;
 
-      // ✅ FIX: 실제 영수증이 있을 때만 서버 검증 시도
       if (currentStatus.receipt_data) {
         const validationResult = await ReceiptValidator.validateReceipt(
           currentStatus.receipt_data,
@@ -870,7 +824,6 @@ class IAPManager {
         return validationResult.isActive;
       }
 
-      // store_transaction_id만 있는 경우: LocalStorage 만료일 기준 검증
       if (currentStatus.expiry_date) {
         const expiryDate = new Date(currentStatus.expiry_date);
         const now = new Date();
