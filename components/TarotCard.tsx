@@ -111,7 +111,7 @@ export const TarotCardComponent: React.FC<TarotCardProps> = memo(({
         ) : (
           <OptimizedImage
             source={card.imageUrl}
-            style={[styles.cardImage, imageSize]}
+            style={{ ...styles.cardImage, ...imageSize }}
             resizeMode="cover"
             onError={handleImageError}
             onLoadStart={() => setImageError(false)}

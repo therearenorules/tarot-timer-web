@@ -69,8 +69,9 @@ export default function PremiumSubscription({
       console.log(`✅ [UI] 상품 로드 성공: ${availableProducts.length}개`);
       setProducts(availableProducts);
 
-      // 현재 구독 상태 확인
-      const currentStatus = await IAPManager.getCurrentSubscriptionStatus();
+      // 현재 구독 상태 확인 (LocalStorageManager 사용)
+      const { LocalStorageManager } = await import('../utils/localStorage');
+      const currentStatus = await LocalStorageManager.getPremiumStatus();
       setPremiumStatus(currentStatus);
 
       console.log('✅ [UI] IAP 초기화 완료');

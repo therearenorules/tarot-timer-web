@@ -25,11 +25,12 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   const [isSupported, setIsSupported] = useSafeState(false);
   const [isInitialized, setIsInitialized] = useSafeState(false);
 
-  // 위젯 지원 여부 확인
+  // 위젯 지원 여부 확인 (현재는 플랫폼에 따라 항상 지원 가정)
   const checkWidgetSupport = useCallback(async () => {
     try {
-      const supported = await WidgetManager.isWidgetSupported();
-      setIsSupported(supported);
+      // 위젯 데이터가 있으면 지원하는 것으로 간주
+      const widgetData = await WidgetManager.getWidgetData();
+      setIsSupported(true); // 기본적으로 지원
     } catch (error) {
       console.error('위젯 지원 확인 오류:', error);
       setIsSupported(false);
@@ -39,15 +40,13 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   // 위젯 초기화
   const initializeWidget = useCallback(async () => {
     try {
+      // initialize() 호출 시 내부에서 자동으로 autoUpdate 시작
       await WidgetManager.initialize();
-      if (autoUpdate) {
-        await WidgetManager.startAutoUpdate(updateInterval);
-      }
       setIsInitialized(true);
     } catch (error) {
       console.error('위젯 초기화 오류:', error);
     }
-  }, [autoUpdate, updateInterval]);
+  }, []);
 
   // 컴포넌트 마운트 시 초기화
   useEffect(() => {

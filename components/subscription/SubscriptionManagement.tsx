@@ -16,7 +16,7 @@ import {
 import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { usePremium } from '../../contexts/PremiumContext';
-import { IAPManager } from '../../utils/iapManager';
+import IAPManager from '../../utils/iapManager';
 import {
   Colors,
   Spacing,

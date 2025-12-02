@@ -15,10 +15,24 @@ import {
   StyleSheet,
   ImageStyle,
   ViewStyle,
-  ImageResizeMode,
   ImageSourcePropType
 } from 'react-native';
-import { Image } from 'expo-image';
+import { Image, ImageContentFit } from 'expo-image';
+
+// expo-image 호환 타입 매핑
+type ImageResizeMode = 'cover' | 'contain' | 'fill' | 'none' | 'scale-down' | 'center';
+
+const resizeModeToContentFit = (mode: ImageResizeMode): ImageContentFit => {
+  const mapping: Record<ImageResizeMode, ImageContentFit> = {
+    'cover': 'cover',
+    'contain': 'contain',
+    'fill': 'fill',
+    'none': 'none',
+    'scale-down': 'scale-down',
+    'center': 'contain', // center를 contain으로 매핑
+  };
+  return mapping[mode] || 'cover';
+};
 
 interface OptimizedImageProps {
   source: ImageSourcePropType;
@@ -136,7 +150,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
       <Image
         source={source}
         style={style}
-        contentFit={resizeMode}
+        contentFit={resizeModeToContentFit(resizeMode)}
         transition={fadeDuration}
         onLoadStart={handleLoadStart}
         onLoad={handleLoad}

@@ -21,7 +21,7 @@ import { LanguageUtils } from '../../i18n/index';
 import { Colors, Spacing, BorderRadius } from '../DesignSystem';
 import { useTimer } from '../../hooks/useTimer';
 import { useTarotCards } from '../../hooks/useTarotCards';
-import { TarotUtils, DailyTarotSave } from '../../utils/tarotData';
+import { TarotUtils, DailyTarotSave, TarotCard } from '../../utils/tarotData';
 import { TarotCardComponent } from '../TarotCard';
 import { Icon } from '../Icon';
 import AdManager from '../../utils/adManager';
@@ -94,7 +94,7 @@ const CardDetailModal = memo(({
   }, []);
 
   // 모달 스타일 (화면 비율 기반 동적 계산)
-  const getModalStyle = () => {
+  const getModalStyle = (): { width: `${number}%`; height: number | `${number}%`; maxWidth: number; maxHeight?: `${number}%` } => {
     const { width, height } = screenData;
 
     // 화면 비율 계산
@@ -106,17 +106,17 @@ const CardDetailModal = memo(({
 
     if (Platform.OS === 'web') {
       return {
-        width: '100%',
+        width: '100%' as `${number}%`,
         maxWidth: 400,
-        height: 'auto',
-        maxHeight: '90vh',
+        height: '90%' as `${number}%`,
+        maxHeight: '90%' as `${number}%`,
       };
     }
 
     // 매우 작은 화면 (< 350dp) - Galaxy A, 저가형
     if (width < 350) {
       return {
-        width: '98%',
+        width: '98%' as `${number}%`,
         height: isVeryTallScreen ? height * 0.72 : isTallScreen ? height * 0.75 : 600,
         maxWidth: 350,
       };
@@ -125,7 +125,7 @@ const CardDetailModal = memo(({
     // 작은 화면 (350~400dp) - iPhone SE, 소형 Android
     if (width < 400) {
       return {
-        width: '95%',
+        width: '95%' as `${number}%`,
         height: isVeryTallScreen ? height * 0.75 : isTallScreen ? height * 0.78 : 650,
         maxWidth: 400,
       };
@@ -134,7 +134,7 @@ const CardDetailModal = memo(({
     // 중간 화면 (400~500dp) - 대부분의 스마트폰
     if (width < 500) {
       return {
-        width: '92%',
+        width: '92%' as `${number}%`,
         height: isVeryTallScreen ? height * 0.77 : isTallScreen ? height * 0.80 : 700,
         maxWidth: 450,
       };
@@ -142,7 +142,7 @@ const CardDetailModal = memo(({
 
     // 큰 화면 / 태블릿 (500dp+)
     return {
-      width: '85%',
+      width: '85%' as `${number}%`,
       height: height * 0.82,
       maxWidth: 600,
     };
@@ -571,7 +571,7 @@ const TimerTab = memo(() => {
   }, [onMidnightReset, removeMidnightResetCallback, handleMidnightReset]);
 
   const [modalVisible, setModalVisible] = useSafeState(false);
-  const [modalCard, setModalCard] = useSafeState(null);
+  const [modalCard, setModalCard] = useSafeState<TarotCard | null>(null);
   const [modalHour, setModalHour] = useSafeState(0);
   const [modalMemo, setModalMemo] = useSafeState('');
 

@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
+  withDelay,
   Easing,
   interpolate,
 } from 'react-native-reanimated';
@@ -130,14 +131,16 @@ export const SparkleAnimation: React.FC<SparkleAnimationProps> = ({
       }), 
       -1
     );
-    sparkle2Opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.2, { duration: durations.opacity * 0.9 }),
-        withTiming(0.8, { duration: durations.opacity * 0.9 })
-      ),
-      -1,
-      false,
-      500 // 0.5초 지연
+    sparkle2Opacity.value = withDelay(
+      500, // 0.5초 지연
+      withRepeat(
+        withSequence(
+          withTiming(0.2, { duration: durations.opacity * 0.9 }),
+          withTiming(0.8, { duration: durations.opacity * 0.9 })
+        ),
+        -1,
+        false
+      )
     );
 
     sparkle3Rotation.value = withRepeat(
@@ -147,14 +150,16 @@ export const SparkleAnimation: React.FC<SparkleAnimationProps> = ({
       }), 
       -1
     );
-    sparkle3Opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.1, { duration: durations.opacity * 1.1 }),
-        withTiming(0.6, { duration: durations.opacity * 1.1 })
-      ),
-      -1,
-      false,
-      1000 // 1초 지연
+    sparkle3Opacity.value = withDelay(
+      1000, // 1초 지연
+      withRepeat(
+        withSequence(
+          withTiming(0.1, { duration: durations.opacity * 1.1 }),
+          withTiming(0.6, { duration: durations.opacity * 1.1 })
+        ),
+        -1,
+        false
+      )
     );
 
     sparkle4Rotation.value = withRepeat(
@@ -164,14 +169,16 @@ export const SparkleAnimation: React.FC<SparkleAnimationProps> = ({
       }), 
       -1
     );
-    sparkle4Opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.3, { duration: durations.opacity * 0.85 }),
-        withTiming(0.9, { duration: durations.opacity * 0.85 })
-      ),
-      -1,
-      false,
-      1500 // 1.5초 지연
+    sparkle4Opacity.value = withDelay(
+      1500, // 1.5초 지연
+      withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: durations.opacity * 0.85 }),
+          withTiming(0.9, { duration: durations.opacity * 0.85 })
+        ),
+        -1,
+        false
+      )
     );
 
     // 부유 파티클들 - 수직 이동
@@ -190,61 +197,73 @@ export const SparkleAnimation: React.FC<SparkleAnimationProps> = ({
       -1
     );
 
-    particle2Y.value = withRepeat(
-      withSequence(
-        withTiming(-20, { duration: durations.movement * 0.83 }),
-        withTiming(0, { duration: durations.movement * 0.83 })
-      ),
-      -1,
-      false,
-      800 // 0.8초 지연
+    particle2Y.value = withDelay(
+      800, // 0.8초 지연
+      withRepeat(
+        withSequence(
+          withTiming(-20, { duration: durations.movement * 0.83 }),
+          withTiming(0, { duration: durations.movement * 0.83 })
+        ),
+        -1,
+        false
+      )
     );
-    particle2Opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: durations.movement * 0.83 }),
-        withTiming(0.5, { duration: durations.movement * 0.83 })
-      ),
-      -1,
-      false,
-      800
-    );
-
-    particle3Y.value = withRepeat(
-      withSequence(
-        withTiming(-20, { duration: durations.movement * 0.93 }),
-        withTiming(0, { duration: durations.movement * 0.93 })
-      ),
-      -1,
-      false,
-      1200 // 1.2초 지연
-    );
-    particle3Opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: durations.movement * 0.93 }),
-        withTiming(0.5, { duration: durations.movement * 0.93 })
-      ),
-      -1,
-      false,
-      1200
+    particle2Opacity.value = withDelay(
+      800,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: durations.movement * 0.83 }),
+          withTiming(0.5, { duration: durations.movement * 0.83 })
+        ),
+        -1,
+        false
+      )
     );
 
-    particle4Y.value = withRepeat(
-      withSequence(
-        withTiming(-15, { duration: durations.movement * 1.07 }),
-        withTiming(0, { duration: durations.movement * 1.07 })
-      ),
-      -1,
-      false,
-      300 // 0.3초 지연
+    particle3Y.value = withDelay(
+      1200, // 1.2초 지연
+      withRepeat(
+        withSequence(
+          withTiming(-20, { duration: durations.movement * 0.93 }),
+          withTiming(0, { duration: durations.movement * 0.93 })
+        ),
+        -1,
+        false
+      )
     );
-    particle4Opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: durations.movement * 1.07 }),
-        withTiming(0.5, { duration: durations.movement * 1.07 })
-      ),
-      -1,
-      false,
-      300
+    particle3Opacity.value = withDelay(
+      1200,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: durations.movement * 0.93 }),
+          withTiming(0.5, { duration: durations.movement * 0.93 })
+        ),
+        -1,
+        false
+      )
+    );
+
+    particle4Y.value = withDelay(
+      300, // 0.3초 지연
+      withRepeat(
+        withSequence(
+          withTiming(-15, { duration: durations.movement * 1.07 }),
+          withTiming(0, { duration: durations.movement * 1.07 })
+        ),
+        -1,
+        false
+      )
+    );
+    particle4Opacity.value = withDelay(
+      300,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: durations.movement * 1.07 }),
+          withTiming(0.5, { duration: durations.movement * 1.07 })
+        ),
+        -1,
+        false
+      )
     );
 
     // 글로우 링들
@@ -263,23 +282,27 @@ export const SparkleAnimation: React.FC<SparkleAnimationProps> = ({
       -1
     );
 
-    glowRadius2.value = withRepeat(
-      withSequence(
-        withTiming(45, { duration: durations.glow * 1.25 }),
-        withTiming(40, { duration: durations.glow * 1.25 })
-      ),
-      -1,
-      false,
-      1000 // 1초 지연
+    glowRadius2.value = withDelay(
+      1000, // 1초 지연
+      withRepeat(
+        withSequence(
+          withTiming(45, { duration: durations.glow * 1.25 }),
+          withTiming(40, { duration: durations.glow * 1.25 })
+        ),
+        -1,
+        false
+      )
     );
-    glowOpacity2.value = withRepeat(
-      withSequence(
-        withTiming(0.05, { duration: durations.glow * 1.25 }),
-        withTiming(0.3, { duration: durations.glow * 1.25 })
-      ),
-      -1,
-      false,
-      1000
+    glowOpacity2.value = withDelay(
+      1000,
+      withRepeat(
+        withSequence(
+          withTiming(0.05, { duration: durations.glow * 1.25 }),
+          withTiming(0.3, { duration: durations.glow * 1.25 })
+        ),
+        -1,
+        false
+      )
     );
   }, [intensity]);
 

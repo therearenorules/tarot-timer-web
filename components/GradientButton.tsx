@@ -1,6 +1,6 @@
 // components/GradientButton.tsx - 고급 그라데이션 버튼 컴포넌트
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { Icon, IconName } from './Icon';
 import { Colors, ShadowStyles, BorderRadius, Spacing } from './DesignSystem';
 
@@ -23,21 +23,21 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   size = 'medium',
   style
 }) => {
-  const getButtonStyle = () => {
-    const baseStyle = [styles.button];
-    
+  const getButtonStyle = (): StyleProp<ViewStyle> => {
+    const baseStyle: StyleProp<ViewStyle>[] = [styles.button];
+
     if (variant === 'primary') {
       baseStyle.push(styles.primaryButton);
     } else {
       baseStyle.push(styles.secondaryButton);
     }
-    
+
     if (size === 'small') {
       baseStyle.push(styles.smallButton);
     } else if (size === 'large') {
       baseStyle.push(styles.largeButton);
     }
-    
+
     if (disabled) {
       baseStyle.push(styles.disabledButton);
     }
@@ -49,28 +49,28 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
     return baseStyle;
   };
 
-  const getTextStyle = () => {
-    const baseStyle = [styles.buttonText];
-    
+  const getTextStyle = (): StyleProp<TextStyle> => {
+    const baseStyle: StyleProp<TextStyle>[] = [styles.buttonText];
+
     // 크기별 텍스트 스타일
     if (size === 'small') {
       baseStyle.push(styles.smallButtonText);
     } else if (size === 'large') {
       baseStyle.push(styles.largeButtonText);
     }
-    
+
     // 버튼 타입별 텍스트 스타일
     if (variant === 'primary') {
       baseStyle.push(styles.primaryButtonText);
     } else if (variant === 'secondary') {
       baseStyle.push(styles.secondaryButtonText);
     }
-    
+
     // 비활성화 상태 텍스트 스타일
     if (disabled) {
       baseStyle.push(styles.disabledButtonText);
     }
-    
+
     return baseStyle;
   };
 
@@ -112,21 +112,23 @@ const styles = StyleSheet.create({
     borderColor: Colors.border.soft,
     backgroundColor: Colors.glass.primary,
     // 고급스러운 그림자
-    ...ShadowStyles.brandGlow,
+    shadowColor: ShadowStyles.brandGlow.shadowColor,
+    shadowOffset: ShadowStyles.brandGlow.shadowOffset,
+    shadowOpacity: ShadowStyles.brandGlow.shadowOpacity,
+    shadowRadius: ShadowStyles.brandGlow.shadowRadius,
+    elevation: ShadowStyles.brandGlow.elevation,
     // 호버/터치 효과를 위한 오버레이 준비
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: 'hidden' as const,
+    position: 'relative' as const,
   },
   primaryButton: {
     backgroundColor: Colors.brand.primary,
     borderColor: Colors.border.focus,
-    ...ShadowStyles.brandGlow,
   },
   secondaryButton: {
     backgroundColor: Colors.glass.primary,
     borderColor: Colors.brand.secondary,
     borderWidth: 2,
-    ...ShadowStyles.mysticGlow,
   },
   disabledButton: {
     backgroundColor: Colors.glass.tertiary,
@@ -147,15 +149,15 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
   },
   buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     gap: Spacing.sm,
   },
   buttonText: {
     color: Colors.text.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
@@ -163,26 +165,25 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '700' as const,
     textShadowColor: 'rgba(0, 0, 0, 0.4)',
     textShadowRadius: 3,
   },
   smallButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '500' as const,
   },
   largeButtonText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 1,
   },
   secondaryButtonText: {
     color: Colors.brand.secondary,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   disabledButtonText: {
     color: Colors.text.muted,
-    textShadowOpacity: 0,
   },
 });
 

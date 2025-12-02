@@ -38,7 +38,7 @@ export interface SpreadPosition {
   offsetY?: number;          // Y축 오프셋
 }
 
-export type SpreadType = 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'relationship' | 'choice';
+export type SpreadType = 'one-card' | 'three-card' | 'four-card' | 'five-card' | 'celtic-cross' | 'relationship' | 'choice';
 
 export interface SpreadLayout {
   id: SpreadType;
@@ -1157,24 +1157,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxs,
     borderRadius: BorderRadius.small,
     maxWidth: 80,
-  },
-  positionIndicator: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    width: 20,
-    height: 20,
-    backgroundColor: Colors.brand.accent,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#fff',
-  },
-  positionNumber: {
-    color: '#000',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
 
   // 선택된 카드 정보

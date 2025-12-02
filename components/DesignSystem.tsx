@@ -67,6 +67,7 @@ export const Colors = {
     warning: 'rgba(245, 158, 11, 0.5)',
     error: 'rgba(239, 68, 68, 0.5)',
     info: 'rgba(59, 130, 246, 0.5)',
+    disabled: 'rgba(255, 255, 255, 0.2)',
   },
 
   // 상태별 색상 (호환성)
@@ -75,6 +76,7 @@ export const Colors = {
     warning: '#F59E0B',
     error: '#EF4444',
     info: '#3B82F6',
+    disabled: 'rgba(255, 255, 255, 0.4)',
   },
 
   // Feedback 색상 (status와 동일, 호환성)
@@ -377,8 +379,15 @@ export const Typography = {
     primary: {
       fontSize: 16,
       fontFamily: 'NotoSansKR_700Bold',
-      fontWeight: '600',
+      fontWeight: '600' as const,
       color: '#fff',
+      textAlign: 'center' as const,
+    },
+    secondary: {
+      fontSize: 14,
+      fontFamily: 'NotoSansKR_500Medium',
+      fontWeight: '500' as const,
+      color: 'rgba(255, 255, 255, 0.8)',
       textAlign: 'center' as const,
     }
   },
@@ -387,14 +396,14 @@ export const Typography = {
     h2: {
       fontSize: 22,
       fontFamily: 'NotoSansKR_700Bold',
-      fontWeight: '600',
+      fontWeight: '600' as const,
       color: '#fff',
       letterSpacing: -0.3,
     },
     h3: {
       fontSize: 20,
       fontFamily: 'NotoSansKR_700Bold',
-      fontWeight: '600',
+      fontWeight: '600' as const,
       color: '#fff',
       marginBottom: 12,
       letterSpacing: -0.2,
@@ -405,14 +414,14 @@ export const Typography = {
     regular: {
       fontSize: 14,
       fontFamily: 'NotoSansKR_400Regular',
-      fontWeight: '400',
+      fontWeight: '400' as const,
       color: 'rgba(255, 255, 255, 0.7)',
       lineHeight: 20,
     },
     medium: {
       fontSize: 14,
       fontFamily: 'NotoSansKR_500Medium',
-      fontWeight: '500',
+      fontWeight: '500' as const,
       color: 'rgba(255, 255, 255, 0.8)',
       lineHeight: 20,
     }
@@ -422,14 +431,14 @@ export const Typography = {
     regular: {
       fontSize: 12,
       fontFamily: 'NotoSansKR_400Regular',
-      fontWeight: '400',
+      fontWeight: '400' as const,
       color: 'rgba(255, 255, 255, 0.6)',
       lineHeight: 16,
     },
     medium: {
       fontSize: 12,
       fontFamily: 'NotoSansKR_500Medium',
-      fontWeight: '500',
+      fontWeight: '500' as const,
       color: 'rgba(255, 255, 255, 0.7)',
       lineHeight: 16,
     }
@@ -518,6 +527,7 @@ export const BorderRadius = {
   sm: 8,
   medium: 12,
   md: 12,
+  large: 16,
   lg: 16,
   xl: 20,
   xxl: 24,

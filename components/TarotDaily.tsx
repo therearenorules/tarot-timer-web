@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { TarotCardComponent } from './TarotCard';
 import { LanguageUtils } from '../i18n/index';
 import { useTarotI18n } from '../hooks/useTarotI18n';
-import { simpleStorage, STORAGE_KEYS, TarotUtils, DailyTarotSave, SavedSpread } from '../utils/tarotData';
+import { simpleStorage, STORAGE_KEYS, TarotUtils, DailyTarotSave, SavedSpread, TarotCard } from '../utils/tarotData';
 import LocalStorageManager from '../utils/localStorage';
 import {
   Colors,
@@ -33,12 +33,25 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 
 // 데일리 타로 뷰어 모달
-const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
+// 확장된 DailyTarotSave 타입 (UI에서 사용하는 추가 필드 포함)
+interface ExtendedDailyTarotSave extends DailyTarotSave {
+  dateKey?: string;
+  displayDate?: string;
+}
+
+interface DailyTarotViewerProps {
+  visible: boolean;
+  reading: ExtendedDailyTarotSave | null;
+  onClose: () => void;
+  onMemoSaved?: (updatedReading: ExtendedDailyTarotSave) => void;
+}
+
+const DailyTarotViewer: React.FC<DailyTarotViewerProps> = ({ visible, reading, onClose, onMemoSaved }) => {
   const { t } = useTranslation();
   const { getCardName } = useTarotI18n();
-  const [selectedHour, setSelectedHour] = useSafeState(0);
-  const [memoText, setMemoText] = useSafeState('');
-  const [cardMemos, setCardMemos] = useSafeState({});
+  const [selectedHour, setSelectedHour] = useSafeState<number>(0);
+  const [memoText, setMemoText] = useSafeState<string>('');
+  const [cardMemos, setCardMemos] = useSafeState<Record<number, string>>({});
 
   useEffect(() => {
     if (reading && reading.memos) {
@@ -54,11 +67,13 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
     }
   }, [selectedHour, cardMemos]);
 
-  const handleCardPress = (hour) => {
+  const handleCardPress = (hour: number) => {
     setSelectedHour(hour);
   };
 
   const saveMemo = async () => {
+    if (!reading) return;
+
     try {
       const updatedMemos = { ...cardMemos, [selectedHour]: memoText };
       setCardMemos(updatedMemos);
@@ -72,7 +87,7 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
 
       const storageKey = STORAGE_KEYS.DAILY_TAROT + dateString;
 
-      const updatedReading = {
+      const updatedReading: ExtendedDailyTarotSave = {
         ...reading,
         memos: updatedMemos
       };
@@ -136,14 +151,6 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.cardScrollContainer}
               removeClippedSubviews={true}
-              initialNumToRender={6}
-              maxToRenderPerBatch={4}
-              windowSize={8}
-              getItemLayout={(data, index) => ({
-                length: 80,
-                offset: 80 * index,
-                index,
-              })}
             >
               {Array.from({ length: 24 }, (_, hour) => {
                 // ✅ FIX: 배열 접근 방식으로 수정
@@ -225,7 +232,13 @@ const DailyTarotViewer = ({ visible, reading, onClose, onMemoSaved }) => {
 };
 
 // 스프레드 뷰어 모달
-const SpreadViewer = ({ visible, spread, onClose }) => {
+interface SpreadViewerProps {
+  visible: boolean;
+  spread: SavedSpread | null;
+  onClose: () => void;
+}
+
+const SpreadViewer: React.FC<SpreadViewerProps> = ({ visible, spread, onClose }) => {
   const { t } = useTranslation();
   const { getSpreadName } = useTarotI18n();
   if (!spread) return null;
@@ -250,7 +263,7 @@ const SpreadViewer = ({ visible, spread, onClose }) => {
           automaticallyAdjustContentInsets={false}
           contentInsetAdjustmentBehavior="never"
         >
-          <Text style={styles.spreadName}>{getSpreadName(spread.spreadName, spread.spreadNameEn)}</Text>
+          <Text style={styles.spreadName}>{spread.spreadName || spread.spreadNameEn}</Text>
 
           {/* 스프레드 배치도 */}
           <View style={styles.spreadLayout}>
@@ -635,11 +648,11 @@ const TarotDaily = () => {
 
   // ✅ Android 성능 최적화: 일일 타로 카드 항목 메모이제이션
   const DailyReadingCard = memo(({ reading, index, isDeleteMode, isSelected, onPress }: {
-    reading: any;
+    reading: ExtendedDailyTarotSave;
     index: number;
     isDeleteMode: boolean;
     isSelected: boolean;
-    onPress: (reading: any, itemId: string) => void;
+    onPress: (reading: ExtendedDailyTarotSave, itemId: string) => void;
   }) => {
     const { t } = useTranslation();
     const itemId = reading.id || `daily-${index}`;
@@ -669,7 +682,7 @@ const TarotDaily = () => {
         {/* 카드 미리보기 */}
         <View style={styles.cardPreview}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {reading.hourlyCards?.slice(0, 8).map((card, cardIndex) => (
+            {reading.hourlyCards?.slice(0, 8).map((card: TarotCard, cardIndex: number) => (
               <View key={cardIndex} style={styles.previewCard}>
                 <TarotCardComponent
                   card={card}
@@ -744,7 +757,7 @@ const TarotDaily = () => {
   );
 
   // ✅ Android 성능 최적화: 카드 클릭 핸들러 메모이제이션
-  const handleDailyCardPress = useCallback((reading, itemId) => {
+  const handleDailyCardPress = useCallback((reading: ExtendedDailyTarotSave, itemId: string) => {
     if (isDeleteMode) {
       const newSelected = new Set(selectedItems);
       if (selectedItems.has(itemId)) {
@@ -759,7 +772,7 @@ const TarotDaily = () => {
   }, [isDeleteMode, selectedItems]);
 
   // ✅ Android 성능 최적화: FlatList renderItem 메모이제이션
-  const renderDailyReadingItem = useCallback(({ item: reading, index }) => {
+  const renderDailyReadingItem = useCallback(({ item: reading, index }: { item: ExtendedDailyTarotSave; index: number }) => {
     const itemId = reading.id || `daily-${index}`;
     const isSelected = selectedItems.has(itemId);
 
@@ -775,12 +788,12 @@ const TarotDaily = () => {
   }, [isDeleteMode, selectedItems, handleDailyCardPress]);
 
   // ✅ Android 성능 최적화: FlatList keyExtractor 메모이제이션
-  const keyExtractor = useCallback((item, index) => {
+  const keyExtractor = useCallback((item: ExtendedDailyTarotSave, index: number) => {
     return item.id || `daily-${index}`;
   }, []);
 
   // ✅ Android 성능 최적화: FlatList getItemLayout
-  const getItemLayout = useCallback((data, index) => {
+  const getItemLayout = useCallback((_data: ArrayLike<ExtendedDailyTarotSave> | null | undefined, index: number) => {
     const ITEM_HEIGHT = 200; // 대략적인 항목 높이
     return {
       length: ITEM_HEIGHT,
@@ -964,7 +977,7 @@ const TarotDaily = () => {
             </View>
 
             <View style={styles.spreadFooter}>
-              <Text style={styles.spreadType}>{getSpreadName(spread.spreadName, spread.spreadNameEn)}</Text>
+              <Text style={styles.spreadType}>{spread.spreadName || spread.spreadNameEn}</Text>
             </View>
           </TouchableOpacity>
           );
@@ -973,7 +986,7 @@ const TarotDaily = () => {
     );
   };
 
-  const handleMemoSaved = (updatedReading) => {
+  const handleMemoSaved = (updatedReading: ExtendedDailyTarotSave) => {
     // dailyReadings 배열에서 해당 reading 업데이트
     setDailyReadings(prevReadings =>
       prevReadings.map(reading =>
