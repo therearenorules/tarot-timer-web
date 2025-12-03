@@ -710,12 +710,27 @@ class IAPManager {
         if (!validationResult.isValid) throw new Error('영수증 검증 실패: ' + validationResult.error);
         if (!validationResult.isActive) throw new Error('구독이 활성 상태가 아닙니다');
 
-        // ✅ FIX: dateUtils 사용하여 정확한 만료일 계산
+        // ✅ FIX: Edge Function에서 반환한 만료일 사용 (없을 때만 새로 계산)
         const isYearly = productId.includes('yearly');
-        const expiryDate = calculateSubscriptionExpiry(new Date(), isYearly ? 'yearly' : 'monthly');
+        const existingStatus = await LocalStorageManager.getPremiumStatus();
+
+        // ✅ CRITICAL FIX: 기존 expiry_date 유지 우선, Edge Function 결과, 마지막으로 새 계산
+        let expiryDate: Date;
+        if (validationResult.expirationDate) {
+          // Edge Function에서 반환한 만료일 사용
+          expiryDate = validationResult.expirationDate;
+          console.log('📅 [ProcessPurchase] Edge Function 만료일 사용:', expiryDate.toISOString());
+        } else if (existingStatus.expiry_date && existingStatus.is_premium) {
+          // 기존 만료일이 있고 프리미엄 상태면 유지
+          expiryDate = new Date(existingStatus.expiry_date);
+          console.log('📅 [ProcessPurchase] 기존 만료일 유지:', expiryDate.toISOString());
+        } else {
+          // 새 구매인 경우에만 새로 계산
+          expiryDate = calculateSubscriptionExpiry(new Date(), isYearly ? 'yearly' : 'monthly');
+          console.log('📅 [ProcessPurchase] 새 만료일 계산:', expiryDate.toISOString());
+        }
 
         // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
-        const existingStatus = await LocalStorageManager.getPremiumStatus();
         const { purchaseDate } = determinePurchaseDate(existingStatus);
 
         const premiumStatus: PremiumStatus = {
@@ -742,10 +757,20 @@ class IAPManager {
         // 3. 영수증 없는 경우 (Web Simulation 또는 Fallback)
         console.log('⚠️ [ProcessPurchase] 영수증 없음 - LocalStorage만 업데이트 (Fallback)');
         const isYearly = productId.includes('yearly');
-        const currentDate = new Date();
-        const expiryDate = calculateSubscriptionExpiry(currentDate, isYearly ? 'yearly' : 'monthly');
-
         const existingStatus = await LocalStorageManager.getPremiumStatus();
+
+        // ✅ CRITICAL FIX: 기존 만료일 유지 (새 구매일 때만 새로 계산)
+        let expiryDate: Date;
+        if (existingStatus.expiry_date && existingStatus.is_premium) {
+          // 기존 만료일 유지
+          expiryDate = new Date(existingStatus.expiry_date);
+          console.log('📅 [ProcessPurchase/Fallback] 기존 만료일 유지:', expiryDate.toISOString());
+        } else {
+          // 새 구매인 경우에만 새로 계산
+          expiryDate = calculateSubscriptionExpiry(new Date(), isYearly ? 'yearly' : 'monthly');
+          console.log('📅 [ProcessPurchase/Fallback] 새 만료일 계산:', expiryDate.toISOString());
+        }
+
         const { purchaseDate } = determinePurchaseDate(existingStatus);
 
         const premiumStatus: PremiumStatus = {

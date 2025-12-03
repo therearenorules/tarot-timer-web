@@ -216,11 +216,22 @@ export class ReceiptValidator {
     const isYearly = productId?.includes('yearly') || false;
     const subscriptionType = isYearly ? 'yearly' : 'monthly';
 
-    // ✅ FIX: dateUtils 사용하여 정확한 만료일 계산
-    const purchaseDate = new Date();
-    const expirationDate = calculateSubscriptionExpiry(purchaseDate, subscriptionType);
+    // ✅ CRITICAL FIX: 기존 만료일 유지 (새 구매일 때만 새로 계산)
+    const existingStatus = await LocalStorageManager.getPremiumStatus();
+    let expirationDate: Date;
+    let purchaseDate: Date;
 
-    console.log(`📅 [Local] ${subscriptionType} 구독 - 만료일:`, expirationDate.toISOString());
+    if (existingStatus.expiry_date && existingStatus.is_premium) {
+      // 기존 만료일 유지
+      expirationDate = new Date(existingStatus.expiry_date);
+      purchaseDate = existingStatus.purchase_date ? new Date(existingStatus.purchase_date) : new Date();
+      console.log(`📅 [Local] 기존 만료일 유지: ${expirationDate.toISOString()}`);
+    } else {
+      // 새 구매인 경우에만 새로 계산
+      purchaseDate = new Date();
+      expirationDate = calculateSubscriptionExpiry(purchaseDate, subscriptionType);
+      console.log(`📅 [Local] 새 ${subscriptionType} 구독 - 만료일:`, expirationDate.toISOString());
+    }
 
     // ✅ NEW: Supabase DB 직접 업데이트 시도 (Edge Function 실패 시 Fallback)
     // 사용자가 로그인 상태라면 user_subscriptions 테이블에 직접 insert/update 시도
@@ -422,11 +433,26 @@ export class ReceiptValidator {
 
       // 구독 타입 결정
       const isYearly = productId.includes('yearly');
-      const expiryDate = validationResult.expirationDate || new Date();
 
       // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
       const existingStatus = await LocalStorageManager.getPremiumStatus();
       const { purchaseDate, isNewPurchase, isActiveRenewal } = determinePurchaseDate(existingStatus);
+
+      // ✅ CRITICAL FIX: 기존 expiry_date 유지 우선, 그 다음 Edge Function 결과, 마지막으로 새 계산
+      let expiryDate: Date;
+      if (validationResult.expirationDate) {
+        // Edge Function에서 반환한 만료일 사용
+        expiryDate = validationResult.expirationDate;
+        console.log('📅 [Sync] Edge Function 만료일 사용:', expiryDate.toISOString());
+      } else if (existingStatus.expiry_date && existingStatus.is_premium) {
+        // 기존 만료일이 있고 프리미엄 상태면 유지
+        expiryDate = new Date(existingStatus.expiry_date);
+        console.log('📅 [Sync] 기존 만료일 유지:', expiryDate.toISOString());
+      } else {
+        // 새 구매인 경우에만 새로 계산
+        expiryDate = calculateSubscriptionExpiry(new Date(), isYearly ? 'yearly' : 'monthly');
+        console.log('📅 [Sync] 새 만료일 계산:', expiryDate.toISOString());
+      }
 
       console.log('📅 [Sync] purchase_date 판단:', {
         isActiveRenewal,
