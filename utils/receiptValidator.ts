@@ -36,6 +36,7 @@ export interface ReceiptValidationResult {
   isValid: boolean;
   isActive: boolean;
   expirationDate?: Date;
+  purchaseDate?: Date;  // ✅ NEW: 원본 구매일 (Edge Function에서 반환)
   originalTransactionId?: string;
   environment?: 'Sandbox' | 'Production';
   subscriptionId?: string;
@@ -216,21 +217,30 @@ export class ReceiptValidator {
     const isYearly = productId?.includes('yearly') || false;
     const subscriptionType = isYearly ? 'yearly' : 'monthly';
 
-    // ✅ CRITICAL FIX: 기존 만료일 유지 (새 구매일 때만 새로 계산)
+    // ✅ CRITICAL FIX V2: 기존 purchase_date 기반으로 만료일 계산
     const existingStatus = await LocalStorageManager.getPremiumStatus();
     let expirationDate: Date;
     let purchaseDate: Date;
 
-    if (existingStatus.expiry_date && existingStatus.is_premium) {
-      // 기존 만료일 유지
-      expirationDate = new Date(existingStatus.expiry_date);
-      purchaseDate = existingStatus.purchase_date ? new Date(existingStatus.purchase_date) : new Date();
-      console.log(`📅 [Local] 기존 만료일 유지: ${expirationDate.toISOString()}`);
+    if (existingStatus.purchase_date) {
+      // 기존 구매일이 있으면 해당 날짜 기준으로 만료일 계산
+      purchaseDate = new Date(existingStatus.purchase_date);
+
+      if (existingStatus.expiry_date && existingStatus.is_premium) {
+        // 기존 만료일이 있으면 유지
+        expirationDate = new Date(existingStatus.expiry_date);
+        console.log(`📅 [Local] 기존 만료일 유지: ${expirationDate.toISOString()}`);
+      } else {
+        // 기존 구매일 기준으로 만료일 재계산
+        expirationDate = calculateSubscriptionExpiry(purchaseDate, subscriptionType);
+        console.log(`📅 [Local] 기존 구매일 기준 만료일 계산: ${expirationDate.toISOString()}`);
+      }
+      console.log(`📅 [Local] 기존 구매일 사용: ${purchaseDate.toISOString()}`);
     } else {
-      // 새 구매인 경우에만 새로 계산
+      // 새 구매인 경우에만 현재 시간 사용
       purchaseDate = new Date();
       expirationDate = calculateSubscriptionExpiry(purchaseDate, subscriptionType);
-      console.log(`📅 [Local] 새 ${subscriptionType} 구독 - 만료일:`, expirationDate.toISOString());
+      console.log(`📅 [Local] 새 ${subscriptionType} 구독 - 구매일: ${purchaseDate.toISOString()}, 만료일: ${expirationDate.toISOString()}`);
     }
 
     // ✅ NEW: Supabase DB 직접 업데이트 시도 (Edge Function 실패 시 Fallback)
@@ -274,6 +284,7 @@ export class ReceiptValidator {
       isValid: true,
       isActive: true,
       expirationDate,
+      purchaseDate,  // ✅ NEW: 구매일도 반환
       originalTransactionId: transactionId,
       environment: 'Sandbox',
     };
@@ -365,10 +376,12 @@ export class ReceiptValidator {
         }
 
         // 검증 성공
+        // ✅ FIX: Edge Function에서 반환한 purchase_date도 함께 반환
         return {
           isValid: true,
           isActive: data.is_active,
           expirationDate: data.expiry_date ? new Date(data.expiry_date) : undefined,
+          purchaseDate: data.purchase_date ? new Date(data.purchase_date) : undefined,
           originalTransactionId: transactionId,
           environment: data.environment,
           subscriptionId: data.subscription_id,
@@ -434,30 +447,49 @@ export class ReceiptValidator {
       // 구독 타입 결정
       const isYearly = productId.includes('yearly');
 
-      // ✅ FIX: purchase_date 관리 로직 (공통 유틸 함수 사용)
+      // ✅ CRITICAL FIX V2: Edge Function에서 반환한 purchase_date 우선 사용
       const existingStatus = await LocalStorageManager.getPremiumStatus();
-      const { purchaseDate, isNewPurchase, isActiveRenewal } = determinePurchaseDate(existingStatus);
 
-      // ✅ CRITICAL FIX: 기존 expiry_date 유지 우선, 그 다음 Edge Function 결과, 마지막으로 새 계산
+      // purchase_date 결정: Edge Function 결과 > 기존 값 > 현재 시간
+      let purchaseDate: string;
+      if (validationResult.purchaseDate) {
+        // Edge Function에서 반환한 원본 구매일 사용 (Apple 서버에서 가져온 값)
+        purchaseDate = validationResult.purchaseDate.toISOString();
+        console.log('📅 [Sync] Edge Function 구매일 사용:', purchaseDate);
+      } else if (existingStatus.purchase_date && existingStatus.is_premium) {
+        // 기존 구매일 유지
+        purchaseDate = existingStatus.purchase_date;
+        console.log('📅 [Sync] 기존 구매일 유지:', purchaseDate);
+      } else {
+        // 새 구매인 경우에만 현재 시간 사용
+        purchaseDate = new Date().toISOString();
+        console.log('📅 [Sync] 새 구매일 설정:', purchaseDate);
+      }
+
+      // ✅ CRITICAL FIX V2: 만료일 결정 - Edge Function 결과 > 구매일 기반 계산 > 기존 값
       let expiryDate: Date;
       if (validationResult.expirationDate) {
-        // Edge Function에서 반환한 만료일 사용
+        // Edge Function에서 반환한 만료일 사용 (Apple 서버에서 가져온 값)
         expiryDate = validationResult.expirationDate;
         console.log('📅 [Sync] Edge Function 만료일 사용:', expiryDate.toISOString());
+      } else if (validationResult.purchaseDate) {
+        // Edge Function에서 구매일만 있는 경우, 구매일 기준으로 만료일 계산
+        expiryDate = calculateSubscriptionExpiry(validationResult.purchaseDate, isYearly ? 'yearly' : 'monthly');
+        console.log('📅 [Sync] 구매일 기준 만료일 계산:', expiryDate.toISOString());
       } else if (existingStatus.expiry_date && existingStatus.is_premium) {
-        // 기존 만료일이 있고 프리미엄 상태면 유지
+        // 기존 만료일 유지
         expiryDate = new Date(existingStatus.expiry_date);
         console.log('📅 [Sync] 기존 만료일 유지:', expiryDate.toISOString());
       } else {
-        // 새 구매인 경우에만 새로 계산
+        // 새 구매인 경우에만 현재 시간 기준으로 계산
         expiryDate = calculateSubscriptionExpiry(new Date(), isYearly ? 'yearly' : 'monthly');
         console.log('📅 [Sync] 새 만료일 계산:', expiryDate.toISOString());
       }
 
-      console.log('📅 [Sync] purchase_date 판단:', {
-        isActiveRenewal,
-        isNewPurchase,
-        finalPurchaseDate: purchaseDate,
+      console.log('📅 [Sync] 최종 날짜 정보:', {
+        purchaseDate,
+        expiryDate: expiryDate.toISOString(),
+        fromEdgeFunction: !!validationResult.purchaseDate,
       });
 
       // LocalStorage에 프리미엄 상태 저장
