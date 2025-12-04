@@ -170,7 +170,9 @@ export class AppleValidator {
 
     // 날짜 파싱
     const expiryDate = new Date(parseInt(latestInfo.expires_date_ms));
-    const purchaseDate = new Date(parseInt(latestInfo.purchase_date_ms));
+    // ✅ FIX: original_purchase_date_ms 사용 (최초 구매일, 불변)
+    // purchase_date_ms는 갱신일이므로 사용자가 본 날짜와 다를 수 있음
+    const purchaseDate = new Date(parseInt(latestInfo.original_purchase_date_ms || latestInfo.purchase_date_ms));
     const now = new Date();
 
     // 활성 상태 확인
