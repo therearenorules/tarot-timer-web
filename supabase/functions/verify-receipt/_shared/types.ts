@@ -61,6 +61,8 @@ export interface AppleLatestReceiptInfo {
   original_transaction_id: string;
   purchase_date: string;
   purchase_date_ms: string;
+  original_purchase_date?: string;  // ✅ 최초 구매일 (ISO 문자열)
+  original_purchase_date_ms?: string;  // ✅ 최초 구매일 (밀리초 타임스탬프)
   expires_date: string;
   expires_date_ms: string;
   cancellation_date?: string;

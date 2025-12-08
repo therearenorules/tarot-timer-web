@@ -1069,6 +1069,30 @@ class IAPManager {
   }
 
   /**
+   * ✅ NEW: 현재 구독 상태 조회 (LocalStorage 기반)
+   * PremiumContext에서 호출하여 현재 저장된 구독 상태를 가져옴
+   */
+  static async getCurrentSubscriptionStatus(): Promise<PremiumStatus> {
+    try {
+      const status = await LocalStorageManager.getPremiumStatus();
+      console.log('📋 [IAPManager] 현재 구독 상태 조회:', {
+        is_premium: status.is_premium,
+        subscription_type: status.subscription_type,
+        expiry_date: status.expiry_date,
+      });
+      return status;
+    } catch (error) {
+      console.error('❌ [IAPManager] 구독 상태 조회 오류:', error);
+      return {
+        is_premium: false,
+        unlimited_storage: false,
+        ad_free: false,
+        premium_spreads: false,
+      };
+    }
+  }
+
+  /**
    * 환불 처리 자동화
    */
   static async handleRefund(transactionId: string): Promise<void> {

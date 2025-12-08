@@ -150,8 +150,28 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
   }, []); // ✅ 의존성 배열 비움 - 마운트 시 한 번만 설정, ref가 항상 최신 함수를 가리킴
 
   /**
+   * ✅ NEW: 백그라운드에서 IAP 초기화 (UI 블로킹 없음)
+   */
+  const initializeIAPInBackground = () => {
+    setTimeout(async () => {
+      try {
+        console.log('🔄 [Background] IAP 초기화 시작...');
+        await IAPManager.initialize();
+        console.log('✅ [Background] IAP 초기화 완료');
+
+        // Supabase 동기화도 함께
+        await ReceiptValidator.periodicValidation();
+        console.log('✅ [Background] Supabase 동기화 완료');
+      } catch (error) {
+        console.warn('⚠️ [Background] IAP/Supabase 초기화 실패 (무시):', error);
+      }
+    }, 2000); // 2초 후 백그라운드 실행
+  };
+
+  /**
    * 컨텍스트 초기화
-   * ✅ CRITICAL FIX: 모든 에러를 catch하고 타임아웃 추가하여 앱 크래시 절대 방지
+   * ✅ CRITICAL FIX V2: LocalStorage 우선 정책 - 구독 상태 안정성 강화
+   * 순서: LocalStorage → IAP 초기화 → 백그라운드 동기화
    */
   const initializePremiumContext = async () => {
     console.log('🔄 PremiumContext 초기화 시작...');
@@ -160,7 +180,54 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
       setIsLoading(true);
       setLastError(null);
 
-      // ✅ CRITICAL FIX: 무료 체험 상태 확인 (안전 모드 + 타임아웃)
+      // ✅ CRITICAL FIX V2: LocalStorage 먼저 확인 (가장 신뢰할 수 있는 소스)
+      let localStatus = defaultPremiumStatus;
+      try {
+        localStatus = await Promise.race([
+          LocalStorageManager.getPremiumStatus(),
+          new Promise<PremiumStatus>((resolve) =>
+            setTimeout(() => {
+              console.warn('⏱️ LocalStorage 조회 타임아웃 - 기본값 사용');
+              resolve(defaultPremiumStatus);
+            }, 3000)
+          )
+        ]);
+        console.log('✅ LocalStorage 구독 상태 확인:', {
+          is_premium: localStatus.is_premium,
+          subscription_type: localStatus.subscription_type,
+          expiry_date: localStatus.expiry_date,
+        });
+      } catch (error) {
+        console.error('❌ LocalStorage 조회 오류 (무시):', error);
+        localStatus = defaultPremiumStatus;
+      }
+
+      // ✅ CRITICAL FIX V2: LocalStorage에 유효한 구독이 있으면 즉시 적용
+      if (localStatus.is_premium && localStatus.subscription_type !== 'trial') {
+        // 만료일 체크
+        let isStillValid = true;
+        if (localStatus.expiry_date) {
+          const expiryDate = new Date(localStatus.expiry_date);
+          const now = new Date();
+          isStillValid = now < expiryDate;
+          console.log(`📅 만료일 체크: ${expiryDate.toISOString()}, 유효: ${isStillValid}`);
+        }
+
+        if (isStillValid) {
+          // 유효한 구독 - 즉시 적용
+          setPremiumStatus(localStatus);
+          console.log('✅ LocalStorage 유료 구독 즉시 활성화');
+
+          // IAP 초기화는 백그라운드에서 진행
+          initializeIAPInBackground();
+          setIsLoading(false);
+          return; // 여기서 종료
+        } else {
+          console.log('⏰ LocalStorage 구독 만료됨 - IAP 확인 필요');
+        }
+      }
+
+      // ✅ 무료 체험 상태 확인
       let trialStatus = defaultPremiumStatus;
       try {
         trialStatus = await Promise.race([
@@ -169,102 +236,87 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
             setTimeout(() => {
               console.warn('⏱️ 체험 상태 조회 타임아웃 - 기본값 사용');
               resolve(defaultPremiumStatus);
-            }, 3000) // 3초 타임아웃
+            }, 3000)
           )
         ]);
         console.log('✅ 무료 체험 상태 확인 완료');
       } catch (error) {
         console.error('❌ LocalStorageManager.checkTrialStatus 오류 (무시):', error);
-        console.log('📌 기본 무료 버전으로 계속 진행');
-        trialStatus = defaultPremiumStatus; // 명시적으로 기본값 재할당
+        trialStatus = defaultPremiumStatus;
       }
 
-      // ✅ CRITICAL FIX: IAP 시스템 초기화 (안전 모드 + 타임아웃)
+      // ✅ IAP 시스템 초기화
       let iapStatus = defaultPremiumStatus;
       try {
-        // ✅ FIX: IAP 초기화에 10초 타임아웃 (3회 재시도 × 2초 + 여유시간)
         const iapInitResult = await Promise.race([
           IAPManager.initialize(),
           new Promise<boolean>((resolve) =>
             setTimeout(() => {
               console.warn('⏱️ IAP 초기화 타임아웃 (10초) - 건너뜀');
               resolve(false);
-            }, 10000) // 10초 타임아웃 (기존 5초에서 증가)
+            }, 10000)
           )
         ]);
 
         if (iapInitResult === false) {
-          console.error('❌ IAP 초기화 타임아웃으로 실패 - IAP 없이 계속 진행');
-          // 초기화 실패 시 상품 로드 스킵
-          iapStatus = defaultPremiumStatus;
+          console.error('❌ IAP 초기화 타임아웃 - LocalStorage 상태 사용');
+          iapStatus = localStatus; // LocalStorage 상태 사용
         } else {
           console.log('✅ IAPManager 초기화 완료');
-
-          // 현재 구독 상태 로드 (IAP에서) - 타임아웃 적용
           iapStatus = await Promise.race([
             IAPManager.getCurrentSubscriptionStatus(),
             new Promise<PremiumStatus>((resolve) =>
               setTimeout(() => {
-                console.warn('⏱️ IAP 상태 조회 타임아웃 - 기본값 사용');
-                resolve(defaultPremiumStatus);
-              }, 3000) // 3초 타임아웃
+                console.warn('⏱️ IAP 상태 조회 타임아웃 - LocalStorage 사용');
+                resolve(localStatus);
+              }, 3000)
             )
           ]);
           console.log('✅ IAP 구독 상태 로드 완료');
         }
       } catch (error) {
-        console.error('❌ IAPManager 초기화 오류 (무시):', error);
-        console.log('📌 IAP 없이 계속 진행');
-        iapStatus = defaultPremiumStatus; // 명시적으로 기본값 재할당
+        console.error('❌ IAPManager 초기화 오류 - LocalStorage 상태 사용:', error);
+        iapStatus = localStatus; // 오류 시 LocalStorage 상태 사용
       }
 
-      // ✅ NEW: Supabase 주기적 동기화 (타임아웃 5초) - 초기화 시에도 실행
+      // ✅ 상태 우선순위 결정: IAP(LocalStorage 기반) > Trial > 무료
       try {
-        await Promise.race([
-          ReceiptValidator.periodicValidation(),
-          new Promise<void>((resolve) =>
-            setTimeout(() => {
-              console.warn('⏱️ Supabase 동기화 타임아웃 - 건너뜀');
-              resolve();
-            }, 5000)
-          )
-        ]);
-        console.log('✅ Supabase 주기적 동기화 완료');
-      } catch (error) {
-        console.error('❌ Supabase 동기화 오류 (무시):', error);
-      }
-
-      // ✅ CRITICAL FIX: 상태 설정도 try-catch로 감싸기
-      try {
-        // IAP 구독이 있으면 IAP 상태 우선, 없으면 무료 체험 상태 사용
         if (iapStatus.is_premium && iapStatus.subscription_type !== 'trial') {
-          // 유료 구독자
           setPremiumStatus(iapStatus);
           console.log('✅ 유료 구독 활성화');
-        } else {
-          // 무료 체험 또는 무료 사용자
+        } else if (trialStatus.is_premium && trialStatus.subscription_type === 'trial') {
           setPremiumStatus(trialStatus);
-          console.log(trialStatus.is_premium ? '🎁 무료 체험 활성화' : '📱 무료 버전');
+          console.log('🎁 무료 체험 활성화');
+        } else {
+          setPremiumStatus(defaultPremiumStatus);
+          console.log('📱 무료 버전');
         }
       } catch (error) {
         console.error('❌ 상태 설정 오류 (무시):', error);
         setPremiumStatus(defaultPremiumStatus);
       }
 
+      // ✅ Supabase 동기화 (백그라운드)
+      setTimeout(async () => {
+        try {
+          await ReceiptValidator.periodicValidation();
+          console.log('✅ Supabase 백그라운드 동기화 완료');
+        } catch (error) {
+          console.error('❌ Supabase 동기화 오류 (무시):', error);
+        }
+      }, 3000);
+
       console.log('✅ PremiumContext 초기화 완료');
 
     } catch (error) {
-      // ✅ CRITICAL FIX: 최상위 catch - 절대 에러를 throw하지 않음
       console.error('❌ PremiumContext 초기화 최상위 오류 (무시하고 계속):', error);
       setLastError(error instanceof Error ? error.message : '초기화 오류');
-      // 무조건 기본 상태로 앱 계속 실행
       try {
         setPremiumStatus(defaultPremiumStatus);
       } catch (setStateError) {
         console.error('❌ setPremiumStatus 실패 (치명적):', setStateError);
       }
     } finally {
-      // ✅ CRITICAL FIX: finally에서도 try-catch
       try {
         setIsLoading(false);
       } catch (error) {
