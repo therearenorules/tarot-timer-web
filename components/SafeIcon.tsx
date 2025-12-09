@@ -102,6 +102,9 @@ const SafeIcon: React.FC<SafeIconProps> = ({
       'mail': '✉️',
       'bookmark': '🔖',
       'trash-2': '🗑️',
+      'edit': '✏️',
+      'edit-2': '✏️',
+      'flame': '🔥',
     };
 
     return fallbackMap[iconName] || '●';

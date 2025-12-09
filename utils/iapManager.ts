@@ -19,7 +19,7 @@ import {
   requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
-  setup, // ✅ CRITICAL FIX V3: StoreKit 1 모드 강제 설정용
+  // setup은 일부 버전에서만 존재하므로 동적 import 사용
 } from 'react-native-iap';
 
 import { calculateSubscriptionExpiry } from './dateUtils';
@@ -113,10 +113,15 @@ class IAPManager {
       console.log('🍎 iOS: StoreKit 1 모드 강제 설정 (최우선)');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       try {
-        RNIap.setup({ storekitMode: 'STOREKIT1_MODE' });
-        console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log('✅ StoreKit 1 모드 적용 대기 완료');
+        // setup 함수가 존재하면 호출 (버전에 따라 없을 수 있음)
+        if (typeof (RNIap as any).setup === 'function') {
+          (RNIap as any).setup({ storekitMode: 'STOREKIT1_MODE' });
+          console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
+          await new Promise(resolve => setTimeout(resolve, 100));
+          console.log('✅ StoreKit 1 모드 적용 대기 완료');
+        } else {
+          console.log('ℹ️ setup 함수 없음 - 기본 모드로 진행');
+        }
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       } catch (setupError) {
         console.warn('⚠️ StoreKit 모드 설정 실패 (계속 진행):', setupError);
@@ -198,19 +203,22 @@ class IAPManager {
       }
 
       this.purchaseUpdateSubscription = RNIap.purchaseUpdatedListener(async (purchase) => {
+        // 타입 단언: react-native-iap 버전에 따라 속성이 다를 수 있음
+        const purchaseAny = purchase as any;
+
         console.log('💳 [1/7] 구매 업데이트 수신:', purchase.productId);
         console.log('📋 [Purchase] 전체 객체:', JSON.stringify(purchase, null, 2));
         console.log('📋 [Purchase] transactionId:', purchase.transactionId);
-        console.log('📋 [Purchase] transactionReceipt:', purchase.transactionReceipt ? `${purchase.transactionReceipt.substring(0, 50)}...` : 'EMPTY');
-        console.log('📋 [Purchase] verificationResultIOS:', purchase.verificationResultIOS ? `${purchase.verificationResultIOS.substring(0, 50)}...` : 'null');
+        console.log('📋 [Purchase] transactionReceipt:', purchaseAny.transactionReceipt ? `${purchaseAny.transactionReceipt.substring(0, 50)}...` : 'EMPTY');
+        console.log('📋 [Purchase] verificationResultIOS:', purchaseAny.verificationResultIOS ? `${purchaseAny.verificationResultIOS.substring(0, 50)}...` : 'null');
         console.log('📋 [Purchase] purchaseToken:', purchase.purchaseToken ? `${purchase.purchaseToken.substring(0, 50)}...` : 'null');
         console.log('📋 [Purchase] productId:', purchase.productId);
 
         const receipt = Platform.OS === 'ios'
-          ? (purchase.transactionReceipt || '')
+          ? (purchaseAny.transactionReceipt || '')
           : (purchase.purchaseToken || '');
 
-        const transactionId = purchase.transactionId || purchase.originalTransactionIdentifierIOS || '';
+        const transactionId = purchase.transactionId || purchaseAny.originalTransactionIdentifierIOS || '';
 
         console.log('📋 [Receipt] 사용할 영수증 타입:', Platform.OS === 'ios' ? 'Legacy Receipt (Edge Function 호환)' : 'Android Token');
         console.log('📋 [Receipt] 영수증 존재 여부:', !!receipt);

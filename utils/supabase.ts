@@ -54,6 +54,9 @@ export const getCurrentUser = async () => {
 
 // 로그인 함수
 export const signInWithEmail = async (email: string, password: string) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -69,6 +72,9 @@ export const signInWithEmail = async (email: string, password: string) => {
 
 // 회원가입 함수
 export const signUpWithEmail = async (email: string, password: string, userData?: any) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -87,6 +93,9 @@ export const signUpWithEmail = async (email: string, password: string, userData?
 
 // 로그아웃 함수
 export const signOut = async () => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -99,6 +108,9 @@ export const signOut = async () => {
 
 // 비밀번호 재설정 함수
 export const resetPassword = async (email: string) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'https://your-app-domain.com/reset-password',
@@ -113,6 +125,9 @@ export const resetPassword = async (email: string) => {
 
 // 프로필 업데이트 함수
 export const updateProfile = async (userId: string, updates: any) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -130,6 +145,9 @@ export const updateProfile = async (userId: string, updates: any) => {
 
 // 타로 세션 관련 함수들
 export const saveTarotSession = async (sessionData: any) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase
       .from('tarot_sessions')
@@ -145,6 +163,9 @@ export const saveTarotSession = async (sessionData: any) => {
 };
 
 export const getTarotSessions = async (userId: string, limit = 10) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase
       .from('tarot_sessions')
@@ -162,6 +183,9 @@ export const getTarotSessions = async (userId: string, limit = 10) => {
 };
 
 export const updateTarotSession = async (sessionId: string, updates: any) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase
       .from('tarot_sessions')
@@ -179,6 +203,9 @@ export const updateTarotSession = async (sessionId: string, updates: any) => {
 
 // 저널 관련 함수들
 export const saveJournalEntry = async (entryData: any) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase
       .from('journal_entries')
@@ -194,6 +221,9 @@ export const saveJournalEntry = async (entryData: any) => {
 };
 
 export const getJournalEntries = async (userId: string, limit = 20) => {
+  if (!supabase) {
+    throw new Error('Supabase가 설정되지 않았습니다.');
+  }
   try {
     const { data, error } = await supabase
       .from('journal_entries')
@@ -212,6 +242,10 @@ export const getJournalEntries = async (userId: string, limit = 20) => {
 
 // 실시간 구독 헬퍼
 export const subscribeToTarotSessions = (userId: string, callback: (payload: any) => void) => {
+  if (!supabase) {
+    console.warn('Supabase가 설정되지 않았습니다. 실시간 구독을 사용할 수 없습니다.');
+    return null;
+  }
   return supabase
     .channel('tarot_sessions')
     .on(

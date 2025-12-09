@@ -55,6 +55,7 @@ export interface SavedSpread {
   }[];
   insights: string; // 전체 인사이트
   createdAt: string; // ISO 문자열
+  updatedAt?: string; // 수정일 (ISO 문자열)
   tags: string[];
 }
 
@@ -1511,6 +1512,27 @@ export const TarotUtils = {
       await simpleStorage.setItem(STORAGE_KEYS.SPREAD_SAVES, JSON.stringify(updatedSpreads));
     } catch (error) {
       console.error('스프레드 삭제 실패:', error);
+      throw error;
+    }
+  },
+
+  // 스프레드 수정
+  updateSpread: async (spreadId: string, updates: Partial<SavedSpread>): Promise<void> => {
+    try {
+      const existingSpreads = await TarotUtils.loadSavedSpreads();
+      const updatedSpreads = existingSpreads.map(spread => {
+        if (spread.id === spreadId) {
+          return {
+            ...spread,
+            ...updates,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return spread;
+      });
+      await simpleStorage.setItem(STORAGE_KEYS.SPREAD_SAVES, JSON.stringify(updatedSpreads));
+    } catch (error) {
+      console.error('스프레드 수정 실패:', error);
       throw error;
     }
   },

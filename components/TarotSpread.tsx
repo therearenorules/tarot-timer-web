@@ -173,6 +173,12 @@ export const TarotSpread: React.FC = () => {
   const [saveInsights, setSaveInsights] = useSafeState('');
   const [savedSpreads, setSavedSpreads] = useSafeState<SavedSpread[]>([]);
   const [isLoadModalVisible, setIsLoadModalVisible] = useSafeState(false);
+
+  // 수정 관련 상태
+  const [isEditModalVisible, setIsEditModalVisible] = useSafeState(false);
+  const [editingSpread, setEditingSpread] = useSafeState<SavedSpread | null>(null);
+  const [editTitle, setEditTitle] = useSafeState('');
+  const [editInsights, setEditInsights] = useSafeState('');
   // premiumStatus 상태 제거 - PremiumContext 사용
 
   // 애니메이션 훅들
@@ -377,6 +383,49 @@ export const TarotSpread: React.FC = () => {
         }
       ]
     );
+  };
+
+  // 스프레드 수정 모달 열기
+  const handleOpenEditModal = (spread: SavedSpread) => {
+    setEditingSpread(spread);
+    setEditTitle(spread.title);
+    setEditInsights(spread.insights || '');
+    setIsEditModalVisible(true);
+  };
+
+  // 스프레드 수정 저장
+  const handleUpdateSpread = async () => {
+    if (!editingSpread) return;
+
+    if (!editTitle.trim()) {
+      Alert.alert(t('common.error'), t('spread.errors.enterTitle'));
+      return;
+    }
+
+    try {
+      await TarotUtils.updateSpread(editingSpread.id, {
+        title: editTitle.trim(),
+        insights: editInsights.trim()
+      });
+
+      // 수정 완료 후 상태 초기화
+      setEditTitle('');
+      setEditInsights('');
+      setEditingSpread(null);
+      setIsEditModalVisible(false);
+
+      // 저장된 스프레드 목록 다시 불러오기
+      await loadSavedSpreadsData();
+
+      Alert.alert(
+        '✏️ ' + t('spread.messages.editSuccess'),
+        t('spread.messages.editComplete', { title: editTitle }),
+        [{ text: t('common.ok') }]
+      );
+    } catch (error) {
+      console.error('스프레드 수정 실패:', error);
+      Alert.alert(t('common.error'), t('spread.errors.editFailed'));
+    }
   };
 
   // 전체 스프레드 뽑기
@@ -861,17 +910,98 @@ export const TarotSpread: React.FC = () => {
                           </Text>
                         )}
                       </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDeleteSpread(savedSpread.id, savedSpread.title)}
-                      >
-                        <Icon name="trash-2" size={16} color="#ff6b6b" />
-                      </TouchableOpacity>
+
+                      <View style={styles.savedSpreadActions}>
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          onPress={() => handleOpenEditModal(savedSpread)}
+                        >
+                          <Icon name="edit-2" size={16} color="#f4d03f" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.deleteButton}
+                          onPress={() => handleDeleteSpread(savedSpread.id, savedSpread.title)}
+                        >
+                          <Icon name="trash-2" size={16} color="#ff6b6b" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   ))
                 )}
               </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* 수정 모달 */}
+        <Modal
+          visible={isEditModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsEditModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Icon name="edit-2" size={24} color="#f4d03f" />
+                <Text style={styles.modalTitle}>{t('spread.editModal.title')}</Text>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => {
+                    setIsEditModalVisible(false);
+                    setEditingSpread(null);
+                    setEditTitle('');
+                    setEditInsights('');
+                  }}
+                >
+                  <Icon name="x" size={20} color="#9b8db8" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalContent}>
+                <Text style={styles.inputLabel}>{t('spread.saveModal.titleLabel')}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editTitle}
+                  onChangeText={setEditTitle}
+                  placeholder={t('spread.saveModal.titlePlaceholder')}
+                  placeholderTextColor="#666"
+                  maxLength={50}
+                />
+
+                <Text style={styles.inputLabel}>{t('spread.saveModal.insightsLabel')}</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={editInsights}
+                  onChangeText={setEditInsights}
+                  placeholder={t('spread.saveModal.insightsPlaceholder')}
+                  placeholderTextColor="#666"
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  maxLength={500}
+                />
+
+                <View style={styles.modalActions}>
+                  <GradientButton
+                    onPress={() => {
+                      setIsEditModalVisible(false);
+                      setEditingSpread(null);
+                      setEditTitle('');
+                      setEditInsights('');
+                    }}
+                    title={t('common.cancel')}
+                    variant="secondary"
+                    size="medium"
+                  />
+                  <GradientButton
+                    onPress={handleUpdateSpread}
+                    title={t('common.save')}
+                    icon="save"
+                    size="medium"
+                  />
+                </View>
+              </View>
             </View>
           </View>
         </Modal>
@@ -1358,11 +1488,26 @@ const styles = StyleSheet.create({
     color: Colors.text.accent,
     fontStyle: 'italic',
   },
+  savedSpreadActions: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(244, 208, 63, 0.3)',
+  },
   deleteButton: {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ff6b6b1A',
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderLeftWidth: 1,
     borderLeftColor: '#ff6b6b33',
   },

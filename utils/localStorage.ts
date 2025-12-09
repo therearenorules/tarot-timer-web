@@ -95,7 +95,7 @@ export interface AppInstallInfo {
 
 export interface PremiumStatus {
   is_premium: boolean;
-  subscription_type?: 'monthly' | 'yearly' | 'trial';
+  subscription_type?: 'monthly' | 'yearly' | 'trial' | 'beta';
   purchase_date?: string;
   expiry_date?: string;
   store_transaction_id?: string;
@@ -104,7 +104,7 @@ export interface PremiumStatus {
   premium_spreads: boolean;
   // 영수증 검증 관련 필드 추가
   last_validated?: string;
-  validation_environment?: 'Sandbox' | 'Production' | 'Unknown' | 'Simulation';
+  validation_environment?: 'Sandbox' | 'Production' | 'Unknown' | 'Simulation' | 'Beta';
   receipt_data?: string;
   original_transaction_id?: string;
   // ✅ FIX: 시뮬레이션 모드 플래그 (테스트용)
@@ -211,7 +211,7 @@ export class LocalStorageManager {
         if (attempt > 1) {
           console.log(`✅ AsyncStorage.getAllKeys() 성공 (${attempt}번째 시도)`);
         }
-        return keys;
+        return [...keys]; // readonly 배열을 mutable로 변환
       } catch (error) {
         console.warn(`⚠️  AsyncStorage.getAllKeys() 실패 (${attempt}/${maxRetries})`, error);
 
@@ -359,7 +359,8 @@ export class LocalStorageManager {
 
   // 타로 세션 관리
   static async getTarotSessions(): Promise<TarotSession[]> {
-    return await this.getItem<TarotSession[]>(STORAGE_KEYS.TAROT_SESSIONS, []);
+    const sessions = await this.getItem<TarotSession[]>(STORAGE_KEYS.TAROT_SESSIONS, []);
+    return sessions ?? [];
   }
 
   static async addTarotSession(session: Omit<TarotSession, 'id' | 'created_at' | 'updated_at'>): Promise<TarotSession | null> {
@@ -424,7 +425,8 @@ export class LocalStorageManager {
 
   // 저널 엔트리 관리
   static async getJournalEntries(): Promise<JournalEntry[]> {
-    return await this.getItem<JournalEntry[]>(STORAGE_KEYS.JOURNAL_ENTRIES, []);
+    const entries = await this.getItem<JournalEntry[]>(STORAGE_KEYS.JOURNAL_ENTRIES, []);
+    return entries ?? [];
   }
 
   static async addJournalEntry(entry: Omit<JournalEntry, 'id' | 'created_at' | 'updated_at'>): Promise<JournalEntry> {
@@ -676,7 +678,8 @@ export class LocalStorageManager {
 
   // 클라우드 백업 설정
   static async isCloudBackupEnabled(): Promise<boolean> {
-    return await this.getItem<boolean>(STORAGE_KEYS.CLOUD_BACKUP_ENABLED, false);
+    const enabled = await this.getItem<boolean>(STORAGE_KEYS.CLOUD_BACKUP_ENABLED, false);
+    return enabled ?? false;
   }
 
   static async setCloudBackupEnabled(enabled: boolean): Promise<void> {
@@ -728,12 +731,13 @@ export class LocalStorageManager {
   // 앱 첫 실행 확인
   static async isFirstLaunch(): Promise<boolean> {
     const isFirst = await this.getItem<boolean>(STORAGE_KEYS.APP_FIRST_LAUNCH, true);
+    const result = isFirst ?? true;
 
-    if (isFirst) {
+    if (result) {
       await this.setItem(STORAGE_KEYS.APP_FIRST_LAUNCH, false);
     }
 
-    return isFirst;
+    return result;
   }
 }
 

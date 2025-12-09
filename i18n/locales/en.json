@@ -139,6 +139,7 @@
       "unsupportedType": "Unsupported spread type.",
       "loadFailed": "An error occurred while loading the spread.",
       "deleteFailed": "An error occurred while deleting the spread.",
+      "editFailed": "An error occurred while editing the spread.",
       "drawFailed": "An error occurred while drawing cards.",
       "storageLimitTitle": "Storage Limit Reached",
       "storageLimitMessage": "Free version allows up to {{max}} spread saves.\nYou currently have {{current}} spread saves.\n\nUpgrade to Premium for unlimited storage!"
@@ -150,6 +151,8 @@
       "loadSuccess": "Load Complete",
       "loadComplete": "\"{{title}}\" spread has been loaded.",
       "deleteSuccess": "Spread has been deleted.",
+      "editSuccess": "Edit Complete",
+      "editComplete": "\"{{title}}\" spread has been updated.",
       "complete": "Complete"
     },
     "deleteConfirm": {
@@ -172,6 +175,9 @@
       "title": "Saved Spreads",
       "emptyTitle": "No saved spreads",
       "emptySubtitle": "Draw cards and tap \"Save to Diary\" to save your spreads"
+    },
+    "editModal": {
+      "title": "Edit Spread"
     },
     "drawing": "Drawing..."
   },

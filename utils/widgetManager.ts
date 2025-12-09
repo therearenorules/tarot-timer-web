@@ -27,7 +27,7 @@ export interface WidgetData {
     hours: number;
     minutes: number;
     seconds: number;
-  };
+  } | string; // 문자열 형식도 허용 (widgetSync 호환)
   nextCardTime?: string;
   streak: number;
   userSettings: {
@@ -36,6 +36,11 @@ export interface WidgetData {
     showTimer: boolean;
     theme: 'light' | 'dark' | 'mystical';
   };
+  // 추가 필드 (widgetSync 호환용)
+  cardName?: string;
+  progressText?: string;
+  progressPercent?: number;
+  streakText?: string;
 }
 
 // 위젯 설정 타입
@@ -342,13 +347,18 @@ export class WidgetManager {
       console.log('📱 iOS 위젯 업데이트 준비 중...');
 
       // App Groups을 통한 데이터 공유
+      // timeRemaining이 문자열인지 객체인지 확인
+      const getTimeLeftString = () => {
+        if (!data.timeRemaining) return '00:00';
+        if (typeof data.timeRemaining === 'string') return data.timeRemaining;
+        return `${data.timeRemaining.hours}:${String(data.timeRemaining.minutes).padStart(2, '0')}`;
+      };
+
       const sharedData = {
         currentCard: data.currentCard?.name || '카드 없음',
         progress: `${data.dailyProgress.completed}/${data.dailyProgress.total}`,
         percentage: data.dailyProgress.percentage,
-        timeLeft: data.timeRemaining ?
-          `${data.timeRemaining.hours}:${String(data.timeRemaining.minutes).padStart(2, '0')}` :
-          '00:00',
+        timeLeft: getTimeLeftString(),
         streak: data.streak,
         lastUpdate: data.lastUpdate
       };
@@ -371,13 +381,18 @@ export class WidgetManager {
     try {
       console.log('🤖 Android 위젯 업데이트 준비 중...');
 
+      // timeRemaining이 문자열인지 객체인지 확인
+      const getTimeRemainingString = () => {
+        if (!data.timeRemaining) return '오늘 완료';
+        if (typeof data.timeRemaining === 'string') return data.timeRemaining;
+        return `${data.timeRemaining.hours}시간 ${data.timeRemaining.minutes}분 남음`;
+      };
+
       const sharedData = {
         cardName: data.currentCard?.name || '오늘의 카드 없음',
         progressText: `${data.dailyProgress.completed}/${data.dailyProgress.total} 완료`,
         progressPercent: data.dailyProgress.percentage,
-        timeRemaining: data.timeRemaining ?
-          `${data.timeRemaining.hours}시간 ${data.timeRemaining.minutes}분 남음` :
-          '오늘 완료',
+        timeRemaining: getTimeRemainingString(),
         streakText: `${data.streak}일 연속`,
         updateTime: new Date(data.lastUpdate).toLocaleTimeString('ko-KR')
       };

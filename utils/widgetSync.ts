@@ -6,7 +6,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { WidgetManager, WidgetData } from './widgetManager';
-import { TimerService } from './timerService';
 
 export interface SyncConfig {
   enabled: boolean;

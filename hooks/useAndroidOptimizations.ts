@@ -3,7 +3,7 @@
  * 안드로이드 기기에서 자동으로 최적화 적용
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import {
   AndroidBackHandler,
@@ -165,8 +165,8 @@ export const useAndroidAppStateOptimization = (
  * Android 디바이스 정보
  */
 export const useAndroidDeviceInfo = () => {
-  const [deviceInfo, setDeviceInfo] = React.useState<any>(null);
-  const [optimizations, setOptimizations] = React.useState<any>(null);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [optimizations, setOptimizations] = useState<any>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -232,7 +232,7 @@ export const useAndroidImageOptimization = () => {
  * Android 키보드 최적화
  */
 export const useAndroidKeyboard = () => {
-  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;

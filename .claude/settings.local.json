@@ -125,7 +125,9 @@
       "Bash(git rm:*)",
       "Bash(.\\android\\gradlew.bat bundleRelease:*)",
       "Bash(keytool:*)",
-      "Bash(jarsigner:*)"
+      "Bash(jarsigner:*)",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase:*)"
     ],
     "deny": [],
     "ask": []
