@@ -259,6 +259,8 @@
     "memoPlaceholder": "Write down your thoughts or feelings about this hour...",
     "insightsTitle": "Insights",
     "createdDate": "Created Date",
+    "updatedDate": "Updated Date",
+    "noInsights": "No insights recorded",
     "deleteRecords": "Delete Records",
     "deleteRecordsConfirm": "Are you sure you want to delete {{count}} selected records?",
     "deleteComplete": "Delete Complete",

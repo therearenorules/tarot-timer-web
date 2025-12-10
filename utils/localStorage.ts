@@ -660,10 +660,25 @@ export class LocalStorageManager {
         maxCount: limits.max_daily_sessions
       };
     } else if (type === 'spread') {
+      // ✅ FIX: spread_saves 키에서 실제 스프레드 개수 카운트
+      let actualSpreadCount = limits.current_spread_sessions;
+      try {
+        const spreadSavesData = await AsyncStorage.getItem('spread_saves');
+        if (spreadSavesData) {
+          const spreads = JSON.parse(spreadSavesData);
+          actualSpreadCount = Array.isArray(spreads) ? spreads.length : 0;
+        } else {
+          actualSpreadCount = 0;
+        }
+        console.log(`🔍 Spread 저장 제한 확인: ${actualSpreadCount}/${limits.max_spread_sessions}`);
+      } catch (error) {
+        console.error('Spread 카운트 실패, 캐시된 값 사용:', error);
+      }
+
       return {
-        canCreate: limits.current_spread_sessions < limits.max_spread_sessions,
-        isAtLimit: limits.current_spread_sessions >= limits.max_spread_sessions,
-        currentCount: limits.current_spread_sessions,
+        canCreate: actualSpreadCount < limits.max_spread_sessions,
+        isAtLimit: actualSpreadCount >= limits.max_spread_sessions,
+        currentCount: actualSpreadCount,
         maxCount: limits.max_spread_sessions
       };
     } else {

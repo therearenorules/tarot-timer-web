@@ -236,12 +236,77 @@ interface SpreadViewerProps {
   visible: boolean;
   spread: SavedSpread | null;
   onClose: () => void;
+  onSpreadUpdated?: (updatedSpread: SavedSpread) => void;
 }
 
-const SpreadViewer: React.FC<SpreadViewerProps> = ({ visible, spread, onClose }) => {
+const SpreadViewer: React.FC<SpreadViewerProps> = ({ visible, spread, onClose, onSpreadUpdated }) => {
   const { t } = useTranslation();
   const { getSpreadName } = useTarotI18n();
+
+  // 수정 모드 상태
+  const [isEditing, setIsEditing] = useSafeState(false);
+  const [editTitle, setEditTitle] = useSafeState('');
+  const [editInsights, setEditInsights] = useSafeState('');
+  const [isSaving, setIsSaving] = useSafeState(false);
+
+  // spread가 바뀔 때 편집 상태 초기화
+  useEffect(() => {
+    if (spread) {
+      setEditTitle(spread.title);
+      setEditInsights(spread.insights || '');
+      setIsEditing(false);
+    }
+  }, [spread]);
+
   if (!spread) return null;
+
+  // 수정 저장 함수
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim()) {
+      Alert.alert(t('common.error'), t('spread.errors.enterTitle'));
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await TarotUtils.updateSpread(spread.id, {
+        title: editTitle.trim(),
+        insights: editInsights.trim()
+      });
+
+      // 업데이트된 스프레드 생성
+      const updatedSpread = {
+        ...spread,
+        title: editTitle.trim(),
+        insights: editInsights.trim(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // 부모 컴포넌트에 알림
+      if (onSpreadUpdated) {
+        onSpreadUpdated(updatedSpread);
+      }
+
+      setIsEditing(false);
+      Alert.alert(
+        '✏️ ' + t('spread.messages.editSuccess'),
+        t('spread.messages.editComplete', { title: editTitle }),
+        [{ text: t('common.ok') }]
+      );
+    } catch (error) {
+      console.error('스프레드 수정 실패:', error);
+      Alert.alert(t('common.error'), t('spread.errors.updateFailed'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 수정 취소
+  const handleCancelEdit = () => {
+    setEditTitle(spread.title);
+    setEditInsights(spread.insights || '');
+    setIsEditing(false);
+  };
 
   return (
     <Modal
@@ -250,73 +315,137 @@ const SpreadViewer: React.FC<SpreadViewerProps> = ({ visible, spread, onClose })
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.spreadViewerContainer}>
-        <View style={styles.spreadViewerHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={{ fontSize: 20, color: '#9b8db8' }}>×</Text>
-          </TouchableOpacity>
-          <Text style={styles.spreadViewerTitle}>{spread.title}</Text>
-        </View>
-
-        <ScrollView
-          style={styles.spreadViewerContent}
-          automaticallyAdjustContentInsets={false}
-          contentInsetAdjustmentBehavior="never"
-        >
-          <Text style={styles.spreadName}>{spread.spreadName || spread.spreadNameEn}</Text>
-
-          {/* 스프레드 배치도 */}
-          <View style={styles.spreadLayout}>
-            {spread.positions?.map((position, index) => (
-              <View
-                key={position.id || index}
-                style={[
-                  styles.spreadCardPosition,
-                  {
-                    position: 'absolute',
-                    left: `${position.x || 50}%`,
-                    top: `${position.y || 50}%`,
-                    transform: [
-                      { translateX: -30 },
-                      { translateY: -40 }
-                    ],
-                    zIndex: spread.spreadName?.includes('켈틱') && position.id === 2 ? 10 : 1
-                  }
-                ]}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.spreadViewerContainer}>
+          <View style={styles.spreadViewerHeader}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={{ fontSize: 20, color: '#9b8db8' }}>×</Text>
+            </TouchableOpacity>
+            {isEditing ? (
+              <TextInput
+                style={styles.spreadViewerTitleInput}
+                value={editTitle}
+                onChangeText={setEditTitle}
+                placeholder={t('spread.saveModal.titlePlaceholder')}
+                placeholderTextColor="#666"
+              />
+            ) : (
+              <Text style={styles.spreadViewerTitle}>{spread.title}</Text>
+            )}
+            {/* 수정 버튼 */}
+            {!isEditing ? (
+              <TouchableOpacity
+                onPress={() => setIsEditing(true)}
+                style={styles.editButton}
               >
-                <View style={spread.spreadName?.includes('켈틱') && position.id === 2 ? styles.rotatedCard : null}>
-                  {position.card && (
-                    <TarotCardComponent
-                      card={position.card}
-                      size="small"
-                      showText={false}
-                      noBorder={spread.spreadName?.includes('켈틱') || spread.spreadName?.includes('컵오브릴레이션십')}
-                    />
-                  )}
-                </View>
+                <Text style={styles.editButtonText}>✏️</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.editButtonGroup}>
+                <TouchableOpacity
+                  onPress={handleCancelEdit}
+                  style={styles.cancelEditButton}
+                >
+                  <Text style={styles.cancelEditButtonText}>✕</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleSaveEdit}
+                  style={styles.saveEditButton}
+                  disabled={isSaving}
+                >
+                  <Text style={styles.saveEditButtonText}>{isSaving ? '...' : '✓'}</Text>
+                </TouchableOpacity>
               </View>
-            ))}
+            )}
           </View>
 
-          {/* 메모/인사이트 섹션 */}
-          {spread.insights && (
+          <ScrollView
+            style={styles.spreadViewerContent}
+            automaticallyAdjustContentInsets={false}
+            contentInsetAdjustmentBehavior="never"
+          >
+            <Text style={styles.spreadName}>{spread.spreadName || spread.spreadNameEn}</Text>
+
+            {/* 스프레드 배치도 */}
+            <View style={styles.spreadLayout}>
+              {spread.positions?.map((position, index) => (
+                <View
+                  key={position.id || index}
+                  style={[
+                    styles.spreadCardPosition,
+                    {
+                      position: 'absolute',
+                      left: `${position.x || 50}%`,
+                      top: `${position.y || 50}%`,
+                      transform: [
+                        { translateX: -30 },
+                        { translateY: -40 }
+                      ],
+                      zIndex: spread.spreadName?.includes('켈틱') && position.id === 2 ? 10 : 1
+                    }
+                  ]}
+                >
+                  <View style={spread.spreadName?.includes('켈틱') && position.id === 2 ? styles.rotatedCard : null}>
+                    {position.card && (
+                      <TarotCardComponent
+                        card={position.card}
+                        size="small"
+                        showText={false}
+                        noBorder={spread.spreadName?.includes('켈틱') || spread.spreadName?.includes('컵오브릴레이션십')}
+                      />
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {/* 메모/인사이트 섹션 */}
             <View style={styles.insightsSection}>
               <Text style={styles.insightsSectionTitle}>📝 {t('journal.insightsTitle')}</Text>
-              <View style={styles.insightsContainer}>
-                <Text style={styles.insightsText}>{spread.insights}</Text>
-              </View>
+              {isEditing ? (
+                <TextInput
+                  style={styles.insightsTextInput}
+                  value={editInsights}
+                  onChangeText={setEditInsights}
+                  placeholder={t('spread.saveModal.insightsPlaceholder')}
+                  placeholderTextColor="#666"
+                  multiline
+                  numberOfLines={5}
+                  textAlignVertical="top"
+                />
+              ) : (
+                <View style={styles.insightsContainer}>
+                  <Text style={styles.insightsText}>
+                    {spread.insights || t('journal.noInsights')}
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
 
-          {/* 생성 날짜 */}
-          <View style={styles.metadataSection}>
-            <Text style={styles.metadataLabel}>{t('journal.createdDate')}</Text>
-            <Text style={styles.metadataValue}>
-              {new Date(spread.createdAt).toLocaleString('ko-KR')}
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
+            {/* 생성 날짜 */}
+            <View style={styles.metadataSection}>
+              <Text style={styles.metadataLabel}>{t('journal.createdDate')}</Text>
+              <Text style={styles.metadataValue}>
+                {new Date(spread.createdAt).toLocaleString('ko-KR')}
+              </Text>
+              {spread.updatedAt && (
+                <>
+                  <Text style={[styles.metadataLabel, { marginTop: 8 }]}>{t('journal.updatedDate')}</Text>
+                  <Text style={styles.metadataValue}>
+                    {new Date(spread.updatedAt).toLocaleString('ko-KR')}
+                  </Text>
+                </>
+              )}
+            </View>
+
+            {/* 키보드 여백 */}
+            {isEditing && <View style={{ height: 150 }} />}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -997,7 +1126,21 @@ const TarotDaily = () => {
     );
 
     // selectedReading도 업데이트
-    setSelectedReading(updatedReading);
+  };
+
+  // 스프레드 수정 완료 핸들러
+  const handleSpreadUpdated = (updatedSpread: SavedSpread) => {
+    // spreadReadings 배열에서 해당 spread 업데이트
+    setSpreadReadings(prevSpreads =>
+      prevSpreads.map(spread =>
+        spread.id === updatedSpread.id
+          ? updatedSpread
+          : spread
+      )
+    );
+
+    // selectedSpread도 업데이트
+    setSelectedSpread(updatedSpread);
   };
 
   return (
@@ -1021,6 +1164,7 @@ const TarotDaily = () => {
         visible={!!selectedSpread}
         spread={selectedSpread}
         onClose={() => setSelectedSpread(null)}
+        onSpreadUpdated={handleSpreadUpdated}
       />
     </View>
   );
@@ -1464,6 +1608,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text.primary,
+    flex: 1,
+  },
+  spreadViewerTitleInput: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    borderRadius: BorderRadius.small,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.5)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    marginRight: Spacing.sm,
+  },
+  editButton: {
+    padding: Spacing.sm,
+  },
+  editButtonText: {
+    fontSize: 18,
+  },
+  editButtonGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cancelEditButton: {
+    backgroundColor: 'rgba(255, 100, 100, 0.2)',
+    borderRadius: BorderRadius.small,
+    padding: Spacing.sm,
+    marginRight: Spacing.xs,
+  },
+  cancelEditButtonText: {
+    fontSize: 16,
+    color: '#ff6464',
+    fontWeight: 'bold',
+  },
+  saveEditButton: {
+    backgroundColor: 'rgba(100, 255, 100, 0.2)',
+    borderRadius: BorderRadius.small,
+    padding: Spacing.sm,
+  },
+  saveEditButtonText: {
+    fontSize: 16,
+    color: '#64ff64',
+    fontWeight: 'bold',
   },
   spreadViewerContent: {
     flex: 1,
@@ -1523,6 +1712,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.primary,
     lineHeight: 20,
+  },
+  insightsTextInput: {
+    backgroundColor: 'rgba(244, 208, 63, 0.1)',
+    borderRadius: BorderRadius.medium,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.5)',
+    padding: Spacing.md,
+    fontSize: 14,
+    color: Colors.text.primary,
+    lineHeight: 20,
+    minHeight: 120,
   },
 
   // 메타데이터 섹션

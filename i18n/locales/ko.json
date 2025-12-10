@@ -259,6 +259,8 @@
     "memoPlaceholder": "이 시간에 대한 생각이나 느낌을 적어보세요...",
     "insightsTitle": "인사이트",
     "createdDate": "생성 날짜",
+    "updatedDate": "수정 날짜",
+    "noInsights": "기록된 인사이트가 없습니다",
     "deleteRecords": "기록 삭제",
     "deleteRecordsConfirm": "선택한 {{count}}개의 기록을 삭제하시겠습니까?",
     "deleteComplete": "삭제 완료",

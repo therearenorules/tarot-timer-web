@@ -253,6 +253,8 @@
     "memoPlaceholder": "この時間についての思いや感覚を書いてみてください...",
     "insightsTitle": "洞察",
     "createdDate": "作成日",
+    "updatedDate": "更新日",
+    "noInsights": "記録されたインサイトはありません",
     "deleteRecords": "記録削除",
     "deleteRecordsConfirm": "選択した{{count}}個の記録を削除しますか？",
     "deleteComplete": "削除完了",
