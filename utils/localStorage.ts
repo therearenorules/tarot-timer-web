@@ -95,7 +95,7 @@ export interface AppInstallInfo {
 
 export interface PremiumStatus {
   is_premium: boolean;
-  subscription_type?: 'monthly' | 'yearly' | 'trial' | 'beta';
+  subscription_type?: 'monthly' | 'yearly' | 'trial' | 'beta' | 'promo';
   purchase_date?: string;
   expiry_date?: string;
   store_transaction_id?: string;

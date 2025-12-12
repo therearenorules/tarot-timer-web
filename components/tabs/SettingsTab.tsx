@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useSafeState } from '../../hooks/useSafeState';
 import {
   View,
@@ -28,6 +28,7 @@ import PremiumTest from '../PremiumTest';
 // BannerAd 제거: 전면광고만 사용으로 unitId 크래시 방지
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SupabaseDebugPanel } from '../SupabaseDebugPanel';
+import PromoCodeSection from '../PromoCodeSection';
 // 조건부 import - 모바일 환경에서만 로드
 let SubscriptionPlans: any = null;
 let SubscriptionManagement: any = null;
@@ -130,7 +131,8 @@ const SettingsTab: React.FC = () => {
     isPremium,
     isSubscriptionActive,
     daysUntilExpiry,
-    isLoading: premiumLoading
+    isLoading: premiumLoading,
+    refreshStatus
   } = usePremium();
 
   const [localDataStatus, setLocalDataStatus] = useSafeState<LocalDataStatus>({
@@ -419,6 +421,9 @@ const SettingsTab: React.FC = () => {
                 {Platform.OS === 'web' ? t('settings.premium.comingSoon') : t('settings.premium.upgradeButton')}
               </Text>
             </TouchableOpacity>
+
+            {/* 프로모션 코드 입력 섹션 */}
+            <PromoCodeSection onApplySuccess={refreshStatus} />
           </View>
         )}
       </View>
