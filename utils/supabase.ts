@@ -276,6 +276,80 @@ export const checkConnection = async () => {
   }
 };
 
+/**
+ * 앱 시작 시 Supabase 연결 상태 및 환경 변수 검증
+ * - 환경 변수 존재 여부 확인
+ * - 실제 Supabase 서버 연결 테스트
+ * - AsyncStorage에 연결 상태 로그 저장
+ */
+export const validateSupabaseConnection = async () => {
+  const timestamp = new Date().toISOString();
+  const connectionStatus = {
+    timestamp,
+    envVarsExist: !!supabaseUrl && !!supabaseAnonKey,
+    envVarsValid: isSupabaseConfigured,
+    supabaseUrl: supabaseUrl || 'NOT_SET',
+    connectionSuccessful: false,
+    error: null as string | null,
+  };
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔍 Supabase 연결 상태 검증 시작...');
+  console.log(`   • 시간: ${timestamp}`);
+  console.log(`   • 환경 변수 존재: ${connectionStatus.envVarsExist ? '✅' : '❌'}`);
+  console.log(`   • 환경 변수 유효성: ${connectionStatus.envVarsValid ? '✅' : '❌'}`);
+  console.log(`   • Supabase URL: ${connectionStatus.supabaseUrl}`);
+
+  // 환경 변수가 설정되지 않은 경우
+  if (!connectionStatus.envVarsExist) {
+    connectionStatus.error = 'Environment variables not set';
+    console.warn('⚠️ Supabase 환경 변수가 설정되지 않았습니다.');
+    console.warn('   → EXPO_PUBLIC_SUPABASE_URL 확인 필요');
+    console.warn('   → EXPO_PUBLIC_SUPABASE_ANON_KEY 확인 필요');
+  }
+  // 환경 변수가 유효하지 않은 경우 (플레이스홀더 등)
+  else if (!connectionStatus.envVarsValid) {
+    connectionStatus.error = 'Environment variables invalid (placeholder values)';
+    console.warn('⚠️ Supabase 환경 변수가 유효하지 않습니다.');
+    console.warn('   → 플레이스홀더 값이 설정되어 있거나 형식이 잘못되었습니다.');
+  }
+  // 실제 연결 테스트
+  else {
+    try {
+      console.log('🔌 Supabase 서버 연결 테스트 중...');
+      const isConnected = await checkConnection();
+      connectionStatus.connectionSuccessful = isConnected;
+
+      if (isConnected) {
+        console.log('✅ Supabase 연결 성공!');
+      } else {
+        connectionStatus.error = 'Connection test failed';
+        console.error('❌ Supabase 연결 실패!');
+        console.error('   → 네트워크 상태 확인 필요');
+        console.error('   → Supabase 프로젝트 상태 확인 필요');
+      }
+    } catch (error: any) {
+      connectionStatus.error = error?.message || 'Unknown connection error';
+      console.error('❌ Supabase 연결 테스트 중 오류:', error);
+    }
+  }
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  // AsyncStorage에 연결 상태 저장 (디버깅용)
+  try {
+    const existingLogsJson = await AsyncStorage.getItem('SUPABASE_CONNECTION_LOGS');
+    const existingLogs = existingLogsJson ? JSON.parse(existingLogsJson) : [];
+    const updatedLogs = [connectionStatus, ...existingLogs].slice(0, 10); // 최대 10개 보관
+    await AsyncStorage.setItem('SUPABASE_CONNECTION_LOGS', JSON.stringify(updatedLogs));
+    console.log('💾 Supabase 연결 상태 로그 저장 완료');
+  } catch (storageError) {
+    console.error('❌ 연결 상태 로그 저장 실패:', storageError);
+  }
+
+  return connectionStatus;
+};
+
 // 타입 정의
 export interface TarotSession {
   id?: string;

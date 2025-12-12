@@ -132,7 +132,10 @@
       "Bash(npm audit fix:*)",
       "Bash(xcrun devicectl:*)",
       "Bash(npm ls:*)",
-      "Bash(log show:*)"
+      "Bash(log show:*)",
+      "Bash(where supabase)",
+      "Bash(C:supabase-clisupabase.exe secrets list --project-ref syzefbnrnnjkdnoqbwsk)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "ask": []

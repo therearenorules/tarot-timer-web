@@ -73,6 +73,7 @@ import AdManager from './utils/adManager';
 import IAPManager from './utils/iapManager';
 import AnalyticsManager from './utils/analyticsManager';
 import { BetaManager } from './utils/betaManager';
+import { validateSupabaseConnection } from './utils/supabase';
 import {
   Colors,
   Spacing,
@@ -495,8 +496,17 @@ function AppContent() {
           console.log('🌐 웹 환경: IAP 시스템 건너뛰기');
         }
 
-        // Step 3: 분석 시스템 초기화
-        console.log('📊 Step 3: 분석 시스템 초기화 시작...');
+        // Step 3: Supabase 연결 상태 검증
+        console.log('🔌 Step 3: Supabase 연결 상태 검증 시작...');
+        try {
+          await validateSupabaseConnection();
+          console.log('   ✅ Supabase 연결 상태 검증 완료');
+        } catch (error) {
+          console.warn('   ⚠️ Supabase 연결 검증 실패:', error);
+        }
+
+        // Step 4: 분석 시스템 초기화
+        console.log('📊 Step 4: 분석 시스템 초기화 시작...');
         try {
           await AnalyticsManager.startSession();
           console.log('   ✅ 분석 시스템 초기화 완료');
@@ -504,11 +514,11 @@ function AppContent() {
           console.warn('   ⚠️ 분석 시스템 초기화 실패:', error);
         }
 
-        // Step 4: 광고 시스템 초기화 (마지막, UI 렌더링 후)
+        // Step 5: 광고 시스템 초기화 (마지막, UI 렌더링 후)
         if (Platform.OS !== 'web') {
           // ✅ Android: 광고는 1초 후에 초기화 (UI 먼저 표시)
           adInitTimeout = setTimeout(async () => {
-            console.log('📱 Step 4: 광고 시스템 초기화 시작 (지연)...');
+            console.log('📱 Step 5: 광고 시스템 초기화 시작 (지연)...');
             try {
               const adSuccess = await AdManager.initialize();
               console.log(adSuccess ? '   ✅ 광고 시스템 초기화 완료' : '   ⚠️ 광고 시스템 초기화 실패');
@@ -518,9 +528,9 @@ function AppContent() {
           }, 1000);
         }
 
-        // Step 5: 타로 카드 이미지 백그라운드 프리로딩 (낮은 우선순위)
+        // Step 6: 타로 카드 이미지 백그라운드 프리로딩 (낮은 우선순위)
         imagePreloadTimeout = setTimeout(() => {
-          console.log('🎴 Step 5: 타로 카드 이미지 백그라운드 프리로드 시작...');
+          console.log('🎴 Step 6: 타로 카드 이미지 백그라운드 프리로드 시작...');
           preloadTarotImages(TAROT_CARDS, 0, 'smart')
             .then(() => console.log('   ✅ 타로 카드 이미지 프리로드 완료'))
             .catch(error => console.warn('   ⚠️ 타로 카드 이미지 프리로드 실패:', error));
