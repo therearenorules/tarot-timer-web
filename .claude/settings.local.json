@@ -136,7 +136,9 @@
       "Bash(where supabase)",
       "Bash(C:supabase-clisupabase.exe secrets list --project-ref syzefbnrnnjkdnoqbwsk)",
       "Bash(netstat:*)",
-      "Bash(start http://localhost:8083)"
+      "Bash(start http://localhost:8083)",
+      "Bash(git restore:*)",
+      "Bash(C:supabase-clisupabase.exe projects list)"
     ],
     "deny": [],
     "ask": []
