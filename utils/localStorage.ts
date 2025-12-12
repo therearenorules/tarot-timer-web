@@ -634,11 +634,7 @@ export class LocalStorageManager {
     maxCount: number;
   }> {
     const premiumStatus = await this.getPremiumStatus();
-
-    if (premiumStatus.is_premium && premiumStatus.unlimited_storage) {
-      return { canCreate: true, isAtLimit: false, currentCount: 0, maxCount: 999999 };
-    }
-
+    const isPremium = premiumStatus.is_premium && premiumStatus.unlimited_storage;
     const limits = await this.getUsageLimits();
 
     if (type === 'daily') {
@@ -648,16 +644,16 @@ export class LocalStorageManager {
         const allKeys = await this.getCachedKeys();
         const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
         actualDailyCount = dailyTarotKeys.length;
-        console.log(`🔍 DailyTarot 저장 제한 확인: ${actualDailyCount}/${limits.max_daily_sessions}`);
+        console.log(`🔍 DailyTarot 저장 제한 확인: ${actualDailyCount}/${isPremium ? '∞' : limits.max_daily_sessions}`);
       } catch (error) {
         console.error('DailyTarot 카운트 실패, 캐시된 값 사용:', error);
       }
 
       return {
-        canCreate: actualDailyCount < limits.max_daily_sessions,
-        isAtLimit: actualDailyCount >= limits.max_daily_sessions,
+        canCreate: isPremium || actualDailyCount < limits.max_daily_sessions,
+        isAtLimit: !isPremium && actualDailyCount >= limits.max_daily_sessions,
         currentCount: actualDailyCount,
-        maxCount: limits.max_daily_sessions
+        maxCount: isPremium ? 999999 : limits.max_daily_sessions
       };
     } else if (type === 'spread') {
       // ✅ FIX: spread_saves 키에서 실제 스프레드 개수 카운트
@@ -670,23 +666,23 @@ export class LocalStorageManager {
         } else {
           actualSpreadCount = 0;
         }
-        console.log(`🔍 Spread 저장 제한 확인: ${actualSpreadCount}/${limits.max_spread_sessions}`);
+        console.log(`🔍 Spread 저장 제한 확인: ${actualSpreadCount}/${isPremium ? '∞' : limits.max_spread_sessions}`);
       } catch (error) {
         console.error('Spread 카운트 실패, 캐시된 값 사용:', error);
       }
 
       return {
-        canCreate: actualSpreadCount < limits.max_spread_sessions,
-        isAtLimit: actualSpreadCount >= limits.max_spread_sessions,
+        canCreate: isPremium || actualSpreadCount < limits.max_spread_sessions,
+        isAtLimit: !isPremium && actualSpreadCount >= limits.max_spread_sessions,
         currentCount: actualSpreadCount,
-        maxCount: limits.max_spread_sessions
+        maxCount: isPremium ? 999999 : limits.max_spread_sessions
       };
     } else {
       return {
-        canCreate: limits.current_journal_entries < limits.max_journal_entries,
-        isAtLimit: limits.current_journal_entries >= limits.max_journal_entries,
+        canCreate: isPremium || limits.current_journal_entries < limits.max_journal_entries,
+        isAtLimit: !isPremium && limits.current_journal_entries >= limits.max_journal_entries,
         currentCount: limits.current_journal_entries,
-        maxCount: limits.max_journal_entries
+        maxCount: isPremium ? 999999 : limits.max_journal_entries
       };
     }
   }
