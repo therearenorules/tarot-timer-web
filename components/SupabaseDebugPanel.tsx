@@ -36,14 +36,25 @@ interface ErrorLog {
   context?: any;
 }
 
+interface HealthLog {
+  timestamp: string;
+  edgeFunctionAvailable: boolean;
+  responseTimeMs: number;
+  status: 'ok' | 'error' | 'unknown';
+  version: string | null;
+  region: string | null;
+  error: string | null;
+}
+
 export const SupabaseDebugPanel: React.FC<{
   visible: boolean;
   onClose: () => void;
 }> = ({ visible, onClose }) => {
   const [connectionLogs, setConnectionLogs] = useState<ConnectionLog[]>([]);
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'connection' | 'errors'>('connection');
+  const [activeTab, setActiveTab] = useState<'connection' | 'errors' | 'health'>('connection');
 
   // 로그 불러오기
   useEffect(() => {
@@ -66,6 +77,12 @@ export const SupabaseDebugPanel: React.FC<{
       if (errorLogsJson) {
         setErrorLogs(JSON.parse(errorLogsJson));
       }
+
+      // Edge Function 헬스체크 로그
+      const healthLogsJson = await AsyncStorage.getItem('EDGE_FUNCTION_HEALTH_LOGS');
+      if (healthLogsJson) {
+        setHealthLogs(JSON.parse(healthLogsJson));
+      }
     } catch (error) {
       console.error('디버그 패널 로그 로드 실패:', error);
     } finally {
@@ -78,11 +95,14 @@ export const SupabaseDebugPanel: React.FC<{
       if (activeTab === 'connection') {
         await AsyncStorage.removeItem('SUPABASE_CONNECTION_LOGS');
         setConnectionLogs([]);
-      } else {
+      } else if (activeTab === 'errors') {
         await AsyncStorage.removeItem('SUPABASE_ERROR_LOGS');
         setErrorLogs([]);
+      } else {
+        await AsyncStorage.removeItem('EDGE_FUNCTION_HEALTH_LOGS');
+        setHealthLogs([]);
       }
-      console.log(`✅ ${activeTab === 'connection' ? '연결' : '에러'} 로그 삭제 완료`);
+      console.log(`✅ ${activeTab === 'connection' ? '연결' : activeTab === 'errors' ? '에러' : '헬스체크'} 로그 삭제 완료`);
     } catch (error) {
       console.error('로그 삭제 실패:', error);
     }
@@ -170,6 +190,63 @@ export const SupabaseDebugPanel: React.FC<{
     );
   };
 
+  const renderHealthLog = (log: HealthLog, index: number) => {
+    const isHealthy = log.status === 'ok' && log.edgeFunctionAvailable;
+    const statusColor = isHealthy ? '#4ade80' : log.status === 'error' ? '#f87171' : '#fbbf24';
+
+    return (
+      <View key={index} style={styles.logItem}>
+        <View style={styles.logHeader}>
+          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+          <Text style={styles.logTime}>{formatTimestamp(log.timestamp)}</Text>
+        </View>
+
+        <View style={styles.logBody}>
+          <View style={styles.logRow}>
+            <Text style={styles.logLabel}>Edge Function:</Text>
+            <Text style={[styles.logValue, { color: log.edgeFunctionAvailable ? '#4ade80' : '#f87171' }]}>
+              {log.edgeFunctionAvailable ? '✅ 사용 가능' : '❌ 사용 불가'}
+            </Text>
+          </View>
+
+          <View style={styles.logRow}>
+            <Text style={styles.logLabel}>상태:</Text>
+            <Text style={[styles.logValue, { color: statusColor }]}>
+              {log.status === 'ok' ? '✅ 정상' : log.status === 'error' ? '❌ 에러' : '⚠️ 알 수 없음'}
+            </Text>
+          </View>
+
+          <View style={styles.logRow}>
+            <Text style={styles.logLabel}>응답 시간:</Text>
+            <Text style={[styles.logValue, { color: log.responseTimeMs < 1000 ? '#4ade80' : '#fbbf24' }]}>
+              {log.responseTimeMs}ms
+            </Text>
+          </View>
+
+          {log.version && (
+            <View style={styles.logRow}>
+              <Text style={styles.logLabel}>버전:</Text>
+              <Text style={styles.logValue}>{log.version}</Text>
+            </View>
+          )}
+
+          {log.region && (
+            <View style={styles.logRow}>
+              <Text style={styles.logLabel}>리전:</Text>
+              <Text style={styles.logValue}>{log.region}</Text>
+            </View>
+          )}
+
+          {log.error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{log.error}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <Modal
       visible={visible}
@@ -196,7 +273,15 @@ export const SupabaseDebugPanel: React.FC<{
             onPress={() => setActiveTab('connection')}
           >
             <Text style={[styles.tabText, activeTab === 'connection' && styles.activeTabText]}>
-              연결 로그 ({connectionLogs.length})
+              연결 ({connectionLogs.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'health' && styles.activeTab]}
+            onPress={() => setActiveTab('health')}
+          >
+            <Text style={[styles.tabText, activeTab === 'health' && styles.activeTabText]}>
+              헬스체크 ({healthLogs.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -204,7 +289,7 @@ export const SupabaseDebugPanel: React.FC<{
             onPress={() => setActiveTab('errors')}
           >
             <Text style={[styles.tabText, activeTab === 'errors' && styles.activeTabText]}>
-              에러 로그 ({errorLogs.length})
+              에러 ({errorLogs.length})
             </Text>
           </TouchableOpacity>
         </View>
@@ -218,6 +303,12 @@ export const SupabaseDebugPanel: React.FC<{
               connectionLogs.map((log, index) => renderConnectionLog(log, index))
             ) : (
               <Text style={styles.emptyText}>연결 로그가 없습니다.</Text>
+            )
+          ) : activeTab === 'health' ? (
+            healthLogs.length > 0 ? (
+              healthLogs.map((log, index) => renderHealthLog(log, index))
+            ) : (
+              <Text style={styles.emptyText}>헬스체크 로그가 없습니다.</Text>
             )
           ) : (
             errorLogs.length > 0 ? (

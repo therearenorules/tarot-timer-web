@@ -350,6 +350,84 @@ export const validateSupabaseConnection = async () => {
   return connectionStatus;
 };
 
+/**
+ * Supabase Edge Function 헬스체크
+ * - health-check Edge Function 호출
+ * - 연결 상태 및 응답 시간 측정
+ * - 앱 시작 시 호출하여 Edge Function 연결 확인
+ */
+export const checkEdgeFunctionHealth = async () => {
+  const timestamp = new Date().toISOString();
+  const startTime = Date.now();
+
+  const healthStatus = {
+    timestamp,
+    edgeFunctionAvailable: false,
+    responseTimeMs: 0,
+    status: 'unknown' as 'ok' | 'error' | 'unknown',
+    version: null as string | null,
+    region: null as string | null,
+    error: null as string | null,
+  };
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🏥 Edge Function 헬스체크 시작...');
+
+  if (!supabase) {
+    healthStatus.error = 'Supabase client not initialized';
+    console.warn('⚠️ Supabase 클라이언트가 초기화되지 않았습니다.');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    return healthStatus;
+  }
+
+  try {
+    console.log('📤 health-check Edge Function 호출 중...');
+
+    const { data, error } = await supabase.functions.invoke('health-check', {
+      body: {},
+    });
+
+    healthStatus.responseTimeMs = Date.now() - startTime;
+
+    if (error) {
+      healthStatus.error = error.message;
+      console.error('❌ Edge Function 호출 실패:', error);
+      console.log(`   • 응답 시간: ${healthStatus.responseTimeMs}ms`);
+    } else if (data) {
+      healthStatus.edgeFunctionAvailable = true;
+      healthStatus.status = data.status || 'ok';
+      healthStatus.version = data.version || null;
+      healthStatus.region = data.region || null;
+
+      console.log('✅ Edge Function 헬스체크 성공!');
+      console.log(`   • 상태: ${healthStatus.status}`);
+      console.log(`   • 응답 시간: ${healthStatus.responseTimeMs}ms`);
+      console.log(`   • 버전: ${healthStatus.version}`);
+      console.log(`   • 리전: ${healthStatus.region}`);
+    }
+  } catch (error: any) {
+    healthStatus.error = error?.message || 'Unknown error';
+    healthStatus.responseTimeMs = Date.now() - startTime;
+    console.error('❌ Edge Function 헬스체크 오류:', error);
+    console.log(`   • 응답 시간: ${healthStatus.responseTimeMs}ms`);
+  }
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  // AsyncStorage에 헬스체크 결과 저장
+  try {
+    const existingLogsJson = await AsyncStorage.getItem('EDGE_FUNCTION_HEALTH_LOGS');
+    const existingLogs = existingLogsJson ? JSON.parse(existingLogsJson) : [];
+    const updatedLogs = [healthStatus, ...existingLogs].slice(0, 10); // 최대 10개 보관
+    await AsyncStorage.setItem('EDGE_FUNCTION_HEALTH_LOGS', JSON.stringify(updatedLogs));
+    console.log('💾 Edge Function 헬스체크 로그 저장 완료');
+  } catch (storageError) {
+    console.error('❌ 헬스체크 로그 저장 실패:', storageError);
+  }
+
+  return healthStatus;
+};
+
 // 타입 정의
 export interface TarotSession {
   id?: string;

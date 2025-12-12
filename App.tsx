@@ -73,7 +73,7 @@ import AdManager from './utils/adManager';
 import IAPManager from './utils/iapManager';
 import AnalyticsManager from './utils/analyticsManager';
 import { BetaManager } from './utils/betaManager';
-import { validateSupabaseConnection } from './utils/supabase';
+import { validateSupabaseConnection, checkEdgeFunctionHealth } from './utils/supabase';
 import {
   Colors,
   Spacing,
@@ -504,6 +504,12 @@ function AppContent() {
         } catch (error) {
           console.warn('   ⚠️ Supabase 연결 검증 실패:', error);
         }
+
+        // Step 3.5: Edge Function 헬스체크 (백그라운드)
+        console.log('🏥 Step 3.5: Edge Function 헬스체크 시작 (백그라운드)...');
+        checkEdgeFunctionHealth()
+          .then(() => console.log('   ✅ Edge Function 헬스체크 완료'))
+          .catch(error => console.warn('   ⚠️ Edge Function 헬스체크 실패:', error));
 
         // Step 4: 분석 시스템 초기화
         console.log('📊 Step 4: 분석 시스템 초기화 시작...');
