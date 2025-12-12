@@ -127,7 +127,12 @@
       "Bash(keytool:*)",
       "Bash(jarsigner:*)",
       "Bash(ls:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npm outdated)",
+      "Bash(npm audit fix:*)",
+      "Bash(xcrun devicectl:*)",
+      "Bash(npm ls:*)",
+      "Bash(log show:*)"
     ],
     "deny": [],
     "ask": []

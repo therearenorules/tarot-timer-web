@@ -52,7 +52,6 @@ const RNIap = Platform.OS === 'web' ? null : {
   requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
-  setup,
 };
 
 export interface SubscriptionProduct {
@@ -83,9 +82,12 @@ class IAPManager {
   private static renewalCheckInterval: ReturnType<typeof setInterval> | null = null;
   private static activePurchases = new Set<string>();
 
+  private static initPromise: Promise<boolean> | null = null;
+
   /**
    * IAP 초기화
    * ✅ FIX: 재시도 로직 추가 (App Review 환경 대응)
+   * ✅ FIX: Singleton Pattern 적용 (Concurrent calls 방지)
    */
   static async initialize(): Promise<boolean> {
     if (this.initialized) {
@@ -93,97 +95,110 @@ class IAPManager {
       return true;
     }
 
-    if (Platform.OS === 'web') {
-      this.initialized = true;
-      return true;
+    // 이미 초기화 진행 중이면 해당 Promise 반환
+    if (this.initPromise) {
+      console.log('🔄 IAPManager 초기화 중... 기존 요청 대기');
+      return this.initPromise;
     }
 
-    if (!RNIap) {
-      console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
-      return false;
-    }
-
-    // ✅ FIX: 재시도 로직 (최대 3회, 2초 간격)
-    let retries = 3;
-    let lastError: any = null;
-
-    // ✅ CRITICAL FIX V4: StoreKit 1 모드 설정을 initConnection() 이전에 명확히 분리
-    if (Platform.OS === 'ios' && RNIap) {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🍎 iOS: StoreKit 1 모드 강제 설정 (최우선)');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      try {
-        // setup 함수가 존재하면 호출 (버전에 따라 없을 수 있음)
-        if (typeof (RNIap as any).setup === 'function') {
-          (RNIap as any).setup({ storekitMode: 'STOREKIT1_MODE' });
-          console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
-          await new Promise(resolve => setTimeout(resolve, 100));
-          console.log('✅ StoreKit 1 모드 적용 대기 완료');
-        } else {
-          console.log('ℹ️ setup 함수 없음 - 기본 모드로 진행');
-        }
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-      } catch (setupError) {
-        console.warn('⚠️ StoreKit 모드 설정 실패 (계속 진행):', setupError);
-        console.warn('   → 이 경우 transactionReceipt가 비어있을 수 있음');
-        console.warn('   → 로컬 검증 fallback으로 구독 활성화 시도\n');
-      }
-    }
-
-    while (retries > 0) {
-      try {
-        console.log(`🔄 IAPManager 초기화 시도 (${4 - retries}/3)...`);
-        console.log('📋 RNIap.initConnection 호출 전 상태:');
-        console.log('  - Platform:', Platform.OS);
-        console.log('  - RNIap 존재:', !!RNIap);
-        console.log('  - initialized:', this.initialized);
-
-        // ✅ FIX: initConnection에 5초 타임아웃 적용
-        const connectionResult = await Promise.race([
-          RNIap.initConnection(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('initConnection timeout after 5s')), 5000)
-          )
-        ]);
-        console.log('📋 RNIap.initConnection 결과:', connectionResult);
-
+    this.initPromise = (async () => {
+      if (Platform.OS === 'web') {
         this.initialized = true;
-        console.log('✅ RNIap 연결 성공');
-
-        // 리스너 설정
-        await this.setupPurchaseListeners();
-
-        // ✅ FIX: StoreKit 완전 초기화 대기 (1초)
-        console.log('⏳ StoreKit 완전 초기화 대기 중... (1초)');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('✅ StoreKit 준비 완료');
-
-        console.log(`✅ IAPManager 초기화 완료 (시도 ${4 - retries}/3)`);
         return true;
-
-      } catch (error) {
-        lastError = error;
-        console.error(`❌ IAPManager 초기화 실패 (시도 ${4 - retries}/3):`);
-        console.error('📋 오류 타입:', error instanceof Error ? error.constructor.name : typeof error);
-        console.error('📋 오류 메시지:', error instanceof Error ? error.message : String(error));
-        console.error('📋 오류 코드:', (error as any)?.code);
-        console.error('📋 전체 오류 객체:', JSON.stringify(error, null, 2));
-
-        if (retries > 1) {
-          console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-
-        retries--;
       }
-    }
 
-    console.error('❌ IAPManager 초기화 최종 실패 (3회 시도 모두 실패):');
-    console.error('📋 최종 오류 타입:', lastError instanceof Error ? lastError.constructor.name : typeof lastError);
-    console.error('📋 최종 오류 메시지:', lastError instanceof Error ? lastError.message : String(lastError));
-    console.error('📋 최종 오류 코드:', (lastError as any)?.code);
-    console.error('📋 최종 오류 전체:', JSON.stringify(lastError, null, 2));
-    return false;
+      if (!RNIap) {
+        console.warn('⚠️ RNIap 모듈이 로드되지 않았습니다.');
+        return false;
+      }
+
+      // ✅ FIX: 재시도 로직 (최대 3회, 2초 간격)
+      let retries = 3;
+      let lastError: any = null;
+
+      // ✅ CRITICAL FIX V4: StoreKit 1 모드 설정을 initConnection() 이전에 명확히 분리
+      if (Platform.OS === 'ios' && RNIap) {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🍎 iOS: StoreKit 1 모드 강제 설정 (최우선)');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        try {
+          // setup 함수가 존재하면 호출 (버전에 따라 없을 수 있음)
+          if (typeof (RNIap as any).setup === 'function') {
+            (RNIap as any).setup({ storekitMode: 'STOREKIT1_MODE' });
+            console.log('✅ StoreKit 1 모드 설정 완료 (Legacy Receipt 사용)');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            console.log('✅ StoreKit 1 모드 적용 대기 완료');
+          } else {
+            console.log('ℹ️ setup 함수 없음 - 기본 모드로 진행');
+          }
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        } catch (setupError) {
+          console.warn('⚠️ StoreKit 모드 설정 실패 (계속 진행):', setupError);
+          console.warn('   → 이 경우 transactionReceipt가 비어있을 수 있음');
+          console.warn('   → 로컬 검증 fallback으로 구독 활성화 시도\n');
+        }
+      }
+
+      while (retries > 0) {
+        try {
+          console.log(`🔄 IAPManager 초기화 시도 (${4 - retries}/3)...`);
+          console.log('📋 RNIap.initConnection 호출 전 상태:');
+          console.log('  - Platform:', Platform.OS);
+          console.log('  - RNIap 존재:', !!RNIap);
+          console.log('  - initialized:', this.initialized);
+
+          // ✅ FIX: initConnection에 5초 타임아웃 적용
+          const connectionResult = await Promise.race([
+            RNIap.initConnection(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('initConnection timeout after 5s')), 5000)
+            )
+          ]);
+          console.log('📋 RNIap.initConnection 결과:', connectionResult);
+
+          this.initialized = true;
+          console.log('✅ RNIap 연결 성공');
+
+          // 리스너 설정
+          await this.setupPurchaseListeners();
+
+          // ✅ FIX: StoreKit 완전 초기화 대기 (1초)
+          console.log('⏳ StoreKit 완전 초기화 대기 중... (1초)');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('✅ StoreKit 준비 완료');
+
+          console.log(`✅ IAPManager 초기화 완료 (시도 ${4 - retries}/3)`);
+          return true;
+
+        } catch (error) {
+          lastError = error;
+          console.error(`❌ IAPManager 초기화 실패 (시도 ${4 - retries}/3):`);
+          console.error('📋 오류 타입:', error instanceof Error ? error.constructor.name : typeof error);
+          console.error('📋 오류 메시지:', error instanceof Error ? error.message : String(error));
+          console.error('📋 오류 코드:', (error as any)?.code);
+          console.error('📋 전체 오류 객체:', JSON.stringify(error, null, 2));
+
+          if (retries > 1) {
+            console.log(`⏳ 2초 후 재시도... (남은 시도: ${retries - 1})`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+
+          retries--;
+        }
+      }
+
+      console.error('❌ IAPManager 초기화 최종 실패 (3회 시도 모두 실패):');
+      console.error('📋 최종 오류 타입:', lastError instanceof Error ? lastError.constructor.name : typeof lastError);
+      console.error('📋 최종 오류 메시지:', lastError instanceof Error ? lastError.message : String(lastError));
+      console.error('📋 최종 오류 코드:', (lastError as any)?.code);
+      console.error('📋 최종 오류 전체:', JSON.stringify(lastError, null, 2));
+
+      // 초기화 실패 시 Promise 초기화하여 재시도 가능하도록 함
+      this.initPromise = null;
+      return false;
+    })();
+
+    return this.initPromise;
   }
 
   /**
