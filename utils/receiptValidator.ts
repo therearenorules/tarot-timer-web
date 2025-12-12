@@ -404,7 +404,7 @@ export class ReceiptValidator {
           lastError = error;
 
           // 에러 로그 저장 (마지막 시도일 때만)
-          if (retries === 1) {
+          if (attempt === VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS) {
             await logSupabaseError(
               'EDGE_FUNCTION_INVOKE_ERROR',
               `Edge Function invocation failed after ${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS} attempts`,

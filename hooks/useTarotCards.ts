@@ -136,10 +136,14 @@ export function useTarotCards(currentHour: number): UseTarotCardsReturn {
     try {
       const today = TarotUtils.getTodayDateString();
       const storageKey = STORAGE_KEYS.DAILY_TAROT + today;
+      const now = new Date().toISOString();
       const saveData: DailyTarotSave = {
+        id: `daily_${today}`,
         date: today,
         hourlyCards: cards,
         memos: memos || cardMemos,
+        insights: '', // 빈 인사이트 (향후 구현)
+        savedAt: now,
       };
       await simpleStorage.setItem(storageKey, JSON.stringify(saveData));
     } catch (error) {

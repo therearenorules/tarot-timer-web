@@ -63,8 +63,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [isScheduling, setIsScheduling] = useSafeState<boolean>(false);
 
   // hasPermission ref로 관리 (AppState 리스너 재생성 방지)
-  const hasPermissionRef = useRef(Platform.OS === 'web' ? false : false);
-  const checkRealTimePermissionRef = useRef<() => Promise<boolean>>();
+  const hasPermissionRef = useRef<boolean>(Platform.OS === 'web' ? false : false);
+  const checkRealTimePermissionRef = useRef<() => Promise<boolean>>(undefined);
 
   // ============ 권한 관리 ============
 
@@ -549,12 +549,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     try {
       if (Notifications?.addNotificationReceivedListener && Notifications?.addNotificationResponseReceivedListener) {
-        notificationListener = Notifications.addNotificationReceivedListener(notification => {
+        notificationListener = Notifications.addNotificationReceivedListener((notification: any) => {
           console.log('Notification received:', notification);
           setNotification(notification);
         });
 
-        responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+        responseListener = Notifications.addNotificationResponseReceivedListener((response: any) => {
           console.log('Notification response:', response);
         });
       }
