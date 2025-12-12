@@ -12,6 +12,7 @@
  */
 
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import LocalStorageManager, { PremiumStatus, determinePurchaseDate } from './localStorage';
 import { calculateSubscriptionExpiry } from './dateUtils';
@@ -63,6 +64,37 @@ interface EdgeFunctionResponse {
 }
 
 // ============================================================================
+// 에러 로깅 헬퍼
+// ============================================================================
+
+/**
+ * Supabase 관련 에러를 AsyncStorage에 저장
+ * SupabaseDebugPanel에서 조회 가능
+ */
+async function logSupabaseError(type: string, message: string, context?: any) {
+  try {
+    const errorLog = {
+      timestamp: new Date().toISOString(),
+      type,
+      message,
+      context,
+    };
+
+    // 기존 로그 가져오기
+    const existingLogsJson = await AsyncStorage.getItem('SUPABASE_ERROR_LOGS');
+    const existingLogs = existingLogsJson ? JSON.parse(existingLogsJson) : [];
+
+    // 새 로그 추가 (최대 50개 보관)
+    const updatedLogs = [errorLog, ...existingLogs].slice(0, 50);
+
+    await AsyncStorage.setItem('SUPABASE_ERROR_LOGS', JSON.stringify(updatedLogs));
+    console.log('💾 [ReceiptValidator] Supabase 에러 로그 저장:', type);
+  } catch (storageError) {
+    console.error('❌ [ReceiptValidator] 에러 로그 저장 실패:', storageError);
+  }
+}
+
+// ============================================================================
 // ReceiptValidator 클래스
 // ============================================================================
 
@@ -100,11 +132,21 @@ export class ReceiptValidator {
       // ✅ NEW: Supabase 설정 확인 - 실패 시 로컬 검증
       if (!supabase) {
         console.warn('⚠️ [ReceiptValidator] Supabase 미설정 - 로컬 검증으로 전환');
+        await logSupabaseError(
+          'SUPABASE_NOT_CONFIGURED',
+          'Supabase client is not initialized - environment variables missing',
+          { transactionId, productId }
+        );
         return this.validateLocalReceipt(receiptData, transactionId, productId);
       }
 
       if (!VALIDATION_CONFIG.EDGE_FUNCTION_URL) {
         console.warn('⚠️ [ReceiptValidator] Edge Function URL 없음 - 로컬 검증으로 전환');
+        await logSupabaseError(
+          'EDGE_FUNCTION_URL_MISSING',
+          'EXPO_PUBLIC_SUPABASE_URL environment variable is not set',
+          { transactionId, productId }
+        );
         return this.validateLocalReceipt(receiptData, transactionId, productId);
       }
 
@@ -126,6 +168,11 @@ export class ReceiptValidator {
 
           if (authError) {
             console.warn('⚠️ [ReceiptValidator] 익명 인증 실패 - 로컬 검증으로 전환:', authError.message);
+            await logSupabaseError(
+              'ANONYMOUS_AUTH_FAILED',
+              `Failed to create anonymous session: ${authError.message}`,
+              { transactionId, productId, error: authError }
+            );
             return this.validateLocalReceipt(receiptData, transactionId, productId);
           }
 
@@ -162,10 +209,20 @@ export class ReceiptValidator {
 
           // Edge Function이 실패를 반환한 경우 로컬 검증으로 fallback
           console.warn('⚠️ [ReceiptValidator] Edge Function 검증 실패 - 로컬 검증으로 전환');
+          await logSupabaseError(
+            'EDGE_FUNCTION_VALIDATION_FAILED',
+            'Edge Function returned validation failure',
+            { transactionId, productId, result }
+          );
           return this.validateLocalReceipt(receiptData, transactionId, productId);
 
-        } catch (edgeFunctionError) {
+        } catch (edgeFunctionError: any) {
           console.warn('⚠️ [ReceiptValidator] Edge Function 오류 - 로컬 검증으로 전환:', edgeFunctionError);
+          await logSupabaseError(
+            'EDGE_FUNCTION_ERROR',
+            `Edge Function call failed: ${edgeFunctionError?.message || 'Unknown error'}`,
+            { transactionId, productId, error: edgeFunctionError }
+          );
           return this.validateLocalReceipt(receiptData, transactionId, productId);
         }
       }
@@ -345,6 +402,15 @@ export class ReceiptValidator {
         if (error) {
           console.error(`❌ [Apple] Edge Function 오류 (시도 ${attempt}):`, error);
           lastError = error;
+
+          // 에러 로그 저장 (마지막 시도일 때만)
+          if (retries === 1) {
+            await logSupabaseError(
+              'EDGE_FUNCTION_INVOKE_ERROR',
+              `Edge Function invocation failed after ${VALIDATION_CONFIG.MAX_RETRY_ATTEMPTS} attempts`,
+              { transactionId, error: error, mode }
+            );
+          }
 
           if (retries > 1) {
             const delay = VALIDATION_CONFIG.RETRY_DELAY_BASE * attempt;

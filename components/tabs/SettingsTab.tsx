@@ -27,6 +27,7 @@ import LocalStorageManager, { PremiumStatus } from '../../utils/localStorage';
 import PremiumTest from '../PremiumTest';
 // BannerAd 제거: 전면광고만 사용으로 unitId 크래시 방지
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SupabaseDebugPanel } from '../SupabaseDebugPanel';
 // 조건부 import - 모바일 환경에서만 로드
 let SubscriptionPlans: any = null;
 let SubscriptionManagement: any = null;
@@ -149,6 +150,8 @@ const SettingsTab: React.FC = () => {
   const [adminClickCount, setAdminClickCount] = useSafeState(0);
   const [showCrashLogs, setShowCrashLogs] = useSafeState(false);
   const [crashLogs, setCrashLogs] = useSafeState<any[]>([]);
+  const [debugTapCount, setDebugTapCount] = useSafeState(0);
+  const [showDebugPanel, setShowDebugPanel] = useSafeState(false);
 
   // Context에서 가져온 값들을 로컬 상태 대신 사용
   const notificationsEnabled = hasPermission;
@@ -422,12 +425,28 @@ const SettingsTab: React.FC = () => {
 
       {/* 화면 및 테마 설정 */}
       <View style={styles.settingsSection}>
-        <View style={styles.sectionHeader}>
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          onPress={() => {
+            const newCount = debugTapCount + 1;
+            setDebugTapCount(newCount);
+
+            if (newCount >= 5) {
+              setShowDebugPanel(true);
+              setDebugTapCount(0);
+              console.log('🔍 Supabase Debug Panel 활성화!');
+            }
+
+            // 2초 후 카운트 리셋
+            setTimeout(() => setDebugTapCount(0), 2000);
+          }}
+          activeOpacity={0.7}
+        >
           <View style={styles.sectionIcon}>
             <Text style={styles.sectionIconText}>🎨</Text>
           </View>
           <Text style={styles.sectionTitle}>{t('settings.display.title')}</Text>
-        </View>
+        </TouchableOpacity>
 
         {/* 타로 덱 테마 선택 */}
         <View style={styles.settingItem}>
@@ -1086,6 +1105,12 @@ const SettingsTab: React.FC = () => {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Supabase Debug Panel */}
+      <SupabaseDebugPanel
+        visible={showDebugPanel}
+        onClose={() => setShowDebugPanel(false)}
+      />
     </ScrollView>
   );
 };
