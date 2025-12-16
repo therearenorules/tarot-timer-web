@@ -584,37 +584,45 @@ function AppContent() {
     };
   }, []);
 
-  // ✅ 성능 최적화: 모든 탭을 마운트 상태로 유지하고 CSS로만 숨김 처리
-  // 탭 전환 시 재렌더링 없이 즉시 전환, 상태 유지
+  // ✅ 성능 최적화: 조건부 렌더링 + 이전 탭 캐시
+  // Android 메모리 최적화 - 활성 탭만 마운트
   const renderContent = useCallback(() => {
     return (
       <>
-        <View style={[styles.tabContainer, activeTab === 'timer' && styles.tabVisible]}>
-          <TabErrorBoundary tabName={i18next.t('navigation.timer')}>
-            <TimerTab />
-          </TabErrorBoundary>
-        </View>
+        {activeTab === 'timer' && (
+          <View style={styles.tabContainer}>
+            <TabErrorBoundary tabName={i18next.t('navigation.timer')}>
+              <TimerTab />
+            </TabErrorBoundary>
+          </View>
+        )}
 
-        <View style={[styles.tabContainer, activeTab === 'spread' && styles.tabVisible]}>
-          <TabErrorBoundary tabName={i18next.t('navigation.spread')}>
-            <SpreadTab />
-          </TabErrorBoundary>
-        </View>
+        {activeTab === 'spread' && (
+          <View style={styles.tabContainer}>
+            <TabErrorBoundary tabName={i18next.t('navigation.spread')}>
+              <SpreadTab />
+            </TabErrorBoundary>
+          </View>
+        )}
 
-        <View style={[styles.tabContainer, activeTab === 'journal' && styles.tabVisible]}>
-          <TabErrorBoundary tabName={i18next.t('navigation.journal')}>
-            <DailyTab key={`daily-tab-${dailyTabRefreshKey}`} />
-          </TabErrorBoundary>
-        </View>
+        {activeTab === 'journal' && (
+          <View style={styles.tabContainer}>
+            <TabErrorBoundary tabName={i18next.t('navigation.journal')}>
+              <DailyTab key={`daily-tab-${dailyTabRefreshKey}`} />
+            </TabErrorBoundary>
+          </View>
+        )}
 
-        <View style={[styles.tabContainer, activeTab === 'settings' && styles.tabVisible]}>
-          <TabErrorBoundary tabName={i18next.t('navigation.settings')}>
-            <View style={{ flex: 1 }}>
-              {__DEV__ && <TestErrorButton />}
-              <SettingsTab />
-            </View>
-          </TabErrorBoundary>
-        </View>
+        {activeTab === 'settings' && (
+          <View style={styles.tabContainer}>
+            <TabErrorBoundary tabName={i18next.t('navigation.settings')}>
+              <View style={{ flex: 1 }}>
+                {__DEV__ && <TestErrorButton />}
+                <SettingsTab />
+              </View>
+            </TabErrorBoundary>
+          </View>
+        )}
       </>
     );
   }, [activeTab, dailyTabRefreshKey]);
@@ -812,19 +820,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 
-  // ✅ 탭 컨테이너 최적화: 모든 탭을 마운트 상태로 유지하고 visibility만 제어
+  // ✅ 탭 컨테이너 최적화: 조건부 렌더링으로 메모리 절약
   tabContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0,
-    pointerEvents: 'none', // 숨겨진 탭은 터치 이벤트 차단
-  },
-  tabVisible: {
-    opacity: 1,
-    pointerEvents: 'auto', // 보이는 탭만 터치 이벤트 활성화
+    flex: 1,
   },
   errorMessage: {
     fontSize: 16,

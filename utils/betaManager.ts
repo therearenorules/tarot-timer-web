@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 설정 (사용자 맞춤 설정 가능)
 // ============================================================================
 const BETA_CONFIG = {
-  ENABLED: true,              // ⚙️ false로 설정하면 베타 프리미엄 비활성화
+  ENABLED: false,             // ⚙️ 정식 출시로 인해 베타 프리미엄 비활성화
   DURATION_DAYS: 14,          // ⚙️ 무료 프리미엄 기간 (일 단위) - 현재 14일 설정
   STORAGE_KEY: '@tarot_timer:beta_premium_activated',
 } as const;

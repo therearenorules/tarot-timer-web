@@ -38,7 +38,7 @@
     },
     "android": {
       "package": "com.tarottimer.app",
-      "versionCode": 116,
+      "versionCode": 118,
       "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "userInterfaceStyle": "dark",
@@ -67,7 +67,8 @@
         "googleMobileAdsAppId": "ca-app-pub-4284542208210945~5287567450"
       },
       "jsEngine": "hermes",
-      "allowBackup": false
+      "allowBackup": false,
+      "enableEdgeToEdge": true
     },
     "web": {
       "favicon": "./assets/favicon.png",
