@@ -1,17 +1,211 @@
 # 📈 타로 타이머 웹앱 개발 진행 현황 보고서
 
-**보고서 날짜**: 2025-12-10 (iOS Build 189 다이어리 기능 개선)
-**프로젝트 전체 완성도**: 98% - 다이어리 스프레드 수정 기능 추가 완료
+**보고서 날짜**: 2025-12-16 (Android Build 116 프로모션 시스템 및 성능 최적화)
+**프로젝트 전체 완성도**: 99% - Supabase 기반 동적 프로모션 시스템 완성
 **현재 버전**:
-- iOS v1.1.7 Build 189 (로컬 빌드 진행 중)
-- Android v1.1.7 Build 110
-**아키텍처**: 크로스 플랫폼 + Supabase 서버리스 백엔드 + Edge Function 영수증 검증
+- iOS v1.1.8 Build 204
+- Android v1.1.8 Build 116 (프로덕션 배포 준비 완료)
+**아키텍트**: 크로스 플랫폼 + Supabase 서버리스 백엔드 + 동적 프로모션 시스템
 
 ---
 
-## 🔥 **2025-12-10 주요 업데이트 - Build 189 다이어리 기능 개선**
+## 🔥 **2025-12-16 주요 업데이트 - Build 116 프로모션 시스템 혁신**
 
-### 1. **다이어리 스프레드 수정 기능 추가** ✅
+### 1. **Supabase 기반 동적 프로모션 코드 시스템** ✅
+
+#### **기존 시스템의 한계**
+```typescript
+// ❌ 하드코딩된 프로모션 코드 (constants/promoCodes.ts)
+export const PROMO_CODES = [
+  { code: 'TAROT2025', freeDays: 7 },
+  { code: '타로사랑', freeDays: 7 },
+  // 새 코드 추가 시 앱 업데이트 필수
+];
+```
+
+#### **새로운 시스템 아키텍처**
+```
+✅ Supabase PostgreSQL 데이터베이스
+   ├── promo_codes 테이블 (코드 마스터)
+   │   ├── code: 프로모션 코드명
+   │   ├── free_days: 무료 기간 (동적 설정)
+   │   ├── max_uses: 사용 횟수 제한
+   │   ├── valid_from/until: 유효 기간
+   │   └── is_active: 활성화 상태
+   │
+   ├── promo_code_usage 테이블 (사용 내역)
+   │   ├── device_id: 디바이스 기반 중복 방지
+   │   ├── user_id: 사용자 ID (선택)
+   │   ├── applied_at: 적용 시간
+   │   └── expires_at: 만료 시간
+   │
+   └── RPC Functions
+       ├── validate_promo_code(): 실시간 검증
+       └── apply_promo_code(): 코드 적용 + 사용 내역 생성
+```
+
+#### **구현 내용**
+
+**1) 데이터베이스 스키마** (`supabase/migrations/create_promo_codes_table.sql`)
+```sql
+✅ 테이블 생성 (promo_codes, promo_code_usage)
+✅ 트리거 함수 (자동 사용 카운트 증가, updated_at 갱신)
+✅ RLS 보안 정책 (읽기: 공개, 쓰기: 관리자만)
+✅ 통계 뷰 (promo_code_stats)
+✅ 초기 데이터 마이그레이션 (4개 기본 코드)
+```
+
+**2) 서비스 레이어** (`services/promoService.ts`)
+```typescript
+✅ Supabase RPC 함수 호출로 서버 검증
+✅ 디바이스 ID 기반 중복 사용 방지
+✅ 오프라인 지원 (로컬 백업)
+✅ PremiumContext 자동 동기화
+✅ 성능 최적화 (안드로이드 IP 조회 제거)
+```
+
+**3) 관리자 API** (`services/adminPromoService.ts`)
+```typescript
+✅ createPromoCode(): 개별 코드 생성
+✅ createBulkPromoCodes(): 대량 코드 생성
+✅ getPromoCodeStats(): 실시간 통계
+✅ togglePromoCode(): 활성화/비활성화
+```
+
+#### **핵심 기능**
+
+| 기능 | 기존 시스템 | 새 시스템 |
+|------|------------|----------|
+| **코드 추가** | 앱 업데이트 필요 | Supabase에서 즉시 추가 |
+| **무료 기간** | 고정 7일 | 1~365일 자유 설정 |
+| **사용 제한** | 없음 | 횟수/기간 제한 가능 |
+| **중복 방지** | 로컬만 | 서버 + 디바이스 ID |
+| **통계** | 없음 | 실시간 사용 현황 |
+| **관리** | 코드 수정 | SQL/관리자 API |
+
+#### **성능 최적화**
+```typescript
+// 안드로이드 성능 개선 (3초 지연 제거)
+const getIpAddress = async () => {
+  if (Platform.OS !== 'web') {
+    return null; // 모바일에서 IP 조회 건너뜀
+  }
+  // Web만 1초 타임아웃으로 IP 조회
+};
+```
+
+#### **수정/생성된 파일**
+```
+supabase/migrations/create_promo_codes_table.sql (신규 300줄)
+services/promoService.ts (Supabase 버전으로 전면 교체 300줄)
+services/adminPromoService.ts (신규 350줄)
+docs/PROMO_CODE_SETUP_GUIDE.md (신규 500줄)
+```
+
+---
+
+### 2. **베타 테스트 무료 이용 제거** ✅
+
+#### **문제점**
+```
+기존: Android 베타 테스터에게 자동으로 무료 프리미엄 제공
+→ 정식 출시 시 수익화 방해 요소
+```
+
+#### **해결책**
+```
+✅ 베타 무료 이용 플래그 완전 제거 (Commit: 3423ffb)
+✅ 프로모션 코드를 통한 통제 가능한 무료 체험으로 전환
+✅ 관리자가 직접 생성한 코드만 유효
+```
+
+#### **Git 히스토리**
+```bash
+3423ffb chore: Remove Android beta test free premium access
+5e18c9a feat: Add promo code system for 7-day premium trial
+```
+
+---
+
+### 3. **안드로이드 성능 최적화 및 안정성 점검** ✅
+
+#### **점검 항목**
+
+| 항목 | 상태 | 최적화 내용 |
+|------|------|------------|
+| ⚡ **PromoService** | ✅ 완료 | IP 조회 건너뜀 (3초→0초) |
+| 🔄 **PremiumContext** | ✅ 양호 | Debounce + 메모리 누수 방지 |
+| 📦 **번들 크기** | ✅ 양호 | SVG 최적화, 코드 스플리팅 |
+| 🐛 **TypeScript** | ⚠️ 비Critical | Deno 타입 오류만 (빌드 무관) |
+
+#### **성능 개선 상세**
+```typescript
+// Before: 모든 플랫폼에서 IP 조회 (3초 타임아웃)
+const getIpAddress = async () => {
+  const response = await fetch('https://api.ipify.org', { timeout: 3000 });
+  // Android에서 최대 3초 지연 발생
+};
+
+// After: 안드로이드/iOS는 즉시 리턴
+const getIpAddress = async () => {
+  if (Platform.OS !== 'web') return null; // 0초
+  // Web만 1초 타임아웃
+};
+```
+
+---
+
+### 4. **Android Build 116 프로덕션 빌드 성공** ✅
+
+#### **빌드 정보**
+```
+플랫폼: Android (AAB)
+빌드 번호: 115 → 116 (자동 증가)
+프로필: production-android
+배포 트랙: production (정식 출시)
+상태: ✅ 빌드 성공
+다운로드: https://expo.dev/artifacts/eas/gfUtCQkFGNJD3eDRu3i2MX.aab
+```
+
+#### **빌드에 포함된 기능**
+```
+✅ Supabase 동적 프로모션 시스템
+✅ 안드로이드 성능 최적화 (IP 조회 제거)
+✅ 베타 무료 이용 제거
+✅ IAP 구독 시스템 안정화
+✅ 디바이스 ID 기반 중복 방지
+```
+
+#### **환경 변수 (프로덕션)**
+```bash
+NODE_ENV=production
+EXPO_PUBLIC_APP_ENV=production
+EXPO_PUBLIC_SUPABASE_URL=https://syzefbnrnnjkdnoqbwsk.supabase.co
+HERMESC_FLAGS=-O -output-source-map
+```
+
+---
+
+## 📊 **완성도 현황 (2025-12-16 기준)**
+
+### **전체 완성도: 99%** ⬆️ (+1%)
+
+### **세부 영역별 완성도**
+
+| 영역 | 완성도 | 변경 | 상태 |
+|------|--------|------|------|
+| 🎨 **프론트엔드** | 95% | - | ✅ 안정 |
+| ⚙️ **백엔드** | 95% | ⬆️ +20% | ✅ Supabase 프로모션 시스템 |
+| 💳 **결제 시스템** | 95% | ⬆️ +10% | ✅ 프로모션 연동 완료 |
+| 🔐 **보안** | 90% | ⬆️ +5% | ✅ RLS 정책, 디바이스 ID |
+| ⚡ **성능** | 95% | ⬆️ +5% | ✅ 안드로이드 최적화 |
+| 📱 **크로스 플랫폼** | 100% | - | ✅ 완료 |
+| 🧪 **테스트** | 85% | - | 🔄 진행중 |
+| 📚 **문서화** | 90% | ⬆️ +10% | ✅ 프로모션 가이드 |
+
+---
+
+### 1. **다이어리 스프레드 수정 기능 추가** ✅ (Build 189 - 이전 업데이트)
 
 #### **구현 내용**
 ```
