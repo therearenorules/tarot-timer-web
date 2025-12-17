@@ -1,7 +1,7 @@
 // components/TarotSpread.tsx - 타로 스프레드 컴포넌트
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeState } from '../hooks/useSafeState';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, Modal, Animated, KeyboardAvoidingView, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TarotCard, TarotUtils, SavedSpread } from '../utils/tarotData';
 import { LanguageUtils } from '../i18n/index';
@@ -806,60 +806,65 @@ export const TarotSpread: React.FC = () => {
           animationType="slide"
           onRequestClose={() => setIsSaveModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Icon name="bookmark" size={24} color="#f4d03f" />
-                <Text style={styles.modalTitle}>{t('spread.saveModal.title')}</Text>
-                <TouchableOpacity 
-                  style={styles.modalCloseButton}
-                  onPress={() => setIsSaveModalVisible(false)}
-                >
-                  <Icon name="x" size={20} color="#9b8db8" />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.modalContent}>
-                <Text style={styles.inputLabel}>{t('spread.saveModal.titleLabel')}</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={saveTitle}
-                  onChangeText={setSaveTitle}
-                  placeholder={t('spread.saveModal.titlePlaceholder')}
-                  placeholderTextColor="#666"
-                  maxLength={50}
-                />
-                
-                <Text style={styles.inputLabel}>{t('spread.saveModal.insightsLabel')}</Text>
-                <TextInput
-                  style={[styles.textInput, styles.textArea]}
-                  value={saveInsights}
-                  onChangeText={setSaveInsights}
-                  placeholder={t('spread.saveModal.insightsPlaceholder')}
-                  placeholderTextColor="#666"
-                  multiline={true}
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  maxLength={500}
-                />
-                
-                <View style={styles.modalActions}>
-                  <GradientButton
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Icon name="bookmark" size={24} color="#f4d03f" />
+                  <Text style={styles.modalTitle}>{t('spread.saveModal.title')}</Text>
+                  <TouchableOpacity
+                    style={styles.modalCloseButton}
                     onPress={() => setIsSaveModalVisible(false)}
-                    title={t('common.cancel')}
-                    variant="secondary"
-                    size="medium"
+                  >
+                    <Icon name="x" size={20} color="#9b8db8" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalContent}>
+                  <Text style={styles.inputLabel}>{t('spread.saveModal.titleLabel')}</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={saveTitle}
+                    onChangeText={setSaveTitle}
+                    placeholder={t('spread.saveModal.titlePlaceholder')}
+                    placeholderTextColor="#666"
+                    maxLength={50}
                   />
-                  <GradientButton
-                    onPress={handleSaveSpread}
-                    title={t('common.save')}
-                    icon="save"
-                    size="medium"
+
+                  <Text style={styles.inputLabel}>{t('spread.saveModal.insightsLabel')}</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    value={saveInsights}
+                    onChangeText={setSaveInsights}
+                    placeholder={t('spread.saveModal.insightsPlaceholder')}
+                    placeholderTextColor="#666"
+                    multiline={true}
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    maxLength={500}
                   />
+
+                  <View style={styles.modalActions}>
+                    <GradientButton
+                      onPress={() => setIsSaveModalVisible(false)}
+                      title={t('common.cancel')}
+                      variant="secondary"
+                      size="medium"
+                    />
+                    <GradientButton
+                      onPress={handleSaveSpread}
+                      title={t('common.save')}
+                      icon="save"
+                      size="medium"
+                    />
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         <Modal
@@ -940,70 +945,75 @@ export const TarotSpread: React.FC = () => {
           animationType="slide"
           onRequestClose={() => setIsEditModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Icon name="edit-2" size={24} color="#f4d03f" />
-                <Text style={styles.modalTitle}>{t('spread.editModal.title')}</Text>
-                <TouchableOpacity
-                  style={styles.modalCloseButton}
-                  onPress={() => {
-                    setIsEditModalVisible(false);
-                    setEditingSpread(null);
-                    setEditTitle('');
-                    setEditInsights('');
-                  }}
-                >
-                  <Icon name="x" size={20} color="#9b8db8" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalContent}>
-                <Text style={styles.inputLabel}>{t('spread.saveModal.titleLabel')}</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={editTitle}
-                  onChangeText={setEditTitle}
-                  placeholder={t('spread.saveModal.titlePlaceholder')}
-                  placeholderTextColor="#666"
-                  maxLength={50}
-                />
-
-                <Text style={styles.inputLabel}>{t('spread.saveModal.insightsLabel')}</Text>
-                <TextInput
-                  style={[styles.textInput, styles.textArea]}
-                  value={editInsights}
-                  onChangeText={setEditInsights}
-                  placeholder={t('spread.saveModal.insightsPlaceholder')}
-                  placeholderTextColor="#666"
-                  multiline={true}
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  maxLength={500}
-                />
-
-                <View style={styles.modalActions}>
-                  <GradientButton
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Icon name="edit-2" size={24} color="#f4d03f" />
+                  <Text style={styles.modalTitle}>{t('spread.editModal.title')}</Text>
+                  <TouchableOpacity
+                    style={styles.modalCloseButton}
                     onPress={() => {
                       setIsEditModalVisible(false);
                       setEditingSpread(null);
                       setEditTitle('');
                       setEditInsights('');
                     }}
-                    title={t('common.cancel')}
-                    variant="secondary"
-                    size="medium"
+                  >
+                    <Icon name="x" size={20} color="#9b8db8" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalContent}>
+                  <Text style={styles.inputLabel}>{t('spread.saveModal.titleLabel')}</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editTitle}
+                    onChangeText={setEditTitle}
+                    placeholder={t('spread.saveModal.titlePlaceholder')}
+                    placeholderTextColor="#666"
+                    maxLength={50}
                   />
-                  <GradientButton
-                    onPress={handleUpdateSpread}
-                    title={t('common.save')}
-                    icon="save"
-                    size="medium"
+
+                  <Text style={styles.inputLabel}>{t('spread.saveModal.insightsLabel')}</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    value={editInsights}
+                    onChangeText={setEditInsights}
+                    placeholder={t('spread.saveModal.insightsPlaceholder')}
+                    placeholderTextColor="#666"
+                    multiline={true}
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    maxLength={500}
                   />
+
+                  <View style={styles.modalActions}>
+                    <GradientButton
+                      onPress={() => {
+                        setIsEditModalVisible(false);
+                        setEditingSpread(null);
+                        setEditTitle('');
+                        setEditInsights('');
+                      }}
+                      title={t('common.cancel')}
+                      variant="secondary"
+                      size="medium"
+                    />
+                    <GradientButton
+                      onPress={handleUpdateSpread}
+                      title={t('common.save')}
+                      icon="save"
+                      size="medium"
+                    />
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </ScrollView>
 

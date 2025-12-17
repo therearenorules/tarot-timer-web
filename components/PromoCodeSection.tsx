@@ -47,7 +47,7 @@ const PromoCodeSection: React.FC<Props> = ({ onApplySuccess }) => {
             </View>
 
             <Text style={styles.description}>
-                코드를 입력하면 7일간 프리미엄 혜택을 무료로 이용할 수 있습니다.
+                코드를 입력하면 프리미엄 혜택을 무료로 이용할 수 있습니다.
             </Text>
 
             <View style={styles.inputRow}>

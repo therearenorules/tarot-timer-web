@@ -223,7 +223,7 @@ const DailyTarotViewer: React.FC<DailyTarotViewerProps> = ({ visible, reading, o
           </View>
 
           {/* 키보드 여백 확보용 빈 공간 */}
-          <View style={{ height: 150 }} />
+          <View style={{ height: 250 }} />
         </ScrollView>
 
       </KeyboardAvoidingView>
@@ -442,7 +442,7 @@ const SpreadViewer: React.FC<SpreadViewerProps> = ({ visible, spread, onClose, o
             </View>
 
             {/* 키보드 여백 */}
-            {isEditing && <View style={{ height: 150 }} />}
+            {isEditing && <View style={{ height: 250 }} />}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -1456,8 +1456,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.md,
+    paddingBottom: Spacing.xl,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(244, 208, 63, 0.3)',
   },
@@ -1481,7 +1481,8 @@ const styles = StyleSheet.create({
 
   // 24시간 카드 가로 스크롤
   cardScrollSection: {
-    paddingVertical: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xl,
   },
   cardScrollContainer: {
     paddingHorizontal: Spacing.lg,
@@ -1531,7 +1532,8 @@ const styles = StyleSheet.create({
   selectedCardInfo: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
+    marginTop: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: 'rgba(212, 175, 55, 0.2)',
   },
@@ -1551,8 +1553,8 @@ const styles = StyleSheet.create({
   // 메모 섹션
   memoSection: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xxl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xxl + Spacing.xl,
   },
   memoSectionTitle: {
     fontSize: 16,
@@ -1599,8 +1601,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.md,
+    paddingBottom: Spacing.xl,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(244, 208, 63, 0.3)',
   },
@@ -1656,7 +1658,9 @@ const styles = StyleSheet.create({
   },
   spreadViewerContent: {
     flex: 1,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xxl,
   },
   spreadName: {
     fontSize: 16,
@@ -1666,7 +1670,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   spreadLayout: {
-    height: 500,
+    minHeight: 400,
+    maxHeight: 500,
+    aspectRatio: 1,
     backgroundColor: 'rgba(15, 12, 27, 0.8)',
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
@@ -1692,8 +1698,8 @@ const styles = StyleSheet.create({
 
   // 인사이트 섹션
   insightsSection: {
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.lg,
+    marginTop: Spacing.xxl,
+    marginBottom: Spacing.xl,
   },
   insightsSectionTitle: {
     fontSize: 16,
