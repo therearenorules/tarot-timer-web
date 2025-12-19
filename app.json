@@ -25,7 +25,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tarottimer.app",
-      "buildNumber": "204",
+      "buildNumber": "205",
       "requireFullScreen": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {
@@ -67,8 +67,7 @@
         "googleMobileAdsAppId": "ca-app-pub-4284542208210945~5287567450"
       },
       "jsEngine": "hermes",
-      "allowBackup": false,
-      "enableEdgeToEdge": true
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png",
