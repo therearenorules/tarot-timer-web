@@ -51,8 +51,13 @@ let AdEventType: any = null;
 let InterstitialAdEventType: any = null;
 let TestIds: any = null;
 
-// Expo Go 환경 감지
-const isExpoGo = Constants.appOwnership === 'expo';
+// Expo Go 환경 감지 (더 안전한 방식)
+// ✅ FIX: executionEnvironment 사용 (appOwnership deprecated)
+// - 'storeClient': Expo Go 앱
+// - 'standalone': EAS Build로 빌드된 앱
+// - 'bare': 베어 워크플로우
+const executionEnv = Constants.executionEnvironment;
+const isExpoGo = executionEnv === 'storeClient';
 const isNativeSupported = Platform.OS !== 'web' && !isExpoGo;
 
 // ✅ Android 최적화: 안전한 개발 환경 감지
@@ -367,18 +372,26 @@ export class AdManager {
     console.log(`🔍 광고 로드 상태: ${this.adStates.interstitial.isLoaded}`);
     console.log(`🔍 일일 광고 카운트: ${this.dailyLimits.interstitial_count}/${AD_CONFIG.MAX_DAILY.INTERSTITIAL}`);
 
-    // 네이티브 모듈 없으면 Mock UI 시뮬레이션
+    // 네이티브 모듈 없으면 처리
     if (!this.nativeModulesLoaded) {
-      console.log(`📺 [시뮬레이션] 전면광고 표시: ${placement}`);
+      // ✅ FIX: 프로덕션에서는 Mock 광고 표시하지 않음 (조용히 건너뛰기)
+      // Mock 광고는 개발 환경(Expo Go)에서만 표시
+      if (!isDevelopment && !isExpoGo) {
+        console.log(`⚠️ [프로덕션] 네이티브 모듈 없음 - 광고 건너뛰기: ${placement}`);
+        return { success: false, error: 'native_modules_not_loaded' };
+      }
+
+      // 개발 환경(Expo Go)에서만 Mock UI 표시
+      console.log(`📺 [개발모드] 전면광고 시뮬레이션: ${placement}`);
       try {
         const result = await adMockEmitter.showMockAd({
           type: 'interstitial',
           placement,
         });
-        console.log(`✅ [시뮬레이션] 전면광고 완료:`, result);
+        console.log(`✅ [개발모드] 전면광고 완료:`, result);
         return { success: true, revenue: 0 };
       } catch (error) {
-        console.error('❌ [시뮬레이션] 전면광고 실패:', error);
+        console.error('❌ [개발모드] 전면광고 실패:', error);
         return { success: false, error: String(error) };
       }
     }
