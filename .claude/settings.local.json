@@ -138,7 +138,8 @@
       "Bash(netstat:*)",
       "Bash(start http://localhost:8083)",
       "Bash(git restore:*)",
-      "Bash(C:supabase-clisupabase.exe projects list)"
+      "Bash(C:supabase-clisupabase.exe projects list)",
+      "Bash(npx expo install:*)"
     ],
     "deny": [],
     "ask": []

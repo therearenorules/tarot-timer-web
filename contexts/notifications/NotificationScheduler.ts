@@ -230,7 +230,7 @@ export class NotificationScheduler {
           priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
           categoryIdentifier: 'tarot-hourly',
         },
-        trigger: triggerDate,
+        trigger: { date: triggerDate },
         identifier: `hourly-${triggerDate.getTime()}`,
       });
 
@@ -297,7 +297,7 @@ export class NotificationScheduler {
           priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
           categoryIdentifier: 'tarot-save',
         },
-        trigger: reminder8AM,
+        trigger: { date: reminder8AM },
         identifier: `daily-reminder-${reminder8AM.getTime()}`,
       });
 
@@ -346,7 +346,7 @@ export class NotificationScheduler {
           priority: Notifications.AndroidNotificationPriority?.DEFAULT || 'default',
           categoryIdentifier: 'tarot-midnight',
         },
-        trigger: tomorrow,
+        trigger: { date: tomorrow },
         identifier: `midnight-${tomorrow.getTime()}`,
       });
 
