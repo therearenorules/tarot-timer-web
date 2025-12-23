@@ -140,6 +140,8 @@ const SettingsTab: React.FC = () => {
     totalJournalEntries: 0,
     storageUsed: 0
   });
+  const [dailyTarotCount, setDailyTarotCount] = useSafeState<number>(0);
+  const MAX_FREE_DAILY_TAROT = 15; // 무료 사용자 최대 저장 개수
   const [cloudBackupEnabled, setCloudBackupEnabled] = useSafeState(false);
   const [syncStatus, setSyncStatus] = useSafeState({
     lastSyncTime: null as number | null,
@@ -184,6 +186,15 @@ const SettingsTab: React.FC = () => {
       const status = await LocalDataManager.getLocalDataStatus();
       setLocalDataStatus(status);
       setCloudBackupEnabled(false); // 로컬 전용으로 변경
+
+      // 데일리 타로 저장 개수 확인
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
+        setDailyTarotCount(dailyTarotKeys.length);
+      } catch (countError) {
+        console.error('데일리 타로 카운트 오류:', countError);
+      }
     } catch (error) {
       console.error('로컬 데이터 상태 로드 오류:', error);
     }
@@ -419,6 +430,63 @@ const SettingsTab: React.FC = () => {
             <PromoCodeSection onApplySuccess={refreshStatus} />
           </View>
         )}
+      </View>
+
+      {/* 데일리 타로 저장 현황 섹션 */}
+      <View style={styles.settingsSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>📊</Text>
+          </View>
+          <Text style={styles.sectionTitle}>{t('settings.storage.title', '데이터 저장 현황')}</Text>
+        </View>
+
+        <View style={styles.storageStatusContainer}>
+          <View style={styles.storageRow}>
+            <Text style={styles.storageLabel}>
+              {t('settings.storage.dailyTarot', '데일리 타로 저장')}
+            </Text>
+            <Text style={[
+              styles.storageValue,
+              !isPremium && dailyTarotCount >= MAX_FREE_DAILY_TAROT && styles.storageValueWarning
+            ]}>
+              {isPremium
+                ? `${dailyTarotCount}${t('settings.storage.countUnit', '개')}`
+                : `${dailyTarotCount}/${MAX_FREE_DAILY_TAROT}${t('settings.storage.countUnit', '개')}`
+              }
+            </Text>
+          </View>
+
+          {/* 무료 사용자용 저장 바 */}
+          {!isPremium && (
+            <View style={styles.storageBarContainer}>
+              <View style={styles.storageBar}>
+                <View
+                  style={[
+                    styles.storageBarFill,
+                    { width: `${Math.min((dailyTarotCount / MAX_FREE_DAILY_TAROT) * 100, 100)}%` },
+                    dailyTarotCount >= MAX_FREE_DAILY_TAROT && styles.storageBarFillFull
+                  ]}
+                />
+              </View>
+              <Text style={styles.storageBarText}>
+                {dailyTarotCount >= MAX_FREE_DAILY_TAROT
+                  ? t('settings.storage.autoDeleteOldest', '새 저장 시 가장 오래된 기록 자동 삭제')
+                  : t('settings.storage.freeLimit', `무료 사용자 최대 ${MAX_FREE_DAILY_TAROT}일 저장`)
+                }
+              </Text>
+            </View>
+          )}
+
+          {/* 프리미엄 사용자 안내 */}
+          {isPremium && (
+            <View style={styles.premiumStorageInfo}>
+              <Text style={styles.premiumStorageText}>
+                ✨ {t('settings.storage.unlimitedStorage', '프리미엄: 무제한 저장')}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* 화면 및 테마 설정 */}
@@ -1633,6 +1701,70 @@ const styles = StyleSheet.create({
 
   bottomSpace: {
     height: 100,
+  },
+
+  // 저장 현황 스타일
+  storageStatusContainer: {
+    backgroundColor: 'rgba(45, 27, 71, 0.4)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 208, 63, 0.2)',
+  },
+  storageRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  storageLabel: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR_500Medium',
+    color: Colors.text.secondary,
+  },
+  storageValue: {
+    fontSize: 16,
+    fontFamily: 'NotoSansKR_700Bold',
+    color: Colors.brand.accent,
+  },
+  storageValueWarning: {
+    color: '#ff9800',
+  },
+  storageBarContainer: {
+    marginTop: Spacing.sm,
+  },
+  storageBar: {
+    height: 8,
+    backgroundColor: 'rgba(155, 141, 184, 0.3)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  storageBarFill: {
+    height: '100%',
+    backgroundColor: Colors.brand.accent,
+    borderRadius: 4,
+  },
+  storageBarFillFull: {
+    backgroundColor: '#ff9800',
+  },
+  storageBarText: {
+    fontSize: 11,
+    fontFamily: 'NotoSansKR_400Regular',
+    color: Colors.text.muted,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+  premiumStorageInfo: {
+    backgroundColor: 'rgba(40, 167, 69, 0.15)',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  premiumStorageText: {
+    fontSize: 13,
+    fontFamily: 'NotoSansKR_500Medium',
+    color: '#4caf50',
+    textAlign: 'center',
   },
 
   // 기본 섹션 스타일
