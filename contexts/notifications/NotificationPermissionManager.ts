@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 let Notifications: any = null;
 let Device: any = null;
 let Constants: any = null;
+let SchedulableTriggerInputTypes: any = null;
+let AndroidImportance: any = null;
 
 const isMobileEnvironment = Platform.OS === 'ios' || Platform.OS === 'android';
 
@@ -12,7 +14,11 @@ if (isMobileEnvironment) {
     Notifications = require('expo-notifications');
     Device = require('expo-device');
     Constants = require('expo-constants');
+    // ✅ FIX: SchedulableTriggerInputTypes 명시적 로드
+    SchedulableTriggerInputTypes = Notifications.SchedulableTriggerInputTypes;
+    AndroidImportance = Notifications.AndroidImportance;
     console.log('✅ Expo notification 모듈 로드 성공');
+    console.log(`   • SchedulableTriggerInputTypes: ${SchedulableTriggerInputTypes ? '✅' : '❌'}`);
   } catch (error) {
     console.warn('⚠️ Expo notification modules not available:', error);
   }
@@ -185,7 +191,7 @@ export class NotificationPermissionManager {
         return scheduledNotifications.length;
       }
 
-      const filtered = scheduledNotifications.filter(n =>
+      const filtered = scheduledNotifications.filter((n: any) =>
         n.content.data?.type === type
       );
       return filtered.length;
@@ -200,4 +206,4 @@ export class NotificationPermissionManager {
 export const permissionManager = NotificationPermissionManager.getInstance();
 
 // Notifications 모듈 export (다른 파일에서 사용)
-export { Notifications, isMobileEnvironment };
+export { Notifications, isMobileEnvironment, SchedulableTriggerInputTypes, AndroidImportance };

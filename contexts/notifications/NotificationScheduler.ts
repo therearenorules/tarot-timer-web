@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 import { simpleStorage, STORAGE_KEYS, TarotCard, DailyTarotSave, TarotUtils } from '../../utils/tarotData';
-import { Notifications, isMobileEnvironment, permissionManager } from './NotificationPermissionManager';
+import { Notifications, isMobileEnvironment, permissionManager, SchedulableTriggerInputTypes } from './NotificationPermissionManager';
 import { NotificationSettings, MultilingualMessage, TarotCardsResult } from './NotificationTypes';
 
 /**
@@ -227,10 +227,14 @@ export class NotificationScheduler {
             cardId: card.id || null
           },
           sound: true,
-          priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+          priority: Notifications.AndroidNotificationPriority?.HIGH,
           categoryIdentifier: 'tarot-hourly',
         },
-        trigger: { date: triggerDate },
+        trigger: SchedulableTriggerInputTypes ? {
+          type: SchedulableTriggerInputTypes.DATE,
+          date: triggerDate,
+          channelId: 'tarot-hourly',
+        } : { date: triggerDate },
         identifier: `hourly-${triggerDate.getTime()}`,
       });
 
@@ -294,10 +298,14 @@ export class NotificationScheduler {
             timestamp: reminder8AM.getTime()
           },
           sound: true,
-          priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+          priority: Notifications.AndroidNotificationPriority?.HIGH,
           categoryIdentifier: 'tarot-save',
         },
-        trigger: { date: reminder8AM },
+        trigger: SchedulableTriggerInputTypes ? {
+          type: SchedulableTriggerInputTypes.DATE,
+          date: reminder8AM,
+          channelId: 'tarot-save',
+        } : { date: reminder8AM },
         identifier: `daily-reminder-${reminder8AM.getTime()}`,
       });
 
@@ -343,10 +351,14 @@ export class NotificationScheduler {
             timestamp: tomorrow.getTime()
           },
           sound: true,
-          priority: Notifications.AndroidNotificationPriority?.DEFAULT || 'default',
+          priority: Notifications.AndroidNotificationPriority?.DEFAULT,
           categoryIdentifier: 'tarot-midnight',
         },
-        trigger: { date: tomorrow },
+        trigger: SchedulableTriggerInputTypes ? {
+          type: SchedulableTriggerInputTypes.DATE,
+          date: tomorrow,
+          channelId: 'tarot-midnight',
+        } : { date: tomorrow },
         identifier: `midnight-${tomorrow.getTime()}`,
       });
 
@@ -375,7 +387,7 @@ export class NotificationScheduler {
             timestamp: Date.now()
           },
           sound: true,
-          priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+          priority: Notifications.AndroidNotificationPriority?.HIGH,
           categoryIdentifier: 'tarot-hourly',
         },
         trigger: null, // 즉시 알림

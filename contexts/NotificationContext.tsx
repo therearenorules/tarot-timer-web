@@ -32,7 +32,7 @@ if (Notifications && isMobileEnvironment) {
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
-        priority: Notifications.AndroidNotificationPriority?.HIGH || 'high',
+        priority: Notifications.AndroidNotificationPriority?.HIGH,
       }),
     });
   } catch (error) {
