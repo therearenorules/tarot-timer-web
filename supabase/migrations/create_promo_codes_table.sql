@@ -174,10 +174,10 @@ DECLARE
     v_promo promo_codes%ROWTYPE;
     v_already_used BOOLEAN;
 BEGIN
-    -- 1. 코드 존재 및 활성화 여부 확인
+    -- 1. 코드 존재 및 활성화 여부 확인 (대소문자 무관)
     SELECT * INTO v_promo
     FROM promo_codes
-    WHERE code = p_code
+    WHERE UPPER(code) = UPPER(p_code)
       AND is_active = true
       AND (valid_from IS NULL OR valid_from <= NOW())
       AND (valid_until IS NULL OR valid_until > NOW());

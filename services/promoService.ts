@@ -11,8 +11,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LocalStorageManager, { PremiumStatus } from '../utils/localStorage';
 import { Platform } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
 import * as Device from 'expo-device';
+import { VALID_PROMO_CODES } from '../constants/promoCodes';
 
 const STORAGE_KEYS = {
     DEVICE_ID: '@tarot/device_id',
@@ -68,6 +69,83 @@ const getUserId = async (): Promise<string | null> => {
 };
 
 /**
+ * 오프라인 모드에서 프로모션 코드 적용
+ * Supabase 연결이 안 될 때 로컬 검증으로 처리
+ */
+const applyPromoCodeOffline = async (
+    normalizedCode: string,
+    deviceId: string
+): Promise<{ success: boolean; message: string; expiresAt?: Date; benefits?: any }> => {
+    console.log('🔌 오프라인 프로모션 코드 검증:', normalizedCode);
+
+    // 1. 로컬 유효 코드 목록에서 확인 (대소문자 무관)
+    const validCodesUpper = VALID_PROMO_CODES.map(c => c.toUpperCase());
+    if (!validCodesUpper.includes(normalizedCode)) {
+        return { success: false, message: '유효하지 않거나 만료된 코드입니다.' };
+    }
+
+    // 2. 이미 사용한 코드인지 확인
+    try {
+        const usedCodesJson = await AsyncStorage.getItem(STORAGE_KEYS.USED_PROMO_CODES);
+        const usedCodes: string[] = usedCodesJson ? JSON.parse(usedCodesJson) : [];
+
+        if (usedCodes.includes(normalizedCode)) {
+            return { success: false, message: '이미 사용한 코드입니다.' };
+        }
+
+        // 3. 코드 사용 처리
+        usedCodes.push(normalizedCode);
+        await AsyncStorage.setItem(STORAGE_KEYS.USED_PROMO_CODES, JSON.stringify(usedCodes));
+    } catch (error) {
+        console.warn('로컬 코드 확인 실패:', error);
+    }
+
+    // 4. 프리미엄 상태 업데이트 (7일 무료)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const benefits = {
+        unlimited_storage: true,
+        ad_free: true,
+        premium_spreads: true
+    };
+
+    const promoStatus: PremiumStatus = {
+        is_premium: true,
+        subscription_type: 'promo',
+        purchase_date: new Date().toISOString(),
+        expiry_date: expiresAt.toISOString(),
+        unlimited_storage: true,
+        ad_free: true,
+        premium_spreads: true,
+        is_simulation: false
+    };
+
+    await LocalStorageManager.updatePremiumStatus(promoStatus);
+
+    // 5. 이벤트 발생
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('premiumStatusChanged', { detail: promoStatus }));
+    } else {
+        try {
+            const { DeviceEventEmitter } = require('react-native');
+            DeviceEventEmitter.emit('premiumStatusChanged', promoStatus);
+        } catch (e) {
+            console.warn('DeviceEventEmitter 이벤트 발송 실패:', e);
+        }
+    }
+
+    console.log('✅ 오프라인 프로모션 코드 적용 완료:', { code: normalizedCode, expiresAt });
+
+    return {
+        success: true,
+        message: '🎉 7일간 프리미엄 혜택이 적용되었습니다! (오프라인 모드)',
+        expiresAt,
+        benefits
+    };
+};
+
+/**
  * IP 주소 가져오기 (선택사항)
  * 안드로이드 성능 최적화: 모바일에서는 IP 조회 건너뜀
  */
@@ -113,7 +191,13 @@ export const PromoService = {
 
             console.log('📱 디바이스 정보:', { deviceId, userId: userId ? 'authenticated' : 'anonymous', platform: Platform.OS });
 
-            // 2. Supabase 함수 호출 (유효성 검증 + 적용)
+            // 2. Supabase 사용 가능 여부 확인
+            if (!isSupabaseAvailable() || !supabase) {
+                console.log('⚠️ Supabase 미연결 - 오프라인 모드로 코드 검증');
+                return await applyPromoCodeOffline(normalizedCode, deviceId);
+            }
+
+            // 3. Supabase 함수 호출 (유효성 검증 + 적용)
             const { data, error } = await supabase.rpc('apply_promo_code', {
                 p_code: normalizedCode,
                 p_device_id: deviceId,
@@ -191,24 +275,12 @@ export const PromoService = {
             };
 
         } catch (error) {
-            console.error('❌ 프로모션 코드 적용 오류:', error);
+            console.error('❌ 프로모션 코드 적용 오류 (Supabase 실패):', error);
 
-            // 네트워크 오류 등으로 Supabase 호출 실패 시 로컬 백업 확인
-            try {
-                const usedCodesJson = await AsyncStorage.getItem(STORAGE_KEYS.USED_PROMO_CODES);
-                const usedCodes: string[] = usedCodesJson ? JSON.parse(usedCodesJson) : [];
-
-                if (usedCodes.includes(code.trim().toUpperCase())) {
-                    return { success: false, message: '이미 사용한 코드입니다. (로컬 확인)' };
-                }
-            } catch (localError) {
-                console.warn('로컬 백업 확인 실패:', localError);
-            }
-
-            return {
-                success: false,
-                message: error instanceof Error ? error.message : '오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
-            };
+            // 네트워크 오류 등으로 Supabase 호출 실패 시 오프라인 폴백 시도
+            console.log('🔄 오프라인 폴백 시도...');
+            const deviceId = await getDeviceId();
+            return await applyPromoCodeOffline(code.trim().toUpperCase(), deviceId);
         }
     },
 
