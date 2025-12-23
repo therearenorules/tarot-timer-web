@@ -1545,9 +1545,30 @@ export const TarotUtils = {
 
       if (limitCheck.isAtLimit) {
         console.warn(`⚠️ DailyTarot 저장 제한 도달: ${limitCheck.currentCount}/${limitCheck.maxCount}`);
-        const error = new Error('STORAGE_LIMIT_REACHED');
-        (error as any).limitInfo = limitCheck;
-        throw error;
+
+        // ✅ FIX: 저장 제한 시 가장 오래된 데이터 삭제 (Rolling Window 방식)
+        // 무료 사용자도 계속 앱을 사용할 수 있도록 함
+        try {
+          const allKeys = await AsyncStorage.getAllKeys();
+          const dailyTarotKeys = allKeys.filter(key => key.startsWith('daily_tarot_'));
+
+          if (dailyTarotKeys.length > 0) {
+            // 날짜순으로 정렬하여 가장 오래된 키 찾기
+            // 키 형식: daily_tarot_YYYY-MM-DD
+            const sortedKeys = dailyTarotKeys.sort((a, b) => {
+              const dateA = a.replace('daily_tarot_', '');
+              const dateB = b.replace('daily_tarot_', '');
+              return dateA.localeCompare(dateB);
+            });
+
+            const oldestKey = sortedKeys[0];
+            await AsyncStorage.removeItem(oldestKey);
+            console.log(`🗑️ 저장 공간 확보: 가장 오래된 데이터 삭제 (${oldestKey})`);
+          }
+        } catch (deleteError) {
+          console.error('❌ 오래된 데이터 삭제 실패:', deleteError);
+          // 삭제 실패해도 저장은 시도
+        }
       }
 
       const storageKey = STORAGE_KEYS.DAILY_TAROT + dailyTarot.date;
