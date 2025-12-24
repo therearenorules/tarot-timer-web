@@ -84,12 +84,12 @@ export const SupabaseTest: React.FC = () => {
       </View>
 
       <View style={styles.envContainer}>
-        <Text style={styles.subtitle}>환경 변수</Text>
+        <Text style={styles.subtitle}>Supabase 설정</Text>
         <Text style={styles.envText}>
-          URL: {process.env.EXPO_PUBLIC_SUPABASE_URL ? '✅ 설정됨' : '❌ 없음'}
+          URL: ✅ 하드코딩됨 (항상 연결)
         </Text>
         <Text style={styles.envText}>
-          KEY: {process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ? '✅ 설정됨' : '❌ 없음'}
+          KEY: ✅ 하드코딩됨 (항상 연결)
         </Text>
       </View>
     </View>
