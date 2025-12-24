@@ -20,13 +20,13 @@ import { calculateSubscriptionExpiry } from './dateUtils';
 // ============================================================================
 // 설정
 // ============================================================================
+const SUPABASE_URL = 'https://syzefbnrnnjkdnoqbwsk.supabase.co';
+
 const VALIDATION_CONFIG = {
   MAX_RETRY_ATTEMPTS: 3,
   RETRY_DELAY_BASE: 2000, // 2초
   VALIDATION_TIMEOUT: 60000, // 60초
-  EDGE_FUNCTION_URL: process.env.EXPO_PUBLIC_SUPABASE_URL
-    ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/verify-receipt`
-    : null,
+  EDGE_FUNCTION_URL: `${SUPABASE_URL}/functions/v1/verify-receipt`,
 } as const;
 
 // ============================================================================
@@ -129,26 +129,7 @@ export class ReceiptValidator {
         return this.validateWebReceipt(receiptData, transactionId);
       }
 
-      // ✅ NEW: Supabase 설정 확인 - 실패 시 로컬 검증
-      if (!supabase) {
-        console.warn('⚠️ [ReceiptValidator] Supabase 미설정 - 로컬 검증으로 전환');
-        await logSupabaseError(
-          'SUPABASE_NOT_CONFIGURED',
-          'Supabase client is not initialized - environment variables missing',
-          { transactionId, productId }
-        );
-        return this.validateLocalReceipt(receiptData, transactionId, productId);
-      }
-
-      if (!VALIDATION_CONFIG.EDGE_FUNCTION_URL) {
-        console.warn('⚠️ [ReceiptValidator] Edge Function URL 없음 - 로컬 검증으로 전환');
-        await logSupabaseError(
-          'EDGE_FUNCTION_URL_MISSING',
-          'EXPO_PUBLIC_SUPABASE_URL environment variable is not set',
-          { transactionId, productId }
-        );
-        return this.validateLocalReceipt(receiptData, transactionId, productId);
-      }
+      // Supabase는 항상 설정되어 있음 (하드코딩된 credentials 사용)
 
       // ✅ FIX: 사용자 인증 (익명 인증 자동 생성) - 실패 시 로컬 검증
       let user = null;
@@ -156,7 +137,7 @@ export class ReceiptValidator {
         console.log('🔐 [ReceiptValidator] 사용자 인증 시작...');
 
         // 1. 기존 세션 확인
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase!.auth.getSession();
 
         if (session && session.user) {
           user = session.user;
@@ -164,7 +145,7 @@ export class ReceiptValidator {
         } else {
           // 2. 익명 인증 자동 생성
           console.log('🔐 [ReceiptValidator] 익명 인증 생성 중...');
-          const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+          const { data: authData, error: authError } = await supabase!.auth.signInAnonymously();
 
           if (authError) {
             console.warn('⚠️ [ReceiptValidator] 익명 인증 실패 - 로컬 검증으로 전환:', authError.message);

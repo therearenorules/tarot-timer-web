@@ -1,28 +1,25 @@
 /**
  * Supabase 클라이언트 설정
  * 타로 타이머 웹앱용 Supabase 연결 및 인증 관리
+ *
+ * ⚠️ 중요: lib/supabase.ts와 동일한 설정을 사용합니다.
+ * 이 파일은 호환성을 위해 유지되며, 새 코드는 lib/supabase.ts를 사용하세요.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 환경 변수에서 Supabase 설정 불러오기
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// ===== Supabase 프로덕션 설정 (항상 사용) =====
+const SUPABASE_URL = 'https://syzefbnrnnjkdnoqbwsk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5emVmYm5ybm5qa2Rub3Fid3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMwMzcsImV4cCI6MjA3MzQwOTAzN30.EnWZW9v05w81eHuPitmWnbbKf9nAbdr-Aj58uk0fESE';
 
-// Supabase 설정이 없거나 플레이스홀더인 경우 오프라인 모드로 작동
-const isSupabaseConfigured = supabaseUrl &&
-  supabaseAnonKey &&
-  supabaseUrl !== 'YOUR_SUPABASE_URL' &&
-  supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY' &&
-  supabaseUrl.startsWith('https://');
+// 호환성을 위한 변수 (기존 코드에서 참조)
+const supabaseUrl = SUPABASE_URL;
+const supabaseAnonKey = SUPABASE_ANON_KEY;
+const isSupabaseConfigured = true;
 
-if (!isSupabaseConfigured) {
-  console.warn('Supabase 설정이 없거나 올바르지 않습니다. 오프라인 모드로 작동합니다.');
-}
-
-// Supabase 클라이언트 생성 (설정이 있는 경우에만)
-export const supabase = isSupabaseConfigured ? createClient(supabaseUrl!, supabaseAnonKey!, {
+// Supabase 클라이언트 직접 생성 (항상 연결)
+export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -34,14 +31,15 @@ export const supabase = isSupabaseConfigured ? createClient(supabaseUrl!, supaba
       eventsPerSecond: 10,
     },
   },
-}) : null;
+});
+
+console.log('🔗 [utils/supabase] Supabase 클라이언트 초기화 완료:', {
+  url: SUPABASE_URL,
+  available: true
+});
 
 // 인증 상태 확인 헬퍼 함수
 export const getCurrentUser = async () => {
-  if (!supabase) {
-    console.warn('Supabase가 설정되지 않았습니다. 오프라인 모드입니다.');
-    return null;
-  }
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) throw error;
@@ -54,9 +52,6 @@ export const getCurrentUser = async () => {
 
 // 로그인 함수
 export const signInWithEmail = async (email: string, password: string) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -72,9 +67,6 @@ export const signInWithEmail = async (email: string, password: string) => {
 
 // 회원가입 함수
 export const signUpWithEmail = async (email: string, password: string, userData?: any) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -93,9 +85,6 @@ export const signUpWithEmail = async (email: string, password: string, userData?
 
 // 로그아웃 함수
 export const signOut = async () => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -108,9 +97,6 @@ export const signOut = async () => {
 
 // 비밀번호 재설정 함수
 export const resetPassword = async (email: string) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'https://your-app-domain.com/reset-password',
@@ -125,9 +111,6 @@ export const resetPassword = async (email: string) => {
 
 // 프로필 업데이트 함수
 export const updateProfile = async (userId: string, updates: any) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -145,9 +128,6 @@ export const updateProfile = async (userId: string, updates: any) => {
 
 // 타로 세션 관련 함수들
 export const saveTarotSession = async (sessionData: any) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase
       .from('tarot_sessions')
@@ -163,9 +143,6 @@ export const saveTarotSession = async (sessionData: any) => {
 };
 
 export const getTarotSessions = async (userId: string, limit = 10) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase
       .from('tarot_sessions')
@@ -183,9 +160,6 @@ export const getTarotSessions = async (userId: string, limit = 10) => {
 };
 
 export const updateTarotSession = async (sessionId: string, updates: any) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase
       .from('tarot_sessions')
@@ -203,9 +177,6 @@ export const updateTarotSession = async (sessionId: string, updates: any) => {
 
 // 저널 관련 함수들
 export const saveJournalEntry = async (entryData: any) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase
       .from('journal_entries')
@@ -221,9 +192,6 @@ export const saveJournalEntry = async (entryData: any) => {
 };
 
 export const getJournalEntries = async (userId: string, limit = 20) => {
-  if (!supabase) {
-    throw new Error('Supabase가 설정되지 않았습니다.');
-  }
   try {
     const { data, error } = await supabase
       .from('journal_entries')
@@ -242,10 +210,6 @@ export const getJournalEntries = async (userId: string, limit = 20) => {
 
 // 실시간 구독 헬퍼
 export const subscribeToTarotSessions = (userId: string, callback: (payload: any) => void) => {
-  if (!supabase) {
-    console.warn('Supabase가 설정되지 않았습니다. 실시간 구독을 사용할 수 없습니다.');
-    return null;
-  }
   return supabase
     .channel('tarot_sessions')
     .on(
@@ -263,10 +227,6 @@ export const subscribeToTarotSessions = (userId: string, callback: (payload: any
 
 // 연결 상태 확인
 export const checkConnection = async () => {
-  if (!supabase) {
-    console.warn('Supabase가 설정되지 않았습니다. 오프라인 모드입니다.');
-    return false;
-  }
   try {
     const { data, error } = await supabase.from('profiles').select('count').limit(1);
     return !error;
@@ -278,7 +238,7 @@ export const checkConnection = async () => {
 
 /**
  * 앱 시작 시 Supabase 연결 상태 및 환경 변수 검증
- * - 환경 변수 존재 여부 확인
+ * - 하드코딩된 credentials 사용 (항상 설정됨)
  * - 실제 Supabase 서버 연결 테스트
  * - AsyncStorage에 연결 상태 로그 저장
  */
@@ -286,9 +246,9 @@ export const validateSupabaseConnection = async () => {
   const timestamp = new Date().toISOString();
   const connectionStatus = {
     timestamp,
-    envVarsExist: !!supabaseUrl && !!supabaseAnonKey,
-    envVarsValid: isSupabaseConfigured,
-    supabaseUrl: supabaseUrl || 'NOT_SET',
+    envVarsExist: true, // 하드코딩된 credentials 사용
+    envVarsValid: true, // 항상 유효
+    supabaseUrl: SUPABASE_URL,
     connectionSuccessful: false,
     error: null as string | null,
   };
@@ -296,42 +256,26 @@ export const validateSupabaseConnection = async () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🔍 Supabase 연결 상태 검증 시작...');
   console.log(`   • 시간: ${timestamp}`);
-  console.log(`   • 환경 변수 존재: ${connectionStatus.envVarsExist ? '✅' : '❌'}`);
-  console.log(`   • 환경 변수 유효성: ${connectionStatus.envVarsValid ? '✅' : '❌'}`);
+  console.log(`   • 설정 상태: ✅ (하드코딩된 credentials 사용)`);
   console.log(`   • Supabase URL: ${connectionStatus.supabaseUrl}`);
 
-  // 환경 변수가 설정되지 않은 경우
-  if (!connectionStatus.envVarsExist) {
-    connectionStatus.error = 'Environment variables not set';
-    console.warn('⚠️ Supabase 환경 변수가 설정되지 않았습니다.');
-    console.warn('   → EXPO_PUBLIC_SUPABASE_URL 확인 필요');
-    console.warn('   → EXPO_PUBLIC_SUPABASE_ANON_KEY 확인 필요');
-  }
-  // 환경 변수가 유효하지 않은 경우 (플레이스홀더 등)
-  else if (!connectionStatus.envVarsValid) {
-    connectionStatus.error = 'Environment variables invalid (placeholder values)';
-    console.warn('⚠️ Supabase 환경 변수가 유효하지 않습니다.');
-    console.warn('   → 플레이스홀더 값이 설정되어 있거나 형식이 잘못되었습니다.');
-  }
   // 실제 연결 테스트
-  else {
-    try {
-      console.log('🔌 Supabase 서버 연결 테스트 중...');
-      const isConnected = await checkConnection();
-      connectionStatus.connectionSuccessful = isConnected;
+  try {
+    console.log('🔌 Supabase 서버 연결 테스트 중...');
+    const isConnected = await checkConnection();
+    connectionStatus.connectionSuccessful = isConnected;
 
-      if (isConnected) {
-        console.log('✅ Supabase 연결 성공!');
-      } else {
-        connectionStatus.error = 'Connection test failed';
-        console.error('❌ Supabase 연결 실패!');
-        console.error('   → 네트워크 상태 확인 필요');
-        console.error('   → Supabase 프로젝트 상태 확인 필요');
-      }
-    } catch (error: any) {
-      connectionStatus.error = error?.message || 'Unknown connection error';
-      console.error('❌ Supabase 연결 테스트 중 오류:', error);
+    if (isConnected) {
+      console.log('✅ Supabase 연결 성공!');
+    } else {
+      connectionStatus.error = 'Connection test failed';
+      console.error('❌ Supabase 연결 실패!');
+      console.error('   → 네트워크 상태 확인 필요');
+      console.error('   → Supabase 프로젝트 상태 확인 필요');
     }
+  } catch (error: any) {
+    connectionStatus.error = error?.message || 'Unknown connection error';
+    console.error('❌ Supabase 연결 테스트 중 오류:', error);
   }
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -372,13 +316,6 @@ export const checkEdgeFunctionHealth = async () => {
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🏥 Edge Function 헬스체크 시작...');
-
-  if (!supabase) {
-    healthStatus.error = 'Supabase client not initialized';
-    console.warn('⚠️ Supabase 클라이언트가 초기화되지 않았습니다.');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    return healthStatus;
-  }
 
   try {
     console.log('📤 health-check Edge Function 호출 중...');
