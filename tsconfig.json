@@ -19,6 +19,8 @@
     "backup-old-app-files",
     "tarot-timer-web-clean-*",
     "backend/**/*",
+    "supabase/functions/**/*",
+    "tarot-admin-dashboard/**/*",
     "**/__tests__/**/*",
     "**/*.test.ts",
     "**/*.test.tsx",

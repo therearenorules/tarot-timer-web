@@ -5,7 +5,17 @@
  * 보안을 위해 Supabase RLS 정책이 적용되어 있습니다.
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseAvailable } from '../lib/supabase';
+
+/**
+ * Supabase 연결 확인 헬퍼 함수
+ */
+const ensureSupabase = () => {
+    if (!isSupabaseAvailable() || !supabase) {
+        throw new Error('Supabase가 연결되지 않았습니다. 관리자 기능을 사용하려면 Supabase 연결이 필요합니다.');
+    }
+    return supabase;
+};
 
 export interface PromoCode {
     id: string;
@@ -58,7 +68,8 @@ export const AdminPromoService = {
      * 모든 프로모션 코드 목록 조회
      */
     getAllPromoCodes: async (): Promise<PromoCode[]> => {
-        const { data, error } = await supabase
+        const sb = ensureSupabase();
+        const { data, error } = await sb
             .from('promo_codes')
             .select('*')
             .order('created_at', { ascending: false });
@@ -75,7 +86,8 @@ export const AdminPromoService = {
      * 프로모션 코드 통계 조회
      */
     getPromoCodeStats: async (): Promise<PromoCodeStats[]> => {
-        const { data, error } = await supabase
+        const sb = ensureSupabase();
+        const { data, error } = await sb
             .from('promo_code_stats')
             .select('*')
             .order('created_at', { ascending: false });
@@ -92,7 +104,8 @@ export const AdminPromoService = {
      * 특정 코드의 사용 내역 조회
      */
     getUsageByCode: async (code: string): Promise<PromoCodeUsage[]> => {
-        const { data, error } = await supabase
+        const sb = ensureSupabase();
+        const { data, error } = await sb
             .from('promo_code_usage')
             .select('*')
             .eq('code', code)
@@ -122,13 +135,14 @@ export const AdminPromoService = {
         validFrom?: string;
         validUntil?: string | null;
     }): Promise<PromoCode> => {
-        const { data: { user } } = await supabase.auth.getUser();
+        const sb = ensureSupabase();
+        const { data: { user } } = await sb.auth.getUser();
 
         if (!user) {
             throw new Error('인증이 필요합니다.');
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('promo_codes')
             .insert({
                 code: params.code.toUpperCase(),
@@ -181,7 +195,8 @@ export const AdminPromoService = {
         if (updates.validFrom !== undefined) updateData.valid_from = updates.validFrom;
         if (updates.validUntil !== undefined) updateData.valid_until = updates.validUntil;
 
-        const { data, error } = await supabase
+        const sb = ensureSupabase();
+        const { data, error } = await sb
             .from('promo_codes')
             .update(updateData)
             .eq('id', id)
@@ -200,8 +215,9 @@ export const AdminPromoService = {
      * 프로모션 코드 활성화/비활성화 토글
      */
     togglePromoCode: async (id: string): Promise<PromoCode> => {
+        const sb = ensureSupabase();
         // 1. 현재 상태 조회
-        const { data: currentCode, error: fetchError } = await supabase
+        const { data: currentCode, error: fetchError } = await sb
             .from('promo_codes')
             .select('is_active')
             .eq('id', id)
@@ -213,7 +229,7 @@ export const AdminPromoService = {
         }
 
         // 2. 상태 반전
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('promo_codes')
             .update({ is_active: !currentCode.is_active })
             .eq('id', id)
@@ -232,7 +248,8 @@ export const AdminPromoService = {
      * 프로모션 코드 삭제
      */
     deletePromoCode: async (id: string): Promise<void> => {
-        const { error } = await supabase
+        const sb = ensureSupabase();
+        const { error } = await sb
             .from('promo_codes')
             .delete()
             .eq('id', id);
@@ -261,7 +278,8 @@ export const AdminPromoService = {
      * 프로모션 코드 중복 확인
      */
     checkCodeExists: async (code: string): Promise<boolean> => {
-        const { data, error } = await supabase
+        const sb = ensureSupabase();
+        const { data, error } = await sb
             .from('promo_codes')
             .select('id')
             .eq('code', code.toUpperCase())
@@ -286,7 +304,8 @@ export const AdminPromoService = {
         maxUses?: number | null;
         validUntil?: string | null;
     }): Promise<PromoCode[]> => {
-        const { data: { user } } = await supabase.auth.getUser();
+        const sb = ensureSupabase();
+        const { data: { user } } = await sb.auth.getUser();
 
         if (!user) {
             throw new Error('인증이 필요합니다.');
@@ -325,7 +344,7 @@ export const AdminPromoService = {
             });
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('promo_codes')
             .insert(codes)
             .select();

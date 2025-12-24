@@ -60,6 +60,9 @@ const getDeviceId = async (): Promise<string> => {
  */
 const getUserId = async (): Promise<string | null> => {
     try {
+        if (!isSupabaseAvailable() || !supabase) {
+            return null;
+        }
         const { data: { user } } = await supabase.auth.getUser();
         return user?.id || null;
     } catch (error) {
@@ -338,6 +341,18 @@ export const PromoService = {
     validatePromoCode: async (code: string): Promise<{ isValid: boolean; message: string; freeDays?: number }> => {
         try {
             const normalizedCode = code.trim().toUpperCase();
+
+            // 오프라인 모드에서는 로컬 검증
+            if (!isSupabaseAvailable() || !supabase) {
+                const validCodesUpper = VALID_PROMO_CODES.map(c => c.toUpperCase());
+                const isValid = validCodesUpper.includes(normalizedCode);
+                return {
+                    isValid,
+                    message: isValid ? '유효한 코드입니다.' : '유효하지 않은 코드입니다.',
+                    freeDays: isValid ? 7 : undefined
+                };
+            }
+
             const deviceId = await getDeviceId();
             const userId = await getUserId();
 
@@ -361,7 +376,15 @@ export const PromoService = {
             };
         } catch (error) {
             console.error('코드 검증 오류:', error);
-            return { isValid: false, message: '네트워크 오류가 발생했습니다.' };
+            // 오류 시 로컬 폴백
+            const validCodesUpper = VALID_PROMO_CODES.map(c => c.toUpperCase());
+            const normalizedCode = code.trim().toUpperCase();
+            const isValid = validCodesUpper.includes(normalizedCode);
+            return {
+                isValid,
+                message: isValid ? '유효한 코드입니다. (오프라인)' : '유효하지 않은 코드입니다.',
+                freeDays: isValid ? 7 : undefined
+            };
         }
     },
 
