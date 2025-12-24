@@ -10,6 +10,8 @@
     "description": "24시간 실시간 학습 시스템으로 타로 카드의 의미를 체계적으로 학습하는 교육 플랫폼입니다. 매 시간마다 새로운 카드를 통해 셀프 스터디하며, 78장 카드의 상징과 의미를 자연스럽게 기억할 수 있습니다.",
     "extra": {
       "EXPO_PUBLIC_API_URL": "https://api.tarottimer.app",
+      "supabaseUrl": "https://syzefbnrnnjkdnoqbwsk.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5emVmYm5ybm5qa2Rub3Fid3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMwMzcsImV4cCI6MjA3MzQwOTAzN30.EnWZW9v05w81eHuPitmWnbbKf9nAbdr-Aj58uk0fESE",
       "eas": {
         "projectId": "268f44c1-406f-4387-8589-e62144024eaa"
       }
