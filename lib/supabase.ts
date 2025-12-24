@@ -1,55 +1,30 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 하드코딩된 Supabase 설정 (프로덕션용)
+// ===== Supabase 프로덕션 설정 (항상 사용) =====
 const SUPABASE_URL = 'https://syzefbnrnnjkdnoqbwsk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5emVmYm5ybm5qa2Rub3Fid3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzMwMzcsImV4cCI6MjA3MzQwOTAzN30.EnWZW9v05w81eHuPitmWnbbKf9nAbdr-Aj58uk0fESE';
 
-// 환경변수에서 Supabase 설정 가져오기 (폴백: 하드코딩 값 사용)
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || SUPABASE_URL;
-const supabaseKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
+// Supabase 클라이언트 직접 생성 (항상 연결)
+export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+    storage: AsyncStorage,
+  },
+});
 
-// URL 유효성 검사 함수
-const isValidHttpUrl = (string: string | undefined): boolean => {
-  if (!string) return false;
-  try {
-    const url = new URL(string);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch (_) {
-    return false;
-  }
-};
-
-// Supabase가 올바르게 설정되어 있는지 확인
-const isValidSupabaseConfig = isValidHttpUrl(supabaseUrl) &&
-  supabaseKey &&
-  supabaseKey.length > 20 &&
-  !supabaseUrl?.includes('dummy') &&
-  !supabaseUrl?.includes('placeholder') &&
-  !supabaseKey?.includes('dummy');
-
-if (!isValidSupabaseConfig) {
-  console.warn('⚠️ Supabase 환경변수가 설정되지 않았거나 유효하지 않습니다.');
-  console.warn('📌 앱은 오프라인 모드로 실행됩니다.');
-  console.warn('📌 프로덕션 빌드 시 EAS Secrets에 EXPO_PUBLIC_SUPABASE_URL과 EXPO_PUBLIC_SUPABASE_ANON_KEY를 설정하세요.');
-}
-
-// Supabase 클라이언트 생성 (유효한 설정이 있을 때만)
-export const supabase: SupabaseClient | null = isValidSupabaseConfig
-  ? createClient(supabaseUrl!, supabaseKey!, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      },
-    })
-  : null;
-
-// Supabase 연결 상태 확인 함수
+// Supabase 연결 상태 확인 함수 (항상 true)
 export const isSupabaseAvailable = (): boolean => {
-  return isValidSupabaseConfig && supabase !== null;
+  return true;
 };
+
+// 디버그 로그
+console.log('🔗 Supabase 클라이언트 초기화 완료:', {
+  url: SUPABASE_URL,
+  available: true
+});
 
 // 타입 정의
 export interface User {
@@ -86,8 +61,6 @@ export interface SpreadReading {
 export const supabaseHelpers = {
   // 사용자 데이터 가져오기
   async getUser(userId: string): Promise<User | null> {
-    if (!isSupabaseAvailable() || !supabase) return null;
-
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -104,8 +77,6 @@ export const supabaseHelpers = {
 
   // 일일 세션 데이터 가져오기
   async getDailySession(userId: string, date: string): Promise<DailyTarotSession | null> {
-    if (!isSupabaseAvailable() || !supabase) return null;
-
     const { data, error} = await supabase
       .from('daily_tarot_sessions')
       .select('*')
@@ -123,8 +94,6 @@ export const supabaseHelpers = {
 
   // 스프레드 리딩 저장
   async saveSpreadReading(reading: Omit<SpreadReading, 'id' | 'created_at'>): Promise<SpreadReading | null> {
-    if (!isSupabaseAvailable() || !supabase) return null;
-
     const { data, error } = await supabase
       .from('spread_readings')
       .insert([reading])
@@ -145,8 +114,6 @@ export const supabaseHelpers = {
     date: string,
     completedHours: number[]
   ): Promise<DailyTarotSession | null> {
-    if (!isSupabaseAvailable() || !supabase) return null;
-
     const { data, error } = await supabase
       .from('daily_tarot_sessions')
       .upsert({
@@ -168,8 +135,6 @@ export const supabaseHelpers = {
 
   // 실시간 구독 설정 (향후 사용)
   subscribeToUserChanges(userId: string, callback: (payload: any) => void) {
-    if (!isSupabaseAvailable() || !supabase) return null;
-
     return supabase
       .channel(`user_${userId}`)
       .on(
@@ -277,11 +242,3 @@ export async function updateProfile(userId: string, updates: Partial<UserProfile
   return data;
 }
 
-// 디버그 정보 출력
-if (__DEV__) {
-  console.log('🔗 Supabase Client Status:', {
-    available: isSupabaseAvailable(),
-    url: supabaseUrl ? '설정됨' : '미설정',
-    key: supabaseKey ? '설정됨' : '미설정'
-  });
-}
