@@ -125,6 +125,18 @@ ALTER TABLE user_card_collections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_statistics ENABLE ROW LEVEL SECURITY;
 
+-- auth.users에 대한 public 스키마 뷰 생성 (보안 강화)
+-- Supabase Auth의 users 테이블에 RLS 정책 적용
+DO $$
+BEGIN
+  -- auth.users 테이블에 RLS 활성화 (이미 활성화되어 있을 수 있음)
+  EXECUTE 'ALTER TABLE IF EXISTS auth.users ENABLE ROW LEVEL SECURITY';
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    -- auth 스키마 권한 없으면 무시 (Supabase가 자동 관리)
+    NULL;
+END $$;
+
 -- 프로필 RLS 정책
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT

@@ -271,10 +271,12 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
--- 관리자용 통계 뷰
+-- 관리자용 통계 뷰 (SECURITY DEFINER)
 -- ============================================
 
-CREATE OR REPLACE VIEW promo_code_stats AS
+CREATE OR REPLACE VIEW promo_code_stats
+WITH (security_barrier = true)
+AS
 SELECT
     pc.id,
     pc.code,
@@ -295,4 +297,12 @@ LEFT JOIN promo_code_usage pcu ON pc.id = pcu.promo_code_id
 GROUP BY pc.id, pc.code, pc.description, pc.free_days, pc.max_uses,
          pc.current_uses, pc.is_active, pc.valid_from, pc.valid_until, pc.created_at;
 
-COMMENT ON VIEW promo_code_stats IS '프로모션 코드 통계 (관리자용)';
+COMMENT ON VIEW promo_code_stats IS '프로모션 코드 통계 (관리자 전용 - SECURITY BARRIER 적용)';
+
+-- 관리자만 접근 가능하도록 권한 설정
+REVOKE ALL ON promo_code_stats FROM PUBLIC;
+REVOKE ALL ON promo_code_stats FROM anon;
+REVOKE ALL ON promo_code_stats FROM authenticated;
+
+-- service_role(관리자)만 SELECT 권한 부여
+GRANT SELECT ON promo_code_stats TO service_role;
