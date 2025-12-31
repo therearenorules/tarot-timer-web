@@ -88,6 +88,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- updated_at 트리거
+DROP TRIGGER IF EXISTS update_promo_codes_updated_at ON promo_codes;
 CREATE TRIGGER update_promo_codes_updated_at
     BEFORE UPDATE ON promo_codes
     FOR EACH ROW
@@ -108,6 +109,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS increment_usage_on_apply ON promo_code_usage;
 CREATE TRIGGER increment_usage_on_apply
     AFTER INSERT ON promo_code_usage
     FOR EACH ROW
@@ -122,22 +124,26 @@ ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_code_usage ENABLE ROW LEVEL SECURITY;
 
 -- 1. 프로모션 코드 조회: 모든 사용자 (활성화된 코드만)
+DROP POLICY IF EXISTS "Anyone can view active promo codes" ON promo_codes;
 CREATE POLICY "Anyone can view active promo codes"
     ON promo_codes FOR SELECT
     USING (is_active = true AND (valid_until IS NULL OR valid_until > NOW()));
 
 -- 2. 프로모션 코드 생성/수정/삭제: 관리자만
 -- (나중에 관리자 역할 추가 시 수정)
+DROP POLICY IF EXISTS "Only admins can manage promo codes" ON promo_codes;
 CREATE POLICY "Only admins can manage promo codes"
     ON promo_codes FOR ALL
     USING (auth.uid() IS NOT NULL); -- 임시: 인증된 사용자만
 
 -- 3. 사용 내역 조회: 본인 것만
+DROP POLICY IF EXISTS "Users can view their own usage" ON promo_code_usage;
 CREATE POLICY "Users can view their own usage"
     ON promo_code_usage FOR SELECT
     USING (auth.uid() = user_id OR user_id IS NULL);
 
 -- 4. 사용 내역 생성: 모든 사용자
+DROP POLICY IF EXISTS "Anyone can create usage record" ON promo_code_usage;
 CREATE POLICY "Anyone can create usage record"
     ON promo_code_usage FOR INSERT
     WITH CHECK (true);
