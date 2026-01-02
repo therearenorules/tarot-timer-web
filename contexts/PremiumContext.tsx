@@ -223,6 +223,20 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
           setIsLoading(false);
           return; // 여기서 종료
         } else {
+          // ✅ FIX: 프로모션 코드 만료 시 무료 상태로 초기화
+          if (localStatus.subscription_type === 'promo') {
+            console.log('⏰ 프로모션 코드 만료됨 - 무료 버전으로 전환');
+            const expiredStatus: PremiumStatus = {
+              is_premium: false,
+              unlimited_storage: false,
+              ad_free: false,
+              premium_spreads: false
+            };
+            await LocalStorageManager.updatePremiumStatus(expiredStatus);
+            setPremiumStatus(expiredStatus);
+            setIsLoading(false);
+            return; // 여기서 종료 - 무료 버전으로 전환됨
+          }
           console.log('⏰ LocalStorage 구독 만료됨 - IAP 확인 필요');
         }
       }
@@ -478,6 +492,25 @@ export function PremiumProvider({ children }: PremiumProviderProps) {
 
       // ✅ NEW: LocalStorage에 유료 구독이 있으면 즉시 적용 (Supabase 대기 X)
       if (localStatus.is_premium && localStatus.subscription_type !== 'trial') {
+        // ✅ FIX: 프로모션 코드 만료 체크
+        if (localStatus.subscription_type === 'promo' && localStatus.expiry_date) {
+          const expiryDate = new Date(localStatus.expiry_date);
+          const now = new Date();
+          if (now > expiryDate) {
+            console.log('⏰ 프로모션 코드 만료됨 - 무료 버전으로 전환');
+            const expiredStatus: PremiumStatus = {
+              is_premium: false,
+              unlimited_storage: false,
+              ad_free: false,
+              premium_spreads: false
+            };
+            await LocalStorageManager.updatePremiumStatus(expiredStatus);
+            setPremiumStatus(expiredStatus);
+            console.log('✅ 구독 상태 새로고침 완료 (프로모션 만료 → 무료)');
+            return; // 여기서 종료 - 무료 버전으로 전환됨
+          }
+        }
+
         console.log('✅ LocalStorage 유료 구독 발견 - 즉시 적용');
         setPremiumStatus(localStatus);
 

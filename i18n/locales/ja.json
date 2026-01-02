@@ -560,6 +560,14 @@
       "japanese": "日本語",
       "chinese": "中文",
       "spanish": "Español"
+    },
+    "storage": {
+      "title": "データ保存状況",
+      "dailyTarot": "デイリータロット保存",
+      "countUnit": "件",
+      "autoDeleteOldest": "新規保存時に最も古い記録を自動削除",
+      "freeLimit": "無料ユーザー最大{{max}}日保存",
+      "unlimitedStorage": "プレミアム：無制限保存"
     }
   },
   "pwa": {

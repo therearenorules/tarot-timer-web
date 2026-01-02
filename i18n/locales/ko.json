@@ -567,6 +567,14 @@
       "japanese": "일어",
       "chinese": "中文",
       "spanish": "Español"
+    },
+    "storage": {
+      "title": "데이터 저장 현황",
+      "dailyTarot": "데일리 타로 저장",
+      "countUnit": "개",
+      "autoDeleteOldest": "새 저장 시 가장 오래된 기록 자동 삭제",
+      "freeLimit": "무료 사용자 최대 {{max}}일 저장",
+      "unlimitedStorage": "프리미엄: 무제한 저장"
     }
   },
   "pwa": {

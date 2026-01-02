@@ -567,6 +567,14 @@
       "japanese": "日本語",
       "chinese": "中文",
       "spanish": "Español"
+    },
+    "storage": {
+      "title": "Data Storage Status",
+      "dailyTarot": "Daily Tarot Storage",
+      "countUnit": "",
+      "autoDeleteOldest": "Auto-delete oldest record when saving new",
+      "freeLimit": "Free users: max {{max}} days storage",
+      "unlimitedStorage": "Premium: Unlimited Storage"
     }
   },
   "pwa": {
